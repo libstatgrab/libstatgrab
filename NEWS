@@ -3,6 +3,20 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.9 (10 March 2004)
+
+ * Added network interface information:
+     speed, duplex, up/down.
+ * Added more statistics on network interfaces:
+     i/o packets, i/o errors, and collisions.
+ * Added support for OpenBSD 3.3.
+ * Added support for DragonFly BSD 1.0.
+ * No longer need elevated privileges on most platforms:
+     FreeBSD 5, NetBSD, and OpenBSD.
+ * Minor changes to the return types of the python bindings functions.
+
+ * PLEASE NOTE: this will break binary (only) compatibility.
+
 libstatgrab 0.8.2 (11 February 2004)
 
  * Fixes to add support for Solaris 6.
