@@ -245,16 +245,16 @@ network_stat_t *get_network_stats_diff(int *entries){
 	for(x=0;x<sizeof_net_stats_diff;x++){
 
 		if((strcmp(network_stats_diff_ptr->interface_name, network_stats_ptr->interface_name))==0){
-			network_stats_diff_ptr->tx = network_stats_ptr->tx - network_stats_diff_ptr->tx;
-			network_stats_diff_ptr->rx = network_stats_ptr->rx - network_stats_diff_ptr->rx;	
+			network_stats_diff_ptr->tx = transfer_diff(network_stats_ptr->tx, network_stats_diff_ptr->tx);
+			network_stats_diff_ptr->rx = transfer_diff(network_stats_ptr->rx, network_stats_diff_ptr->rx);
 			network_stats_diff_ptr->systime = network_stats_ptr->systime - network_stats_diff_ptr->systime;	
 		}else{
 			
 			network_stats_ptr=network_stats;
 			for(y=0;y<ifaces;y++){
 				if((strcmp(network_stats_diff_ptr->interface_name, network_stats_ptr->interface_name))==0){
-					network_stats_diff_ptr->tx = network_stats_ptr->tx - network_stats_diff_ptr->tx;
-					network_stats_diff_ptr->rx = network_stats_ptr->rx - network_stats_diff_ptr->rx;	
+					network_stats_diff_ptr->tx = transfer_diff(network_stats_ptr->tx, network_stats_diff_ptr->tx);
+					network_stats_diff_ptr->rx = transfer_diff(network_stats_ptr->rx, network_stats_diff_ptr->rx);	
 					network_stats_diff_ptr->systime = network_stats_ptr->systime - network_stats_diff_ptr->systime;	
 					break;
 				}
