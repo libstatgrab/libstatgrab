@@ -32,6 +32,10 @@
 #ifdef LINUX
 #include <stdio.h>
 #endif
+#ifdef FREEBSD
+#include <sys/sysctl.h>
+#include <sys/dkstat.h>
+#endif
 
 static cpu_states_t cpu_now;
 static int cpu_now_uninit=1;
@@ -46,13 +50,17 @@ cpu_states_t *get_cpu_totals(){
 #ifdef LINUX
 	FILE *f;
 #endif
+#ifdef FREEBSD
+	long cp_time[CPUSTATES];
+	size_t size;
+#endif
         
 	cpu_now.user=0;
-	/* Not stored in linux */
+	/* Not stored in linux or freebsd */
 	cpu_now.iowait=0;
 	cpu_now.kernel=0;
 	cpu_now.idle=0;
-	/* Not stored in linux */
+	/* Not stored in linux or freebsd */
 	cpu_now.swap=0;
 	cpu_now.total=0;
 	/* Not stored in solaris */
@@ -95,6 +103,22 @@ cpu_states_t *get_cpu_totals(){
 	fclose(f);
 
 	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
+#endif
+#ifdef FREEBSD
+	if (sysctlbyname("kern.cp_time", NULL, &size, NULL, NULL) < 0){	
+		return NULL;
+	}
+	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, NULL) < 0){
+		return NULL;
+  	}
+
+	cpu_now.user=cp_time[CP_USER];
+	cpu_now.nice=cp_time[CP_NICE];
+	cpu_now.kernel=cp_time[CP_SYS];
+	cpu_now.idle=cp_time[CP_IDLE];
+	
+	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
+
 #endif
 
 	cpu_now.systime=time(NULL);
