@@ -71,6 +71,8 @@ solaris2.[[6-7]])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	AC_DEFINE(SOL7, , [Building on Solaris 2.6 or 2.7])
 	AM_CONDITIONAL(SETUIDBINS, true)
+	BIN_OWNER="root"
+	BIN_PERM="4755"
 	LINKFLAGS="-lkstat -lsocket -lnsl"
 	AC_CHECK_LIB(devinfo, di_init, [LINKFLAGS="$LINKFLAGS -ldevinfo"])
 	;;
@@ -83,6 +85,8 @@ freebsd4.*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
 	AM_CONDITIONAL(SETGIDBINS, true)
+	BIN_GROUP="kmem"
+	BIN_PERM="2755"
 	LINKFLAGS="-lkvm -ldevstat"
 	;;
 freebsd5.*)
@@ -108,11 +112,15 @@ dragonfly*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(DFBSD, , [Building on DragonFlyBSD])
 	AM_CONDITIONAL(SETGIDBINS, true)
+	BIN_GROUP="kmem"
+	BIN_PERM="2755"
 	LINKFLAGS="-lkvm -ldevstat"
 	;;
 linux-gnu)
 	AC_DEFINE(LINUX, , [Building on GNU/Linux])
 	AM_CONDITIONAL(SETUIDBINS, true)
+	BIN_OWNER="root"
+	BIN_PERM="4755"
 	;;
 cygwin)
 	AC_DEFINE(CYGWIN, , [Building on Cygwin])
@@ -222,6 +230,11 @@ AC_SUBST(SAIDARCPPFLAGS)
 # The flags needed to link to libstatgrab
 # (ie. our dependencies)
 AC_SUBST(LINKFLAGS)
+
+# Ownership and permissions possibly needed for binaries
+AC_SUBST(BIN_OWNER)
+AC_SUBST(BIN_GROUP)
+AC_SUBST(BIN_PERM)
 
 # And finish by changing these files
 AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index src/saidar/Makefile])
