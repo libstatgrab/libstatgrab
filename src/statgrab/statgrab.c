@@ -612,6 +612,10 @@ int main(int argc, char **argv) {
 	if (setegid(getgid()) != 0)
 		die("Failed to lose effective group");
 #endif
+#ifdef SOLARIS
+	if (seteuid(getuid()) != 0)
+		die("Failed to lose effective user");
+#endif
 
 	switch (repeat_mode) {
 	case REPEAT_NONE:
