@@ -1,4 +1,4 @@
-# Makefile for libstatgrab/src
+# Makefile for libstatgrab/src/libstatgrab
 # http://www.i-scream.org/
 # $Id$
 
