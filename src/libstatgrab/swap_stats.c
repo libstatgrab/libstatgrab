@@ -32,6 +32,12 @@
 #include <stdio.h>
 #include "tools.h"
 #endif
+#ifdef FREEBSD
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <kvm.h>
+#endif
 
 swap_stat_t *get_swap_stats(){
 
@@ -44,6 +50,11 @@ swap_stat_t *get_swap_stats(){
 #ifdef LINUX
 	FILE *f;
 	char *line_ptr;
+#endif
+#ifdef FREEBSD
+	struct kvm_swap swapinfo;
+	int pagesize;
+	kvm_t *kvmd = NULL;
 #endif
 
 #ifdef SOLARIS
@@ -71,7 +82,21 @@ swap_stat_t *get_swap_stats(){
 	}
 	fclose(f);
 #endif
+#ifdef FREEBSD
+	if((kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL)) == NULL){
+		return NULL;
+	}
+	if ((kvm_getswapinfo(kvmd, &swapinfo, 1,0)) == -1){
+		return NULL;
+	}
+	pagesize=getpagesize();
 
+	swap_stat.total= (long long)swapinfo.ksw_total * (long long)pagesize;
+	swap_stat.used = (long long)swapinfo.ksw_used * (long long)pagesize;
+	swap_stat.free = swap_stat.total-swap_stat.used;
+
+	kvm_close(kvmd);
+#endif
 	return &swap_stat;
 
 }
