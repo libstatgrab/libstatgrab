@@ -51,6 +51,7 @@ mem_stat_t *get_memory_stats(){
 #endif
 #ifdef LINUX
 	char *line_ptr;
+	unsigned long long value;
 	FILE *f;
 #endif
 #ifdef FREEBSD
@@ -95,30 +96,28 @@ mem_stat_t *get_memory_stats(){
 #endif
 
 #ifdef LINUX
-	f=fopen("/proc/meminfo", "r");
-	if(f==NULL){
+	f = fopen("/proc/meminfo", "r");
+	if (f == NULL) {
 		return NULL;
 	}
 
-	if((line_ptr=f_read_line(f, "Mem:"))==NULL){
-		fclose(f);
-		return NULL;
+	while ((line_ptr = f_read_line(f, "")) != NULL) {
+		if (sscanf(line_ptr, "%*s %lld kB", &value) != 2) {
+			continue;
+		}
+		value *= 1024;
+
+		if (strncmp(line_ptr, "MemTotal:", 9) == 0) {
+			mem_stat.total = value;
+		} else if (strncmp(line_ptr, "MemFree:", 8) == 0) {
+			mem_stat.free = value;
+		} else if (strncmp(line_ptr, "Cached:", 7) == 0) {
+			mem_stat.cache = value;
+		}
 	}
 
 	fclose(f);
-
-	/* Linux actually stores this as a unsigned long long, but
-	 * our structures are just long longs. This shouldn't be a
-	 * problem for sometime yet :) 
-	 */
-	if((sscanf(line_ptr,"Mem:  %lld %lld %lld %*d %*d %lld", \
-		&mem_stat.total, \
-		&mem_stat.used, \
-		&mem_stat.free, \
-		&mem_stat.cache))!=4){
-			return NULL;
-	}
-
+	mem_stat.used = mem_stat.total - mem_stat.free;
 #endif
 
 #ifdef FREEBSD
