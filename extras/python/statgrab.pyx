@@ -1,5 +1,4 @@
-# TODO: return values more the python way - like os.stat
-#       deal with failures better (return nothing, or raise error?)
+# TODO: deal with failures better (return nothing, or raise error?)
 
 ctypedef long time_t
 
@@ -106,86 +105,113 @@ cdef extern from "statgrab.h":
     cdef extern int statgrab_drop_privileges()
 
 
+class Result:
+    def __init__(self, attrs):
+        self.attrs = attrs
+        for attr in attrs:
+            setattr(self, attr, attrs[attr])
+    def __getitem__(self, item):
+        return getattr(self, item)
+    def __repr__(self):
+        return str(self.attrs)
+
+
 def py_get_cpu_totals():
     cdef cpu_states_t *s
     s = get_cpu_totals()
-    return {'user': s.user,
-            'kernel': s.kernel,
-            'idle': s.idle,
-            'iowait': s.iowait,
-            'swap': s.swap,
-            'nice': s.nice,
-            'total': s.total,
-            'systime': s.systime,
-           }
+    return Result(
+        {'user': s.user,
+         'kernel': s.kernel,
+         'idle': s.idle,
+         'iowait': s.iowait,
+         'swap': s.swap,
+         'nice': s.nice,
+         'total': s.total,
+         'systime': s.systime,
+        }
+    )
 
 def py_get_cpu_diff():
     cdef cpu_states_t *s
     s = get_cpu_diff()
-    return {'user': s.user,
-            'kernel': s.kernel,
-            'idle': s.idle,
-            'iowait': s.iowait,
-            'swap': s.swap,
-            'nice': s.nice,
-            'total': s.total,
-            'systime': s.systime,
-           }
+    return Result(
+        {'user': s.user,
+         'kernel': s.kernel,
+         'idle': s.idle,
+         'iowait': s.iowait,
+         'swap': s.swap,
+         'nice': s.nice,
+         'total': s.total,
+         'systime': s.systime,
+        }
+    )
 
 def py_cpu_percent_usage():
     cdef cpu_percent_t *s
     s = cpu_percent_usage()
-    return {'user': s.user,
-            'kernel': s.kernel,
-            'idle': s.idle,
-            'iowait': s.iowait,
-            'swap': s.swap,
-            'nice': s.nice,
-            'time_taken': s.time_taken,
-           }
+    return Result(
+        {'user': s.user,
+         'kernel': s.kernel,
+         'idle': s.idle,
+         'iowait': s.iowait,
+         'swap': s.swap,
+         'nice': s.nice,
+         'time_taken': s.time_taken,
+        }
+    )
 
 def py_get_memory_stats():
     cdef mem_stat_t *s
     s = get_memory_stats()
-    return {'total': s.total,
-            'used': s.used,
-            'free': s.free,
-            'cache': s.cache,
-           }
+    return Result(
+        {'total': s.total,
+         'used': s.used,
+         'free': s.free,
+         'cache': s.cache,
+        }
+    )
 
 def py_get_load_stats():
     cdef load_stat_t *s
     s = get_load_stats()
-    return {'min1': s.min1,
-            'min5': s.min5,
-            'min15': s.min15,
-           }
+    return Result(
+        {'min1': s.min1,
+         'min5': s.min5,
+         'min15': s.min15,
+        }
+    )
 
 def py_get_user_stats():
     cdef user_stat_t *s
     s = get_user_stats()
-    return {'name_list': s.name_list,
-            'num_entries': s.num_entries,
-           }
+    return Result(
+        {'name_list': s.name_list,
+         'num_entries': s.num_entries,
+        }
+    )
 
 def py_get_swap_stats():
     cdef swap_stat_t *s
     s = get_swap_stats()
-    return {'total': s.total,
-            'used': s.used,
-            'free': s.free,
-           }
+    return Result(
+        {'total': s.total,
+         'used': s.used,
+         'free': s.free,
+        }
+    )
 
 def py_get_general_stats():
     cdef general_stat_t *s
     s = get_general_stats()
-    return {'os_name': s.os_name,
-            'os_release': s.os_release,
-            'os_version': s.os_version,
-            'platform': s.platform,
-            'hostname': s.hostname,
-            'uptime': s.uptime,
-           }
+    return Result(
+        {'os_name': s.os_name,
+         'os_release': s.os_release,
+         'os_version': s.os_version,
+         'platform': s.platform,
+         'hostname': s.hostname,
+         'uptime': s.uptime,
+        }
+    )
 
 def py_get_disk_stats():
     cdef disk_stat_t *s
@@ -193,17 +219,18 @@ def py_get_disk_stats():
     s = get_disk_stats(&entries)
     list = [entries]
     for i from 0 <= i < entries:
-        list.append({'device_name': s.device_name,
-                     'fs_type': s.fs_type,
-                     'mnt_point': s.mnt_point,
-                     'size': s.size,
-                     'used': s.used,
-                     'avail': s.avail,
-                     'total_inodes': s.total_inodes,
-                     'used_inodes': s.used_inodes,
-                     'free_inodes': s.free_inodes,
-                    },
-                   )
+        list.append(Result(
+            {'device_name': s.device_name,
+             'fs_type': s.fs_type,
+             'mnt_point': s.mnt_point,
+             'size': s.size,
+             'used': s.used,
+             'avail': s.avail,
+             'total_inodes': s.total_inodes,
+             'used_inodes': s.used_inodes,
+             'free_inodes': s.free_inodes,
+            }
+        ))
         s = s + 1
     return list
 
@@ -213,12 +240,13 @@ def py_get_diskio_stats():
     s = get_diskio_stats(&entries)
     list = [entries]
     for i from 0 <= i < entries:
-        list.append({'disk_name': s.disk_name,
-                     'read_bytes': s.read_bytes,
-                     'write_bytes': s.write_bytes,
-                     'systime': s.systime,
-                    },
-                   )
+        list.append(Result(
+            {'disk_name': s.disk_name,
+             'read_bytes': s.read_bytes,
+             'write_bytes': s.write_bytes,
+             'systime': s.systime,
+            }
+        ))
         s = s + 1
     return list
 
@@ -228,24 +256,27 @@ def py_get_diskio_stats_diff():
     s = get_diskio_stats_diff(&entries)
     list = [entries]
     for i from 0 <= i < entries:
-        list.append({'disk_name': s.disk_name,
-                     'read_bytes': s.read_bytes,
-                     'write_bytes': s.write_bytes,
-                     'systime': s.systime,
-                    },
-                   )
+        list.append(Result(
+            {'disk_name': s.disk_name,
+             'read_bytes': s.read_bytes,
+             'write_bytes': s.write_bytes,
+             'systime': s.systime,
+            }
+        ))
         s = s + 1
     return list
 
 def py_get_process_stats():
     cdef process_stat_t *s
     s = get_process_stats()
-    return {'total': s.total,
-            'running': s.running,
-            'sleeping': s.sleeping,
-            'stopped': s.stopped,
-            'zombie': s.zombie,
-           }
+    return Result(
+        {'total': s.total,
+         'running': s.running,
+         'sleeping': s.sleeping,
+         'stopped': s.stopped,
+         'zombie': s.zombie,
+        }
+    )
 
 def py_get_network_stats():
     cdef network_stat_t *s
@@ -253,12 +284,13 @@ def py_get_network_stats():
     s = get_network_stats(&entries)
     list = [entries]
     for i from 0 <= i < entries:
-        list.append({'interface_name': s.interface_name,
-                     'tx': s.tx,
-                     'rx': s.rx,
-                     'systime': s.systime,
-                    },
-                   )
+        list.append(Result(
+            {'interface_name': s.interface_name,
+             'tx': s.tx,
+             'rx': s.rx,
+             'systime': s.systime,
+            }
+        ))
         s = s + 1
     return list
 
@@ -268,28 +300,33 @@ def py_get_network_stats_diff():
     s = get_network_stats_diff(&entries)
     list = [entries]
     for i from 0 <= i < entries:
-        list.append({'interface_name': s.interface_name,
-                     'tx': s.tx,
-                     'rx': s.rx,
-                     'systime': s.systime,
-                    },
-                   )
+        list.append(Result(
+            {'interface_name': s.interface_name,
+             'tx': s.tx,
+             'rx': s.rx,
+             'systime': s.systime,
+            }
+        ))
         s = s + 1
     return list
 
 def py_get_page_stats():
     cdef page_stat_t *s
     s = get_page_stats()
-    return {'pages_pagein': s.pages_pagein,
-            'pages_pageout': s.pages_pageout,
-           }
+    return Result(
+        {'pages_pagein': s.pages_pagein,
+         'pages_pageout': s.pages_pageout,
+        }
+    )
 
 def py_get_page_stats_diff():
     cdef page_stat_t *s
     s = get_page_stats_diff()
-    return {'pages_pagein': s.pages_pagein,
-            'pages_pageout': s.pages_pageout,
-           }
+    return Result(
+        {'pages_pagein': s.pages_pagein,
+         'pages_pageout': s.pages_pageout,
+        }
+    )
 
 def py_statgrab_init():
     return statgrab_init()
