@@ -29,6 +29,7 @@
 #include <string.h>
 #include "statgrab.h"
 #include "vector.h"
+#include "tools.h"
 #include <time.h>
 #ifdef SOLARIS
 #include <kstat.h>
@@ -48,7 +49,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <ctype.h>
-#include "tools.h"
 /* Stuff which could be defined by defining KERNEL, but 
  * that would be a bad idea, so we'll just declare it here
  */
@@ -125,9 +125,10 @@ network_stat_t *get_network_stats(int *entries){
 		}
 		network_stat_ptr=network_stats+interfaces;
 		
-		if(network_stat_ptr->interface_name!=NULL) free(network_stat_ptr->interface_name);
-		network_stat_ptr->interface_name=strdup(net_ptr->ifa_name);
-		if(network_stat_ptr->interface_name==NULL) return NULL;
+		if (update_string(&network_stat_ptr->interface_name,
+		                  net_ptr->ifa_name) == NULL) {
+			return NULL;
+		}
 		net_data=(struct if_data *)net_ptr->ifa_data;
 		network_stat_ptr->rx=net_data->ifi_ibytes;
 		network_stat_ptr->tx=net_data->ifi_obytes;
@@ -224,10 +225,10 @@ network_stat_t *get_network_stats(int *entries){
 			network_stat_ptr->collisions=knp->value.ui32;
 
 			/* Read interface name */
-			if(network_stat_ptr->interface_name!=NULL){
-				free(network_stat_ptr->interface_name);
+			if (update_string(&network_stat_ptr->interface_name,
+			                  ksp->ks_name) == NULL) {
+				return NULL;
 			}
-			network_stat_ptr->interface_name=strdup(ksp->ks_name);
 
 			/* Store systime */
 			network_stat_ptr->systime=time(NULL);
@@ -331,10 +332,10 @@ network_stat_t *get_network_stats_diff(int *entries) {
 		src = &network_stats[i];
 		dest = &diff[i];
 
-		if (dest->interface_name != NULL) {
-			free(dest->interface_name);
+		if (update_string(&dest->interface_name,
+		                  src->interface_name) == NULL) {
+			return NULL;
 		}
-		dest->interface_name = strdup(src->interface_name);
 		dest->rx = src->rx;
 		dest->tx = src->tx;
 		dest->ipackets = src->ipackets;
@@ -449,9 +450,10 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			network_iface_stat_ptr->up = 0;
 		}
 
-		if (network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
-		network_iface_stat_ptr->interface_name = strdup(net_ptr->ifa_name);
-		if (network_iface_stat_ptr->interface_name == NULL) return NULL;
+		if (update_string(&network_iface_stat_ptr->interface_name,
+		                  net_ptr->ifa_name) == NULL) {
+			return NULL;
+		}
 
 		network_iface_stat_ptr->speed = 0;
 		network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
@@ -550,9 +552,10 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			network_iface_stat_ptr = network_iface_stats + ifaces;
 			ifaces++;
 
-			if (network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
-			network_iface_stat_ptr->interface_name = strdup(ksp->ks_name);
-			if (network_iface_stat_ptr->interface_name == NULL) return NULL;
+			if (update_string(&network_iface_stat_ptr->interface_name,
+			                  ksp->ks_name) == NULL) {
+				return NULL;
+			}
 
 			if ((ifr.ifr_flags & IFF_UP) != 0) {
 				network_iface_stat_ptr->up = 1;
@@ -625,7 +628,11 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			return NULL;
 		}
 		network_iface_stat_ptr = network_iface_stats + ifaces;
-		network_iface_stat_ptr->interface_name = strdup(name);
+		
+		if (update_string(&network_iface_stat_ptr->interface_name,
+		                  name) == NULL) {
+			return NULL;
+		}
 		if ((ifr.ifr_flags & IFF_UP) != 0) {
 			network_iface_stat_ptr->up = 1;
 		} else {
