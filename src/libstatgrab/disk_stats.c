@@ -296,6 +296,13 @@ diskio_stat_t *diskio_stat_malloc(int needed_entries, int *cur_entries, diskio_s
 static diskio_stat_t *diskio_stats=NULL;	
 static int num_diskio=0;	
 
+#ifdef LINUX
+typedef struct {
+	int major;
+	int minor;
+} partition;
+#endif
+
 diskio_stat_t *get_diskio_stats(int *entries){
 
 	static int sizeof_diskio_stats=0;
@@ -311,6 +318,11 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	char *line_ptr;
 	int major, minor;
 	char dev_letter;
+	int has_pp_stats = 1;
+	static partition *parts = NULL;
+	static int alloc_parts = 0;
+	int i, n;
+	time_t now;
 #endif
 #ifdef FREEBSD
 	struct statinfo stats;
@@ -393,82 +405,131 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #endif
 
 #ifdef LINUX
-	f=fopen("/proc/stat", "r");
-	if(f==NULL){
-		*entries=0;
-		return NULL;
+	num_diskio = 0;
+	n = 0;
+
+	/* Read /proc/partitions to find what devices exist. Recent 2.4 kernels
+	   have statistics in here too, so we can use those directly. */
+
+	f = fopen("/proc/partitions", "r");
+	if (f == NULL) goto out;
+	now = time(NULL);
+
+	while ((line_ptr = f_read_line(f, "")) != NULL) {
+		char name[20];
+		char *s;
+		long long rsect, wsect;
+
+		int nr = sscanf(line_ptr,
+			" %d %d %*d %19s %*d %*d %lld %*d %*d %*d %lld",
+			&major, &minor, name, &rsect, &wsect);
+		if (nr < 3) continue;
+		if (nr < 5) {
+			has_pp_stats = 0;
+			rsect = 0;
+			wsect = 0;
+		}
+
+		/* Skip device names ending in numbers, since they're
+		   partitions. */
+		s = name;
+		while (*s != '\0') s++;
+		--s;
+		if (*s >= '0' && *s <= '9') continue;
+
+		diskio_stats = diskio_stat_malloc(n + 1, &sizeof_diskio_stats,
+			diskio_stats);
+		if (diskio_stats == NULL) goto out;
+		if (n >= alloc_parts) {
+			alloc_parts += 16;
+			parts = realloc(parts, alloc_parts * sizeof *parts);
+			if (parts == NULL) {
+				alloc_parts = 0;
+				goto out;
+			}
+		}
+
+		if (diskio_stats[n].disk_name != NULL)
+			free(diskio_stats[n].disk_name);
+		diskio_stats[n].disk_name = strdup(name);
+		diskio_stats[n].read_bytes = rsect * 512;
+		diskio_stats[n].write_bytes = wsect * 512;
+		diskio_stats[n].systime = now;
+		parts[n].major = major;
+		parts[n].minor = minor;
+
+		n++;
 	}
-	if((line_ptr=f_read_line(f, "disk_io:"))==NULL){
-		*entries=0;
-		fclose(f);
-		return NULL;
-	}
-	while((line_ptr=strchr(line_ptr, ' '))!=NULL){
-		line_ptr++;
-		if(*line_ptr=='\0'){
-			break;
-		}
-		if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
-			fclose(f);
-			*entries=0;
-			return NULL;
-		}
-		diskio_stats_ptr=diskio_stats+num_diskio;
 
+	if (!has_pp_stats) {
+		/* This is an older kernel without stats in /proc/partitions.
+		   Read what we can from /proc/stat instead. */
 
-		if((sscanf(line_ptr, "(%d,%d):(%*d, %*d, %lld, %*d, %lld)", \
-			&major, \
-			&minor, \
-			&diskio_stats_ptr->read_bytes, \
-			&diskio_stats_ptr->write_bytes))!=4) {
-				continue;
-		}
+		f = fopen("/proc/stat", "r");
+		if (f == NULL) goto out;
+		now = time(NULL);
+	
+		line_ptr = f_read_line(f, "disk_io:");
+		if (line_ptr == NULL) goto out;
+	
+		while((line_ptr=strchr(line_ptr, ' '))!=NULL){
+			long long rsect, wsect;
 
-		/* We read the number of blocks. Blocks are stored in 512 bytes */
-		diskio_stats_ptr->read_bytes=diskio_stats_ptr->read_bytes*512;
-		diskio_stats_ptr->write_bytes=diskio_stats_ptr->write_bytes*512;
+			if (*++line_ptr == '\0') break;
+	
+			if((sscanf(line_ptr,
+				"(%d,%d):(%*d, %*d, %lld, %*d, %lld)",
+				&major, &minor, &rsect, &wsect)) != 4) {
+					continue;
+			}
 
-		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
-
-		switch(major){
-			case 2:
-				if(minor==0){
-					diskio_stats_ptr->disk_name=strdup("fd0");
-				}
-				break;
-
-			case 3: 
-				if(minor==0){
-					diskio_stats_ptr->disk_name=strdup("hda");
-				}else{
-					diskio_stats_ptr->disk_name=strdup("hdb");
-				}
-				break;
-
+			/* Find the corresponding device from earlier.
+			   Just to add to the fun, "minor" is actually the disk
+			   number, not the device minor, so we need to figure
+			   out the real minor number based on the major!
+			   This list is not exhaustive; if you're running
+			   an older kernel you probably don't have fancy
+			   I2O hardware anyway... */
+			switch (major) {
+			case 3:
+			case 21:
 			case 22:
-				if(minor==0){
-					diskio_stats_ptr->disk_name=strdup("hdc");
-				}else{
-					diskio_stats_ptr->disk_name=strdup("hdd");
-				}
+			case 33:
+			case 34:
+			case 36:
+			case 56:
+			case 57:
+			case 88:
+			case 89:
+			case 90:
+			case 91:
+				minor *= 64;
 				break;
-			case 8:
-				dev_letter='a'+(minor/16);
-				diskio_stats_ptr->disk_name=malloc(4);
-				snprintf(diskio_stats_ptr->disk_name, 4, "sd%c", dev_letter);
+			case 9:
+			case 43:
 				break;
 			default:
-				/* I have no idea what it is then :) */
-				diskio_stats_ptr->disk_name=malloc(16);
-				snprintf(diskio_stats_ptr->disk_name, 16, "%d %d", major, minor);
+				minor *= 16;
 				break;
-		}
+			}
+			for (i = 0; i < n; i++) {
+				if (major == parts[i].major
+					&& minor == parts[i].minor)
+					break;
+			}
+			if (i == n) continue;
 
-		diskio_stats_ptr->systime=time(NULL);
-		num_diskio++;
+			/* We read the number of blocks. Blocks are stored in
+			   512 bytes */
+			diskio_stats[i].read_bytes = rsect * 512;
+			diskio_stats[i].write_bytes = wsect * 512;
+			diskio_stats[i].systime = now;
+		}
 	}
 
-	fclose(f);
+	num_diskio = n;
+out:
+	if (f != NULL) fclose(f);
 
 #endif
 	*entries=num_diskio;
