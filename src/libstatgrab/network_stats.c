@@ -385,6 +385,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 #ifdef ALLBSD
         struct ifaddrs *net, *net_ptr;
 	struct ifmediareq ifmed;
+	struct ifreq ifr;
 	int s;
 	int x;
 #endif
@@ -465,12 +466,6 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 				break;
 		}
 
-		if((ifmr.ifm_status & IFM_ACTIVE)){
-			network_iface_stat_ptr->up = 1;
-		}else{
-			network_iface_stat_ptr->up = 0;
-		}
-
 		if( (ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active ){
 			network_iface_stat_ptr->dup = FULL_DUPLEX;
 		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
@@ -478,6 +473,16 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}else{
 			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		}
+
+		if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0){
+			continue;
+		}	
+		if((ifr.ifr_flags & IFF_UP) != 0){
+			network_iface_stat_ptr->up = 1;
+		}else{
+			network_iface_stat_ptr->up = 0;
+		}
+
 		ifaces++;
 	}	
 	freeifaddrs(net);
