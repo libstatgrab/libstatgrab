@@ -247,7 +247,6 @@ void display_data(){
 	printw("%5d", stats.user_stats->num_entries);
 
 	/* Mem */
-
 	move(6, 12);
 	printw("%7s", size_conv(stats.mem_stats->total));	
 	move(7, 12);
@@ -315,6 +314,7 @@ void display_data(){
 		network_stat_ptr++;
 	}
 
+	/* Disk */
 	disk_stat_ptr = stats.disk_stats;
 	for(counter=0;counter<stats.disk_entries;counter++){
 		move(13+stats.network_entries+counter, 42);
@@ -322,7 +322,7 @@ void display_data(){
 		move(13+stats.network_entries+counter, 62);
 		printw("%7s", size_conv(disk_stat_ptr->avail));
 		move(13+stats.network_entries+counter, 73);
-		printw("%5.2f%%", 100.00 * ((float)disk_stat_ptr->used / (float)disk_stat_ptr->size));
+		printw("%5.2f%%", 100.00 * ((float) (disk_stat_ptr->size - disk_stat_ptr->avail) / (float) disk_stat_ptr->size));
 		disk_stat_ptr++;
 	}
 
