@@ -42,15 +42,16 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #else
-#include <unistd.h>
 #include <sys/types.h>
 #include <kvm.h>
 #endif
+#include <unistd.h>
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
 #include <sys/time.h>
 #include <uvm/uvm.h>
+#include <unistd.h>
 #endif
 
 swap_stat_t *get_swap_stats(){

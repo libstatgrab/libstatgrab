@@ -66,6 +66,7 @@ typedef __uint64_t u64;
 #include <net/if.h>
 #include <net/if_media.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 #endif
 
 static network_stat_t *network_stats=NULL;

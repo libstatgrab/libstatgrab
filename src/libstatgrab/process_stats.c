@@ -61,7 +61,10 @@
 #include <paths.h>
 #include <fcntl.h>
 #include <limits.h>
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 #include <kvm.h>
+#endif
+#include <unistd.h>
 #endif
 
 int get_proc_snapshot(proc_state_t **ps){
@@ -72,16 +75,15 @@ int get_proc_snapshot(proc_state_t **ps){
 	int mib[4];
 	size_t size;
 	struct kinfo_proc *kp_stats;
-	int procs, i, alloc;
+	int procs, i;
 	char *proctitle;
-#if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
-	long buflen;
-	char *p;
-	int argc;
-	int j = 0;
-#else
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	static kvm_t *kvmd;
 	char **args;
+	int alloc;
+#else
+	long buflen;
+	char *p;
 #endif
 #endif
 #if defined(SOLARIS) || defined(LINUX)
