@@ -50,6 +50,7 @@ typedef __uint16_t u16;
 typedef __uint32_t u32;
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#include <unistd.h>
 #endif
 #ifdef ALLBSD
 #include <sys/types.h>
@@ -575,7 +576,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		network_iface_stat_ptr = network_iface_stats + ifaces;
 		network_iface_stat_ptr->interface_name = strdup(name);
 		network_iface_stat_ptr->speed = ethcmd->speed;
-		network_iface_stat_ptr->dup = UNKNOWN_DUPEX;
+		network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		if(ethcmd->duplex == 0x00){
 			network_iface_stat_ptr->dup = FULL_DUPLEX;
 		}
