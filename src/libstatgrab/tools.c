@@ -74,7 +74,7 @@ static mapping_t *mapping = NULL;
 #endif
 
 #ifdef SOLARIS
-char *get_svr_from_bsd(char *bsd){
+const char *get_svr_from_bsd(const char *bsd){
 #ifdef HAVE_LIBDEVINFO_H
 	mapping_t *map_ptr;
 	for(map_ptr = mapping; map_ptr != NULL; map_ptr = map_ptr->next)

@@ -30,6 +30,10 @@
 #include <uvm/uvm_extern.h>
 #endif
 
+#ifdef SOLARIS
+const char *get_svr_from_bsd(const char *bsd);
+#endif
+
 #ifndef HAVE_STRLCPY
 size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
