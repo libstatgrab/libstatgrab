@@ -47,9 +47,10 @@
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
 #ifdef ALLBSD
-#include <kvm.h>
+#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/proc.h>
 #endif
 #ifdef FREEBSD
 #include <sys/user.h>
@@ -72,9 +73,10 @@ process_stat_t *get_process_stats(){
 	psinfo_t process_info;
 #endif
 #ifdef ALLBSD
+	int mib[3];
+	size_t size;
 	struct kinfo_proc *kp_stats;	
-	kvm_t *kvmd;
-	int procs;
+	int procs, i;
 #endif
 
 	process_stat.sleeping=0;
@@ -139,31 +141,50 @@ process_stat_t *get_process_stats(){
 	closedir(proc_dir);
 #endif
 #ifdef ALLBSD
-	if((kvmd = get_kvm()) == NULL){
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC;
+	mib[2] = KERN_PROC_ALL;
+
+	if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+        
+	procs = size / sizeof(struct kinfo_proc);
+
+	kp_stats = malloc(size);
+	if (kp_stats == NULL) {
+		return NULL;
+	}
+        
+	if (sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
 		return NULL;
 	}
 
-	kp_stats=kvm_getprocs(kvmd, KERN_PROC_ALL, 0, &procs);
-
-	while(procs--){
+	for (i = 0; i < procs; i++) {
 #ifdef FREEBSD5
-               	if (kp_stats[procs].ki_stat == SSLEEP) process_stat.sleeping++;
-		if (kp_stats[procs].ki_stat == SWAIT) process_stat.sleeping++;
-		if (kp_stats[procs].ki_stat == SLOCK) process_stat.sleeping++;
-               	if (kp_stats[procs].ki_stat == SRUN) process_stat.running++;
-               	if (kp_stats[procs].ki_stat == SIDL) process_stat.running++;
-               	if (kp_stats[procs].ki_stat == SZOMB) process_stat.zombie++;
-               	if (kp_stats[procs].ki_stat == SSTOP) process_stat.stopped++;
-		
+		switch (kp_stats[i].ki_stat) {
 #else
-		if (kp_stats[procs].kp_proc.p_stat == SSLEEP) process_stat.sleeping++;	
-		if (kp_stats[procs].kp_proc.p_stat == SRUN) process_stat.running++;
-		if (kp_stats[procs].kp_proc.p_stat == SIDL) process_stat.running++;
-		if (kp_stats[procs].kp_proc.p_stat == SZOMB) process_stat.zombie++;
-		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
+		switch (kp_stats[i].kp_proc.p_stat) {
 #endif
+		case SSLEEP:
+			process_stat.sleeping++;
+			break;
+		case SRUN:
+		case SIDL:
+			process_stat.running++;
+			break;
+		case SZOMB:
+		/*case SDEAD:*/
+			process_stat.zombie++;
+			break;
+		case SSTOP:
+			process_stat.stopped++;
+			break;
+                }
 	}
 #endif
+
+free(kp_stats);
 
 #ifdef CYGWIN
 	return NULL;
