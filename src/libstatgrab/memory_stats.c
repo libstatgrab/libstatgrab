@@ -32,6 +32,11 @@
 #include <string.h>
 #include "tools.h"
 #endif
+#ifdef FREEBSD
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <unistd.h>
+#endif
 
 mem_stat_t *get_memory_stats(){
 
@@ -47,6 +52,11 @@ mem_stat_t *get_memory_stats(){
 #ifdef LINUX
 	char *line_ptr;
 	FILE *f;
+#endif
+#ifdef FREEBSD
+	long inactive;
+	size_t size;
+	int pagesize;
 #endif
 
 #ifdef SOLARIS
@@ -101,6 +111,55 @@ mem_stat_t *get_memory_stats(){
 		&mem_stat.cache))!=4){
 			return NULL;
 	}
+
+#endif
+
+#ifdef FREEBSD
+	/* Returns byes */
+  	if (sysctlbyname("hw.physmem", NULL, &size, NULL, NULL) < 0){
+		return NULL;
+    	}
+  	if (sysctlbyname("hw.physmem", &mem_stat.total, &size, NULL, NULL) < 0){
+		return NULL;
+  	}
+
+	/*returns pages*/
+  	if (sysctlbyname("vm.stats.vm.v_free_count", NULL, &size, NULL, NULL) < 0){
+		return NULL;
+    	}
+  	if (sysctlbyname("vm.stats.vm.v_free_count", &mem_stat.free, &size, NULL, NULL) < 0){
+		return NULL;
+  	}
+
+  	if (sysctlbyname("vm.stats.vm.v_inactive_count", NULL, &size, NULL, NULL) < 0){
+		return NULL;
+    	}
+  	if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive , &size, NULL, NULL) < 0){
+		return NULL;
+  	}
+
+	if (sysctlbyname("vm.stats.vm.v_cache_count", NULL, &size, NULL, NULL) < 0){
+		return NULL;
+    	}
+  	if (sysctlbyname("vm.stats.vm.v_cache_count", &mem_stat.cache, &size, NULL, NULL) < 0){
+		return NULL;
+  	}
+
+	/* Because all the vm.stats returns pages, i need to get the page size.
+ 	 * After that i then need to multiple the anything that used vm.stats to get
+	 * the system statistics by pagesize 
+	 */
+	if ((pagesize=getpagesize()) == -1){
+		return NULL;
+	}
+
+	mem_stat.cache=mem_stat.cache*pagesize;
+	/* Of couse nothing is ever that simple :) And i have inactive pages to deal 
+	 * with too. So im goingto add them to free memory :)
+	 */
+	mem_stat.free=(mem_stat.free*pagesize)+(inactive*pagesize);
+	
+	mem_stat.used=mem_stat.total-mem_stat.free;
 
 #endif
 
