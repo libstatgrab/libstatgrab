@@ -1,0 +1,22 @@
+get_process_stats returns information on the number of processes on
+the host, and the number in different states. It takes no arguments.
+
+get_process_stats returns a static buffer process_stat_t
+
+process_stat_t *get_process_stats();
+
+typedef struct{
+        int total;
+        int running;
+        int sleeping;
+        int stopped;
+        int zombie;
+}process_stat_t;
+
+total : stores the total number of processes on the machine
+running : the number of running processes
+sleeping : number of sleeping processes
+stopped : number of stopped processes 
+zombie : number of zombie processes
+
+
