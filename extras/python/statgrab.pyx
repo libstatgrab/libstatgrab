@@ -272,7 +272,7 @@ def py_get_disk_stats():
     s = get_disk_stats(&entries)
     if s == NULL:
         raise StatgrabException, 'get_disk_stats() returned NULL'
-    list = [entries]
+    list = []
     for i from 0 <= i < entries:
         list.append(Result(
             {'device_name': s.device_name,
@@ -295,7 +295,7 @@ def py_get_diskio_stats():
     s = get_diskio_stats(&entries)
     if s == NULL:
         raise StatgrabException, 'get_diskio_stats() returned NULL'
-    list = [entries]
+    list = []
     for i from 0 <= i < entries:
         list.append(Result(
             {'disk_name': s.disk_name,
@@ -313,7 +313,7 @@ def py_get_diskio_stats_diff():
     s = get_diskio_stats_diff(&entries)
     if s == NULL:
         raise StatgrabException, 'get_diskio_stats_diff() returned NULL'
-    list = [entries]
+    list = []
     for i from 0 <= i < entries:
         list.append(Result(
             {'disk_name': s.disk_name,
@@ -345,7 +345,7 @@ def py_get_network_stats():
     s = get_network_stats(&entries)
     if s == NULL:
         raise StatgrabException, 'get_network_stats() returned NULL'
-    list = [entries]
+    list = []
     for i from 0 <= i < entries:
         list.append(Result(
             {'interface_name': s.interface_name,
@@ -363,7 +363,7 @@ def py_get_network_stats_diff():
     s = get_network_stats_diff(&entries)
     if s == NULL:
         raise StatgrabException, 'get_network_stats_diff() returned NULL'
-    list = [entries]
+    list = []
     for i from 0 <= i < entries:
         list.append(Result(
             {'interface_name': s.interface_name,
@@ -381,7 +381,7 @@ def py_get_network_iface_stats():
     s = get_network_iface_stats(&entries)
     if s == NULL:
         raise StatgrabException, 'get_network_iface_stats() returned NULL'
-    list = [entries]
+    list = []
     for i from 0 <= i < entries:
         list.append(Result(
             {'interface_name': s.interface_name,
