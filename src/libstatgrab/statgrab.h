@@ -205,3 +205,7 @@ typedef struct {
 
 sg_process_count *sg_get_process_count();
 
+#ifdef SG_ENABLE_DEPRECATED
+#include <statgrab_deprecated.h>
+#endif
+

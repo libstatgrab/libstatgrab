@@ -6,8 +6,8 @@
 #
 
 # Change these to change the package name and version
-AC_INIT(libstatgrab, 0.9.1, bugs@i-scream.org)
-AM_INIT_AUTOMAKE(libstatgrab, 0.9.1)
+AC_INIT(libstatgrab, 0.10, bugs@i-scream.org)
+AM_INIT_AUTOMAKE(libstatgrab, 0.10)
 
 # Revision number (automatically updated)
 AC_REVISION($Revision$)
@@ -190,6 +190,17 @@ AC_ARG_ENABLE(setuid-binaries,
 			AM_CONDITIONAL(SETUIDBINS, false)
 		fi
 	]
+)
+
+# Check if the user would prefer not to include compatibility code
+AM_CONDITIONAL(DEPRECATED, true)
+AC_ARG_ENABLE(deprecated,
+        [  --disable-deprecated    disable inclusion of pre-0.10 compatibility code],
+        [
+                if test "x$enableval" = "xno" ; then
+                        AM_CONDITIONAL(DEPRECATED, false)
+                fi
+        ]
 )
 
 # The LIBS and CPPFLAGS that saidar needs
