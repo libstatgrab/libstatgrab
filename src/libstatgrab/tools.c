@@ -158,8 +158,7 @@ int get_alias(char *alias){
 	char *value;
 	int instance;
 	if ((root_node = di_init("/", DINFOCPYALL)) == DI_NODE_NIL) {
-		fprintf(stderr, "di_init() failed\n");
-		exit(1);
+		return 1;
 	}
 	node = di_drv_first_node(alias, root_node);
 	while (node != DI_NODE_NIL) {
@@ -169,10 +168,10 @@ int get_alias(char *alias){
 			minor_name = di_minor_name(minor);
 			strcpy(tmpnode, alias);
 			sprintf(tmpnode, "%s%d", tmpnode, instance);
-			strcpy(file, "/devices");
-			strcat(file, phys_path);
-			strcat(file, ":");
-			strcat(file, minor_name);
+			strlcpy(file, "/devices", sizeof file);
+			strlcat(file, phys_path, sizeof file);
+			strlcat(file, ":", sizeof file);
+			strlcat(file, minor_name, sizeof file);
 			value = read_dir(file);
 			if (value != NULL){
 				add_mapping(tmpnode, value);
@@ -184,10 +183,10 @@ int get_alias(char *alias){
 		}
 	}
 	di_fini(root_node);
-	return (-1);
+	return 0;
 }
 
-void build_mapping(){
+int build_mapping(){
 	char device_name[512];
 	int x;
 	kstat_ctl_t *kc;
@@ -210,11 +209,13 @@ void build_mapping(){
 			}
 			if(x == sizeof device_name) x--;
 			device_name[x] = '\0';
-			get_alias(device_name);
+			if((get_alias(device_name)) != 0){
+				return 1;
+			}
 		}
 	}
 
-	return;
+	return 0;
 }
 
 #endif
@@ -332,7 +333,7 @@ int statgrab_init(){
 	}
 #endif
 #ifdef SOLARIS
-	build_mapping();
+	if((build_mapping()) != 0) return 1;
 #endif
 	return 0;
 }
