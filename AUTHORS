@@ -1,6 +1,7 @@
 libstatgrab written by Pete Saunders <pajs@i-scream.org>
+statgrab written by Adam Sampson <ats@i-scream.org>
 Autoconf/Automake scripts written by Tim Bishop <tim@i-scream.org>
 
-All code is copyright i-scream and released under the GPL.
+All code is released under the GPL.
 
 http://www.i-scream.org
