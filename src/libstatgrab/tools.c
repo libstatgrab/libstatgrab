@@ -294,17 +294,7 @@ char *sg_get_string_match(char *line, regmatch_t *match){
 	return match_string;
 }
 
-long long sg_get_ll_match(char *line, regmatch_t *match){
-	char *ptr;
-	long long num;
-
-	ptr=line+match->rm_so;
-	num=atoll(ptr);
-
-	return num;
-}
-#endif
-
+/* FIXME do Linux and Cygwin always have atoll? */
 #ifndef HAVE_ATOLL
 static long long atoll(const char *s) {
 	long long value = 0;
@@ -322,6 +312,17 @@ static long long atoll(const char *s) {
 		s++;
 	}
 	return (isneg ? -value : value);
+}
+#endif
+
+long long sg_get_ll_match(char *line, regmatch_t *match){
+	char *ptr;
+	long long num;
+
+	ptr=line+match->rm_so;
+	num=atoll(ptr);
+
+	return num;
 }
 #endif
 
