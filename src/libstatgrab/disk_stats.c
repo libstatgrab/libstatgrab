@@ -67,7 +67,7 @@
 #define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
                         "ufs", "mfs"}
 #endif
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
@@ -360,41 +360,63 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #endif
 #ifdef NETBSD
 	struct disk_sysctl *stats;
+#endif
+#ifdef OPENBSD
+	struct diskstats *stats;
+#endif
+#ifdef NETBSD
+#define MIBSIZE 3
+#endif
+#ifdef OPENBSD
+#define MIBSIZE 2
+#endif
+#if defined(NETBSD) || defined(OPENBSD)
 	int num_disks, i;
-	int mib[3];
+	int mib[MIBSIZE];
 	size_t size;
 #endif
 
 	num_diskio=0;
 
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 	mib[0] = CTL_HW;
 	mib[1] = HW_DISKSTATS;
+#ifdef NETBSD
 	mib[2] = sizeof(struct disk_sysctl);
+#endif
 
-	if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
 		return NULL;
 	}
+
+#ifdef NETBSD
 	num_disks = size / sizeof(struct disk_sysctl);
+#else
+	num_disks = size / sizeof(struct diskstats);
+#endif
 
 	stats = malloc(size);
 	if (stats == NULL) {
 		return NULL;
 	}
 
-	if (sysctl(mib, 3, stats, &size, NULL, 0) < 0) {
+	if (sysctl(mib, MIBSIZE, stats, &size, NULL, 0) < 0) {
 		return NULL;
 	}
 
 	for (i = 0; i < num_disks; i++) {
 		u_int64_t rbytes, wbytes;
 
+#ifdef NETBSD
 #ifdef HAVE_DK_RBYTES
 		rbytes = stats[i].dk_rbytes;
 		wbytes = stats[i].dk_wbytes;
 #else
 		/* Before 1.7, NetBSD merged reads and writes. */
 		rbytes = wbytes = stats[i].dk_bytes;
+#endif
+#else
+		rbytes = wbytes = stats[i].ds_bytes;
 #endif
 
 		/* Don't keep stats for disks that have never been used. */
@@ -415,7 +437,11 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		if (diskio_stats_ptr->disk_name != NULL) {
 			free(diskio_stats_ptr->disk_name);
 		}
+#ifdef NETBSD
 		diskio_stats_ptr->disk_name = strdup(stats[i].dk_name);
+#else
+		asprintf((&diskio_stats_ptr->disk_name), "%s%d", "disk", i);
+#endif
 		diskio_stats_ptr->systime = time(NULL);
 	
 		num_diskio++;	

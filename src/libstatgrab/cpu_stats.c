@@ -44,6 +44,11 @@
 #include <sys/sysctl.h>
 #include <sys/sched.h>
 #endif
+#ifdef OPENBSD
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/dkstat.h>
+#endif
 
 static cpu_states_t cpu_now;
 static int cpu_now_uninit=1;
@@ -127,7 +132,11 @@ cpu_states_t *get_cpu_totals(){
   	}
 #else
 	mib[0] = CTL_KERN;
+#ifdef NETBSD
 	mib[1] = KERN_CP_TIME;
+#else
+	mib[1] = KERN_CPTIME;
+#endif
 	size = sizeof cp_time;
 	if (sysctl(mib, 2, &cp_time, &size, NULL, 0) < 0) {
 		return NULL;

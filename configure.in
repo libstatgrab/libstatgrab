@@ -87,6 +87,12 @@ netbsdelf*)
 	AM_CONDITIONAL(SETGIDBINS, true)
 	LINKFLAGS="-lkvm"
 	;;
+openbsd*)
+	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
+	AC_DEFINE(OPENBSD, , [Building on OpenBSD])
+	AM_CONDITIONAL(SETGIDBINS, true)
+	LINKFLAGS="-lkvm"
+	;;
 linux-gnu)
 	AC_DEFINE(LINUX, , [Building on GNU/Linux])
 	;;

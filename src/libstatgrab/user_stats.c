@@ -32,8 +32,11 @@
 #ifdef ALLBSD
 #include <sys/types.h>
 #endif
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 #include <limits.h>
+#endif
+#ifdef OPENBSD
+#include <sys/param.h>
 #endif
 #include <utmp.h>
 #ifdef CYGWIN
@@ -46,7 +49,7 @@
 #if defined(LINUX) || defined(FREEBSD)
 #define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
 #endif
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 #define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
 #endif
 #if defined(CYGWIN)
