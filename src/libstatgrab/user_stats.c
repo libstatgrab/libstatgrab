@@ -41,7 +41,7 @@ user_stat_t *get_user_stats(){
 
 	/* First case call */
 	if (watermark==-1){
-		user_stat.name_list=malloc(START_VAL * sizeof *user_stat.name_list);
+		user_stat.name_list=malloc(START_VAL * sizeof(user_stat.name_list));
 		if(user_stat.name_list==NULL){
 			return NULL;
 		}
@@ -53,7 +53,7 @@ user_stat_t *get_user_stats(){
 		if(entry->ut_type==USER_PROCESS) {
 			if(num_users>watermark-1){
 				name_ptr=user_stat.name_list;
-				if((user_stat.name_list=realloc(user_stat.name_list, (watermark*2* sizeof *user_stat.name_list)))==NULL){
+				if((user_stat.name_list=realloc(user_stat.name_list, (watermark*2* sizeof(user_stat.name_list))))==NULL){
 					user_stat.name_list=name_ptr;
 					return NULL;
 				}

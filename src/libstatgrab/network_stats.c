@@ -184,6 +184,7 @@ network_stat_t *get_network_stats_diff(int *entries){
 		network_stats_diff_ptr++;
 	}
 
+	*entries=sizeof_net_stats_diff;
 	return network_stats_diff;
 }	
 
