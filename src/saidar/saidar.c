@@ -445,6 +445,12 @@ int main(int argc, char **argv){
 		return 1;
 	}
 #endif
+#ifdef SOLARIS
+	if((seteuid(getuid())) != 0){
+		fprintf(stderr, "Failed to lose setuid'ness\n");
+		return 1;
+	}	
+#endif
 		
         while ((c = getopt(argc, argv, "vhd:")) != -1){
                 switch (c){
