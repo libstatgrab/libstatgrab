@@ -81,7 +81,7 @@ disk_stat_t *get_disk_stats(int *entries){
 	disk_stat_t *disk_ptr;
 
 #ifdef SOLARIS
-	struct mnttab *mp;
+	struct mnttab mp;
 	struct statvfs fs;
 #endif
 #ifdef LINUX
