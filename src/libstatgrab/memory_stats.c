@@ -119,19 +119,23 @@ mem_stat_t *get_memory_stats(){
 
 #ifdef FREEBSD
 	/* Returns bytes */
+	size = sizeof physmem;
   	if (sysctlbyname("hw.physmem", &physmem, &size, NULL, 0) < 0){
 		return NULL;
   	}
 
 	/*returns pages*/
+	size = sizeof free_count;
   	if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &size, NULL, 0) < 0){
 		return NULL;
   	}
 
+	size = sizeof inactive_count;
   	if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive_count , &size, NULL, 0) < 0){
 		return NULL;
   	}
 
+	size = sizeof cache_count;
   	if (sysctlbyname("vm.stats.vm.v_cache_count", &cache_count, &size, NULL, 0) < 0){
 		return NULL;
   	}

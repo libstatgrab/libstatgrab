@@ -99,6 +99,7 @@ general_stat_t *get_general_stats(){
 	fclose(f);
 #endif
 #ifdef FREEBSD
+	size = sizeof boottime;
 	if (sysctlbyname("kern.boottime", &boottime, &size, NULL, 0) < 0){
 		return NULL;
 	}
