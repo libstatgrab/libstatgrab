@@ -373,6 +373,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		diskio_stats_ptr->systime=time(NULL);
 		num_diskio++;
 	}
+	fclose(f);
 
 #endif
 	*entries=num_diskio;

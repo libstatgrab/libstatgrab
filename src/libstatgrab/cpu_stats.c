@@ -88,6 +88,7 @@ cpu_states_t *get_cpu_totals(){
 		&cpu_now.nice, \
 		&cpu_now.kernel, \
 		&cpu_now.idle)) != 4){
+		fclose(f);
 		return NULL;
 	}
 

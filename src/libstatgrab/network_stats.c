@@ -90,7 +90,7 @@ network_stat_t *get_network_stats(int *entries){
 
 #ifdef LINUX
 	FILE *f;
-	/* Horrible big enough, but it should be quite easily */
+	/* Horrible big enough, but it should be easily big enough */
 	char line[8096];
 	regex_t regex;
 	regmatch_t line_match[4];
@@ -183,6 +183,7 @@ network_stat_t *get_network_stats(int *entries){
 
 		interfaces++;
 	}
+	fclose(f);
 
 #endif
 	*entries=interfaces;
