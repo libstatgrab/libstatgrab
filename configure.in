@@ -77,17 +77,15 @@ freebsd5.*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
 	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x])
-	LINKFLAGS="-lkvm -ldevstat"
+	LINKFLAGS="-ldevstat"
 	;;
 netbsdelf*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(NETBSD, , [Building on NetBSD])
-	LINKFLAGS="-lkvm"
 	;;
 openbsd*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(OPENBSD, , [Building on OpenBSD])
-	LINKFLAGS="-lkvm"
 	;;
 dragonfly*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
