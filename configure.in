@@ -8,19 +8,16 @@ AM_INIT_AUTOMAKE(libstatgrab, 0.1)
 dnl The file we use to pass #define's to the source
 AM_CONFIG_HEADER(config.h)
 
-dnl We need a CC, install, and ranlib
+dnl We need a CC, install, and libtool
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 
 dnl And we probably need the standard C bits
 AC_HEADER_STDC
 
 dnl The program needs to know whether it can use getloadavg
 AC_CHECK_FUNCS(getloadavg)
-
-dnl Figure out details about the host - we need the OS
-AC_CANONICAL_HOST
 
 dnl Set things up for different OS's
 dnl We define the name of the OS so the code can act accordingly
