@@ -22,11 +22,15 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
 #include "statgrab.h"
 #ifdef SOLARIS
 #include <unistd.h>
 #include <kstat.h>
+#endif
+#ifdef LINUX
+#include <stdio.h>
+#include <string.h>
+#include "tools.h"
 #endif
 
 mem_stat_t *get_memory_stats(){
@@ -39,6 +43,10 @@ mem_stat_t *get_memory_stats(){
 	kstat_named_t *kn;
 	long totalmem;
 	int pagesize;
+#endif
+#ifdef LINUX
+	char *line_ptr;
+	FILE *f;
 #endif
 
 #ifdef SOLARIS
@@ -67,6 +75,33 @@ mem_stat_t *get_memory_stats(){
 	mem_stat.total = (long long)totalmem * (long long)pagesize;
 	mem_stat.free = ((long long)kn->value.ul) * (long long)pagesize;
 	mem_stat.used = mem_stat.total - mem_stat.free;
+#endif
+
+#ifdef LINUX
+	f=fopen("/proc/meminfo", "r");
+	if(f==NULL){
+		return NULL;
+	}
+
+	if((line_ptr=f_read_line(f, "Mem:"))==NULL){
+		fclose(f);
+		return NULL;
+	}
+
+	fclose(f);
+
+	/* Linux actually stores this as a unsigned long long, but
+	 * our structures are just long longs. This shouldn't be a
+	 * problem for sometime yet :) 
+	 */
+	if((sscanf(line_ptr,"Mem:  %lld %lld %lld %*d %*d %lld", \
+		&mem_stat.total, \
+		&mem_stat.used, \
+		&mem_stat.free, \
+		&mem_stat.cache))!=4){
+			return NULL;
+	}
+
 #endif
 
 	return &mem_stat;
