@@ -1,0 +1,45 @@
+CPU Statistics
+
+cpu_states_t *get_cpu_totals();
+cpu_states_t *get_cpu_diff();
+cpu_percent_t *cpu_percent_usage();
+
+typedef struct{
+        long long user;
+        long long kernel;
+        long long idle;
+        long long iowait;
+        long long swap;
+        long long nice;
+        long long total;
+        time_t systime;
+}cpu_states_t;
+
+typedef struct{
+        float user;
+        float kernel;
+        float idle;
+        float iowait;
+        float swap;
+        float nice;
+        time_t time_taken;
+}cpu_percent_t;
+
+get_cpu_totals() and get_cpu_diff() both return static pointers of
+type cpu_states_t. get_cpu_totals() returns the total amount of "ticks"
+the OS has spent in each of the different states. get_cpu_diff() returns
+the difference in "ticks" for each of the states since last time get_cpu_diff()
+or get_cpu_totals() was called. If it has never been called, it will return
+the result of get_cpu_totals()
+
+The vaule stored (the "ticks") will vary from OS to OS. E.g. solaris has a 
+total of 100 per second. Linux has substatially more than that. Also, different
+OS's store different information. E.g. solaris doesn't do nice.
+
+Because of this, ideally you will always want to work on a scale against the 
+total, or in percentages. 
+
+cpu_percent_usage() returns a pointer to a static cpu_percent_t. The function calls
+get_cpu_diff() and changes the values into percentages. If its never been called
+before (and nor has get_cpu_totals() and get_cpu_diff() ), the returned percentages
+will be the systems total ever since its uptime. (Unless the counters of cycled)
