@@ -453,6 +453,10 @@ int get_proc_snapshot(proc_state_t **ps){
 	free(kp_stats);
 #endif
 
+#ifdef CYGWIN
+	return -1;
+#endif
+
 	*ps = proc_state;
 	return proc_state_size;
 }
