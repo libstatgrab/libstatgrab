@@ -60,6 +60,7 @@ int main(int argc, char **argv){
 			printf("unknown\n");
 			break;
 		}
+		network_iface_stats++;
 	}
 
 	exit(0);
