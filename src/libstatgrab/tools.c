@@ -544,25 +544,3 @@ void *sg_realloc(void *ptr, size_t size) {
 	}
 	return tmp;
 }
-
-/* If we don't have a GNU compatible realloc, fake it. */
-#if HAVE_REALLOC == 0
-void *rpl_realloc(void *ptr, size_t size) {
-	if (ptr == NULL && size == 0) {
-		return NULL;
-	}
-
-	if (size == 0) {
-		free(ptr);
-		return NULL;
-	}
-
-	if (ptr == NULL) {
-		return malloc(size);
-	}
-
-#undef realloc
-	return realloc(ptr, size);
-#define realloc rpl_realloc
-}
-#endif

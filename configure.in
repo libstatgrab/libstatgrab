@@ -31,7 +31,6 @@ AC_C_CONST
 
 # Checks for library functions
 AC_FUNC_MALLOC
-AC_FUNC_REALLOC
 AC_CHECK_FUNCS(atoll seteuid setegid setresuid setresgid)
 
 # Disk IO read and write statistics are only present on recent NetBSD.
