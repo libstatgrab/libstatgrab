@@ -26,6 +26,11 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
 
       <funcprototype>
+        <funcdef>int <function>statgrab_init</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
         <funcdef>cpu_percent_t *<function>cpu_percent_usage</function></funcdef>
         <void/>
       </funcprototype>
@@ -104,6 +109,19 @@
       system statistics. Each of the function calls returns a structure
       containing statistics. See the manual page for each individual
       function for more details on usage.
+    </para>
+    <para>
+      <function>statgrab_init(void)</function> should be the first
+      function you call before you start to use libstatgrab. This
+      function on *bsd systems opens up the kernel structures and
+      leaves them open for future use. Because of this, any special
+      privileges the program has (e.g. setgid kmem) can be dropped
+      after this call, and all the libstatgrab calls should continue to
+      work.
+    </para>
+    <para>
+      <function>statgrab_init</function> returns 0 on success, and
+      non-zero on failure.
     </para>
     <para>
       The library was originally written to support the i-scream central
