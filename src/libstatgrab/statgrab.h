@@ -32,6 +32,14 @@
 int sg_init(void);
 int sg_drop_privileges(void);
 
+typedef enum {
+	SG_ERROR
+} sg_error;
+
+void sg_set_error(sg_error code, const char *arg);
+sg_error sg_get_error();
+char *sg_str_error(sg_error code);
+
 typedef struct {
 	char *os_name;
 	char *os_release;
