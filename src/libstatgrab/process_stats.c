@@ -51,6 +51,7 @@
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
 #ifdef ALLBSD
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -99,7 +100,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	int argslen = 0;
 #else
 	long buflen;
-	char *p;
+	char *p, *proctitletmp;
 #endif
 #ifdef NETBSD2
 	int lwps;
@@ -361,31 +362,6 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		}
 
 #if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
-		size = sizeof(buflen);
-
-#ifdef FREEBSD5
-		if(sysctlbyname("kern.ps_arg_cache_limit", &buflen, &size, NULL, 0) < 0) {
-			sg_set_error(SG_ERROR_SYSCTLBYNAME, "kern.ps_arg_cache_limit");
-			return NULL;
-		}
-#else
-		/* FIXME - this value can be too large on some of
-		   the BSD's, which causes sysctl not to return
-		   anything. Maybe we need something smaller? */
-		mib[1] = KERN_ARGMAX;
-
-		if(sysctl(mib, 2, &buflen, &size, NULL, 0) < 0) {
-			sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_ARGMAX");
-			return NULL;
-		}
-#endif
-
-		proctitle = sg_malloc(buflen);
-		if(proctitle == NULL) {
-			return NULL;
-		}
-
-		size = buflen;
 
 #ifdef FREEBSD5
 		mib[2] = KERN_PROC_ARGS;
@@ -397,11 +373,40 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #endif
 
 		free(proc_state_ptr->proctitle);
-		if(sysctl(mib, 4, proctitle, &size, NULL, 0) < 0) {
-			free(proctitle);
-			proc_state_ptr->proctitle = NULL;
-		}
-		else if(size > 0) {
+		proc_state_ptr->proctitle = NULL;
+
+/* Starting size - we'll double this straight away */
+#define PROCTITLE_START_SIZE 64
+		buflen = PROCTITLE_START_SIZE;
+		size = buflen;
+		proctitle = NULL;
+
+		do {
+			if(size >= buflen) {
+				buflen *= 2;
+				size = buflen;
+				proctitletmp = sg_realloc(proctitle, buflen);
+				if(proctitletmp == NULL) {
+					free(proctitle);
+					proctitle = NULL;
+					proc_state_ptr->proctitle = NULL;
+					size = 0;
+					break;
+				}
+				proctitle = proctitletmp;
+				bzero(proctitle, buflen);
+			}
+
+			if(sysctl(mib, 4, proctitle, &size, NULL, 0) < 0) {
+				free(proctitle);
+				proctitle = NULL;
+				proc_state_ptr->proctitle = NULL;
+				size = 0;
+				break;
+			}
+		} while(size >= buflen);
+
+		if(size > 0) {
 			proc_state_ptr->proctitle = sg_malloc(size+1);
 			if(proc_state_ptr->proctitle == NULL) {
 				return NULL;
@@ -414,15 +419,20 @@ sg_process_stats *sg_get_process_stats(int *entries){
 				p += strlen(p) + 1;
 			} while (p < proctitle + size);
 			free(proctitle);
+			proctitle = NULL;
 			/* remove trailing space */
 			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = '\0';
 		}
 		else {
-			free(proctitle);
+			if(proctitle != NULL) {
+				free(proctitle);
+				proctitle = NULL;
+			}
 			proc_state_ptr->proctitle = NULL;
 		}
 #else
 		free(proc_state_ptr->proctitle);
+		proc_state_ptr->proctitle = NULL;
 		if(kvmd != NULL) {
 			args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
 			if(args != NULL) {
