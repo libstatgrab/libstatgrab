@@ -294,6 +294,10 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
 	return NULL;
 #endif
+#ifdef HPUX
+	sg_set_error(SG_ERROR_UNSUPPORTED, "HP-UX");
+	return NULL;
+#endif
 
 	*entries=interfaces;
 
