@@ -118,11 +118,11 @@
       <function>statgrab_init</function> must be the first
       function you call before you start to use libstatgrab; it performs all
       the one-time initialisation operations that need setuid/setgid
-      privileges (for instance, on *BSD it opens a descriptor to be able to
+      privileges. For instance, on *BSD it opens a descriptor to be able to
       read kernel structures later on, and on Solaris it reads the device
-      mappings that are only accessible by root). Once this has run,
-      the other libstatgrab functions no longer need elevated privileges.
-      It is therefore a good idea to call
+      mappings that in some cases are only accessible by root (machines with
+      a /dev/osa). Once this has run, the other libstatgrab functions no longer 
+      need elevated privileges. It is therefore a good idea to call
       <function>statgrab_drop_privileges</function>, which discards
       setuid and setgid privileges, immediately after you call
       <function>statgrab_init</function>, unless your application has
