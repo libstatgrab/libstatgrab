@@ -675,3 +675,126 @@ sg_process_count *sg_get_process_count() {
 
 	return &process_stat;
 }
+
+int sg_compare_pid(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->pid < b->pid) {
+		return -1;
+	} else if (a->pid == b->pid) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+int sg_compare_uid(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->uid < b->uid) {
+		return -1;
+	} else if (a->uid == b->uid) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+int sg_compare_gid(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->gid < b->gid) {
+		return -1;
+	} else if (a->gid == b->gid) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+int sg_compare_size(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->proc_size < b->proc_size) {
+		return -1;
+	} else if (a->proc_size == b->proc_size) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+int sg_compare_res(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->proc_resident < b->proc_resident) {
+		return -1;
+	} else if (a->proc_resident == b->proc_resident) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+int sg_compare_cpu(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->cpu_percent < b->cpu_percent) {
+		return -1;
+	} else if (a->cpu_percent == b->cpu_percent) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+int sg_compare_time(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	if (a->time_spent < b->time_spent) {
+		return -1;
+	} else if (a->time_spent == b->time_spent) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+void sg_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm){
+	int (*sortby_ptr)(const void *a, const void *b);
+
+	switch(sm){
+	case SG_PS_PID:
+		sortby_ptr = sg_compare_pid;
+		break;
+	case SG_PS_UID:
+		sortby_ptr = sg_compare_uid;
+		break;
+	case SG_PS_GID:
+		sortby_ptr = sg_compare_gid;
+		break;
+	case SG_PS_SIZE:
+		sortby_ptr = sg_compare_size;
+		break;
+	case SG_PS_RES:
+		sortby_ptr = sg_compare_res;
+		break;
+	case SG_PS_CPU:
+		sortby_ptr = sg_compare_cpu;
+		break;
+	case SG_PS_TIME:
+		sortby_ptr = sg_compare_time;
+		break;
+	}
+
+	qsort(ps, num_ps, sizeof(*ps), sortby_ptr);
+
+	return;
+}
