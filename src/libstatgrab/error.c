@@ -35,7 +35,13 @@ static char error_arg[ERROR_ARG_MAX];
 
 void sg_set_error(sg_error code, const char *arg) {
 	error = code;
-	strlcpy(error_arg, arg, sizeof error_arg);
+	if (arg != NULL) {
+		strlcpy(error_arg, arg, sizeof error_arg);
+	}
+	else {
+		/* FIXME is this the best idea? */
+		error_arg[0] = '\0';
+	}
 }
 
 sg_error sg_get_error() {

@@ -58,7 +58,7 @@ int main(int argc, char **argv){
 
 	}
 	else {
-		printf("Unable to get VM stats.\n");
+		printf("Unable to get VM stats: %s\n", sg_str_error(sg_get_error()));
 		exit(1);
 	}
 	exit(0);
