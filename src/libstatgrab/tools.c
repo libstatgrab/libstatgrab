@@ -294,7 +294,7 @@ char *sg_get_string_match(char *line, regmatch_t *match){
 	return match_string;
 }
 
-/* FIXME do Linux and Cygwin always have atoll? */
+/* Cygwin (without a recent newlib) doesn't have atoll */
 #ifndef HAVE_ATOLL
 static long long atoll(const char *s) {
 	long long value = 0;
