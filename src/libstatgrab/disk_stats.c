@@ -87,6 +87,7 @@
 #include <stdio.h>
 #include <time.h>
 #define VALID_FS_TYPES {"vxfs", "hfs"}
+#define DISK_BATCH 30
 #endif
 
 static void disk_stat_init(sg_fs_stats *d) {
@@ -316,11 +317,12 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	long long rbytes = 0, wbytes = 0;
 	struct dirent *dinfo = NULL;
 	struct stat lstatinfo;
-	struct pst_diskinfo pstat_diskinfo;
+	struct pst_diskinfo pstat_diskinfo[DISK_BATCH];
 	char fullpathbuf[1024] = {0};
 	dev_t diskid;
 	DIR *dh = NULL;
-	int disknum = 0;
+	int diskidx = 0;
+	int num, i;
 #endif
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
@@ -370,77 +372,81 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	num_diskio=0;
 
 #ifdef HPUX
-
-	/* The "128" here is arbitrary, it can be increased to any number
-	   at the expense of only more system calls to pstat(). */
-	for (disknum = 0; disknum < 128; disknum++) {
-		if (pstat_getdisk(&pstat_diskinfo, sizeof(pstat_diskinfo), 1, disknum) == -1) {
+	while (1) {
+		num = pstat_getdisk(pstat_diskinfo, sizeof pstat_diskinfo[0],
+		                    DISK_BATCH, diskidx);
+		if (num == -1) {
+			sg_set_error_with_errno(SG_ERROR_PSTAT,
+			                        "pstat_getdisk");
+			return NULL;
+		} else if (num == 0) {
 			break;
 		}
 
-		if (pstat_diskinfo.psd_idx != disknum) {
-			continue;
-		}
+		for (i = 0; i < num; i++) {
+			struct pst_diskinfo *di = &pstat_diskinfo[i];
 
-		/* Skip "disabled" disks.. */
-		if (pstat_diskinfo.psd_status == 0) {
-			continue;
-		}
-
-		/* We can't seperate the reads from the writes, we'll
-		   just give the same to each. */
-		rbytes = wbytes = (pstat_diskinfo.psd_dkwds * 64);
-
-		/* Skip unused disks. */
-		if (rbytes == 0 && wbytes == 0) {
-			continue;
-		}
-
-		if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
-			return NULL;
-		}
-
-		diskio_stats_ptr = diskio_stats + num_diskio;
-
-		diskio_stats_ptr->read_bytes = rbytes;
-		diskio_stats_ptr->write_bytes = wbytes;
-
-		diskio_stats_ptr->systime = time(NULL);
-
-		num_diskio++;
-
-		if (diskio_stats_ptr->disk_name == NULL) {
-			dh = opendir("/dev/dsk");
-			if (dh == NULL) {
+			/* Skip "disabled" disks. */
+			if (di->psd_status == 0) {
 				continue;
 			}
-
-			diskid = (pstat_diskinfo.psd_dev.psd_major << 24) | pstat_diskinfo.psd_dev.psd_minor;
-			while (1) {
-				dinfo = readdir(dh);
-				if (dinfo == NULL) {
-					break;
-				}
-				snprintf(fullpathbuf, sizeof(fullpathbuf), "/dev/dsk/%s", dinfo->d_name);
-				if (lstat(fullpathbuf, &lstatinfo) < 0) {
+	
+			/* We can't seperate the reads from the writes, we'll
+			   just give the same to each. */
+			rbytes = wbytes = (di->psd_dkwds * 64);
+	
+			/* Skip unused disks. */
+			if (rbytes == 0 && wbytes == 0) {
+				continue;
+			}
+	
+			if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
+				return NULL;
+			}
+	
+			diskio_stats_ptr = diskio_stats + num_diskio;
+	
+			diskio_stats_ptr->read_bytes = rbytes;
+			diskio_stats_ptr->write_bytes = wbytes;
+	
+			diskio_stats_ptr->systime = time(NULL);
+	
+			num_diskio++;
+	
+			if (diskio_stats_ptr->disk_name == NULL) {
+				dh = opendir("/dev/dsk");
+				if (dh == NULL) {
 					continue;
 				}
-
-				if (lstatinfo.st_rdev == diskid) {
-					if (sg_update_string(&diskio_stats_ptr->disk_name, dinfo->d_name) < 0) {
+	
+				diskid = (di->psd_dev.psd_major << 24) | di->psd_dev.psd_minor;
+				while (1) {
+					dinfo = readdir(dh);
+					if (dinfo == NULL) {
+						break;
+					}
+					snprintf(fullpathbuf, sizeof(fullpathbuf), "/dev/dsk/%s", dinfo->d_name);
+					if (lstat(fullpathbuf, &lstatinfo) < 0) {
+						continue;
+					}
+	
+					if (lstatinfo.st_rdev == diskid) {
+						if (sg_update_string(&diskio_stats_ptr->disk_name, dinfo->d_name) < 0) {
+							return NULL;
+						}
+						break;
+					}
+				}
+				closedir(dh);
+	
+				if (diskio_stats_ptr->disk_name == NULL) {
+					if (sg_update_string(&diskio_stats_ptr->disk_name, di->psd_hw_path.psh_name) < 0) {
 						return NULL;
 					}
-					break;
-				}
-			}
-			closedir(dh);
-
-			if (diskio_stats_ptr->disk_name == NULL) {
-				if (sg_update_string(&diskio_stats_ptr->disk_name, pstat_diskinfo.psd_hw_path.psh_name) < 0) {
-					return NULL;
 				}
 			}
 		}
+		diskidx = pstat_diskinfo[num - 1].psd_idx + 1;
 	}
 #endif
 #ifdef OPENBSD
