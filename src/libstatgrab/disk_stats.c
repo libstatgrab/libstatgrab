@@ -76,16 +76,17 @@
                         "ntfs"}
 #endif
 
-char *copy_string(char *orig_ptr, const char *newtext){
+static char *copy_string(char **dest, const char *src) {
+	char *new;
 
-	/* Maybe free if not NULL, and strdup rather than realloc and strcpy? */
-	orig_ptr=realloc(orig_ptr, (1+strlen(newtext)));
-        if(orig_ptr==NULL){
-        	return NULL;
-        }
-        strcpy(orig_ptr, newtext);
+	new = realloc(*dest, strlen(src) + 1);
+	if (new == NULL) {
+		return NULL;
+	}
 
-	return orig_ptr;
+	strcpy(new, src);
+	*dest = new;
+	return new;
 }
 
 static void disk_stat_init(disk_stat_t *d) {
@@ -177,15 +178,13 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr=disk_stats+num_disks;
 
 #ifdef ALLBSD
-			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->f_mntfromname))==NULL){
+			if (copy_string(&disk_ptr->device_name, mp->f_mntfromname) == NULL) {
 				return NULL;
 			}
-
-			if((disk_ptr->fs_type=copy_string(disk_ptr->fs_type, mp->f_fstypename))==NULL){
+			if (copy_string(&disk_ptr->fs_type, mp->f_fstypename) == NULL) {
 				return NULL;
 			}
-
-			if((disk_ptr->mnt_point=copy_string(disk_ptr->mnt_point, mp->f_mntonname))==NULL){
+			if (copy_string(&disk_ptr->mnt_point, mp->f_mntonname) == NULL) {
 				return NULL;
 			}
 
@@ -199,15 +198,15 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
 #endif
 #if defined(LINUX) || defined(CYGWIN)
-			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->mnt_fsname))==NULL){
+			if (copy_string(&disk_ptr->device_name, mp->mnt_fsname) == NULL) {
 				return NULL;
 			}
 				
-			if((disk_ptr->fs_type=copy_string(disk_ptr->fs_type, mp->mnt_type))==NULL){	
+			if (copy_string(&disk_ptr->fs_type, mp->mnt_type) == NULL) {	
 				return NULL;
 			}
 
-			if((disk_ptr->mnt_point=copy_string(disk_ptr->mnt_point, mp->mnt_dir))==NULL){
+			if (copy_string(&disk_ptr->mnt_point, mp->mnt_dir) == NULL) {
 				return NULL;
 			}
 			disk_ptr->size = (long long)fs.f_bsize * (long long)fs.f_blocks;
@@ -221,20 +220,19 @@ disk_stat_t *get_disk_stats(int *entries){
 #endif
 
 #ifdef SOLARIS
-			/* Memory leak in event of realloc failing */
 			/* Maybe make this char[bigenough] and do strncpy's and put a null in the end? 
 			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
 			 * be upwards of a k each 
 			 */
-			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp.mnt_special))==NULL){
+			if (copy_string(&disk_ptr->device_name, mp.mnt_special) == NULL) {
 				return NULL;
 			}
 
-			if((disk_ptr->fs_type=copy_string(disk_ptr->fs_type, mp.mnt_fstype))==NULL){
+			if (copy_string(&disk_ptr->fs_type, mp.mnt_fstype) == NULL) {
                                 return NULL;
                         }
 	
-			if((disk_ptr->mnt_point=copy_string(disk_ptr->mnt_point, mp.mnt_mountp))==NULL){
+			if (copy_string(&disk_ptr->mnt_point, mp.mnt_mountp) == NULL) {
                                 return NULL;
                         }
 			
