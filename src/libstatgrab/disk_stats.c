@@ -577,6 +577,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	}
 
 	fclose(f);
+	f = NULL;
 
 	if (!has_pp_stats) {
 		/* This is an older kernel where /proc/partitions doesn't
