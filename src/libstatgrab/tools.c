@@ -171,7 +171,7 @@ static int get_alias(char *alias){
 	char *value;
 	int instance;
 	if ((root_node = di_init("/", DINFOCPYALL)) == DI_NODE_NIL) {
-		return 1;
+		return -1;
 	}
 	node = di_drv_first_node(alias, root_node);
 	while (node != DI_NODE_NIL) {
@@ -213,7 +213,7 @@ static int build_mapping(){
 	int found;
 
 	if ((kc = kstat_open()) == NULL) {
-		return 1;
+		return -1;
 	}
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
@@ -235,7 +235,7 @@ static int build_mapping(){
 				if (x>=BIG_ENOUGH){
 					/* We've got bigger than we thought was massive */
 					/* If we hit this.. Make big enough bigger */
-					return 1;
+					return -1;
 				}
 				if( !strncmp(driver_list[x], device_name, BIG_ENOUGH)){
 					found = 1;
@@ -245,7 +245,7 @@ static int build_mapping(){
 
 			if(!found){
 				if((get_alias(device_name)) != 0){
-					return 1;
+					return -1;
 				}
 				strncpy(driver_list[x], device_name, BIG_ENOUGH);
 				list_entries++;
@@ -479,10 +479,10 @@ struct uvmexp *sg_get_uvmexp() {
 int sg_init(){
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	if (sg_get_kvm() == NULL) {
-		return 1;
+		return -1;
 	}
 	if (sg_get_kvm2() == NULL) {
-		return 1;
+		return -1;
 	}
 #endif
 #ifdef SOLARIS
