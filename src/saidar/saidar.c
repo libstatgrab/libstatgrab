@@ -431,7 +431,6 @@ int main(int argc, char **argv){
 	WINDOW *window;
 
 	extern int errno;
-	char ch;
 
 	int delay=2;
 #ifdef ALLBSD
@@ -485,7 +484,7 @@ int main(int argc, char **argv){
 	display_headings();
 
 	for(;;){
-		ch = getch();
+		int ch = getch();
 		if (ch == 'q'){
 			endwin();
 			return 0;
