@@ -52,6 +52,8 @@
 #include <time.h>
 #endif
 
+#include "tools.h"
+
 sg_host_info *sg_get_host_info(){
 
 	static sg_host_info general_stat;
