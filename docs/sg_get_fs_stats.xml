@@ -39,7 +39,7 @@
       number of mounted file systems the machine has. The return
       value is a pointer to the first member of an array of
       <structname>sg_fs_stats</structname> structures; the number of
-      entries in the array is returned in </parameter>entries</parameter>.
+      entries in the array is returned in <parameter>entries</parameter>.
     </para>
     <para>
       The function returns statistics about mounted filesystems,
