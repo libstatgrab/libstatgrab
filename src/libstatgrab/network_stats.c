@@ -107,7 +107,17 @@ network_stat_t *get_network_stats(int *entries){
         	if (!strcmp(ksp->ks_class, "net")) {
                 	kstat_read(kc, ksp, NULL);
 
-			if((knp=kstat_data_lookup(ksp, "rbytes64"))==NULL){
+#ifdef SOL7
+#define RLOOKUP "rbytes"
+#define WLOOKUP "obytes"
+#define VALTYPE value.ui32
+#else
+#define RLOOKUP "rbytes64"
+#define WLOOKUP "obytes64"
+#define VALTYPE value.ui64
+#endif
+
+			if((knp=kstat_data_lookup(ksp, RLOOKUP))==NULL){
 				/* Not a network interface, so skip to the next entry */
 				continue;
 			}
@@ -117,13 +127,13 @@ network_stat_t *get_network_stats(int *entries){
 				return NULL;
 			}
 			network_stat_ptr=network_stats+interfaces;
-			network_stat_ptr->rx=knp->value.ui64;
+			network_stat_ptr->rx=knp->VALTYPE;
 
-			if((knp=kstat_data_lookup(ksp, "obytes64"))==NULL){
+			if((knp=kstat_data_lookup(ksp, WLOOKUP))==NULL){
 				/* Not a network interface, so skip to the next entry */
 				continue;
 			}
-			network_stat_ptr->tx=knp->value.ui64;
+			network_stat_ptr->tx=knp->VALTYPE;
 			if(network_stat_ptr->interface_name!=NULL){
 				free(network_stat_ptr->interface_name);
 			}
