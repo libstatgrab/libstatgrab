@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <sys/vfs.h>
 #include <mntent.h>
+#include "tools.h"
 #define VALID_FS_TYPES {"ext2", "ext3", "xfs", "reiserfs", "vfat", "tmpfs"}
 #endif
 
@@ -205,7 +206,6 @@ disk_stat_t *get_disk_stats(int *entries){
 	return disk_stats;
 
 }
-#ifdef SOLARIS
 void diskio_stat_init(int start, int end, diskio_stat_t *diskio_stats){
 
 	for(diskio_stats+=start; start<end; start++){
@@ -249,15 +249,24 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	static int sizeof_diskio_stats=0;
 	diskio_stat_t *diskio_stats_ptr;
 
+#ifdef SOLARIS
         kstat_ctl_t *kc;
         kstat_t *ksp;
 	kstat_io_t kios;
+#endif
+#ifdef LINUX
+	FILE *f;
+	char *line_ptr;
+	int major, minor;
+	char dev_letter;
+#endif
 
+	num_diskio=0;
+
+#ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
                 return NULL;
         }
-
-	num_diskio=0;
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
                 if (!strcmp(ksp->ks_class, "disk")) {
@@ -286,7 +295,61 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	}
 
 	kstat_close(kc);
+#endif
 
+#ifdef LINUX
+	f=fopen("/proc/stat", "r");
+	if(f==NULL){
+		return NULL;
+	}
+	if((line_ptr=f_read_line(f, "disk_io:"))==NULL){
+		return NULL;
+	}
+	while((line_ptr=strchr(line_ptr, ' '))!=NULL){
+		if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
+			fclose(f);
+			return NULL;
+		}
+		diskio_stats_ptr=diskio_stats+num_diskio;
+
+
+		sscanf(line_ptr, "(%d,%d):(%*d, %lld, %*d, %lld, %*d)", \
+			&major, \
+			&minor, \
+			&diskio_stats_ptr->read_bytes, \
+			&diskio_stats_ptr->write_bytes);
+
+		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
+
+		switch(major){
+			case 3: 
+				if(minor==0){
+					diskio_stats_ptr->disk_name=strdup("hda");
+				}else{
+					diskio_stats_ptr->disk_name=strdup("hdb");
+				}
+				break;
+
+			case 22:
+				if(minor==0){
+					diskio_stats_ptr->disk_name=strdup("hdc");
+				}else{
+					diskio_stats_ptr->disk_name=strdup("hdd");
+				}
+			case 8:
+				dev_letter='a'+(minor/16);
+				diskio_stats_ptr->disk_name=malloc(4);
+				snprintf(diskio_stats_ptr->disk_name, 4, "sd%c", dev_letter);
+			default:
+				/* I have no idea what it is then :) */
+				diskio_stats_ptr->disk_name=malloc(16);
+				snprintf(diskio_stats_ptr->disk_name, 16, "%d %d", major, minor);
+		}
+
+		num_diskio++;
+	}
+
+#endif
 	*entries=num_diskio;
 
 	return diskio_stats;
@@ -357,4 +420,3 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 	*entries=sizeof_diskio_stats_diff;
 	return diskio_stats_diff;
 }
-#endif
