@@ -397,7 +397,20 @@ int main(int argc, char **argv){
 	char ch;
 
 	int delay=2;
-
+#ifdef ALLBSD
+	gid_t gid;
+#endif
+	if(statgrab_init() != 0){
+		fprintf(stderr, "statgrab_init failed. Please check the permissions\n");
+		return 1; 
+	}
+#ifdef ALLBSD
+	if((setegid(getgid())) != 0){
+		fprintf(stderr, "Failed to lose setgid'ness\n");
+		return 1;
+	}
+#endif
+		
         while ((c = getopt(argc, argv, "vhd:")) != EOF){
                 switch (c){
                         case 'd':

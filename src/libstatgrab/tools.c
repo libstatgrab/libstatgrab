@@ -114,3 +114,22 @@ struct uvmexp *get_uvmexp() {
 }
 #endif
 
+int statgrab_init(){
+
+#ifdef ALLBSD
+	kvm_t *kvmd;
+#endif
+#ifdef NETBSD
+	struct uvmexp *uvm;
+#endif
+
+#ifdef ALLBSD
+	kvmd = get_kvm();
+	if (kvmd == NULL) return 1;
+#endif
+#ifdef NETBSD
+	uvm = get_uvmexp();
+	if (uvm == NULL) return 1;
+#endif
+	return 0;
+}

@@ -146,3 +146,5 @@ network_stat_t *get_network_stats_diff(int *entries);
 
 page_stat_t *get_page_stats();
 page_stat_t *get_page_stats_diff();
+
+int statgrab_init(void);
