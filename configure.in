@@ -57,9 +57,10 @@ case $host_os in
 solaris2.[[6-7]])
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
-	AC_DEFINE(SOL7, , [Building on Solaris 2.7])
+	AC_DEFINE(SOL7, , [Building on Solaris 2.6 or 2.7])
 	AM_CONDITIONAL(SETUIDBINS, true)
-	LINKFLAGS="-lkstat -ldevinfo"
+	LINKFLAGS="-lkstat"
+	AC_CHECK_LIB(devinfo, di_init, [LINKFLAGS="$LINKFLAGS -ldevinfo"])
 	;;
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
