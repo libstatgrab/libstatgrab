@@ -42,6 +42,9 @@
 #endif
 #ifdef LINUX
 #include <limits.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
@@ -68,9 +71,23 @@ int get_proc_snapshot(proc_state_t **ps){
 #ifdef SOLARIS
 	psinfo_t process_info;
 #endif
+#ifdef LINUX
+	char s;
+	/* If someone has a executable of 4k filename length, they deserve to get it truncated :) */
+	char ps_name[4096];
+	char *ptr;
+	static char *psargs = NULL;
+	static int psarg_size = 0;
+	unsigned long stime, utime;
+	int x;
+	int fn;
+	int toread;
+	ssize_t size;
+	int t_read;
+#endif
 
         if((proc_dir=opendir(PROC_LOCATION))==NULL){
-                return NULL;
+                return -1;
         }
 
         while((dir_entry=readdir(proc_dir))!=NULL){
@@ -79,6 +96,9 @@ int get_proc_snapshot(proc_state_t **ps){
 #ifdef SOLARIS
                 snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
 #endif
+#ifdef LINUX
+		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/stat", dir_entry->d_name);
+#endif
                 if((f=fopen(filename, "r"))==NULL){
                         /* Open failed.. Process since vanished, or the path was too long.
                          * Ah well, move onwards to the next one */
@@ -86,10 +106,11 @@ int get_proc_snapshot(proc_state_t **ps){
                 }
 #ifdef SOLARIS
                 fread(&process_info, sizeof(psinfo_t), 1, f);
+#endif
 
 		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
 		proc_state_ptr = proc_state+proc_state_size;
-		
+#ifdef SOLARIS		
 		proc_state_ptr->pid = process_info.pr_pid;
 		proc_state_ptr->parent = process_info.pr_ppid;
 		proc_state_ptr->pgid = process_info.pr_pgid;
@@ -109,6 +130,59 @@ int get_proc_snapshot(proc_state_t **ps){
                 if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = ZOMBIE; 
                 if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = STOPPED; 
                 if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = RUNNING; 
+#endif
+#ifdef LINUX
+		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*lu %*lu %*lu %*lu %*lu %lu %lu %*ld %*ld %*ld %d %*ld %*ld %*lu %llu %llu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
+		proc_state_ptr->proc_resident = proc_state_ptr->proc_resident * getpagesize();
+		if(s == 'S') proc_state_ptr->state = SLEEPING;
+		if(s == 'R') proc_state_ptr->state = RUNNING;
+		if(s == 'Z') proc_state_ptr->state = ZOMBIE;
+		if(s == 'T') proc_state_ptr->state = STOPPED;
+		if(s == 'D') proc_state_ptr->state = STOPPED;
+	
+		/* pa_name[0] should = '(' */
+		ptr = strchr(&ps_name[1], ')');	
+		if(ptr !=NULL) *ptr='\0';
+		proc_state_ptr->process_name = strdup(&ps_name[1]);
+
+		/* Need to do cpu */
+		
+
+		/* proctitle */	
+		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/cmdline", dir_entry->d_name);
+
+                if((fn=open(filename, O_RDONLY)) == -1){
+                        /* Open failed.. Process since vanished, or the path was too long.
+                         * Ah well, move onwards to the next one */
+                        continue;
+                }
+#define		PSARG_START_SIZE 128
+		if(psargs == NULL){
+			psargs = malloc(PSARG_START_SIZE);
+			psarg_size = PSARG_START_SIZE;
+		}
+		ptr = psargs;	
+		t_read = 0;
+		toread = psarg_size;
+		while((size = read(fn, ptr, toread)) == toread){
+			psargs = realloc(psargs, (psarg_size + PSARG_START_SIZE));
+			ptr = psargs+psarg_size;
+			t_read = psarg_size;
+			psarg_size+=PSARG_START_SIZE;
+			toread = PSARG_START_SIZE;
+		}
+		if(size != -1) t_read+=size;
+
+		ptr = psargs;
+		for(x=0; x<t_read; x++){
+			if (*ptr == '\0') *ptr = ' ';
+			ptr++;
+		}
+		/*  for safety sake */
+		psargs[t_read] = '\0';
+
+		proc_state_ptr->proctitle = strdup(psargs);
+
 #endif
 
 		proc_state_size++;
