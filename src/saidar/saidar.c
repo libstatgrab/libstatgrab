@@ -205,9 +205,20 @@ void display_data(){
 	diskio_stat_t *diskio_stat_ptr;
 	network_stat_t *network_stat_ptr;
 	disk_stat_t *disk_stat_ptr;
+	/* Size before it will start overwriting "uptime" */
+	char hostname[15];
+	char *ptr;
 
 	move(0,12);
-	printw("%s", stats.general_stats->hostname);
+	strncpy(hostname, stats.general_stats->hostname, sizeof(hostname));
+	ptr=strchr(hostname, '.');
+	/* Some hosts give back a FQDN for hostname. To avoid this, we'll
+	 * just blank out everything after the first "."
+	 */
+	if (ptr != NULL){
+		*ptr = '\0';
+	}	
+	printw("%s", hostname);
 	move(0,36);
 	printw("%s", hr_uptime(stats.general_stats->uptime));
 	epoc_time=time(NULL);
