@@ -513,11 +513,23 @@ int sg_init(){
 }
 
 int sg_drop_privileges() {
+#ifdef HAVE_SETEGID
 	if (setegid(getgid()) != 0) {
+#elif defined(HAVE_SETRESGID)
+	if (setresgid(getgid(), getgid(), getgid()) != 0) {
+#else
+	{
+#endif
 		sg_set_error_with_errno(SG_ERROR_SETEGID, NULL);
 		return -1;
 	}
+#ifdef HAVE_SETEUID
 	if (seteuid(getuid()) != 0) {
+#elif defined(HAVE_SETRESUID)
+	if (setresuid(getuid(), getuid(), getuid()) != 0) {
+#else
+	{
+#endif
 		sg_set_error_with_errno(SG_ERROR_SETEUID, NULL);
 		return -1;
 	}
@@ -533,3 +545,24 @@ void *sg_realloc(void *ptr, size_t size) {
 	return tmp;
 }
 
+/* If we don't have a GNU compatible realloc, fake it. */
+#if HAVE_REALLOC == 0
+void *rpl_realloc(void *ptr, size_t size) {
+	if (ptr == NULL && size == 0) {
+		return NULL;
+	}
+
+	if (size == 0) {
+		free(ptr);
+		return NULL;
+	}
+
+	if (ptr == NULL) {
+		return malloc(size);
+	}
+
+#undef realloc
+	return realloc(ptr, size);
+#define realloc rpl_realloc
+}
+#endif

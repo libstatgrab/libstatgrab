@@ -35,12 +35,19 @@
 #include <kstat.h>
 #endif
 #endif
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#endif
 
 sg_load_stats *sg_get_load_stats(){
 
 	static sg_load_stats load_stat;
 
 	double loadav[3];
+#ifdef HPUX
+	struct pst_dynamic pstat_dynamic;
+#endif
 
 #ifdef CYGWIN
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
@@ -85,6 +92,15 @@ sg_load_stats *sg_get_load_stats(){
 		return NULL;
 	}
 	load_stat.min15 = (double)kn->value.ui32 / (double)256;
+#elif defined(HPUX)
+	if (pstat_getdynamic(&pstat_dynamic, sizeof(pstat_dynamic), 1, 0) == -1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_dynamic");
+		return NULL;
+	}
+
+	load_stat.min1=pstat_dynamic.psd_avg_1_min;
+	load_stat.min5=pstat_dynamic.psd_avg_5_min;
+	load_stat.min15=pstat_dynamic.psd_avg_15_min;
 #else
 	getloadavg(loadav,3);
 

@@ -45,11 +45,21 @@
 #include <sys/time.h>
 #include <uvm/uvm.h>
 #endif
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#include <unistd.h>
+#endif
 
 sg_mem_stats *sg_get_mem_stats(){
 
 	static sg_mem_stats mem_stat;
 
+#ifdef HPUX
+	struct pst_static pstat_static;
+	struct pst_dynamic pstat_dynamic;
+	long long pagesize;
+#endif
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
@@ -75,6 +85,25 @@ sg_mem_stats *sg_get_mem_stats(){
 	struct uvmexp *uvm;
 #endif
 
+#ifdef HPUX
+	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+		return NULL;
+	}
+
+	if (pstat_getdynamic(&pstat_dynamic, sizeof(pstat_dynamic), 1, 0) == -1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_dynamic");
+		return NULL;
+	}
+	if (pstat_getstatic(&pstat_static, sizeof(pstat_static), 1, 0) == -1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_static");
+		return NULL;
+	}
+
+	mem_stat.total = ((long long) pstat_static.physical_memory) * pagesize;
+	mem_stat.free = ((long long) pstat_dynamic.psd_free) * pagesize;
+	mem_stat.used = mem_stat.total - mem_stat.free;
+#endif
 #ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
 		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");

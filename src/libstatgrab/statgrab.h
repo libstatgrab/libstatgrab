@@ -63,7 +63,8 @@ typedef enum {
 	SG_ERROR_SYSCTLNAMETOMIB,
 	SG_ERROR_UNAME,
 	SG_ERROR_UNSUPPORTED,
-	SG_ERROR_XSW_VER_MISMATCH
+	SG_ERROR_XSW_VER_MISMATCH,
+	SG_ERROR_PSTAT
 } sg_error;
 
 void sg_set_error(sg_error code, const char *arg);

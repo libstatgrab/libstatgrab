@@ -50,12 +50,21 @@
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
 #endif
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#include <sys/dk.h>
+#endif
 
 static sg_cpu_stats cpu_now;
 static int cpu_now_uninit=1;
 
 sg_cpu_stats *sg_get_cpu_stats(){
 
+#ifdef HPUX
+	struct pst_dynamic pstat_dynamic;
+	int i;
+#endif
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
@@ -81,12 +90,26 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	cpu_now.iowait=0;
 	cpu_now.kernel=0;
 	cpu_now.idle=0;
-	/* Not stored in linux or freebsd */
+	/* Not stored in linux, freebsd, or hpux */
 	cpu_now.swap=0;
 	cpu_now.total=0;
 	/* Not stored in solaris */
 	cpu_now.nice=0;
 
+#ifdef HPUX
+	if (pstat_getdynamic(&pstat_dynamic, sizeof(pstat_dynamic), 1, 0) == -1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_dynamic");
+		return NULL;
+	}
+	cpu_now.user   = pstat_dynamic.psd_cpu_time[CP_USER];
+	cpu_now.iowait = pstat_dynamic.psd_cpu_time[CP_WAIT];
+	cpu_now.kernel = pstat_dynamic.psd_cpu_time[CP_SSYS] + pstat_dynamic.psd_cpu_time[CP_SYS];
+	cpu_now.idle   = pstat_dynamic.psd_cpu_time[CP_IDLE];
+	cpu_now.nice   = pstat_dynamic.psd_cpu_time[CP_NICE];
+	for (i = 0; i < PST_MAX_CPUSTATES; i++) {
+		cpu_now.total += pstat_dynamic.psd_cpu_time[i];
+	}
+#endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
 		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);

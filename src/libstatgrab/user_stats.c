@@ -43,37 +43,18 @@
 #ifdef CYGWIN
 #include <sys/unistd.h>
 #endif
+#ifdef HPUX
+#include <utmp.h>
+#endif
 
 sg_user_stats *sg_get_user_stats(){
 	int num_users = 0, pos = 0, new_pos;
 	VECTOR_DECLARE_STATIC(name_list, char, 128, NULL, NULL);
 	static sg_user_stats user_stats;
-#if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
-	struct utmp *entry;
-#endif
 #ifdef ALLBSD
 	struct utmp entry;
 	FILE *f;
-#endif
 
-#if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
-	setutent();
-	while((entry=getutent()) != NULL) {
-		if (entry->ut_type != USER_PROCESS) continue;
-
-		new_pos = pos + strlen(entry->ut_user) + 1;
-		if (VECTOR_RESIZE(name_list, new_pos) < 0) {
-			return NULL;
-		}
-
-		strcpy(name_list + pos, entry->ut_user);
-		name_list[new_pos - 1] = ' ';
-		pos = new_pos;
-		num_users++;
-	}
-	endutent();
-#endif
-#ifdef ALLBSD
 	if ((f=fopen(_PATH_UTMP, "r")) == NULL){
 		sg_set_error_with_errno(SG_ERROR_OPEN, _PATH_UTMP);
 		return NULL;
@@ -92,6 +73,25 @@ sg_user_stats *sg_get_user_stats(){
 		num_users++;
 	}
 	fclose(f);
+#else
+	/* This works on everything else. */
+	struct utmp *entry;
+
+	setutent();
+	while((entry=getutent()) != NULL) {
+		if (entry->ut_type != USER_PROCESS) continue;
+
+		new_pos = pos + strlen(entry->ut_user) + 1;
+		if (VECTOR_RESIZE(name_list, new_pos) < 0) {
+			return NULL;
+		}
+
+		strcpy(name_list + pos, entry->ut_user);
+		name_list[new_pos - 1] = ' ';
+		pos = new_pos;
+		num_users++;
+	}
+	endutent();
 #endif
 
 	/* Remove the extra space at the end, and append a \0. */

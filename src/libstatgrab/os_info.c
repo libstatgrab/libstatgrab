@@ -46,12 +46,22 @@
 #include <time.h>
 #include <sys/time.h>
 #endif
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#include <time.h>
+#endif
 
 sg_host_info *sg_get_host_info(){
 
-	static sg_host_info general_stat;	
+	static sg_host_info general_stat;
 	static struct utsname os;
 
+#ifdef HPUX
+	struct pst_static pstat_static;
+	time_t currtime;
+	long boottime;
+#endif
 #ifdef SOLARIS
 	time_t boottime,curtime;
 	kstat_ctl_t *kc;
@@ -80,6 +90,18 @@ sg_host_info *sg_get_host_info(){
 	general_stat.hostname = os.nodename;
 
 	/* get uptime */
+#ifdef HPUX
+	if (pstat_getstatic(&pstat_static, sizeof(pstat_static), 1, 0) == -1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_static");
+		return NULL;
+	}
+
+	currtime = time(NULL);
+
+	boottime = pstat_static.boot_time;
+
+	general_stat.uptime = currtime - boottime;
+#endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
 		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);

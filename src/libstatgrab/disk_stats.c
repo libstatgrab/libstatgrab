@@ -76,6 +76,19 @@
 			"ntfs"}
 #endif
 
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/vfs.h>
+#include <mntent.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <time.h>
+#define VALID_FS_TYPES {"vxfs", "hfs"}
+#endif
+
 static void disk_stat_init(sg_fs_stats *d) {
 	d->device_name = NULL;
 	d->fs_type = NULL;
@@ -106,7 +119,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 
 	int valid_type;
 	int num_disks=0;
-#if defined(LINUX) || defined (SOLARIS) || defined(CYGWIN)
+#if defined(LINUX) || defined (SOLARIS) || defined(CYGWIN) || defined(HPUX)
 	FILE *f;
 #endif
 
@@ -116,7 +129,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 	struct mnttab mp;
 	struct statvfs fs;
 #endif
-#if defined(LINUX) || defined(CYGWIN)
+#if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
 	struct mntent *mp;
 	struct statfs fs;
 #endif
@@ -139,8 +152,12 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 		valid_type = is_valid_fs_type(mp->f_fstypename);
 #endif
 
-#if defined(LINUX) || defined(CYGWIN)
+#if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
+#ifdef MNT_MNTTAB
+	if ((f=setmntent(MNT_MNTTAB, "r" ))==NULL){
+#else
 	if ((f=setmntent("/etc/mtab", "r" ))==NULL){
+#endif
 		sg_set_error(SG_ERROR_SETMNTENT, NULL);
 		return NULL;
 	}
@@ -191,7 +208,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			/* Freebsd doesn't have a "available" inodes */
 			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
 #endif
-#if defined(LINUX) || defined(CYGWIN)
+#if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
 			if (sg_update_string(&disk_ptr->device_name, mp->mnt_fsname) < 0) {
 				return NULL;
 			}
@@ -246,7 +263,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 
 	/* If this fails, there is very little i can do about it, so
 	   I'll ignore it :) */
-#if defined(LINUX) || defined(CYGWIN)
+#if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
 	endmntent(f);
 #endif
 #if defined(SOLARIS)
@@ -295,6 +312,16 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	sg_disk_io_stats *diskio_stats_ptr;
 #endif
 
+#ifdef HPUX
+	long long rbytes = 0, wbytes = 0;
+	struct dirent *dinfo = NULL;
+	struct stat lstatinfo;
+	struct pst_diskinfo pstat_diskinfo;
+	char fullpathbuf[1024] = {0};
+	dev_t diskid;
+	DIR *dh = NULL;
+	int disknum = 0;
+#endif
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
@@ -342,6 +369,80 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 
 	num_diskio=0;
 
+#ifdef HPUX
+
+	/* The "128" here is arbitrary, it can be increased to any number
+	   at the expense of only more system calls to pstat(). */
+	for (disknum = 0; disknum < 128; disknum++) {
+		if (pstat_getdisk(&pstat_diskinfo, sizeof(pstat_diskinfo), 1, disknum) == -1) {
+			break;
+		}
+
+		if (pstat_diskinfo.psd_idx != disknum) {
+			continue;
+		}
+
+		/* Skip "disabled" disks.. */
+		if (pstat_diskinfo.psd_status == 0) {
+			continue;
+		}
+
+		/* We can't seperate the reads from the writes, we'll
+		   just give half to each. */
+		rbytes = wbytes = (pstat_diskinfo.psd_dkwds * 64);
+
+		/* Skip unused disks. */
+		if (rbytes == 0 && wbytes == 0) {
+			continue;
+		}
+
+		if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
+			return NULL;
+		}
+
+		diskio_stats_ptr = diskio_stats + num_diskio;
+
+		diskio_stats_ptr->read_bytes = rbytes;
+		diskio_stats_ptr->write_bytes = wbytes;
+
+		diskio_stats_ptr->systime = time(NULL);
+
+		num_diskio++;
+
+		if (diskio_stats_ptr->disk_name == NULL) {
+			dh = opendir("/dev/dsk");
+			if (dh == NULL) {
+				continue;
+			}
+
+			diskid = (pstat_diskinfo.psd_dev.psd_major << 24) | pstat_diskinfo.psd_dev.psd_minor;
+			while (1) {
+				dinfo = readdir(dh);
+				if (dinfo == NULL) {
+					break;
+				}
+				snprintf(fullpathbuf, sizeof(fullpathbuf), "/dev/dsk/%s", dinfo->d_name);
+				if (lstat(fullpathbuf, &lstatinfo) < 0) {
+					continue;
+				}
+
+				if (lstatinfo.st_rdev == diskid) {
+					if (sg_update_string(&diskio_stats_ptr->disk_name, dinfo->d_name) < 0) {
+						return NULL;
+					}
+					break;
+				}
+			}
+			closedir(dh);
+
+			if (diskio_stats_ptr->disk_name == NULL) {
+				if (sg_update_string(&diskio_stats_ptr->disk_name, pstat_diskinfo.psd_hw_path.psh_name) < 0) {
+					return NULL;
+				}
+			}
+		}
+	}
+#endif
 #ifdef OPENBSD
 	mib[0] = CTL_HW;
 	mib[1] = HW_DISKCOUNT;

@@ -32,7 +32,7 @@ AC_C_CONST
 # Checks for library functions
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS(atoll)
+AC_CHECK_FUNCS(atoll seteuid setegid setresuid setresgid)
 
 # Disk IO read and write statistics are only present on recent NetBSD.
 AC_CHECK_MEMBER(struct disk_sysctl.dk_rbytes,
@@ -80,6 +80,9 @@ solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	LINKFLAGS="-lkstat -ldevinfo -lsocket -lnsl"
+	;;
+hpux11.11*)
+	AC_DEFINE(HPUX, , [Building on HP-UX 11.11])
 	;;
 freebsd4.*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])

@@ -128,6 +128,8 @@ const char *sg_str_error(sg_error code) {
 		return "unsupported function";
 	case SG_ERROR_XSW_VER_MISMATCH:
 		return "XSW version mismatch";
+	case SG_ERROR_PSTAT:
+		return "pstat failed";
 	}
 	return "unknown error";
 }
