@@ -166,19 +166,30 @@ process_stat_t *get_process_stats(){
 #else
 		switch (kp_stats[i].kp_proc.p_stat) {
 #endif
-		case SSLEEP:
-			process_stat.sleeping++;
-			break;
-		case SRUN:
 		case SIDL:
+		case SRUN:
+#ifdef SONPROC
+		case SONPROC: /* NetBSD */
+#endif
 			process_stat.running++;
 			break;
-		case SZOMB:
-		/*case SDEAD:*/
-			process_stat.zombie++;
+		case SSLEEP:
+#ifdef SWAIT
+		case SWAIT: /* FreeBSD 5 */
+#endif
+#ifdef SLOCK
+		case SLOCK: /* FreeBSD 5 */
+#endif
+			process_stat.sleeping++;
 			break;
 		case SSTOP:
 			process_stat.stopped++;
+			break;
+		case SZOMB:
+#ifdef SDEAD
+		case SDEAD: /* OpenBSD & NetBSD */
+#endif
+			process_stat.zombie++;
 			break;
                 }
 	}
