@@ -515,7 +515,7 @@ void *sg_realloc(void *ptr, size_t size) {
 	void *tmp = NULL;
 	tmp = realloc(ptr, size);
 	if(tmp == NULL) {
-		sg_set_error(SG_ERROR_MALLOC_FAILED, NULL);
+		sg_set_error(SG_ERROR_MALLOC, NULL);
 	}
 	return tmp;
 }

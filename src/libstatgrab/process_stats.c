@@ -158,6 +158,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		}
 #ifdef SOLARIS
 		fread(&process_info, sizeof(psinfo_t), 1, f);
+		fclose(f);
 #endif
 
 		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
@@ -177,6 +178,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->proc_resident = (process_info.pr_rssize) * 1024;
 		proc_state_ptr->time_spent = process_info.pr_time.tv_sec;
 		proc_state_ptr->cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
+		proc_state_ptr->nice = (int)process_info.pr_lwp.pr_nice - 20;
 		if (sg_update_string(&proc_state_ptr->process_name,
 				     process_info.pr_fname) < 0) {
 			return NULL;
