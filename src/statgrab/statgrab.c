@@ -140,9 +140,17 @@ void add_stat(stat_type type, void *stat, ...) {
 	++num_stats;
 }
 
-/* Compare two stats by name, for sorting purposes. */
+/* Compare two stats by name for qsort and bsearch. */
 int stats_compare(const void *a, const void *b) {
 	return strcmp(((stat *)a)->name, ((stat *)b)->name);
+}
+
+/* Compare up to the length of the key for bsearch. */
+int stats_compare_prefix(const void *key, const void *item) {
+	const char *kn = ((stat *)key)->name;
+	const char *in = ((stat *)item)->name;
+
+	return strncmp(kn, in, strlen(kn));
 }
 
 void populate_const() {
@@ -468,14 +476,37 @@ void print_stats(int argc, char **argv) {
 	} else {
 		/* Print selected stats. */
 		for (i = optind; i < argc; i++) {
+			char *name = argv[i];
 			stat key;
-			const stat *s;
+			const stat *s, *end;
+			int (*compare)(const void *, const void *);
 
-			key.name = argv[i];
+			key.name = name;
+			if (name[strlen(name) - 1] == '.')
+				compare = stats_compare_prefix;
+			else
+				compare = stats_compare;
+
 			s = (const stat *)bsearch(&key, stats, num_stats,
-			                          sizeof *stats,
-			                          stats_compare);
-			if (s != NULL) {
+			                          sizeof *stats, compare);
+			if (s == NULL) {
+				printf("Unknown stat %s\n", name);
+				continue;
+			}
+
+			/* Find the range of stats the user wanted. */
+			for (; s >= stats; s--) {
+				if (compare(&key, s) != 0)
+					break;
+			}
+			s++;
+			for (end = s; end < &stats[num_stats]; end++) {
+				if (compare(&key, end) != 0)
+					break;
+			}
+
+			/* And print them. */
+			for (; s < end; s++) {
 				print_stat(s);
 			}
 		}
@@ -484,7 +515,10 @@ void print_stats(int argc, char **argv) {
 
 void usage() {
 	printf("Usage: statgrab [OPTION]... [STAT]...\n"
-	       "Display system statistics (all statistics by default).\n"
+	       "Display system statistics.\n"
+	       "\n"
+	       "If no STATs are given, all will be displayed. Specify 'STAT.' to display all\n"
+	       "statistics starting with that prefix.\n"
 	       "\n");
 	printf("  -l         Linux sysctl-style output (default)\n"
 	       "  -b         BSD sysctl-style output\n"
