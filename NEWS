@@ -1,4 +1,4 @@
-libstatgrab 0.7 (21 October 2003)
+libstatgrab 0.7 (22 October 2003)
 
  * Support for NetBSD 1.6.x.
  * FreeBSD code optimised.
@@ -6,6 +6,8 @@ libstatgrab 0.7 (21 October 2003)
  * saidar now works even if it can't get all statistics.
  * List of known file systems increased on Linux and *BSD.
  * Minor bug fixes.
+ * Tested (and working) on Solaris 9 x86, Linux 2.2 on alpha, and
+   Linux 2.4 on amd64.
 
 libstatgrab 0.6.1 (18 October 2003)
 
