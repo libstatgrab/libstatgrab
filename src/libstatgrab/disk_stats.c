@@ -396,7 +396,6 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	f=fopen("/proc/stat", "r");
 	if(f==NULL){
 		*entries=0;
-		fclose(f);
 		return NULL;
 	}
 	if((line_ptr=f_read_line(f, "disk_io:"))==NULL){
