@@ -100,6 +100,16 @@ cdef extern from "statgrab.h":
         long long rx
         time_t systime
 
+    ctypedef enum duplex:
+        FULL_DUPLEX
+        HALF_DUPLEX
+        NO_DUPLEX
+
+    ctypedef struct network_iface_stat_t:
+        char *interface_name
+        int speed
+        duplex dup
+
     ctypedef struct page_stat_t:
         long long pages_pagein
         long long pages_pageout
@@ -119,6 +129,7 @@ cdef extern from "statgrab.h":
     cdef extern process_stat_t *get_process_stats()
     cdef extern network_stat_t *get_network_stats(int *entries)
     cdef extern network_stat_t *get_network_stats_diff(int *entries)
+    cdef extern network_iface_stat_t *get_network_iface_stats(int *entries)
     cdef extern page_stat_t *get_page_stats()
     cdef extern page_stat_t *get_page_stats_diff()
     cdef extern int statgrab_init()
@@ -359,6 +370,23 @@ def py_get_network_stats_diff():
              'tx': s.tx,
              'rx': s.rx,
              'systime': s.systime,
+            }
+        ))
+        s = s + 1
+    return list
+
+def py_get_network_iface_stats():
+    cdef network_iface_stat_t *s
+    cdef int entries
+    s = get_network_iface_stats(&entries)
+    if s == NULL:
+        raise StatgrabException, 'get_network_iface_stats() returned NULL'
+    list = [entries]
+    for i from 0 <= i < entries:
+        list.append(Result(
+            {'interface_name': s.interface_name,
+             'speed': s.speed,
+             'dup': s.dup,
             }
         ))
         s = s + 1
