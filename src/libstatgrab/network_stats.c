@@ -608,7 +608,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			}
 		} else {
 			/* Not all interfaces support the ethtool ioctl. */
-			network_iface_stat_ptr->speed = -1;
+			network_iface_stat_ptr->speed = 0;
 			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		}
 
