@@ -64,6 +64,9 @@ int main(){
 		case ZOMBIE:
 			state = "ZOMBIE";
 			break;
+		case UNKNOWN:
+			state = "UNKNOWN";
+			break;
 		}
 		printf("%5d %5d %5d %5d %5d %5d %5d %5dM %5dM %8ds %10f %4d %-8s %-20s %s\n",
 			(int)ps->pid, (int)ps->parent, (int)ps->pgid, (int)ps->uid,

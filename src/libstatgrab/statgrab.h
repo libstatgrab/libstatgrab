@@ -139,7 +139,8 @@ typedef enum{
 	RUNNING,
 	SLEEPING,
 	STOPPED,
-	ZOMBIE
+	ZOMBIE,
+	UNKNOWN
 }process_status;
 
 typedef struct{

@@ -219,13 +219,20 @@ int get_proc_snapshot(proc_state_t **ps){
 
 	for (i = 0; i < procs; i++) {
 		/* replace with something more sensible */
-		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
+		proc_state = realloc(proc_state,
+				(1+proc_state_size)*sizeof(proc_state_t));
 		if(proc_state == NULL ) {
 			return NULL;
 		}
 		proc_state_ptr = proc_state+proc_state_size;
-		
-		proc_state_ptr->process_name = strdup(kp_stats[i].ki_comm);
+
+#ifdef FREEBSD5
+		proc_state_ptr->process_name =
+			strdup(kp_stats[i].ki_comm);
+#else
+		proc_state_ptr->process_name =
+			strdup(kp_stats[i].kp_proc.p_comm);
+#endif
 
 		args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
 		if(args != NULL) {
@@ -251,31 +258,66 @@ int get_proc_snapshot(proc_state_t **ps){
 			proc_state_ptr->proctitle = proctitle;
 		}
 		else {
-			proc_state_ptr->proctitle = malloc(strlen(kp_stats[i].ki_comm)+4);
+			proc_state_ptr->proctitle =
+				malloc(strlen(proc_state_ptr->process_name)+4);
 			if(proc_state_ptr->proctitle == NULL) {
 				return NULL;
 			}
-			sprintf(proc_state_ptr->proctitle, " (%s)", kp_stats[i].ki_comm);
+			sprintf(proc_state_ptr->proctitle, " (%s)",
+				proc_state_ptr->process_name);
 		}
 
+#ifdef FREEBSD5
 		proc_state_ptr->pid = kp_stats[i].ki_pid;
 		proc_state_ptr->parent = kp_stats[i].ki_ppid;
 		proc_state_ptr->pgid = kp_stats[i].ki_pgid;
+#else
+		proc_state_ptr->pid = kp_stats[i].kp_proc.p_pid;
+		proc_state_ptr->parent = kp_stats[i].kp_eproc.e_ppid;
+		proc_state_ptr->pgid = kp_stats[i].kp_eproc.e_pgid;
+#endif
 
+#ifdef FREEBSD5
 		proc_state_ptr->uid = kp_stats[i].ki_ruid;
 		proc_state_ptr->euid = kp_stats[i].ki_uid;
 		proc_state_ptr->gid = kp_stats[i].ki_rgid;
 		proc_state_ptr->egid = kp_stats[i].ki_svgid;
+#else
+		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_pcred.p_ruid;
+		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_pcred.p_svuid;
+		proc_state_ptr->gid = kp_stats[i].kp_eproc.e_pcred.p_rgid;
+		proc_state_ptr->egid = kp_stats[i].kp_eproc.e_pcred.p_svgid;
+#endif
 
+#ifdef FREEBSD5
 		proc_state_ptr->proc_size = kp_stats[i].ki_size;
 		/* This is in pages */
-		proc_state_ptr->proc_resident = kp_stats[i].ki_rssize * getpagesize();
+		proc_state_ptr->proc_resident =
+			kp_stats[i].ki_rssize * getpagesize();
 		/* This is in microseconds */
 		proc_state_ptr->time_spent = kp_stats[i].ki_runtime / 1000000;
-		proc_state_ptr->cpu_percent = ((double) kp_stats[i].ki_pctcpu / FSCALE) * 100.0;
+		proc_state_ptr->cpu_percent =
+			((double)kp_stats[i].ki_pctcpu / FSCALE) * 100.0;
 		proc_state_ptr->nice = kp_stats[i].ki_nice;
+#else
+		proc_state_ptr->proc_size =
+			kp_stats[i].kp_eproc.e_vm.vm_map.size;
+		/* This is in pages */
+		proc_state_ptr->proc_resident =
+			kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
+		/* This is in microseconds */
+		proc_state_ptr->time_spent =
+			kp_stats[i].kp_proc.p_runtime / 1000000;
+		proc_state_ptr->cpu_percent =
+			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
+		proc_state_ptr->nice = kp_stats[i].kp_proc.p_nice;
+#endif
 
+#ifdef FREEBSD5
 		switch (kp_stats[i].ki_stat) {
+#else
+		switch (kp_stats[i].kp_proc.p_stat) {
+#endif
 		case SIDL:
 		case SRUN:
 #ifdef SONPROC
@@ -317,16 +359,17 @@ process_stat_t *get_process_stats() {
 	proc_state_t *ps;
 	int ps_size, x;
 
-	process_stat.sleeping=0;
-	process_stat.running=0;
-	process_stat.zombie=0;
-	process_stat.stopped=0;
-	process_stat.total=0;
+	process_stat.sleeping = 0;
+	process_stat.running = 0;
+	process_stat.zombie = 0;
+	process_stat.stopped = 0;
+	process_stat.total = 0;
 
 	ps_size = get_proc_snapshot(&ps);
 
 	for(x = 0; x < ps_size; x++) {
 		switch (ps->state) {
+		/* currently no mapping for UNKNOWN in process_stat_t */
 		case RUNNING:
 			process_stat.running++;
 			break;
