@@ -108,6 +108,11 @@ typedef struct{
 	char *interface_name;
 	long long tx;
 	long long rx;
+	long long ipackets;
+	long long opackets;
+	long long ierrors;
+	long long oerrors;
+	long long collisions;
 	time_t systime;
 }network_stat_t;
 
