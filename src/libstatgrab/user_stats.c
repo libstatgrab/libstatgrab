@@ -31,6 +31,19 @@
 #endif
 #include <utmp.h>
 
+#ifdef SOLARIS
+#define MAX_LOGIN_NAME_SIZE 8
+#endif
+#if defined(LINUX) || defined(FREEBSD)
+#define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
+#endif
+#ifdef NETBSD
+#define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
+#endif
+#if defined(CYGWIN)
+#define MAX_LOGIN_NAME_SIZE _SC_LOGIN_NAME_MAX
+#endif
+
 #define START_VAL (5*(1+MAX_LOGIN_NAME_SIZE))
 
 user_stat_t *get_user_stats(){

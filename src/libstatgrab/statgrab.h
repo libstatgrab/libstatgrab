@@ -60,19 +60,6 @@ typedef struct{
 	double min15;
 }load_stat_t;
 
-#ifdef SOLARIS
-#define MAX_LOGIN_NAME_SIZE 8
-#endif
-#if defined(LINUX) || defined(FREEBSD)
-#define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
-#endif
-#ifdef NETBSD
-#define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
-#endif
-#if defined(CYGWIN)
-#define MAX_LOGIN_NAME_SIZE _SC_LOGIN_NAME_MAX
-#endif
-
 typedef struct{
 	char *name_list;
 	int num_entries;
