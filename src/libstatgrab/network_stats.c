@@ -386,7 +386,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
         struct ifaddrs *net, *net_ptr;
 	struct ifmediareq ifmed;
 	struct ifreq ifr;
-	int s;
+	int sock;
 	int x;
 #endif
 #ifdef LINUX
@@ -403,7 +403,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
                 return NULL;
         }
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == NULL) return NULL;
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == 0) return NULL;
 
 	for(net_ptr=net; net_ptr!=NULL; net_ptr=net_ptr->ifa_next){
                 if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
@@ -415,7 +415,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 
 		memset(&ifmed, 0, sizeof(struct ifmediareq));
 		strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
-		if(ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmed) == -1){
+		if(ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmed) == -1){
 			continue;
 		}
 
@@ -474,6 +474,9 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		}
 
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, net_ptr->ifa_name, sizeof(ifr.ifr_name));
+
 		if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0){
 			continue;
 		}	
@@ -486,7 +489,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		ifaces++;
 	}	
 	freeifaddrs(net);
-	close(s);
+	close(sock);
 #endif
 
 #ifdef SOLARIS
