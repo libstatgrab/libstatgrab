@@ -5,7 +5,8 @@
 DOCS = network.txt diskio.txt load_average.txt process_stats.txt os_stats.txt vm_stats.txt user_list.txt cpu.txt page_stat.txt
 
 man_MANS = get_load_stats.3 get_general_stats.3 cpu_percent_usage.3 \
-	   get_cpu_totals.3 get_cpu_diff.3
+	   get_cpu_totals.3 get_cpu_diff.3 get_network_stats.3 \
+	   get_network_stats_diff.3
 
 docdir = $(datadir)/doc/libstatgrab
 
