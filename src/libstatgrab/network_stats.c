@@ -112,7 +112,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 #ifdef ALLBSD
 	if(getifaddrs(&net) != 0){
-		sg_set_error(SG_ERROR_GETIFADDRS, NULL);
+		sg_set_error_with_errno(SG_ERROR_GETIFADDRS, NULL);
 		return NULL;
 	}
 
@@ -244,7 +244,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 #ifdef LINUX
 	f=fopen("/proc/net/dev", "r");
 	if(f==NULL){
-		sg_set_error(SG_ERROR_OPEN, "/proc/net/dev");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/net/dev");
 		return NULL;
 	}
 	/* read the 2 lines.. Its the title, so we dont care :) */
@@ -437,7 +437,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 #ifdef ALLBSD
 	if(getifaddrs(&net) != 0){
-		sg_set_error(SG_ERROR_GETIFADDRS, NULL);
+		sg_set_error_with_errno(SG_ERROR_GETIFADDRS, NULL);
 		return NULL;
 	}
 
@@ -545,7 +545,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	}
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0) {
-		sg_set_error(SG_ERROR_SOCKET, NULL);
+		sg_set_error_with_errno(SG_ERROR_SOCKET, NULL);
 		return NULL;
 	}
 
@@ -604,13 +604,13 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #ifdef LINUX
 	f = fopen("/proc/net/dev", "r");
 	if(f == NULL){
-		sg_set_error(SG_ERROR_OPEN, "/proc/net/dev");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/net/dev");
 		return NULL;
 	}
 
 	/* Setup stuff so we can do the ioctl to get the info */
 	if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
-		sg_set_error(SG_ERROR_SOCKET, NULL);
+		sg_set_error_with_errno(SG_ERROR_SOCKET, NULL);
 		return NULL;
 	}
 

@@ -481,7 +481,7 @@ struct uvmexp *sg_get_uvmexp() {
 	mib[1] = VM_UVMEXP;
 
 	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP");
 		return NULL;
 	}
 
@@ -514,11 +514,11 @@ int sg_init(){
 
 int sg_drop_privileges() {
 	if (setegid(getgid()) != 0) {
-		sg_set_error(SG_ERROR_SETEGID, NULL);
+		sg_set_error_with_errno(SG_ERROR_SETEGID, NULL);
 		return -1;
 	}
 	if (seteuid(getuid()) != 0) {
-		sg_set_error(SG_ERROR_SETEUID, NULL);
+		sg_set_error_with_errno(SG_ERROR_SETEUID, NULL);
 		return -1;
 	}
 	return 0;
@@ -528,7 +528,7 @@ void *sg_realloc(void *ptr, size_t size) {
 	void *tmp = NULL;
 	tmp = realloc(ptr, size);
 	if(tmp == NULL) {
-		sg_set_error(SG_ERROR_MALLOC, NULL);
+		sg_set_error_with_errno(SG_ERROR_MALLOC, NULL);
 	}
 	return tmp;
 }

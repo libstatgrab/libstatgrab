@@ -119,19 +119,21 @@ sg_page_stats *sg_get_page_stats(){
 
 		fclose(f);
 	} else {
-		sg_set_error(SG_ERROR_OPEN, "/proc/stat");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/stat");
 		return NULL;
 	}
 #endif
 #if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof page_stats.pages_pagein;
 	if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsin");
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME,
+		                        "vm.stats.vm.v_swappgsin");
 		return NULL;
 	}
 	size = sizeof page_stats.pages_pageout;
 	if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsout");
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME,
+		                        "vm.stats.vm.v_swappgsout");
 		return NULL;
 	}
 #endif

@@ -132,7 +132,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 #ifdef ALLBSD
 	nummnt=getmntinfo(&mp , MNT_LOCAL);
 	if (nummnt<=0){
-		sg_set_error(SG_ERROR_GETMNTINFO, NULL);
+		sg_set_error_with_errno(SG_ERROR_GETMNTINFO, NULL);
 		return NULL;
 	}
 	for(;nummnt--; mp++){
@@ -155,7 +155,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 
 #ifdef SOLARIS
 	if ((f=fopen("/etc/mnttab", "r" ))==NULL){
-		sg_set_error(SG_ERROR_OPEN, "/etc/mnttab");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/etc/mnttab");
 		return NULL;
 	}
 	while((getmntent(f, &mp)) == 0){
@@ -348,7 +348,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 
 	size = sizeof(diskcount);
 	if (sysctl(mib, MIBSIZE, &diskcount, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKCOUNT");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKCOUNT");
 		return NULL;
 	}
 
@@ -356,7 +356,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	mib[1] = HW_DISKNAMES;
 
 	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
 		return NULL;
 	}
 
@@ -366,7 +366,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 
 	if (sysctl(mib, MIBSIZE, disknames, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
 		return NULL;
 	}
 
@@ -385,7 +385,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 
 	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
 		return NULL;
 	}
 
@@ -401,7 +401,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 
 	if (sysctl(mib, MIBSIZE, stats, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
 		return NULL;
 	}
 
@@ -468,6 +468,8 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 #ifdef FREEBSD5
 	if ((devstat_getdevs(NULL, &stats)) < 0) {
+		/* FIXME devstat functions return a string error in
+		   devstat_errbuf */
 		sg_set_error(SG_ERROR_DEVSTAT_GETDEVS, NULL);
 		return NULL;
 	}
@@ -521,7 +523,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 		if (asprintf((&diskio_stats_ptr->disk_name), "%s%d", dev_ptr->device_name, dev_ptr->unit_number) == -1) {
-			sg_set_error(SG_ERROR_ASPRINTF, NULL);
+			sg_set_error_with_errno(SG_ERROR_ASPRINTF, NULL);
 			return NULL;
 		}
 		diskio_stats_ptr->systime=time(NULL);

@@ -69,7 +69,7 @@ sg_host_info *sg_get_host_info(){
 #endif
 
 	if((uname(&os)) < 0){
-		sg_set_error(SG_ERROR_UNAME, NULL);
+		sg_set_error_with_errno(SG_ERROR_UNAME, NULL);
 		return NULL;
 	}
 	
@@ -106,7 +106,7 @@ sg_host_info *sg_get_host_info(){
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/uptime", "r")) == NULL) {
-		sg_set_error(SG_ERROR_OPEN, "/proc/uptime");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/uptime");
 		return NULL;
 	}
 	if((fscanf(f,"%lu %*d",&general_stat.uptime)) != 1){
@@ -120,7 +120,8 @@ sg_host_info *sg_get_host_info(){
 	mib[1] = KERN_BOOTTIME;
 	size = sizeof boottime;
 	if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_BOOTTIME");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL,
+		                        "CTL_KERN.KERN_BOOTTIME");
 		return NULL;
 	}
 	time(&curtime);

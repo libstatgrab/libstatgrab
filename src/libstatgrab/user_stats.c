@@ -75,7 +75,7 @@ sg_user_stats *sg_get_user_stats(){
 #endif
 #ifdef ALLBSD
 	if ((f=fopen(_PATH_UTMP, "r")) == NULL){
-		sg_set_error(SG_ERROR_OPEN, _PATH_UTMP);
+		sg_set_error_with_errno(SG_ERROR_OPEN, _PATH_UTMP);
 		return NULL;
 	}
 	while((fread(&entry, sizeof(entry),1,f)) != 0){

@@ -77,12 +77,12 @@ sg_mem_stats *sg_get_mem_stats(){
 
 #ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
-		sg_set_error(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 		return NULL;	
 	}
 
 	if((totalmem=sysconf(_SC_PHYS_PAGES)) == -1){
-		sg_set_error(SG_ERROR_SYSCONF, "_SC_PHYS_PAGES");
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PHYS_PAGES");
 		return NULL;
 	}
 
@@ -111,7 +111,7 @@ sg_mem_stats *sg_get_mem_stats(){
 
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
-		sg_set_error(SG_ERROR_OPEN, "/proc/meminfo");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/meminfo");
 		return NULL;
 	}
 
@@ -140,7 +140,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	mib[1] = HW_PHYSMEM;
 	size = sizeof physmem;
 	if (sysctl(mib, 2, &physmem, &size, NULL, 0) < 0) {
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_PHYSMEM");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_HW.HW_PHYSMEM");
 		return NULL;
 	}
 	mem_stat.total = physmem;
@@ -148,19 +148,22 @@ sg_mem_stats *sg_get_mem_stats(){
 	/*returns pages*/
 	size = sizeof free_count;
 	if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_free_count");
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME,
+		                        "vm.stats.vm.v_free_count");
 		return NULL;
 	}
 
 	size = sizeof inactive_count;
 	if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive_count , &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_inactive_count");
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME,
+		                        "vm.stats.vm.v_inactive_count");
 		return NULL;
 	}
 
 	size = sizeof cache_count;
 	if (sysctlbyname("vm.stats.vm.v_cache_count", &cache_count, &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_cache_count");
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME,
+		                        "vm.stats.vm.v_cache_count");
 		return NULL;
 	}
 
@@ -168,6 +171,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	 * After that I then need to multiple the anything that used vm.stats to
 	 * get the system statistics by pagesize 
 	 */
+	/* FIXME getpagesize() cannot actually fail */
 	if ((pagesize=getpagesize()) == -1){
 		sg_set_error(SG_ERROR_GETPAGESIZE, "NULL");
 		return NULL;

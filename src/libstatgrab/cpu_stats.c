@@ -110,7 +110,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/stat", "r" ))==NULL) {
-		sg_set_error(SG_ERROR_OPEN, "/proc/stat");
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/stat");
 		return NULL;
 	}
 	/* The very first line should be cpu */
@@ -132,7 +132,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof cp_time;
 	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0){
-		sg_set_error(SG_ERROR_SYSCTLBYNAME, "kern.cp_time");
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "kern.cp_time");
 		return NULL;
   	}
 #else
@@ -145,9 +145,11 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	size = sizeof cp_time;
 	if (sysctl(mib, 2, &cp_time, &size, NULL, 0) < 0) {
 #ifdef NETBSD
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_CP_TIME");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL,
+		                        "CTL_KERN.KERN_CP_TIME");
 #else
-		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_CPTIME");
+		sg_set_error_with_errno(SG_ERROR_SYSCTL,
+		                        "CTL_KERN.KERN_CPTIME");
 #endif
 		return NULL;
 	}
