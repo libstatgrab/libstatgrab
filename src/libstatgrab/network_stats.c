@@ -322,20 +322,18 @@ network_stat_t *get_network_stats(int *entries){
 }
 
 long long transfer_diff(long long new, long long old){
-#if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD)
-#define MAXVAL 0xffffffffLL
-#else
-#define MAXVAL 0xffffffffffffffffLL
-#endif
-	long long result;
-	if(new>=old){
-		result = (new-old);
-	}else{
-		result = (MAXVAL+(new-old));
+#if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD) || defined(OPENBSD)
+	/* 32-bit quantities, so we must explicitly deal with wraparound. */
+#define MAXVAL 0x100000000LL
+	if (new >= old) {
+		return new - old;
+	} else {
+		return MAXVAL + new - old;
 	}
-
-	return result;
-
+#else
+	/* 64-bit quantities, so plain subtraction works. */
+	return new - old;
+#endif
 }
 
 network_stat_t *get_network_stats_diff(int *entries) {
