@@ -641,7 +641,7 @@ void usage() {
 	       "	     absolute values\n"
 	       "  -f SCALE   Display floating-point values as integers scaled by FACTOR\n"
 	       "  -K         Display byte counts in kibibytes\n"
-	       "  -M         Display byte counts in mibibytes\n"
+	       "  -M         Display byte counts in mebibytes\n"
 	       "  -G         Display byte counts in gibibytes\n"
 	       "\n");
 	printf("Version %s - report bugs to <%s>.\n",
