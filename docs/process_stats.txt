@@ -19,4 +19,4 @@ sleeping : number of sleeping processes
 stopped : number of stopped processes 
 zombie : number of zombie processes
 
-
+see examples/process_stats.c for a working implimentation.
