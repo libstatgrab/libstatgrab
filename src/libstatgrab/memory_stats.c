@@ -96,13 +96,12 @@ mem_stat_t *get_memory_stats(){
 #endif
 
 #ifdef LINUX
-	f = fopen("/proc/meminfo", "r");
-	if (f == NULL) {
+	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
 		return NULL;
 	}
 
 	while ((line_ptr = f_read_line(f, "")) != NULL) {
-		if (sscanf(line_ptr, "%*s %lld kB", &value) != 2) {
+		if (sscanf(line_ptr, "%*s %llu kB", &value) != 1) {
 			continue;
 		}
 		value *= 1024;

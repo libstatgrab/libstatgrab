@@ -31,6 +31,7 @@
 #endif
 #ifdef LINUX
 #include <stdio.h>
+#include <string.h>
 #endif
 #ifdef FREEBSD
 #include <unistd.h>
@@ -49,6 +50,7 @@ swap_stat_t *get_swap_stats(){
 #ifdef LINUX
 	FILE *f;
 	char *line_ptr;
+	unsigned long long value;
 #endif
 #ifdef FREEBSD
 	struct kvm_swap swapinfo;
@@ -71,18 +73,25 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.free = swap_stat.total - swap_stat.used;
 #endif
 #ifdef LINUX
-	if ((f=fopen("/proc/meminfo", "r" ))==NULL) {
+	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
 		return NULL;
 	}
-	if((line_ptr=f_read_line(f, "Swap:"))==NULL){
-		fclose(f);
-		return NULL;
+
+	while ((line_ptr = f_read_line(f, "")) != NULL) {
+		if (sscanf(line_ptr, "%*s %llu kB", &value) != 1) {
+			continue;
+		}
+		value *= 1024;
+
+		if (strncmp(line_ptr, "SwapTotal:", 10) == 0) {
+			swap_stat.total = value;
+		} else if (strncmp(line_ptr, "SwapFree:", 9) == 0) {
+			swap_stat.free = value;
+		}
 	}
-	if((sscanf(line_ptr, "Swap: %lld %lld %lld", &swap_stat.total, &swap_stat.used, &swap_stat.free))!=3){
-		fclose(f);
-		return NULL;
-	}
+
 	fclose(f);
+	swap_stat.used = swap_stat.total - swap_stat.free;
 #endif
 #ifdef FREEBSD
 	if((kvmd = get_kvm()) == NULL){

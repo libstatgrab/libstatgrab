@@ -32,6 +32,7 @@
 #endif
 #ifdef LINUX
 #include <stdio.h>
+#include <string.h>
 #endif
 #ifdef FREEBSD
 #include <sys/types.h>
@@ -79,18 +80,36 @@ page_stat_t *get_page_stats(){
 	kstat_close(kc);
 #endif
 #ifdef LINUX
-	if((f=fopen("/proc/stat", "r"))==NULL){
-		return NULL;
-	}
-	if((line_ptr=f_read_line(f, "page"))==NULL){
-		fclose(f);
-		return NULL;
-	}
-	if((sscanf(line_ptr, "page %lld %lld", &page_stats.pages_pagein, &page_stats.pages_pageout))!=2){
-		return NULL;
-	}
-	fclose(f);
+	if ((f = fopen("/proc/vmstat", "r")) != NULL) {
+		while ((line_ptr = f_read_line(f, "")) != NULL) {
+			long long value;
 
+			if (sscanf(line_ptr, "%*s %lld", &value) != 1) {
+				continue;
+			}
+
+			if (strncmp(line_ptr, "pgpgin ", 7) == 0) {
+				page_stats.pages_pagein = value;
+			} else if (strncmp(line_ptr, "pgpgout ", 8) == 0) {
+				page_stats.pages_pageout = value;
+			}
+		}
+
+		fclose(f);
+	} else if ((f = fopen("/proc/stat", "r")) != NULL) {
+		if ((line_ptr = f_read_line(f, "page")) == NULL) {
+			fclose(f);
+			return NULL;
+		}
+
+		if (sscanf(line_ptr, "page %lld %lld", &page_stats.pages_pagein, &page_stats.pages_pageout) != 2) {
+			return NULL;
+		}
+
+		fclose(f);
+	} else {
+		return NULL;
+	}
 #endif
 #ifdef FREEBSD
 	size = sizeof page_stats.pages_pagein;
