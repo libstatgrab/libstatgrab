@@ -33,8 +33,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <string.h>
 #endif
+#include <string.h>
 
 #ifdef SOLARIS
 #include <procfs.h>
