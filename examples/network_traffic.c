@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 	int delay = 1;
 	char units = 'b';
 
-	network_stat_t *network_stats;
+	sg_network_io_stats *network_stats;
 	int num_network_stats;
 
 	/* Parse command line options */
@@ -70,10 +70,10 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 	 * Because of this, we do nothing for the very first call.
 	 */
 
-	network_stats = get_network_stats_diff(&num_network_stats);
+	network_stats = sg_get_network_io_stats_diff(&num_network_stats);
 	if (network_stats == NULL){
 		perror("Error. Failed to get network stats");
 		return 1;
@@ -92,7 +92,7 @@ int main(int argc, char **argv){
 	printf("\033[2J");
 
 	/* Keep getting the network stats */
-	while ( (network_stats = get_network_stats_diff(&num_network_stats)) != NULL){
+	while ( (network_stats = sg_get_network_io_stats_diff(&num_network_stats)) != NULL){
 		int x;
 		int line_number = 2;
 

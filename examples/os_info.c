@@ -27,18 +27,18 @@
 
 int main(int argc, char **argv){
 
-	general_stat_t *general_stats;
+	sg_host_info *general_stats;
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	general_stats = get_general_stats();
+	general_stats = sg_get_host_info();
 
 	if(general_stats == NULL){
 		fprintf(stderr, "Failed to get os stats\n");

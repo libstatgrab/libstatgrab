@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 	int c;
 
 	int delay = 1;
-	load_stat_t *load_stat;
+	sg_load_stats *load_stat;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -42,15 +42,15 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	while( (load_stat = get_load_stats()) != NULL){
+	while( (load_stat = sg_get_load_stats()) != NULL){
 		printf("Load 1 : %5.2f\t Load 5 : %5.2f\t Load 15 : %5.2f\n", load_stat->min1, load_stat->min5, load_stat->min15);
 		sleep(delay);
 	}

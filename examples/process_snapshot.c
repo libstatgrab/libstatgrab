@@ -26,23 +26,23 @@
 #include <unistd.h>
 
 int main(){
-        proc_state_t *ps;
+        sg_process_stats *ps;
         int ps_size;
         int x;
 	char *state = NULL;
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-        ps_size = get_proc_snapshot(&ps);
+        ps = sg_get_process_stats(&ps_size);
 
-	if(ps_size < 0){
+	if(ps == NULL){
 		fprintf(stderr, "Failed to get process snapshot\n");
 		exit(1);
 	}
@@ -52,19 +52,20 @@ int main(){
 
         for(x=0;x<ps_size;x++){
 		switch (ps->state) {
-		case RUNNING:
+		case SG_PROCESS_STATE_RUNNING:
 			state = "RUNNING";
 			break;
-		case SLEEPING:
+		case SG_PROCESS_STATE_SLEEPING:
 			state = "SLEEPING";
 			break;
-		case STOPPED:
+		case SG_PROCESS_STATE_STOPPED:
 			state = "STOPPED";
 			break;
-		case ZOMBIE:
+		case SG_PROCESS_STATE_ZOMBIE:
 			state = "ZOMBIE";
 			break;
-		case UNKNOWN:
+		case SG_PROCESS_STATE_UNKNOWN:
+		default:
 			state = "UNKNOWN";
 			break;
 		}

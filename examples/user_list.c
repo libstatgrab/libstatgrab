@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 	int c;
 
 	int delay = 1;
-	user_stat_t *users;
+	sg_user_stats *users;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -42,15 +42,15 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	if( (users = get_user_stats()) != NULL){
+	if( (users = sg_get_user_stats()) != NULL){
 		printf("Users : %s\n", users->name_list);
 		printf("Number of users : %d\n", users->num_entries);
 	}

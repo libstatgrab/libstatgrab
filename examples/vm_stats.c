@@ -27,21 +27,21 @@
 
 int main(int argc, char **argv){
 
-	mem_stat_t *mem_stats;
-	swap_stat_t *swap_stats;
+	sg_mem_stats *mem_stats;
+	sg_swap_stats *swap_stats;
 
 	long long total, free;
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	if( ((mem_stats=get_memory_stats()) != NULL) && (swap_stats=get_swap_stats()) != NULL){
+	if( ((mem_stats=sg_get_mem_stats()) != NULL) && (swap_stats=sg_get_swap_stats()) != NULL){
 		printf("Total memory in bytes : %lld\n", mem_stats->total);
 		printf("Used memory in bytes : %lld\n", mem_stats->used);
 		printf("Cache memory in bytes : %lld\n", mem_stats->cache);

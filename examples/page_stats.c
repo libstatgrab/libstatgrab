@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 	int c;
 
 	int delay = 1;
-	page_stat_t *page_stats;
+	sg_page_stats *page_stats;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -42,15 +42,15 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	while( (page_stats = get_page_stats_diff()) != NULL){
+	while( (page_stats = sg_get_page_stats_diff()) != NULL){
 		printf("Pages in : %lld\n", page_stats->pages_pagein);
 		printf("Pages out : %lld\n", page_stats->pages_pageout);
 		sleep(delay);

@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 	int delay = 1;
 	char units = 'b';
 
-	diskio_stat_t *diskio_stats;
+	sg_disk_io_stats *diskio_stats;
 	int num_diskio_stats;
 
 	/* Parse command line options */
@@ -70,10 +70,10 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 	 * Because of this, we do nothing for the very first call.
 	 */
 
-	diskio_stats = get_diskio_stats_diff(&num_diskio_stats);
+	diskio_stats = sg_get_disk_io_stats_diff(&num_diskio_stats);
 	if (diskio_stats == NULL){
 		perror("Error. Failed to get disk stats");
 		return 1;
@@ -92,7 +92,7 @@ int main(int argc, char **argv){
 	printf("\033[2J");
 
 	/* Keep getting the disk stats */
-	while ( (diskio_stats = get_diskio_stats_diff(&num_diskio_stats)) != NULL){
+	while ( (diskio_stats = sg_get_disk_io_stats_diff(&num_diskio_stats)) != NULL){
 		int x;
 		int line_number = 2;
 

@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 	int c;
 
 	int delay = 1;
-	cpu_percent_t *cpu_percent;
+	sg_cpu_percents *cpu_percent;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -42,21 +42,21 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
 	/* Throw away the first reading as thats averaged over the machines uptime */
-	cpu_percent = cpu_percent_usage();
+	cpu_percent = sg_get_cpu_percents();
 
 	/* Clear the screen ready for display the cpu usage */
 	printf("\033[2J");
 
-	while( (cpu_percent = cpu_percent_usage()) != NULL){
+	while( (cpu_percent = sg_get_cpu_percents()) != NULL){
 		printf("\033[2;2H%-12s : %6.2f", "User CPU", cpu_percent->user);
 		printf("\033[3;2H%-12s : %6.2f", "Kernel CPU", cpu_percent->kernel);
 		printf("\033[4;2H%-12s : %6.2f", "IOWait CPU", cpu_percent->iowait);

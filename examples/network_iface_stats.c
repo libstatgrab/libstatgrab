@@ -27,19 +27,19 @@
 
 int main(int argc, char **argv){
 
-	network_iface_stat_t *network_iface_stats;
+	sg_network_iface_stats *network_iface_stats;
 	int iface_count, i;
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	network_iface_stats = get_network_iface_stats(&iface_count);
+	network_iface_stats = sg_get_network_iface_stats(&iface_count);
 
 	if(network_iface_stats == NULL){
 		fprintf(stderr, "Failed to get network interface stats\n");
@@ -50,10 +50,10 @@ int main(int argc, char **argv){
 	for(i = 0; i < iface_count; i++) {
 		printf("%s\t%d\t", network_iface_stats->interface_name, network_iface_stats->speed);
 		switch (network_iface_stats->dup) {
-		case FULL_DUPLEX:
+		case SG_IFACE_DUPLEX_FULL:
 			printf("full\n");
 			break;
-		case HALF_DUPLEX:
+		case SG_IFACE_DUPLEX_HALF:
 			printf("half\n");
 			break;
 		default:

@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 	int c;
 
 	int delay = 1;
-	process_stat_t *process_stat;
+	sg_process_count *process_stat;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -42,15 +42,15 @@ int main(int argc, char **argv){
 	}
 
 	/* Initialise statgrab */
-	statgrab_init();
+	sg_init();
 
 	/* Drop setuid/setgid privileges. */
-	if (statgrab_drop_privileges() != 0) {
+	if (sg_drop_privileges() != 0) {
 		perror("Error. Failed to drop privileges");
 		return 1;
 	}
 
-	while( (process_stat = get_process_stats()) != NULL){
+	while( (process_stat = sg_get_process_count()) != NULL){
 		printf("Running:%3d \t", process_stat->running);
 		printf("Sleeping:%5d \t",process_stat->sleeping);
 		printf("Stopped:%4d \t", process_stat->stopped);
