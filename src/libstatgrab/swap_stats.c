@@ -37,9 +37,15 @@
 #include <string.h>
 #endif
 #ifdef FREEBSD
+#ifdef FREEBSD5
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
+#else
 #include <unistd.h>
 #include <sys/types.h>
 #include <kvm.h>
+#endif
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
@@ -61,9 +67,15 @@ swap_stat_t *get_swap_stats(){
 	unsigned long long value;
 #endif
 #ifdef FREEBSD
-	struct kvm_swap swapinfo;
 	int pagesize;
+#ifdef FREEBSD5
+	struct xswdev xsw;
+	int mib[16], n;
+	size_t mibsize, size;
+#else
+	struct kvm_swap swapinfo;
 	kvm_t *kvmd;
+#endif
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
@@ -102,17 +114,45 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.used = swap_stat.total - swap_stat.free;
 #endif
 #ifdef FREEBSD
+	pagesize=getpagesize();
+
+#ifdef FREEBSD5
+	swap_stat.total = 0;
+	swap_stat.used = 0;
+
+	mibsize = sizeof mib / sizeof mib[0];
+	if (sysctlnametomib("vm.swap_info", mib, &mibsize) < 0) {
+		return NULL;
+	}
+	for (n = 0; ; ++n) {
+		mib[mibsize] = n;
+		size = sizeof xsw;
+		if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, NULL) < 0) {
+			break;
+		}
+		if (xsw.xsw_version != XSWDEV_VERSION) {
+			return NULL;
+		}
+		swap_stat.total += (long long) xsw.xsw_nblks;
+		swap_stat.used += (long long) xsw.xsw_used;
+	}
+	if (errno != ENOENT) {
+		return NULL;
+	}
+#else
 	if((kvmd = get_kvm()) == NULL){
 		return NULL;
 	}
 	if ((kvm_getswapinfo(kvmd, &swapinfo, 1,0)) == -1){
 		return NULL;
 	}
-	pagesize=getpagesize();
 
-	swap_stat.total= (long long)swapinfo.ksw_total * (long long)pagesize;
-	swap_stat.used = (long long)swapinfo.ksw_used * (long long)pagesize;
-	swap_stat.free = swap_stat.total-swap_stat.used;
+	swap_stat.total = (long long)swapinfo.ksw_total;
+	swap_stat.used = (long long)swapinfo.ksw_used;
+#endif
+	swap_stat.total *= pagesize;
+	swap_stat.used *= pagesize;
+	swap_stat.free = swap_stat.total - swap_stat.used;
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	if ((uvm = get_uvmexp()) == NULL) {

@@ -78,8 +78,7 @@ freebsd5.*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
 	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x])
-	AM_CONDITIONAL(SETGIDBINS, true)
-	LINKFLAGS="-lkvm -ldevstat"
+	LINKFLAGS="-ldevstat"
 	;;
 netbsdelf*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
