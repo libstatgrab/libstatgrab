@@ -57,6 +57,11 @@
 #else
 #include <sys/proc.h>
 #endif
+#include <string.h>
+#include <paths.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <kvm.h>
 #endif
 
 int get_proc_snapshot(proc_state_t **ps){
@@ -67,7 +72,10 @@ int get_proc_snapshot(proc_state_t **ps){
 	int mib[3];
 	size_t size;
 	struct kinfo_proc *kp_stats;
-	int procs, i;
+	int procs, i, alloc;
+	static kvm_t *kvmd;
+	char **args;
+	char *proctitle;
 #endif
 #if defined(SOLARIS) || defined(LINUX)
         DIR *proc_dir;
@@ -199,34 +207,56 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
 #ifdef ALLBSD
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_PROC;
-	mib[2] = KERN_PROC_ALL;
+	kvmd = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
 
-	if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
-		return NULL;
-	}
+	if(kvmd == NULL) return NULL;
 
-	procs = size / sizeof(struct kinfo_proc);
+	kp_stats = kvm_getprocs(kvmd, KERN_PROC_ALL, 0, &procs);
 
-	kp_stats = malloc(size);
-	if (kp_stats == NULL) {
-		return NULL;
-	}
-
-	if (sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
-		free(kp_stats);
+	if (kp_stats == NULL || procs < 0) {
 		return NULL;
 	}
 
 	for (i = 0; i < procs; i++) {
+		/* replace with something more sensible */
 		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
+		if(proc_state == NULL ) {
+			return NULL;
+		}
 		proc_state_ptr = proc_state+proc_state_size;
 		
 		proc_state_ptr->process_name = strdup(kp_stats[i].ki_comm);
-		/* Seems we don't have access to that bit of memory */
-		/*proc_state_ptr->proctitle = strdup(kp_stats[i].ki_args->ar_args);*/
-		proc_state_ptr->proctitle = NULL;
+
+		args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
+		if(args != NULL) {
+			alloc = 1;
+			proctitle = malloc(alloc);
+			if(proctitle == NULL) {
+				return NULL;
+			}
+			while(*args != NULL) {
+				if(strlen(proctitle) + strlen(*args) >= alloc) {
+					alloc = (alloc + strlen(*args)) << 1;
+					proctitle = realloc(proctitle, alloc);
+					if(proctitle == NULL) {
+						return NULL;
+					}
+				}
+				strncat(proctitle, *args, strlen(*args));
+				strncat(proctitle, " ", 1);
+				args++;
+			}
+			/* remove trailing space */
+			proctitle[strlen(proctitle)-1] = NULL;
+			proc_state_ptr->proctitle = proctitle;
+		}
+		else {
+			proc_state_ptr->proctitle = malloc(strlen(kp_stats[i].ki_comm)+4);
+			if(proc_state_ptr->proctitle == NULL) {
+				return NULL;
+			}
+			sprintf(proc_state_ptr->proctitle, " (%s)", kp_stats[i].ki_comm);
+		}
 
 		proc_state_ptr->pid = kp_stats[i].ki_pid;
 		proc_state_ptr->parent = kp_stats[i].ki_ppid;
