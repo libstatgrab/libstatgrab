@@ -363,6 +363,16 @@ void populate_net() {
 			         "net", name, "tx", NULL);
 			add_stat(LONG_LONG, &net[i].rx,
 			         "net", name, "rx", NULL);
+			add_stat(LONG_LONG, &net[i].ipackets,
+			         "net", name, "ipackets", NULL);
+			add_stat(LONG_LONG, &net[i].opackets,
+			         "net", name, "opackets", NULL);
+			add_stat(LONG_LONG, &net[i].ierrors,
+			         "net", name, "ierrors", NULL);
+			add_stat(LONG_LONG, &net[i].oerrors,
+			         "net", name, "oerrors", NULL);
+			add_stat(LONG_LONG, &net[i].collisions,
+			         "net", name, "collisions", NULL);
 			add_stat(TIME_T, &net[i].systime,
 			         "net", name, "systime", NULL);
 		}
