@@ -1,13 +1,29 @@
-user_stats() returns a static user_stat_t structure.
+User Statistics
+===============
 
-user_stat_t *get_user_stats();
+$Id$
+
+Data Structure
+--------------
+
+A structure of type user_stat_t is used:
 
 typedef struct{
         char *name_list;
         int num_entries;
 }user_stat_t;
 
-name_list contains a list of all the logged in users. The
-list is a single char * and the users are space seperated.
+name_list	contains a space seperated list of the logged in users.
+num_entries	is the number of users logged in.
 
-num_entries contains the number of users logged in.
+Functions
+---------
+
+user_stat_t *get_user_stats();
+
+get_user_stats() returns a static user_stat_t structure.
+
+Examples
+--------
+
+An example can be found in examples/user_list.c
