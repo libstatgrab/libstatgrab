@@ -37,7 +37,8 @@ typedef enum {
 	FLOAT,
 	DOUBLE,
 	STRING,
-	INT
+	INT,
+	DUPLEX
 } stat_type;
 
 typedef enum {
@@ -348,6 +349,7 @@ void populate_proc() {
 void populate_net() {
 	int n, i;
 	network_stat_t *net;
+	network_iface_stat_t *iface;
 
 	net = use_diffs ? get_network_stats_diff(&n) : get_network_stats(&n);
 	if (net != NULL) {
@@ -362,6 +364,18 @@ void populate_net() {
 			         "net", name, "rx", NULL);
 			add_stat(TIME_T, &net[i].systime,
 			         "net", name, "systime", NULL);
+		}
+	}
+
+	iface = get_network_iface_stats(&n);
+	if (iface != NULL) {
+		for (i = 0; i < n; i++) {
+			const char *name = iface[i].interface_name;
+
+			add_stat(INT, &iface[i].speed,
+			         "net", name, "speed", NULL);
+			add_stat(DUPLEX, &iface[i].dup,
+			         "net", name, "duplex", NULL);
 		}
 	}
 }
@@ -459,6 +473,19 @@ void print_stat_value(const stat *s) {
 		break;
 	case INT:
 		printf("%d", *(int *)v);
+		break;
+	case DUPLEX:
+		switch (*(duplex *) v) {
+		case FULL_DUPLEX:
+			printf("full");
+			break;
+		case HALF_DUPLEX:
+			printf("half");
+			break;
+		default:
+			printf("unknown");
+			break;
+		}
 		break;
 	}
 }
