@@ -151,7 +151,12 @@ network_stat_t *get_network_stats(int *entries){
 		if(network_stat_ptr->interface_name==NULL) return NULL;
 		net_data=(struct if_data *)net_ptr->ifa_data;
 		network_stat_ptr->rx=net_data->ifi_ibytes;
-		network_stat_ptr->tx=net_data->ifi_obytes;			
+		network_stat_ptr->tx=net_data->ifi_obytes;
+		network_stat_ptr->ipackets=net_data->ifi_ipackets;
+		network_stat_ptr->opackets=net_data->ifi_opackets;
+		network_stat_ptr->ierrors=net_data->ifi_ierrors;
+		network_stat_ptr->oerrors=net_data->ifi_oerrors;
+		network_stat_ptr->collisions=net_data->ifi_collisions;
 		network_stat_ptr->systime=time(NULL);
 		interfaces++;
 	}
