@@ -29,13 +29,13 @@
 
 #include "vector.h"
 
-int statgrab_vector_resize(char **vector, vector_header *h, int count) {
+void *statgrab_vector_resize(void *vector, vector_header *h, int count) {
 	int new_count, i;
 
 	/* Destroy any now-unused items. */
 	if (count < h->used_count && h->destroy_fn != NULL) {
 		for (i = count; i < h->used_count; i++) {
-			h->destroy_fn((void *) ((*vector) + i * h->item_size));
+			h->destroy_fn((void *) (vector + i * h->item_size));
 		}
 	}
 
@@ -47,26 +47,27 @@ int statgrab_vector_resize(char **vector, vector_header *h, int count) {
 	if (new_count != h->alloc_count) {
 		char *new_vector;
 
-		new_vector = realloc(*vector, new_count * h->item_size);
+		new_vector = realloc(vector, new_count * h->item_size);
 		if (new_vector == NULL && new_count != 0) {
 			/* Out of memory -- free the contents of the vector. */
 			statgrab_vector_resize(vector, h, 0);
-			return -1;
+			/* And return the sentinel value to indicate failure. */
+			return statgrab_vector_sentinel;
 		}
 
-		*vector = new_vector;
+		vector = new_vector;
 		h->alloc_count = new_count;
 	}
 
 	/* Initialise any new items. */
 	if (count > h->used_count && h->init_fn != NULL) {
 		for (i = h->used_count; i < count; i++) {
-			h->init_fn((void *) ((*vector) + i * h->item_size));
+			h->init_fn((void *) (vector + i * h->item_size));
 		}
 	}
 
 	h->used_count = count;
 
-	return 0;
+	return vector;
 }
 
