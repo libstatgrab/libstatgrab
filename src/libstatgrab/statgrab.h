@@ -67,6 +67,7 @@ typedef enum {
 
 void sg_set_error(sg_error code, const char *arg);
 sg_error sg_get_error();
+const char *sg_get_error_arg();
 const char *sg_str_error(sg_error code);
 
 typedef struct {

@@ -30,14 +30,20 @@
 #include "statgrab.h"
 
 static sg_error error = SG_ERROR_NONE;
+#define ERROR_ARG_MAX 256
+static char error_arg[ERROR_ARG_MAX];
 
 void sg_set_error(sg_error code, const char *arg) {
 	error = code;
-	/* FIXME do something with arg */
+	strlcpy(error_arg, arg, sizeof error_arg);
 }
 
 sg_error sg_get_error() {
 	return error;
+}
+
+const char *sg_get_error_arg() {
+	return error_arg;
 }
 
 const char *sg_str_error(sg_error code) {
@@ -102,8 +108,7 @@ const char *sg_str_error(sg_error code) {
 		return "unsupported function";
 	case SG_ERROR_XSW_VER_MISMATCH:
 		return "XSW version mismatch";
-	default:
-		return "unknown error";
 	}
+	return "unknown error";
 }
 
