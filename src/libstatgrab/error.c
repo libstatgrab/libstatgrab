@@ -26,6 +26,8 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #include "statgrab.h"
 #include "tools.h"
@@ -33,6 +35,7 @@
 static sg_error error = SG_ERROR_NONE;
 #define ERROR_ARG_MAX 256
 static char error_arg[ERROR_ARG_MAX];
+static char error_strerror[ERROR_ARG_MAX];
 
 void sg_set_error(sg_error code, const char *arg) {
 	error = code;
@@ -45,12 +48,27 @@ void sg_set_error(sg_error code, const char *arg) {
 	}
 }
 
+void sg_set_error_with_errno(sg_error code, const char *arg, int use_errno) {
+	if(use_errno) {
+		sg_strlcpy(error_strerror, strerror(errno), sizeof error_strerror);
+	}
+	else {
+		/* FIXME is this the best idea? */
+		error_strerror[0] = '\0';
+	}
+	sg_set_error(code, arg);
+}
+
 sg_error sg_get_error() {
 	return error;
 }
 
 const char *sg_get_error_arg() {
 	return error_arg;
+}
+
+const char *sg_get_error_strerror() {
+	return error_strerror;
 }
 
 const char *sg_str_error(sg_error code) {

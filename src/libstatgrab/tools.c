@@ -490,7 +490,7 @@ struct uvmexp *sg_get_uvmexp() {
 #endif
 
 int sg_init(){
-	sg_set_error(SG_ERROR_NONE, NULL);
+	sg_set_error_with_errno(SG_ERROR_NONE, NULL, 0);
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	if (sg_get_kvm() == NULL) {
