@@ -416,7 +416,8 @@ void usage() {
 	       "  -t DELAY   When repeating, wait DELAY seconds between updates (default 1)\n"
 	       "  -p         Display CPU usage as percentages rather than absolute values\n"
 	       "\n");
-	printf("Report bugs to <bugs@i-scream.org>.\n");
+	printf("Version %s - report bugs to <%s>.\n",
+		PACKAGE_VERSION, PACKAGE_BUGREPORT);
 	exit(1);
 }
 
