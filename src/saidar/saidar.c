@@ -295,12 +295,16 @@ void display_data(){
 		printw("%8s", size_conv(stats.swap_stats->free));
 	}
 
-	if (stats.mem_stats != NULL && stats.swap_stats != NULL) {	
-		/* VM */
+	/* VM */
+	if (stats.mem_stats != NULL) {	
 		move(6, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total));
+	}
+	if (stats.swap_stats != NULL) {	
 		move(7, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total));
+	}
+	if (stats.mem_stats != NULL && stats.swap_stats != NULL) {	
 		move(8, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used+stats.swap_stats->used)/(stats.mem_stats->total+stats.swap_stats->total)));
 	}
