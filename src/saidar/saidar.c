@@ -428,6 +428,8 @@ int main(int argc, char **argv){
         extern int optind;
         int c;
 
+	time_t last_update = 0;
+
 	WINDOW *window;
 
 	extern int errno;
@@ -484,20 +486,24 @@ int main(int argc, char **argv){
 	display_headings();
 
 	for(;;){
+		time_t now;
 		int ch = getch();
+
 		if (ch == 'q'){
 			endwin();
 			return 0;
 		}
 
-		get_stats();
+		/* To keep the numbers slightly accurate we do not want them
+		 * updating more frequently than once a second.
+		 */
+		now = time(NULL);
+		if ((now - last_update) >= 1) {
+			get_stats();
+		}
+		last_update = now;
 
 		display_data();
-
-		/* To keep the numbers slightly accurate we do not want them updating more 
-  		 * frequently than once a second.
-		 */
-		sleep(1);
 	}	
 
 	endwin();
