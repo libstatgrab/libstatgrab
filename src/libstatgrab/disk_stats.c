@@ -37,7 +37,7 @@
 #include <sys/mnttab.h>
 #include <sys/statvfs.h>
 #include <kstat.h>
-#define VALID_FS_TYPES {"ufs", "tmpfs"}
+#define VALID_FS_TYPES {"ufs", "tmpfs", "vxfs"}
 #endif
 
 #if defined(LINUX) || defined(CYGWIN)
