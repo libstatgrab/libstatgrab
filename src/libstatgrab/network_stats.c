@@ -518,7 +518,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
                                 continue;
                         }
 			/* Solaris has 1 for up, and 0 for not. As we do too */
-                        network_iface_stat_ptr->up = value.ui32;
+                        network_iface_stat_ptr->up = knp->value.ui32;
 
 			if((knp=kstat_data_lookup(ksp, "link_duplex"))==NULL){
 				/* Not a network interface, so skip to the next entry */
