@@ -35,6 +35,7 @@
 #endif
 
 #ifdef LINUX
+#include <time.h>
 #include <sys/vfs.h>
 #include <mntent.h>
 #include "tools.h"
