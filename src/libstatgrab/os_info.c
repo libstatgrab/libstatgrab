@@ -99,10 +99,7 @@ general_stat_t *get_general_stats(){
 	fclose(f);
 #endif
 #ifdef FREEBSD
-	if (sysctlbyname("kern.boottime", NULL, &size, NULL, NULL) < 0){
-		return NULL;
-	}
-	if (sysctlbyname("kern.boottime", &boottime, &size, NULL, NULL) < 0){
+	if (sysctlbyname("kern.boottime", &boottime, &size, NULL, 0) < 0){
 		return NULL;
 	}
 	time(&curtime);

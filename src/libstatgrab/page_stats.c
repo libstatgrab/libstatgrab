@@ -92,16 +92,10 @@ page_stat_t *get_page_stats(){
 
 #endif
 #ifdef FREEBSD
-        if (sysctlbyname("vm.stats.vm.v_swappgsin", NULL, &size, NULL, NULL) < 0){
+        if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, 0) < 0){
                 return NULL;
         }
-        if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, NULL) < 0){
-                return NULL;
-        }
-        if (sysctlbyname("vm.stats.vm.v_swappgsout", NULL, &size, NULL, NULL) < 0){
-                return NULL;
-        }
-        if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, NULL) < 0){
+        if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, 0) < 0){
                 return NULL;
         }
 

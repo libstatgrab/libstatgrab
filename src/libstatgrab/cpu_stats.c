@@ -105,10 +105,7 @@ cpu_states_t *get_cpu_totals(){
 	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
 #endif
 #ifdef FREEBSD
-	if (sysctlbyname("kern.cp_time", NULL, &size, NULL, NULL) < 0){	
-		return NULL;
-	}
-	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, NULL) < 0){
+	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0){
 		return NULL;
   	}
 
