@@ -71,6 +71,7 @@ repeat_mode_type repeat_mode = REPEAT_NONE;
 int repeat_time = 1;
 int use_cpu_percent = 0;
 int use_diffs = 0;
+long float_scale_factor = 0;
 
 /* Exit with an error message. */
 void die(const char *s) {
@@ -488,6 +489,7 @@ void get_stats() {
 /* Print the value of a stat. */
 void print_stat_value(const stat *s) {
 	void *v = s->stat;
+	double fv;
 	long l;
 
 	switch (s->type) {
@@ -500,10 +502,17 @@ void print_stat_value(const stat *s) {
 		printf("%ld", l);
 		break;
 	case FLOAT:
-		printf("%f", *(float *)v);
-		break;
 	case DOUBLE:
-		printf("%f", *(double *)v);
+		if (s->type == FLOAT) {
+			fv = *(float *)v;
+		} else {
+			fv = *(double *)v;
+		}
+		if (float_scale_factor != 0) {
+			printf("%ld", (long)(float_scale_factor * fv));
+		} else {
+			printf("%f", fv);
+		}
 		break;
 	case STRING:
 		/* FIXME escaping? */
@@ -620,6 +629,7 @@ void usage() {
 	       "  -t DELAY   When repeating, wait DELAY seconds between updates (default 1)\n"
 	       "  -p	 Display CPU usage differences as percentages rather than\n"
 	       "	     absolute values\n"
+	       "  -f SCALE   Display floating-point values as integers scaled by FACTOR\n"
 	       "\n");
 	printf("Version %s - report bugs to <%s>.\n",
 	       PACKAGE_VERSION, PACKAGE_BUGREPORT);
@@ -629,7 +639,7 @@ void usage() {
 int main(int argc, char **argv) {
 	opterr = 0;
 	while (1) {
-		int c = getopt(argc, argv, "lbmunsot:p");
+		int c = getopt(argc, argv, "lbmunsot:pf:");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -659,6 +669,9 @@ int main(int argc, char **argv) {
 			break;
 		case 'p':
 			use_cpu_percent = 1;
+			break;
+		case 'f':
+			float_scale_factor = atol(optarg);
 			break;
 		default:
 			usage();
