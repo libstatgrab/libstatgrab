@@ -158,8 +158,9 @@ sub main () {
 
 	foreach my $net (sort keys %nets) {
 		my $name = $stats{"net.$net.interface_name"};
-		# FIXME should be able to discover interface speed
-		entry("Network interface $name IO", "net.$net.rx", "net.$net.tx", 100*$mib, "Network IO", "KiB/s", "rx", "tx", 0, $KIBIBYTES);
+		my $speed = int($stats{"net.$net.speed"});
+		$speed = 100 if $speed == 0;
+		entry("Network interface $name IO", "net.$net.rx", "net.$net.tx", $speed*$mib, "Network IO", "KiB/s", "rx", "tx", 0, $KIBIBYTES);
 	}
 
 	if (exists $toplevel{"page"}) {
