@@ -171,12 +171,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	 * After that I then need to multiple the anything that used vm.stats to
 	 * get the system statistics by pagesize 
 	 */
-	/* FIXME getpagesize() cannot actually fail */
-	if ((pagesize=getpagesize()) == -1){
-		sg_set_error(SG_ERROR_GETPAGESIZE, "NULL");
-		return NULL;
-	}
-
+	pagesize = getpagesize();
 	mem_stat.cache=cache_count*pagesize;
 
 	/* Of couse nothing is ever that simple :) And I have inactive pages to
