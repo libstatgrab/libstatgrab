@@ -207,20 +207,31 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
 #ifdef ALLBSD
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC;
+	mib[2] = KERN_PROC_ALL;
+
+	if(sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	procs = size / sizeof(struct kinfo_proc);
+
+	kp_stats = malloc(size);
+	if(kp_stats == NULL) {
+		return NULL;
+	}
+
+	if(sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
+		free(kp_stats);
+		return NULL;
+	}
 
 #if defined(NETBSD) || defined(OPENBSD)
 	kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
 #else
 	kvmd = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
 #endif
-
-	if(kvmd == NULL) return NULL;
-
-	kp_stats = kvm_getprocs(kvmd, KERN_PROC_ALL, 0, &procs);
-
-	if (kp_stats == NULL || procs < 0) {
-		return NULL;
-	}
 
 	for (i = 0; i < procs; i++) {
 		/* replace with something more sensible */
@@ -266,6 +277,7 @@ int get_proc_snapshot(proc_state_t **ps){
 			proc_state_ptr->proctitle = proctitle;
 		}
 		else {
+			/* Should probably be returning NULL here */
 			proc_state_ptr->proctitle =
 				malloc(strlen(proc_state_ptr->process_name)+4);
 			if(proc_state_ptr->proctitle == NULL) {
@@ -318,7 +330,6 @@ int get_proc_snapshot(proc_state_t **ps){
 		/* This is in pages */
 		proc_state_ptr->proc_resident =
 			kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
-		/* This is in microseconds */
 #if defined(NETBSD) || defined(OPENBSD)
 		proc_state_ptr->time_spent =
 			kp_stats[i].kp_proc.p_rtime.tv_sec;
@@ -328,6 +339,7 @@ int get_proc_snapshot(proc_state_t **ps){
 			kp_stats[i].kp_thread.td_sticks +
 			kp_stats[i].kp_thread.td_iticks ) / 1000000;
 #else
+		/* This is in microseconds */
 		proc_state_ptr->time_spent =
 			kp_stats[i].kp_proc.p_runtime / 1000000;
 #endif
