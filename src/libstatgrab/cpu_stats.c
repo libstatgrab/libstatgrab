@@ -34,7 +34,7 @@
 #if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
 #endif
@@ -64,7 +64,7 @@ cpu_states_t *get_cpu_totals(){
 	FILE *f;
 #endif
 #ifdef ALLBSD
-#ifndef FREEBSD
+#if defined(NETBSD) || defined(OPENBSD)
 	int mib[2];
 #endif
 #ifdef NETBSD
@@ -125,7 +125,7 @@ cpu_states_t *get_cpu_totals(){
 	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
 #endif
 #ifdef ALLBSD
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof cp_time;
 	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0){
 		return NULL;

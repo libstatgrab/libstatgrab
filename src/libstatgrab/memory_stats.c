@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
@@ -62,7 +62,7 @@ mem_stat_t *get_memory_stats(){
 	unsigned long long value;
 	FILE *f;
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	int mib[2];
 	u_long physmem;
 	size_t size;
@@ -127,7 +127,7 @@ mem_stat_t *get_memory_stats(){
 	mem_stat.used = mem_stat.total - mem_stat.free;
 #endif
 
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	/* Returns bytes */
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM;

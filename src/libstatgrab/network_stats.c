@@ -262,7 +262,7 @@ network_stat_t *get_network_stats(int *entries){
 }
 
 long long transfer_diff(long long new, long long old){
-#if defined(SOL7) || defined(LINUX) || defined(FREEBSD)
+#if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD)
 #define MAXVAL 4294967296LL
 #else
 #define MAXVAL 18446744073709551616LL
@@ -477,11 +477,14 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			case(IFM_1000_SX):
 			case(IFM_1000_LX):
 			case(IFM_1000_CX):
-#if defined(FREEBSD) && !defined(FREEBSD5)
-			case(IFM_1000_TX):
-			case(IFM_1000_FX):
-#else
-			case(IFM_1000_T):
+#ifdef IFM_1000_TX
+			case(IFM_1000_TX): /* FreeBSD 4 and others? */
+#endif
+#ifdef IFM_1000_FX
+			case(IFM_1000_FX): /* FreeBSD 4 */
+#endif
+#ifdef IFM_1000_T
+			case(IFM_1000_T): /* FreeBSD 5 */
 #endif
 				network_iface_stat_ptr->speed = 1000;
 				break;

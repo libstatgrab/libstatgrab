@@ -34,7 +34,7 @@
 #ifdef ALLBSD
 #include <fcntl.h>
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <kvm.h>
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
@@ -420,7 +420,7 @@ long long get_ll_match(char *line, regmatch_t *match){
 	return num;
 }
 
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 kvm_t *get_kvm() {
 	static kvm_t *kvmd = NULL;
 
@@ -460,7 +460,7 @@ struct uvmexp *get_uvmexp() {
 #endif
 
 int statgrab_init(){
-#ifdef FREEBSD 
+#if defined(FREEBSD) || defined(DFBSD)
 	{ 
 		kvm_t *kvmd = get_kvm(); 
 		if (kvmd == NULL) return 1;

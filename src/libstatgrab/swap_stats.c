@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #ifdef FREEBSD5
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -66,7 +66,7 @@ swap_stat_t *get_swap_stats(){
 	char *line_ptr;
 	unsigned long long value;
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	int pagesize;
 #ifdef FREEBSD5
 	struct xswdev xsw;
@@ -113,7 +113,7 @@ swap_stat_t *get_swap_stats(){
 	fclose(f);
 	swap_stat.used = swap_stat.total - swap_stat.free;
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	pagesize=getpagesize();
 
 #ifdef FREEBSD5

@@ -46,7 +46,7 @@
 #ifdef SOLARIS
 #define MAX_LOGIN_NAME_SIZE 8
 #endif
-#if defined(LINUX) || defined(FREEBSD)
+#if defined(LINUX) || defined(FREEBSD) || defined(DFBSD)
 #define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
 #endif
 #if defined(NETBSD) || defined(OPENBSD)

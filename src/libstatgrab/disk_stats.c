@@ -61,7 +61,7 @@
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <sys/dkstat.h>
 #include <devstat.h>
 #define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
@@ -349,7 +349,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	time_t now;
 	const char *format;
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	static struct statinfo stats;
 	static int stats_init = 0;
 	int counter;
@@ -489,7 +489,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #endif
 #endif
 
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	if (!stats_init) {
 		stats.dinfo=malloc(sizeof(struct devinfo));
 		if(stats.dinfo==NULL) return NULL;

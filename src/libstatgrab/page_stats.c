@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <string.h>
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -59,7 +59,7 @@ page_stat_t *get_page_stats(){
 	FILE *f;
 	char *line_ptr;
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	size_t size;
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
@@ -119,7 +119,7 @@ page_stat_t *get_page_stats(){
 		return NULL;
 	}
 #endif
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof page_stats.pages_pagein;
         if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, 0) < 0){
                 return NULL;

@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 #include <regex.h>
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <kvm.h>
 #endif
 #ifdef NETBSD
@@ -48,7 +48,7 @@ char *f_read_line(FILE *f, const char *string);
 
 char *get_string_match(char *line, regmatch_t *match);
 
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 kvm_t *get_kvm(void);
 #endif
 

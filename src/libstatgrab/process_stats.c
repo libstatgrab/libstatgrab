@@ -50,10 +50,11 @@
 #include <stdlib.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#if defined(FREEBSD) || defined(DFBSD)
+#include <sys/user.h>
+#else
 #include <sys/proc.h>
 #endif
-#ifdef FREEBSD
-#include <sys/user.h>
 #endif
 
 process_stat_t *get_process_stats(){

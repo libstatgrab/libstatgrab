@@ -36,7 +36,7 @@
 #include <stdio.h>
 #endif
 #ifdef ALLBSD
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(DFBSD)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #else
