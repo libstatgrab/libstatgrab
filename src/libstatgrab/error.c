@@ -29,17 +29,22 @@
 
 #include "statgrab.h"
 
-static sg_error error;
+static sg_error error = SG_ERROR_NONE;
 
 void sg_set_error(sg_error code, const char *arg) {
 	error = code;
+	/* FIXME do something with arg */
 }
 
 sg_error sg_get_error() {
 	return error;
 }
 
-char *sg_str_error(sg_error code) {
-	return NULL;
+const char *sg_str_error(sg_error code) {
+	switch (code) {
+	case SG_ERROR_NONE:
+		return "no error";
+	}
+	return "unknown error";
 }
 
