@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="get_process_stats">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>get_process_stats</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>get_process_stats</refname>
+    <refpurpose>get process statistics</refpurpose>
+  </refnamediv>
+    
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>process_stat_t *<function>get_process_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+    
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <function>get_process_stats</function> returns a pointer to a
+      static buffer of type <structname>process_stat_t</structname>.
+    </para>
+    <para>
+      It provides information on the number of processes and the
+      system and the different states they're in.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>Return Values</title>
+
+    <para>
+      The structure returned is of type
+      <structname>process_stat_t</structname>.
+    </para>
+
+    <programlisting>
+typedef struct{
+        int total;
+        int running;
+        int sleeping;
+        int stopped;
+        int zombie;
+}process_stat_t;
+    </programlisting>
+
+    <variablelist>
+      <varlistentry>
+        <term><structfield>total</structfield></term>
+        <listitem>
+          <para>
+            The total number of processes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>running</structfield></term>
+        <listitem>
+          <para>
+            The number of running processes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>sleeping</structfield></term>
+        <listitem>
+          <para>
+            The number of sleeping processes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>stopped</structfield></term>
+        <listitem>
+          <para>
+            The number of stopped processes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>zombie</structfield></term>
+        <listitem>
+          <para>
+            The number of zombie processes.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+    <para>Nothing yet</para>
+  </refsect1>
+  
+  <refsect1>
+    <title>Website</title>
+    
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org">http://www.i-scream.org</ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
