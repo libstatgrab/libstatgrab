@@ -119,7 +119,6 @@ mem_stat_t *get_memory_stats(){
 	 * problem for sometime yet :) 
 	 */
 	if((sscanf(line_ptr,"Mem:  %lld %lld %lld %*d %*d %lld", \
-	size = sizeof physmem;
 		&mem_stat.total, \
 		&mem_stat.used, \
 		&mem_stat.free, \
