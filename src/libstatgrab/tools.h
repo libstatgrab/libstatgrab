@@ -22,7 +22,9 @@
  */
 
 #include <stdio.h>
+#if defined(LINUX) || defined(CYGWIN)
 #include <regex.h>
+#endif
 #if defined(FREEBSD) || defined(DFBSD)
 #include <kvm.h>
 #endif
@@ -39,10 +41,12 @@ size_t sg_strlcpy(char *dst, const char *src, size_t siz);
 
 int sg_update_string(char **dest, const char *src);
 
+#if defined(LINUX) || defined(CYGWIN)
 long long sg_get_ll_match(char *line, regmatch_t *match);
 char *sg_get_string_match(char *line, regmatch_t *match);
 
 char *sg_f_read_line(FILE *f, const char *string);
+#endif
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 kvm_t *sg_get_kvm(void);

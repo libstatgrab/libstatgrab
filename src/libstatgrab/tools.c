@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <regex.h>
 #ifdef ALLBSD
 #include <fcntl.h>
 #endif
@@ -266,7 +265,7 @@ static int build_mapping(){
 
 #endif
 
-
+#if defined(LINUX) || defined(CYGWIN)
 char *sg_f_read_line(FILE *f, const char *string){
 	/* Max line length. 8k should be more than enough */
 	static char line[8192];
@@ -291,6 +290,16 @@ char *sg_get_string_match(char *line, regmatch_t *match){
 	return match_string;
 }
 
+long long sg_get_ll_match(char *line, regmatch_t *match){
+	char *ptr;
+	long long num;
+
+	ptr=line+match->rm_so;
+	num=atoll(ptr);
+
+	return num;
+}
+#endif
 
 #ifndef HAVE_ATOLL
 static long long atoll(const char *s) {
@@ -428,16 +437,6 @@ int sg_update_string(char **dest, const char *src) {
 	strcpy(new, src);
 	*dest = new;
 	return 0;
-}
-
-long long sg_get_ll_match(char *line, regmatch_t *match){
-	char *ptr;
-	long long num;
-
-	ptr=line+match->rm_so;
-	num=atoll(ptr);
-
-	return num;
 }
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
