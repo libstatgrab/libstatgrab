@@ -48,7 +48,6 @@ int main(int argc, char **argv){
 
 	printf("Name\tSpeed\tDuplex\n");
 	for(i = 0; i < iface_count; i++) {
-		printf("%d\n", network_iface_stats->dup);
 		printf("%s\t%d\t", network_iface_stats->interface_name, network_iface_stats->speed);
 		switch (network_iface_stats->dup) {
 		case FULL_DUPLEX:
