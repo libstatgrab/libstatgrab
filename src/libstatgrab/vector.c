@@ -32,7 +32,12 @@
 void *statgrab_vector_resize(void *vector, vector_header *h, int count) {
 	int new_count, i;
 
-	/* Destroy any now-unused items. */
+	/* Destroy any now-unused items.
+         *
+	 * Note that there's an assumption here that making the vector smaller
+	 * will never fail; if it did, then we would have destroyed items here
+	 * but not actually got rid of the vector pointing to them before the
+	 * error return.) */
 	if (count < h->used_count && h->destroy_fn != NULL) {
 		for (i = count; i < h->used_count; i++) {
 			h->destroy_fn((void *) (vector + i * h->item_size));
@@ -51,8 +56,8 @@ void *statgrab_vector_resize(void *vector, vector_header *h, int count) {
 		if (new_vector == NULL && new_count != 0) {
 			/* Out of memory -- free the contents of the vector. */
 			statgrab_vector_resize(vector, h, 0);
-			/* And return the sentinel value to indicate failure. */
-			return statgrab_vector_sentinel;
+			h->error = -1;
+			return vector;
 		}
 
 		vector = new_vector;
@@ -67,7 +72,7 @@ void *statgrab_vector_resize(void *vector, vector_header *h, int count) {
 	}
 
 	h->used_count = count;
-
+	h->error = 0;
 	return vector;
 }
 
