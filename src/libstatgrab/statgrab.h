@@ -93,6 +93,13 @@ typedef struct {
 }disk_stat_t;
 
 typedef struct{
+	char *disk_name;
+	long long read_bytes;
+	long long write_bytes;
+	time_t systime;
+}diskio_stat_t;
+
+typedef struct{
 	int total;
 	int running;
 	int sleeping;
@@ -134,6 +141,7 @@ disk_stat_t *get_disk_stats(int *entries);
 process_stat_t *get_process_stats();
 
 network_stat_t *get_network_stats(int *entries);
+network_stat_t *get_network_stats_diff(int *entries);
 
 page_stat_t *get_page_stats();
 page_stat_t *get_page_stats_diff();

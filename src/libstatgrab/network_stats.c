@@ -31,55 +31,60 @@
 #include <string.h>
 #endif
 
-#define START_VAL 1
+static network_stat_t *network_stats=NULL;
+static int interfaces=0;
 
-network_stat_t *network_stat_init(int num_iface, int *wmark, network_stat_t *net_stats){
-	int x;
-	network_stat_t *net_stats_ptr;
+void network_stat_init(int start, int end, network_stat_t *net_stats){
 
-	if(*wmark==-1){
-		printf("new malloc\n");
-		if((net_stats=malloc(START_VAL * sizeof(network_stat_t)))==NULL){
+	for(net_stats+=start; start<end; start++){
+		net_stats->interface_name=NULL;
+		net_stats->tx=0;
+		net_stats->rx=0;
+		net_stats++;
+	}
+}
+
+network_stat_t *network_stat_malloc(int needed_entries, int *cur_entries, network_stat_t *net_stats){
+
+	if(net_stats==NULL){
+
+		if((net_stats=malloc(needed_entries * sizeof(network_stat_t)))==NULL){
 			return NULL;
 		}
-		*wmark=START_VAL;
-		net_stats_ptr=net_stats;
-		for(x=0;x<(*wmark);x++){
-			net_stats_ptr->interface_name=NULL;
-			net_stats_ptr++;
-		}
+		network_stat_init(0, needed_entries, net_stats);
+		*cur_entries=needed_entries;
+
 		return net_stats;
 	}
-	if(num_iface>(*wmark-1)){
-		if((net_stats=realloc(net_stats, (*wmark)*2 * sizeof(network_stat_t)))==NULL){
+
+
+	if(*cur_entries<needed_entries){
+		net_stats=realloc(net_stats, (sizeof(network_stat_t)*needed_entries));
+		if(net_stats==NULL){
 			return NULL;
 		}
-
-		*wmark=(*wmark)*2;
-		net_stats_ptr=net_stats+num_iface;
-		for(x=num_iface;x<(*wmark);x++){
-			net_stats_ptr->interface_name=NULL;
-			net_stats_ptr++;
-		}
-		return net_stats;
+		network_stat_init(*cur_entries, needed_entries, net_stats);
+		*cur_entries=needed_entries;
 	}
 
 	return net_stats;
 }
 
+
 network_stat_t *get_network_stats(int *entries){
         kstat_ctl_t *kc;
         kstat_t *ksp;
 	kstat_named_t *knp;
+
+	static int sizeof_network_stats=0;	
 	
-	int interfaces=0;	
 	network_stat_t *network_stat_ptr;
-	static network_stat_t *network_stats=NULL;
-	static int watermark=-1;
 
         if ((kc = kstat_open()) == NULL) {
                 return NULL;
         }
+
+	interfaces=0;	
 
     	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         	if (!strcmp(ksp->ks_class, "net")) {
@@ -89,7 +94,8 @@ network_stat_t *get_network_stats(int *entries){
 				/* Not a network interface, so skip to the next entry */
 				continue;
 			}
-			network_stats=network_stat_init(interfaces, &watermark, network_stats);
+
+			network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
 			if(network_stats==NULL){
 				return NULL;
 			}
@@ -105,6 +111,8 @@ network_stat_t *get_network_stats(int *entries){
 				free(network_stat_ptr->interface_name);
 			}
 			network_stat_ptr->interface_name=strdup(ksp->ks_name);
+
+			network_stat_ptr->systime=time(NULL);
 			interfaces++;
 		}
 	}
@@ -114,6 +122,70 @@ network_stat_t *get_network_stats(int *entries){
 	*entries=interfaces;
 
 	return network_stats;	
-
 }
+
+network_stat_t *get_network_stats_diff(int *entries){
+	static network_stat_t *network_stats_diff=NULL;
+	static int sizeof_net_stats_diff=0;
+	network_stat_t *network_stats_ptr, *network_stats_diff_ptr;
+	int ifaces, x, y;
+
+	if(network_stats==NULL){
+		network_stats_ptr=get_network_stats(&ifaces);
+		*entries=ifaces;
+		return network_stats_ptr;
+	}
+
+	network_stats_diff=network_stat_malloc(interfaces, &sizeof_net_stats_diff, network_stats_diff);
+	if(network_stats_diff==NULL){
+		return NULL;
+	}
+
+	network_stats_ptr=network_stats;
+	network_stats_diff_ptr=network_stats_diff;
+
+	for(ifaces=0;ifaces<interfaces;ifaces++){
+		if(network_stats_diff_ptr->interface_name!=NULL){
+			free(network_stats_diff_ptr->interface_name);
+		}
+		network_stats_diff_ptr->interface_name=strdup(network_stats_ptr->interface_name);
+		network_stats_diff_ptr->tx=network_stats_ptr->tx;
+		network_stats_diff_ptr->rx=network_stats_ptr->rx;
+		network_stats_diff_ptr->systime=network_stats->systime;
+
+		network_stats_ptr++;
+		network_stats_diff_ptr++;
+	}
+	network_stats_ptr=get_network_stats(&ifaces);		
+	network_stats_diff_ptr=network_stats_diff;
+
+	for(x=0;x<sizeof_net_stats_diff;x++){
+
+		if((strcmp(network_stats_diff_ptr->interface_name, network_stats_ptr->interface_name))==0){
+			network_stats_diff_ptr->tx = network_stats_ptr->tx - network_stats_diff_ptr->tx;
+			network_stats_diff_ptr->rx = network_stats_ptr->rx - network_stats_diff_ptr->rx;	
+			network_stats_diff_ptr->systime = network_stats_ptr->systime - network_stats_diff_ptr->systime;	
+		}else{
+			
+			network_stats_ptr=network_stats;
+			for(y=0;y<ifaces;y++){
+				if((strcmp(network_stats_diff_ptr->interface_name, network_stats_ptr->interface_name))==0){
+					network_stats_diff_ptr->tx = network_stats_ptr->tx - network_stats_diff_ptr->tx;
+					network_stats_diff_ptr->rx = network_stats_ptr->rx - network_stats_diff_ptr->rx;	
+					network_stats_diff_ptr->systime = network_stats_ptr->systime - network_stats_diff_ptr->systime;	
+					break;
+				}
+
+				network_stats_ptr++;
+			}	
+		}
+
+		network_stats_ptr++;
+		network_stats_diff_ptr++;
+	}
+
+	return network_stats_diff;
+}	
+
+
 
