@@ -81,7 +81,6 @@ linux-gnu)
 	AC_DEFINE(LINUX, , [Building on GNU/Linux])
 	;;
 cygwin)
-	AC_DEFINE(LINUX, , [Building on GNU/Linux])
 	AC_DEFINE(CYGWIN, , [Building on Cygwin])
 	;;
 *)

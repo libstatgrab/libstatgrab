@@ -29,7 +29,7 @@
 #include <sys/sysinfo.h>
 #include <string.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #endif
 #ifdef FREEBSD
@@ -99,7 +99,7 @@ cpu_states_t *get_cpu_totals(){
 	
         kstat_close(kc);
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/stat", "r" ))==NULL) {
 		return NULL;
 	}

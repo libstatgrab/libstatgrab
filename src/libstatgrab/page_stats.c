@@ -30,7 +30,7 @@
 #include <sys/sysinfo.h>
 #include <string.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #include <string.h>
 #endif
@@ -48,7 +48,7 @@ page_stat_t *get_page_stats(){
         kstat_t *ksp;
         cpu_stat_t cs;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	FILE *f;
 	char *line_ptr;
 #endif
@@ -79,7 +79,7 @@ page_stat_t *get_page_stats(){
 
 	kstat_close(kc);
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/vmstat", "r")) != NULL) {
 		while ((line_ptr = f_read_line(f, "")) != NULL) {
 			long long value;

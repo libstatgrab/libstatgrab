@@ -39,7 +39,7 @@ user_stat_t *get_user_stats(){
 	static user_stat_t user_stats;
 	static int size_of_namelist=-1;
 	char *tmp;
-#if defined(SOLARIS) || defined(LINUX)	
+#if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
 	struct utmp *entry;
 #endif
 #ifdef ALLBSD
@@ -59,7 +59,7 @@ user_stat_t *get_user_stats(){
 	/* Essentially blank the list, or give it a inital starting string */
 	strcpy(user_stats.name_list, "");
 
-#if defined(SOLARIS) || defined(LINUX)	
+#if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
 	setutent();
 	while((entry=getutent()) != NULL) {
 		if(entry->ut_type==USER_PROCESS) {

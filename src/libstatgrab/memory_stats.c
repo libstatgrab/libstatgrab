@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <kstat.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #include <string.h>
 #endif
@@ -49,7 +49,7 @@ mem_stat_t *get_memory_stats(){
 	long totalmem;
 	int pagesize;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	char *line_ptr;
 	unsigned long long value;
 	FILE *f;
@@ -95,7 +95,7 @@ mem_stat_t *get_memory_stats(){
 	mem_stat.used = mem_stat.total - mem_stat.free;
 #endif
 
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
 		return NULL;
 	}

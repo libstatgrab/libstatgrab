@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "statgrab.h"
 
 #ifdef SOLARIS
@@ -34,20 +35,22 @@
 #define VALID_FS_TYPES {"ufs", "tmpfs"}
 #endif
 
-#ifdef LINUX
-#include <time.h>
-#include <sys/vfs.h>
+#if defined(LINUX) || defined(CYGWIN)
 #include <mntent.h>
+#include <sys/vfs.h>
 #include "tools.h"
-#ifdef CYGWIN
-#define VALID_FS_TYPES {"user"}
-#else
+#endif
+
+#ifdef LINUX
 #define VALID_FS_TYPES {"adfs", "affs", "befs", "bfs", "efs", "ext2", \
                         "ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
                         "jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
                         "rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
                         "umsdos", "vfat", "xfs", "jfs"}
 #endif
+
+#ifdef CYGWIN
+#define VALID_FS_TYPES {"user"}
 #endif
 
 #ifdef ALLBSD
@@ -103,7 +106,7 @@ disk_stat_t *get_disk_stats(int *entries){
 	char *fs_types[] = VALID_FS_TYPES;
 	int x, valid_type;
 	int num_disks=0;
-#if defined(LINUX) || defined (SOLARIS)
+#if defined(LINUX) || defined (SOLARIS) || defined(CYGWIN)
 	FILE *f;
 #endif
 
@@ -113,7 +116,7 @@ disk_stat_t *get_disk_stats(int *entries){
 	struct mnttab mp;
 	struct statvfs fs;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	struct mntent *mp;
 	struct statfs fs;
 #endif
@@ -145,7 +148,7 @@ disk_stat_t *get_disk_stats(int *entries){
                 }
 #endif
 
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	if ((f=setmntent("/etc/mtab", "r" ))==NULL){
 		return NULL;
 	}
@@ -216,7 +219,7 @@ disk_stat_t *get_disk_stats(int *entries){
 			/* Freebsd doesn't have a "available" inodes */
 			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->mnt_fsname))==NULL){
 				return NULL;
 			}
@@ -272,7 +275,7 @@ disk_stat_t *get_disk_stats(int *entries){
 
 	/* If this fails, there is very little i can do about it, so
            I'll ignore it :) */
-#if defined(LINUX)
+#if defined(LINUX) || defined(CYGWIN)
 	endmntent(f);
 #endif
 #if defined(SOLARIS)

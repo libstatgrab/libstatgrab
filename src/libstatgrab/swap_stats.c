@@ -29,7 +29,7 @@
 #include <sys/swap.h>
 #include <unistd.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #include <string.h>
 #endif
@@ -47,7 +47,7 @@ swap_stat_t *get_swap_stats(){
 	struct anoninfo ai;
 	int pagesize;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	FILE *f;
 	char *line_ptr;
 	unsigned long long value;
@@ -72,7 +72,7 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.used = (long long)ai.ani_resv * (long long)pagesize;
 	swap_stat.free = swap_stat.total - swap_stat.used;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
 		return NULL;
 	}

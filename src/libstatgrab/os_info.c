@@ -29,7 +29,7 @@
 #include <kstat.h>
 #include <time.h>
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #endif
 #ifdef ALLBSD
@@ -55,7 +55,7 @@ general_stat_t *get_general_stats(){
 	kstat_t *ksp;
 	kstat_named_t *kn;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	FILE *f;
 #endif
 #ifdef ALLBSD
@@ -96,7 +96,7 @@ general_stat_t *get_general_stats(){
 	time(&curtime);
 	general_stat.uptime = curtime - boottime;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/uptime", "r")) == NULL) {
 		return NULL;
 	}
