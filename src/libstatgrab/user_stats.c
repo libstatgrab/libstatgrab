@@ -45,7 +45,6 @@ user_stat_t *get_user_stats(){
 			return NULL;
 		}
 		size_of_namelist=START_VAL;
-		printf("Initially started at %d\n", size_of_namelist);
 	}	
 
 	/* Essentially blank the list, or give it a inital starting string */
@@ -56,9 +55,7 @@ user_stat_t *get_user_stats(){
 			if((strlen(user_stats.name_list)+MAX_LOGIN_NAME_SIZE+2) > size_of_namelist){
 				tmp=user_stats.name_list;
 				user_stats.name_list=realloc(user_stats.name_list, 1+(size_of_namelist*2));
-				printf("realloc to %d\n", 1+(size_of_namelist*2));
 				if(user_stats.name_list==NULL){
-					printf("realloc failed\n");
 					user_stats.name_list=tmp;
 					return NULL;
 				}
