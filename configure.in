@@ -61,9 +61,77 @@ linux-gnu)
 	;;
 esac
 
+# User specified curses/ncurses prefix
+AC_ARG_WITH([curses-prefix],
+        [  --with-curses-prefix=PATH     curses (or ncurses) is in PATH],
+        [
+                if test -d "$withval/lib"; then
+                        SAIDARLIBS="-L${withval}/lib ${SAIDARLIBS}"
+                fi
+                if test -d "$withval/include"; then
+                        SAIDARCPPFLAGS="-I${withval}/include ${SAIRDARCPPFLAGS}"
+                fi
+        ]
+)
+
+# Check if user wants to disable statgrab
+AM_CONDITIONAL(STATGRAB, true)
+AC_ARG_ENABLE(statgrab,
+        [  --disable-statgrab      disable building of statgrab],
+        [
+                if test "x$enableval" = "xno" ; then
+                        AM_CONDITIONAL(STATGRAB, false)
+                fi
+        ]
+)
+
+# Check if user wants to disable saidar
+AM_CONDITIONAL(SAIDAR, true)
+AC_ARG_ENABLE(saidar,
+        [  --disable-saidar        disable building of saidar],
+        [
+                if test "x$enableval" = "xno" ; then
+                        AM_CONDITIONAL(SAIDAR, false)
+                fi
+        ],
+	[
+		# saidar needs curses
+		# (if we don't find curses we disable saidar)
+		MP_WITH_CURSES
+	]
+)
+
+# Check if the user would prefer not to build examples
+AM_CONDITIONAL(EXAMPLES, true)
+AC_ARG_ENABLE(examples,
+        [  --disable-examples      disable building of examples],
+        [
+                if test "x$enableval" = "xno" ; then
+                        AM_CONDITIONAL(EXAMPLES, false)
+                fi
+        ]
+)
+
+# Check if user wants to install manpages
+AM_CONDITIONAL(MANPAGES, true)
+AC_ARG_ENABLE(manpages,
+        [  --disable-manpages      disable installation of manpages],
+        [
+                if test "x$enableval" = "xno" ; then
+                        AM_CONDITIONAL(MANPAGES, false)
+                fi
+        ]
+)
+
+# The LIBS and CPPFLAGS that saidar needs
+AC_SUBST(SAIDARLIBS)
+AC_SUBST(SAIDARCPPFLAGS)
+
+# The flags needed to link to libstatgrab
+# (ie. our dependencies)
 AC_SUBST(LINKFLAGS)
 
 # And finish by changing these files
-AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index])
+AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index src/saidar/Makefile])
 
 AC_OUTPUT

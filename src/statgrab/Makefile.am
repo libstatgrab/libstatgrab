@@ -2,8 +2,11 @@
 # http://www.i-scream.org/
 # $Id$
 
+if STATGRAB
 bin_PROGRAMS = statgrab
 bin_SCRIPTS = statgrab-make-mrtg-config statgrab-make-mrtg-index
+endif
+
 statgrab_SOURCES = statgrab.c
 
 INCLUDES = -I$(top_srcdir) -I$(top_builddir) \
