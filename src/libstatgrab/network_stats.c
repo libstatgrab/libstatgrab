@@ -339,7 +339,7 @@ long long transfer_diff(long long new, long long old){
 network_stat_t *get_network_stats_diff(int *entries) {
 	static network_stat_t *diff = NULL;
 	static int diff_count = 0;
-	network_stat_t *src, *dest;
+	network_stat_t *src = NULL, *dest;
 	int i, j, new_count;
 
 	if (network_stats == NULL) {
