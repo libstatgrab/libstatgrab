@@ -29,6 +29,9 @@
 #include <sys/sysinfo.h>
 #include <string.h>
 #endif
+#ifdef LINUX
+#include <stdio.h>
+#endif
 
 static cpu_states_t cpu_now;
 static int cpu_now_uninit=1;
@@ -38,17 +41,24 @@ cpu_states_t *get_cpu_totals(){
 #ifdef SOLARIS
         kstat_ctl_t *kc;
         kstat_t *ksp;
-        cpu_stat_t cs;
-
+	cpu_stat_t cs;
+#endif
+#ifdef LINUX
+	FILE *f;
+#endif
+        
 	cpu_now.user=0;
+	/* Not stored in linux */
 	cpu_now.iowait=0;
 	cpu_now.kernel=0;
 	cpu_now.idle=0;
+	/* Not stored in linux */
 	cpu_now.swap=0;
 	cpu_now.total=0;
 	/* Not stored in solaris */
 	cpu_now.nice=0;
 
+#ifdef SOLARIS
         if ((kc = kstat_open()) == NULL) {
                 return NULL;
         }
@@ -65,12 +75,30 @@ cpu_states_t *get_cpu_totals(){
 	}
 
 	cpu_now.total=cpu_now.user+cpu_now.iowait+cpu_now.kernel+cpu_now.idle+cpu_now.swap;
-	cpu_now_uninit=0;
-
+	
         kstat_close(kc);
+#endif
+#ifdef LINUX
+	if ((f=fopen("/proc/stat", "r" ))==NULL) {
+		return NULL;
+	}
+	/* The very first line should be cpu */
+	if((fscanf(f, "cpu %lld %lld %lld %lld", \
+		&cpu_now.user, \
+		&cpu_now.nice, \
+		&cpu_now.kernel, \
+		&cpu_now.idle)) != 4){
+		return NULL;
+	}
+
+	fclose(f);
+
+	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
 #endif
 
 	cpu_now.systime=time(NULL);
+	cpu_now_uninit=0;
+
 
 	return &cpu_now;
 }

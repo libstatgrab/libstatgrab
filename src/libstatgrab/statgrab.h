@@ -57,6 +57,9 @@ typedef struct{
 #ifdef SOLARIS
 #define MAX_LOGIN_NAME_SIZE 8
 #endif
+#ifdef LINUX
+#define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
+#endif
 
 typedef struct{
 	char *name_list;
