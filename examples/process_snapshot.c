@@ -42,6 +42,11 @@ int main(){
 
         ps_size = get_proc_snapshot(&ps);
 
+	if(ps_size == NULL){
+		fprintf(stderr, "Failed to get process snapshot\n");
+		exit(1);
+	}
+
 	printf("%5s %5s %5s %5s %5s %5s %5s %6s %6s %9s %-10s %-4s %-8s %-20s %s\n",
 	 	"pid", "ppid", "pgid", "uid", "euid", "gid", "egid", "size", "res", "time", "cpu", "nice", "state", "name", "title");
 
