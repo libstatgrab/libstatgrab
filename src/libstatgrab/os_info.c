@@ -99,7 +99,6 @@ general_stat_t *get_general_stats(){
 #ifdef LINUX
 	if ((f=fopen("/proc/uptime", "r")) == NULL) {
 		return NULL;
-	size = sizeof boottime;
 	}
 	if((fscanf(f,"%lu %*d",&general_stat.uptime)) != 1){
 		return NULL;
