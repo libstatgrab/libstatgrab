@@ -22,15 +22,12 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <time.h>
-#include <string.h>
 #include "statgrab.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
+#include <string.h>
 #endif
 
 static cpu_states_t cpu_now;
