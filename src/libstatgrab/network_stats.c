@@ -545,8 +545,8 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			case(IFM_1000_SX):
 			case(IFM_1000_LX):
 			case(IFM_1000_CX):
-#ifdef IFM_1000_TX
-			case(IFM_1000_TX): /* FreeBSD 4 and others? */
+#if defined(IFM_1000_TX) && !defined(OPENBSD)
+			case(IFM_1000_TX): /* FreeBSD 4 and others (but NOT OpenBSD)? */
 #endif
 #ifdef IFM_1000_FX
 			case(IFM_1000_FX): /* FreeBSD 4 */
