@@ -57,6 +57,7 @@
 #include <sys/param.h>
 #include <sys/pstat.h>
 #include <unistd.h>
+#define SWAP_BATCH 5
 #endif
 
 sg_swap_stats *sg_get_swap_stats(){
@@ -64,8 +65,9 @@ sg_swap_stats *sg_get_swap_stats(){
 	static sg_swap_stats swap_stat;
 
 #ifdef HPUX
-	struct pst_swapinfo pstat_swapinfo;
+	struct pst_swapinfo pstat_swapinfo[SWAP_BATCH];
 	int swapidx = 0;
+	int num, i;
 #endif
 #ifdef SOLARIS
 	struct anoninfo ai;
@@ -96,31 +98,36 @@ sg_swap_stats *sg_get_swap_stats(){
 	swap_stat.used = 0;
 	swap_stat.free = 0;
 
-	/* The 128 here is arbitrary, it can be increased at the expense
-	   of more system calls to pstat(). */
-	for (swapidx = 0; swapidx < 128; swapidx++) {
-		if (pstat_getswap(&pstat_swapinfo, sizeof(pstat_swapinfo), 1, swapidx) == -1) {
+	while (1) {
+		num = pstat_getswap(pstat_swapinfo, sizeof pstat_swapinfo[0],
+		                    SWAP_BATCH, swapidx);
+		if (num == -1) {
+			sg_set_error_with_errno(SG_ERROR_PSTAT,
+			                        "pstat_getswap");
+			return NULL;
+		} else if (num == 0) {
 			break;
 		}
 
-		if (pstat_swapinfo.pss_idx != swapidx) {
-			continue;
-		}
+		for (i = 0; i < num; i++) {
+			struct pst_swapinfo *si = &pstat_swapinfo[i];
 
-		if ((pstat_swapinfo.pss_flags & SW_ENABLED) != SW_ENABLED) {
-			continue;
+			if ((si->pss_flags & SW_ENABLED) != SW_ENABLED) {
+				continue;
+			}
+	
+			if ((si->pss_flags & SW_BLOCK) == SW_BLOCK) {
+				swap_stat.total += ((long long) si->pss_nblksavail) * 1024LL;
+				swap_stat.used += ((long long) si->pss_nfpgs) * 1024LL;
+				swap_stat.free = swap_stat.total - swap_stat.used;
+			}
+			if ((si->pss_flags & SW_FS) == SW_FS) {
+				swap_stat.total += ((long long) si->pss_limit) * 1024LL;
+				swap_stat.used += ((long long) si->pss_allocated) * 1024LL;
+				swap_stat.free = swap_stat.total - swap_stat.used;
+			}
 		}
-
-		if ((pstat_swapinfo.pss_flags & SW_BLOCK) == SW_BLOCK) {
-			swap_stat.total += ((long long) pstat_swapinfo.pss_nblksavail) * 1024LL;
-			swap_stat.used += ((long long) pstat_swapinfo.pss_nfpgs) * 1024LL;
-			swap_stat.free = swap_stat.total - swap_stat.used;
-		}
-		if ((pstat_swapinfo.pss_flags & SW_FS) == SW_FS) {
-			swap_stat.total += ((long long) pstat_swapinfo.pss_limit) * 1024LL;
-			swap_stat.used += ((long long) pstat_swapinfo.pss_allocated) * 1024LL;
-			swap_stat.free = swap_stat.total - swap_stat.used;
-		}
+		swapidx = pstat_swapinfo[num - 1].pss_idx + 1;
 	}
 #endif
 #ifdef SOLARIS
