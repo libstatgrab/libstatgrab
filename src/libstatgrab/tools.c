@@ -54,7 +54,7 @@
 #include <dirent.h>
 #endif
 
-#ifdef SOLARIS
+#if defined(SOLARIS) && !defined(HAVE_LIBDEVINFO_H)
 struct map{
 	char *bsd;
 	char *svr;
@@ -469,7 +469,9 @@ int statgrab_init(){
 	 * will still work, just no disk mappings. So we will ignore the exit
 	 * status of this, and carry on merrily.
 	 */
+#ifdef(HAVE_LIBDEVINFO_H)
 	build_mapping();
+#endif
 #endif
 	return 0;
 }
