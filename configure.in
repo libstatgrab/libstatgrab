@@ -40,6 +40,9 @@ AC_CHECK_MEMBER(struct disk_sysctl.dk_rbytes,
                 [],
                 [#include <sys/disk.h>])
 
+# Check for loadavg.h
+AC_CHECK_HEADERS([sys/loadavg.h])
+
 # Default needing setgid/setuid to false
 AM_CONDITIONAL(SETGIDBINS, false)
 AM_CONDITIONAL(SETUIDBINS, false)
