@@ -31,6 +31,12 @@
 #ifdef LINUX
 #include <stdio.h>
 #endif
+#ifdef FREEBSD
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <time.h>
+#include <sys/time.h>
+#endif
 
 general_stat_t *get_general_stats(){
 
@@ -45,6 +51,11 @@ general_stat_t *get_general_stats(){
 #endif
 #ifdef LINUX
 	FILE *f;
+#endif
+#ifdef FREEBSD
+	struct timeval boottime;
+	time_t curtime;
+	size_t size;
 #endif
 
 	if((uname(&os)) < 0){
@@ -86,6 +97,16 @@ general_stat_t *get_general_stats(){
 		return NULL;
 	}
 	fclose(f);
+#endif
+#ifdef FREEBSD
+	if (sysctlbyname("kern.boottime", NULL, &size, NULL, NULL) < 0){
+		return NULL;
+	}
+	if (sysctlbyname("kern.boottime", &boottime, &size, NULL, NULL) < 0){
+		return NULL;
+	}
+	time(&curtime);
+	general_stat.uptime=curtime-boottime.tv_sec;
 #endif
 
 	return &general_stat;
