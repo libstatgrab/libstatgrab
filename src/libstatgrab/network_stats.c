@@ -36,6 +36,12 @@
 #include <regex.h>
 #include "tools.h"
 #endif
+#ifdef FREEBSD
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#endif
 
 static network_stat_t *network_stats=NULL;
 static int interfaces=0;
@@ -94,6 +100,37 @@ network_stat_t *get_network_stats(int *entries){
 	char line[8096];
 	regex_t regex;
 	regmatch_t line_match[4];
+#endif
+#ifdef FREEBSD
+	struct ifaddrs *net, *net_ptr;
+	struct if_data *net_data;
+#endif
+
+#ifdef FREEBSD
+	if(getifaddrs(&net) != 0){
+		return NULL;
+	}
+
+	interfaces=0;
+	
+	for(net_ptr=net;net_ptr!=NULL;net_ptr=net_ptr->ifa_next){
+		if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
+		network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
+		if(network_stats==NULL){
+			return NULL;
+		}
+		network_stat_ptr=network_stats+interfaces;
+		
+		if(network_stat_ptr->interface_name!=NULL) free(network_stat_ptr->interface_name);
+		network_stat_ptr->interface_name=strdup(net_ptr->ifa_name);
+		if(network_stat_ptr->interface_name==NULL) return NULL;
+		net_data=(struct if_data *)net_ptr->ifa_data;
+		network_stat_ptr->rx=net_data->ifi_ibytes;
+		network_stat_ptr->tx=net_data->ifi_obytes;			
+		network_stat_ptr->systime=time(NULL);
+		interfaces++;
+	}
+	freeifaddrs(net);	
 #endif
 
 #ifdef SOLARIS
