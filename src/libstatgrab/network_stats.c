@@ -40,6 +40,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/sockio.h>
+#include <unistd.h>
 #endif
 #ifdef LINUX
 #include <stdio.h>

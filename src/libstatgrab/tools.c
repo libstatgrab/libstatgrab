@@ -216,7 +216,7 @@ int build_mapping(){
 	int found;
 
 	if ((kc = kstat_open()) == NULL) {
-		return;
+		return 1;
 	}
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
