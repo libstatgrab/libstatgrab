@@ -230,7 +230,7 @@ network_stat_t *get_network_stats(int *entries){
 }
 
 long long transfer_diff(long long new, long long old){
-#ifdef SOL7 
+#if defined(SOL7) || defined(LINUX)
 #define MAXVAL 4294967296
 #else
 #define MAXVAL 18446744073709551616
