@@ -450,7 +450,12 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			case(IFM_1000_SX):
 			case(IFM_1000_LX):
 			case(IFM_1000_CX):
+#ifdef FREEBSD5
+			case(IFM_1000_T):
+#else
 			case(IFM_1000_TX):
+			case(IFM_1000_FX):
+#endif
 				network_iface_stat_ptr->speed = 1000;
 				break;
 			/* We don't know what it is */
