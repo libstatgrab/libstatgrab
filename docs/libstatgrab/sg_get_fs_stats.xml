@@ -36,10 +36,10 @@
     <para>
       The <function>sg_get_fs_stats</function> takes a pointer to an
       int, <parameter>entries</parameter>, which is filled with the
-      number of mounted file systems the machine has. It returns a
-      pointer to the first <structname>sg_fs_stats</structname> structure.
-      The <parameter>entries</parameter> can then be used to iterate
-      through the rest of the structures.
+      number of mounted file systems the machine has. The return
+      value is a pointer to the first member of an array of
+      <structname>sg_fs_stats</structname> structures; the number of
+      entries in the array is returned in </parameter>entries</parameter>.
     </para>
     <para>
       The function returns statistics about mounted filesystems,

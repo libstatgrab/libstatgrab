@@ -41,10 +41,11 @@
     <para>
       The <function>sg_get_process_stats</function> takes a pointer to
       an int, <parameter>entries</parameter>, which is filled with the
-      number of processes the snapshot contains. A pointer to the first
-      entry, of type <structname>sg_process_stats</structname> is
-      returned, and <parameter>entries</parameter> can be used to iterate
-      through to the last entry.
+      number of processes the snapshot contains. The return value is a
+      pointer to the first member of an array of
+      <structname>sg_process_stats</structname> structures; the number
+      of entries in the array is returned in
+      <parameter>entries</parameter>.
     </para>
     <para>
       <function>sg_get_process_count</function> returns a pointer to a
