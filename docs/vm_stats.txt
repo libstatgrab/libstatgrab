@@ -1,0 +1,34 @@
+Memory stats are accessed through get_memory_stats() call. This 
+returns a pointer to a static mem_stat_t 
+
+typedef struct{
+        long long total;
+        long long free;
+        long long used;
+        long long cache;
+}mem_stat_t;
+
+total contains the total memory in bytes. 
+free is the total free memory in bytes.
+used is the total used memory in bytes.
+cache is the cache used in bytes.
+
+cache is not available in all operating systems. Solaris being a key
+one that it isn't. free memory and cache memory can sometimes be 
+linked.
+
+Swap stats are accessed through get_swap_stats() call. This returns a
+pointer to a static swap_stat_t
+
+typedef struct{
+        long long total;
+        long long used;
+        long long free;
+}swap_stat_t;
+
+
+Freebsd requires kmem privilages to be able to do this call. Making the 
+program setgid kmem should be sufficent. 
+
+TODO
+Add a function to hold open the FD to kmem privilages could be dropped.
