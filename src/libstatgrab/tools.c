@@ -437,7 +437,11 @@ int statgrab_init(){
 	}
 #endif
 #ifdef SOLARIS
-	if((build_mapping()) != 0) return 1;
+	/* On solaris 7, this will fail if you are not root. But, everything
+	 * will still work, just no disk mappings. So we will ignore the exit
+	 * status of this, and carry on merrily.
+	 */
+	build_mapping();
 #endif
 	return 0;
 }
