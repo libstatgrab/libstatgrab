@@ -30,11 +30,6 @@
 #include <sys/types.h>
 #endif
 #include <utmp.h>
-#ifdef NETBSD
-#include <limits.h>
-#undef MAX_LOGIN_NAME_SIZE
-#define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
-#endif
 
 #define START_VAL (5*(1+MAX_LOGIN_NAME_SIZE))
 

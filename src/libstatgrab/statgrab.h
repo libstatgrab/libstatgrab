@@ -19,6 +19,9 @@
  */
 
 #include <sys/types.h>
+#ifdef NETBSD
+#include <limits.h>
+#endif
 
 typedef struct{
         long long user;
@@ -59,6 +62,9 @@ typedef struct{
 #endif
 #if defined(LINUX) || defined(FREEBSD)
 #define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
+#endif
+#ifdef NETBSD
+#define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
 #endif
 
 typedef struct{
