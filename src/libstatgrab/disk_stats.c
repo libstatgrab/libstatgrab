@@ -325,7 +325,8 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	time_t now;
 #endif
 #ifdef FREEBSD
-	struct statinfo stats;
+	static struct statinfo stats;
+	static int stats_init = 0;
 	int counter;
 	struct device_selection *dev_sel = NULL;
 	int n_selected, n_selections;
@@ -335,8 +336,11 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	num_diskio=0;
 
 #ifdef FREEBSD
-	stats.dinfo=malloc(sizeof(struct devinfo));
-	if(stats.dinfo==NULL) return NULL;
+	if (!stats_init) {
+		stats.dinfo=malloc(sizeof(struct devinfo));
+		if(stats.dinfo==NULL) return NULL;
+		stats_init = 1;
+	}
 	if ((getdevs(&stats)) < 0) return NULL;
 	/* Not aware of a get all devices, so i said 999. If we ever
 	 * find a machine with more than 999 disks, then i'll change
