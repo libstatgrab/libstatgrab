@@ -70,9 +70,13 @@ user_stat_t *get_user_stats(){
 	endutent();
 
 	/* We want to remove the last " " */
-	tmp=strrchr(user_stats.name_list, ' ');
-	*tmp='\0';
-	user_stats.num_entries=num_users;
+	if(num_users!=0){
+		tmp=strrchr(user_stats.name_list, ' ');
+		if(tmp!=NULL){
+			*tmp='\0';
+			user_stats.num_entries=num_users;
+		}
+	}
 
 	return &user_stats;
 
