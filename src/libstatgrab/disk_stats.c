@@ -31,6 +31,10 @@
 #include <sys/mnttab.h>
 #include <sys/statvfs.h>
 #include <kstat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <limits.h>
+#include <unistd.h>
 #define VALID_FS_TYPES {"ufs", "tmpfs"}
 #endif
 
@@ -50,6 +54,27 @@
 #define VALID_FS_TYPES {"ufs", "mfs"}
 #endif
 #define START_VAL 1
+
+/* Solaris kernel stores the disk names in the old BSD format
+ * and we would prefer it in th modern format. 
+ */
+#ifdef SOLARIS
+/* Lines from the path_to_inst file */
+typedef struct {
+	/* unlikely to get a line that long */
+	char line[256];
+}file_line_t;
+
+/* Linked list of the mappings from the older bsd-based sunos names
+ * to the modern solaris names 
+ */
+struct disk_mapping_ent_t{
+	char *sunos_name;
+	char *solaris_name;
+	struct disk_mapping_ent_t *next;
+};
+typedef struct disk_mapping_ent_t disk_mapping_t;
+#endif
 
 char *copy_string(char *orig_ptr, const char *newtext){
 
@@ -267,6 +292,130 @@ void diskio_stat_init(int start, int end, diskio_stat_t *diskio_stats){
 	}
 }
 
+#ifdef SOLARIS
+char *drive_map(char *sunos_name){
+	file_line_t *file_lines = NULL;
+	file_line_t *f_ptr;
+	static disk_mapping_t *disk_mapping = NULL;
+	disk_mapping_t *d_ptr;
+	int x = 0;
+	int y = 256;
+	FILE *f;
+	DIR *dsk;
+	struct dirent *dsk_ent;
+	char linkpointer[PATH_MAX];
+	char link_path[PATH_MAX];
+	char *p, *r, *q;
+
+	int dev_num;
+	char dev_name[51];
+
+	if(disk_mapping == NULL){
+		/* Read in the path_to_inst file into memory */
+		file_lines = malloc(sizeof(file_line_t) * y);
+		f_ptr = file_lines;
+		if(file_lines == NULL) return NULL;
+		f = fopen("/etc/path_to_inst", "r");
+		if (f == NULL){
+			free(file_lines);
+			return NULL;
+		}	
+		for(x=0;fgets(f_ptr->line, sizeof(f_ptr->line), f);x++){
+			if ((x+1) >= y){
+				y = y*2;
+				file_lines = realloc(file_lines, sizeof(file_line_t) * y);
+				if (file_lines == NULL) return NULL;
+			}
+			f_ptr++;
+		}
+		f_ptr = NULL;
+		fclose(f);
+
+		dsk = opendir("/dev/dsk");
+		if (dsk == NULL){
+			free(file_lines);
+			return NULL;
+		}
+		
+		while((dsk_ent = readdir(dsk)) != NULL){
+			snprintf(link_path, sizeof(link_path), "/dev/dsk/%s", dsk_ent->d_name);
+			/* Ignore the non symlinks, e.g. ".." and "." */
+			if((readlink(link_path, linkpointer, PATH_MAX)) == -1) continue;
+			/* We are only intrested in the string past the ../../devices/ part */
+			p = strstr(linkpointer, "devices");
+			p+=8;
+		
+			/* We are not intrested in the :a etc slices */
+			q = strrchr(p, ':');
+			*q = '\0';
+
+			/* char *p should not contain the info we need to look up in the 
+			 * path_to_inst file. 
+			 */
+			
+			for(f_ptr = file_lines; f_ptr != NULL; f_ptr++){
+				r = strstr(f_ptr->line, p);
+				if (r != NULL) break;
+			}
+
+			if(r == NULL){
+				free(file_lines);
+				closedir(dsk);
+				return NULL;
+			}
+
+			/* f_ptr should be pointing to the line of path_to_inst we are intrested in now */
+
+			sscanf(r, "%*s %d \"%50s", &dev_num, dev_name);
+			q = strrchr(dev_name, '"');
+			if (q == NULL){ 
+				free(file_lines);
+				closedir(dsk);
+				return NULL;
+			}
+			*q = '\0';
+			
+			/* Nasty... Add the number to the end of the string.. This means
+			 * dev_name now contains the sunos name.. E.g. ssd1
+			 */
+			snprintf(dev_name, 50, "%s%d", dev_name, dev_num);
+			if (disk_mapping == NULL){
+				disk_mapping = malloc(sizeof(disk_mapping_t));
+				d_ptr = disk_mapping;
+			}else{
+				d_ptr->next = malloc(sizeof(disk_mapping_t));
+				d_ptr = d_ptr->next;
+			}
+
+			if (d_ptr == NULL){
+				free(file_lines);
+				closedir(dsk);
+				return NULL;
+			}
+
+			if( ((d_ptr->sunos_name = strdup(dev_name)) == NULL) ||
+			   ((d_ptr->solaris_name = strdup(dsk_ent->d_name))==NULL) ){
+				free(file_lines);
+				closedir(dsk);
+				return NULL;
+			}
+		}
+		free(file_lines);
+		closedir(dsk);
+	}
+		
+	for(d_ptr = disk_mapping; d_ptr !=NULL; d_ptr=d_ptr->next){
+		if(!strcmp(sunos_name, d_ptr->sunos_name)){
+			return (strdup(d_ptr->solaris_name));
+		}
+	}
+
+	/* If we really fail to find it.. Return the original name back */
+	return strdup(sunos_name);
+}
+
+#endif
+
 diskio_stat_t *diskio_stat_malloc(int needed_entries, int *cur_entries, diskio_stat_t *diskio_stats){
 
         if(diskio_stats==NULL){
@@ -399,7 +548,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 
 			if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 
-			diskio_stats_ptr->disk_name=strdup(ksp->ks_name);
+			diskio_stats_ptr->disk_name=drive_map(ksp->ks_name);
 			diskio_stats_ptr->systime=time(NULL);
 			num_diskio++;
 		}
