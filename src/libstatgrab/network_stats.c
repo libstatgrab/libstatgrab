@@ -199,6 +199,8 @@ network_stat_t *get_network_stats(int *entries){
 				 * have the rbytes/obytes values; for instance,
 				 * the loopback devices have this behaviour
 				 * (although they do track packets in/out). */
+				/* FIXME: Show packet counts when byte counts
+				 * not available. */
 				continue;
 			}
 
