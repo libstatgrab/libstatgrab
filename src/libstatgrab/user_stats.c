@@ -97,7 +97,9 @@ user_stat_t *get_user_stats(){
 	if (num_users != 0) {
 		pos--;
 	}
-	VECTOR_RESIZE(name_list, pos + 1);
+	if (VECTOR_RESIZE(name_list, pos + 1) < 0) {
+		return NULL;
+	}
 	name_list[pos] = '\0';
 
 	user_stats.num_entries = num_users;
