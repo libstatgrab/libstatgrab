@@ -461,28 +461,18 @@ kvm_t *sg_get_kvm2() {
 #if defined(NETBSD) || defined(OPENBSD)
 struct uvmexp *sg_get_uvmexp() {
 	int mib[2];
-	size_t size;
-	static struct uvmexp *uvm = NULL;
+	size_t size = sizeof(struct uvmexp);
+	static struct uvmexp uvm;
 	struct uvmexp *new;
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
 
-	if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
 		return NULL;
 	}
 
-	new = realloc(uvm, size);
-	if (new == NULL) {
-		return NULL;
-	}
-	uvm = new;
-
-	if (sysctl(mib, 2, uvm, &size, NULL, 0) < 0) {
-		return NULL;
-	}
-
-	return uvm;
+	return &uvm;
 }
 #endif
 
@@ -494,13 +484,6 @@ int sg_init(){
 	if (sg_get_kvm2() == NULL) {
 		return 1;
 	}
-#endif
-#if defined(NETBSD) || defined(OPENBSD)
-	/* This should always succeed, but it seems that on some
-	 * versions of NetBSD the first call to get_uvmexp will return
-	 * a non-filled-in structure; this is a workaround for that.
-	 */
-	if (sg_get_uvmexp() == NULL) return 1;
 #endif
 #ifdef SOLARIS
 	/* On solaris 7, this will fail if you are not root. But, everything
