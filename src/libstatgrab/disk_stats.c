@@ -321,13 +321,17 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		diskio_stats_ptr=diskio_stats+num_diskio;
 
 
-		if((sscanf(line_ptr, "(%d,%d):(%*d, %lld, %*d, %lld, %*d)", \
+		if((sscanf(line_ptr, "(%d,%d):(%*d, %*d, %lld, %*d, %lld)", \
 			&major, \
 			&minor, \
 			&diskio_stats_ptr->read_bytes, \
 			&diskio_stats_ptr->write_bytes))!=4) {
 				continue;
 		}
+
+		/* We read the number of blocks. Blocks are stored in 512 bytes */
+		diskio_stats_ptr->read_bytes=diskio_stats_ptr->read_bytes*512;
+		diskio_stats_ptr->write_bytes=diskio_stats_ptr->write_bytes*512;
 
 		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 
