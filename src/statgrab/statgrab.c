@@ -184,7 +184,7 @@ void get_stats(int use_diffs) {
 			         "cpu", "swap", NULL);
 			add_stat(FLOAT, &cpu_p->nice,
 			         "cpu", "nice", NULL);
-			add_stat(TIME_T, &cpu_s->systime,
+			add_stat(TIME_T, &cpu_p->systime,
 			         "cpu", "time_taken", NULL);
 		}
 	} else {
