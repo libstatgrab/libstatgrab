@@ -576,13 +576,12 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		n++;
 	}
 
-	if(f != NULL) fclose(f);
-
-	/* This code relies on /proc/partions existing, and it all being malloc'ed above.
+	fclose(f);
 
 	if (!has_pp_stats) {
-		/* This is an older kernel without stats in /proc/partitions.
-		   Read what we can from /proc/stat instead. */
+		/* This is an older kernel where /proc/partitions doesn't
+		   contain stats. Read what we can from /proc/stat instead, and
+		   fill in the appropriate bits of the list allocated above. */
 
 		f = fopen("/proc/stat", "r");
 		if (f == NULL) goto out;
