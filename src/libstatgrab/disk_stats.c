@@ -56,6 +56,11 @@
 #include <sys/dkstat.h>
 #include <devstat.h>
 #endif
+#ifdef NETBSD
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/disk.h>
+#endif
 
 #define START_VAL 1
 
@@ -342,11 +347,70 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	struct devstat *dev_ptr;
 #endif
 #ifdef NETBSD
-	/* FIXME get_diskio_stats NYI on NetBSD.
-         * See vmstat/dkstats.c in NetBSD source for examples.
-         */
+	struct disk_sysctl *stats;
+	int num_disks, i;
+	int mib[3];
+	size_t size;
 #endif
+
 	num_diskio=0;
+
+#ifdef NETBSD
+	mib[0] = CTL_HW;
+	mib[1] = HW_DISKSTATS;
+	mib[2] = sizeof(struct disk_sysctl);
+
+	if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+	num_disks = size / sizeof(struct disk_sysctl);
+
+	stats = malloc(size);
+	if (stats == NULL) {
+		return NULL;
+	}
+
+	if (sysctl(mib, 3, stats, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	for (i = 0; i < num_disks; i++) {
+		u_int64_t rbytes, wbytes;
+
+#ifdef HAVE_DK_RBYTES
+		rbytes = stats[i].dk_rbytes;
+		wbytes = stats[i].dk_wbytes;
+#else
+		/* Before 1.6.1, NetBSD merged reads and writes. */
+		rbytes = wbytes = stats[i].dk_bytes;
+#endif
+
+		/* Don't keep stats for disks that have never been used. */
+		if (rbytes == 0 && wbytes == 0) {
+			continue;
+		}
+
+		diskio_stats = diskio_stat_malloc(num_diskio + 1,
+		                                  &sizeof_diskio_stats,
+		                                  diskio_stats);
+		if (diskio_stats == NULL) {
+			return NULL;
+		}
+		diskio_stats_ptr = diskio_stats + num_diskio;
+		
+		diskio_stats_ptr->read_bytes = rbytes;
+		diskio_stats_ptr->write_bytes = wbytes;
+		if (diskio_stats_ptr->disk_name != NULL) {
+			free(diskio_stats_ptr->disk_name);
+		}
+		diskio_stats_ptr->disk_name = strdup(stats[i].dk_name);
+		diskio_stats_ptr->systime = time(NULL);
+	
+		num_diskio++;	
+	}
+
+	free(stats);
+#endif
 
 #ifdef FREEBSD
 	if (!stats_init) {

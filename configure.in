@@ -34,6 +34,12 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS(atoll)
 
+# Disk IO read and write statistics are only present on recent NetBSD.
+AC_CHECK_MEMBER(struct disk_sysctl.dk_rbytes,
+                [AC_DEFINE(HAVE_DK_RBYTES, , [New-style NetBSD stats])],
+                [],
+                [#include <sys/disk.h>])
+
 # Default needing setgid to false
 AM_CONDITIONAL(SETGIDBINS, false)
 
