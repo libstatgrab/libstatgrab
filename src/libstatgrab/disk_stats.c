@@ -42,6 +42,12 @@
 #define VALID_FS_TYPES {"ext2", "ext3", "xfs", "reiserfs", "vfat", "tmpfs"}
 #endif
 
+#ifdef FREEBSD
+#include <sys/param.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
+#define VALID_FS_TYPES {"ufs", "mfs"}
+#endif
 #define START_VAL 1
 
 char *copy_string(char *orig_ptr, const char *newtext){
@@ -76,7 +82,9 @@ disk_stat_t *get_disk_stats(int *entries){
 	char *fs_types[] = VALID_FS_TYPES;
 	int x, valid_type;
 	int num_disks=0;
+#if defined(LINUX) || defined (SOLARIS)
 	FILE *f;
+#endif
 
 	disk_stat_t *disk_ptr;
 
@@ -88,6 +96,10 @@ disk_stat_t *get_disk_stats(int *entries){
 	struct mntent *mp;
 	struct statfs fs;
 #endif
+#ifdef FREEBSD
+	int nummnt;
+	struct statfs *mp;
+#endif
 
 	if(watermark==-1){
 		disk_stats=malloc(START_VAL * sizeof(disk_stat_t));
@@ -97,6 +109,21 @@ disk_stat_t *get_disk_stats(int *entries){
 		watermark=START_VAL;
 		init_disk_stat(0, watermark-1, disk_stats);
 	}
+#ifdef FREEBSD
+	nummnt=getmntinfo(&mp , MNT_LOCAL);
+	if (nummnt<=0){
+		return NULL;
+	}
+	for(;nummnt--; mp++){
+		valid_type=0;
+		for(x=0;x<((sizeof(fs_types))/(sizeof(char*)));x++){
+                        if(strcmp(mp->f_fstypename, fs_types[x]) ==0){
+                                valid_type=1;
+                                break;
+                        }
+                }
+#endif
+
 #ifdef LINUX
 	if ((f=setmntent("/etc/mtab", "r" ))==NULL){
 		return NULL;
@@ -146,6 +173,28 @@ disk_stat_t *get_disk_stats(int *entries){
 			}
 
 			disk_ptr=disk_stats+num_disks;
+#ifdef FREEBSD
+			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->f_mntfromname))==NULL){
+				return NULL;
+			}
+
+			if((disk_ptr->fs_type=copy_string(disk_ptr->fs_type, mp->f_fstypename))==NULL){
+				return NULL;
+			}
+
+			if((disk_ptr->mnt_point=copy_string(disk_ptr->mnt_point, mp->f_mntonname))==NULL){
+				return NULL;
+			}
+
+			disk_ptr->size = (long long)mp->f_bsize * (long long) mp->f_blocks;
+			disk_ptr->avail = (long long)mp->f_bsize * (long long) mp->f_bavail;
+			disk_ptr->used = (disk_ptr->size) - ((long long)mp->f_bsize * (long long)mp->f_bfree);
+
+			disk_ptr->total_inodes=(long long)mp->f_files;
+			disk_ptr->free_inodes=(long long)mp->f_ffree;
+			/* Freebsd doesn't have a "available" inodes */
+			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
+#endif
 #ifdef LINUX
 			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->mnt_fsname))==NULL){
 				return NULL;
@@ -201,7 +250,9 @@ disk_stat_t *get_disk_stats(int *entries){
 	*entries=num_disks;	
 
 	/* If this fails, there is very little i can do about it, so i'll ignore it :) */
+#if defined(LINUX) || defined(SOLARIS)
 	fclose(f);
+#endif
 
 	return disk_stats;
 
@@ -373,6 +424,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		diskio_stats_ptr->systime=time(NULL);
 		num_diskio++;
 	}
+
 	fclose(f);
 
 #endif
