@@ -731,7 +731,7 @@ out:
 diskio_stat_t *get_diskio_stats_diff(int *entries){
 	static diskio_stat_t *diff = NULL;
 	static int diff_count = 0;
-	diskio_stat_t *src, *dest;
+	diskio_stat_t *src = NULL, *dest;
 	int i, j, new_count;
 
 	if (diskio_stats == NULL) {
