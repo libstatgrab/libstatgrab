@@ -322,6 +322,9 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			return NULL;
 		}
 #else
+		/* FIXME - this value can be too large on some of
+		   the BSD's, which causes sysctl not to return
+		   anything. Maybe we need something smaller? */
 		mib[1] = KERN_ARGMAX;
 
 		if(sysctl(mib, 2, &buflen, &size, NULL, 0) < 0) {
