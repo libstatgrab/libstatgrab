@@ -19,14 +19,12 @@
  */
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
 #include <regex.h>
 
 char *f_read_line(FILE *f, const char *string);
 
 char *get_string_match(char *line, regmatch_t *match);
+
 #ifdef HAVE_ATOLL
 long long get_ll_match(char *line, regmatch_t *match);
 #endif

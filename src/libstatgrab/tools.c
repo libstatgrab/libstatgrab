@@ -28,6 +28,8 @@
 #include <sys/types.h>
 #include <regex.h>
 
+#include "tools.h"
+
 char *f_read_line(FILE *f, const char *string){
 	/* Max line length. 8k should be more than enough */
 	static char line[8192];
@@ -50,6 +52,7 @@ char *get_string_match(char *line, regmatch_t *match){
 
 	return match_string;
 }
+
 #ifdef HAVE_ATOLL
 long long get_ll_match(char *line, regmatch_t *match){
 	char *ptr;
