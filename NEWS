@@ -3,6 +3,12 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.8.2 (11 February 2004)
+
+ * Fixes to add support for Solaris 6.
+ * Python bindings available in extras directory.
+ * Some tidying up of code.
+
 libstatgrab 0.8.1 (21 January 2004)
 
  * The library part of libstatgrab is now released under the LGPL.
