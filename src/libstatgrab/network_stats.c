@@ -675,10 +675,10 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			network_iface_stat_ptr->speed = ethcmd.speed;
 
 			switch (ethcmd.duplex) {
-			case 0x00:
+			case DUPLEX_FULL:
 				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
 				break;
-			case 0x01:
+			case DUPLEX_HALF:
 				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
 				break;
 			default:
