@@ -68,6 +68,9 @@
 #include <tools.h>
 #endif
 #include <unistd.h>
+#ifdef NETBSD2
+#include <sys/lwp.h>
+#endif
 #endif
 
 static void proc_state_init(sg_process_stats *s) {
@@ -98,6 +101,10 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #else
 	long buflen;
 	char *p;
+#endif
+#ifdef NETBSD2
+	int lwps;
+	struct kinfo_lwp *kl_stats;
 #endif
 #endif
 #if defined(SOLARIS) || defined(LINUX)
@@ -278,7 +285,11 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	for (i = 0; i < procs; i++) {
 		const char *name;
 
+#ifdef FREEBSD5
 		if (kp_stats[i].ki_stat == 0) {
+#else
+		if (kp_stats[i].kp_proc.p_stat == 0) {
+#endif
 			/* FreeBSD 5 deliberately overallocates the array that
 			 * the sysctl returns, so we'll get a few junk
 			 * processes on the end that we have to ignore. (Search
@@ -453,6 +464,72 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->nice = kp_stats[i].kp_proc.p_nice;
 #endif
 
+#ifdef NETBSD2
+		{
+			size_t size;
+			int mib[5];
+
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_LWP;
+			mib[2] = kp_stats[i].kp_proc.p_pid;
+			mib[3] = sizeof(struct kinfo_lwp);
+			mib[4] = 0;
+
+			if(sysctl(mib, 5, NULL, &size, NULL, 0) < 0) {
+				return NULL;
+			}
+
+			lwps = size / sizeof(struct kinfo_lwp);
+			mib[4] = lwps;
+
+			kl_stats = malloc(size);
+			if(kl_stats == NULL) {
+				return NULL;
+			}
+
+			if(sysctl(mib, 5, kl_stats, &size, NULL, 0) < 0) {
+				return NULL;
+			}
+		}
+
+		switch(kp_stats[i].kp_proc.p_stat) {
+		case SIDL:
+			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+			break;
+		case SACTIVE:
+			{
+				int i;
+
+				for(i = 0; i < lwps; i++) {
+					switch(kl_stats[i].l_stat) {
+					case LSONPROC:
+					case LSRUN:
+						proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+						goto end;
+					case LSSLEEP:
+						proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+						goto end;
+					case LSSTOP:
+					case LSSUSPENDED:
+						proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+						goto end;
+					}
+					proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+				}
+				end: ;
+			}
+			break;
+		case SSTOP:
+			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+			break;
+		case SZOMB:
+			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+			break;
+		default:
+			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+			break;
+		}
+#else
 #ifdef FREEBSD5
 		switch (kp_stats[i].ki_stat) {
 #else
@@ -487,6 +564,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
 			break;
 		}
+#endif
 		proc_state_size++;
 	}
 
