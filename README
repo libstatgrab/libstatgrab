@@ -1,0 +1,32 @@
+libstatgrab README
+http://www.i-scream.org.uk
+
+$Id$
+
+Building and Installation
+-------------------------
+
+After downloading and extracting libstatgrab, configure and build as
+follows;
+
+./configure
+make
+
+Then install as root;
+
+make install
+
+There are, of course, the usual GNU-style configure options;
+
+  --prefix=PREFIX
+
+For more documentation on the installation process, please read the
+INSTALL document.
+
+Problems?
+---------
+
+Please send all questions, problems, and bugs to dev@i-scream.org.uk. We
+will do our best to help.
+
+Thank-you for using i-scream software.

@@ -1,0 +1,18 @@
+libstatgrab CVS README
+http://www.i-scream.org.uk
+
+$Id$
+
+Starting from CVS there are a few things that need to be done before
+the normal build procedure. These require autoconf and automake to
+be installed.
+
+Then run the following;
+
+aclocal
+autoheader
+autoconf
+automake -a -c
+
+After this the normal build procedure in the README file can be
+followed.

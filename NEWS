@@ -1,0 +1,2 @@
+libstatgrab is a library for collecting system statistics for use in
+other programs. It is designed to work on Solaris, Linux, and FreeBSD.
