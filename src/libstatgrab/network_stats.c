@@ -318,3 +318,96 @@ network_stat_t *get_network_stats_diff(int *entries) {
 	*entries = diff_count;
 	return diff;
 }
+/* NETWORK INTERFACE STATS */
+
+void network_iface_stat_init(int start, int end, network_iface_stat_t *net_stats){
+
+	for(net_stats+=start; start<end; start++){
+		net_stats->interface_name=NULL;
+		net_stats->speed=0;
+		net_stats->dup=NO_DUPLEX;
+		net_stats++;
+	}
+}
+
+network_iface_stat_t *network_iface_stat_malloc(int needed_entries, int *cur_entries, network_iface_stat_t *net_stats){
+
+	if(net_stats==NULL){
+
+		if((net_stats=malloc(needed_entries * sizeof(network_iface_stat_t)))==NULL){
+			return NULL;
+		}
+		network_iface_stat_init(0, needed_entries, net_stats);
+		*cur_entries=needed_entries;
+
+		return net_stats;
+	}
+
+
+	if(*cur_entries<needed_entries){
+		net_stats=realloc(net_stats, (sizeof(network_iface_stat_t)*needed_entries));
+		if(net_stats==NULL){
+			return NULL;
+		}
+		network_iface_stat_init(*cur_entries, needed_entries, net_stats);
+		*cur_entries=needed_entries;
+	}
+
+	return net_stats;
+}
+
+network_iface_stat_t *get_network_iface_stats(int *entries){
+	static network_iface_stat_t *network_iface_stats;
+	network_iface_stat_t *network_iface_stat_ptr;
+	static int sizeof_network_iface_stats=0;	
+	int ifaces;
+
+#ifdef SOLARIS
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+	kstat_named_t *knp;
+#endif
+
+#ifdef SOLARIS
+        if ((kc = kstat_open()) == NULL) {
+                return NULL;
+        }
+
+	ifaces=0;
+
+    	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+        	if (!strcmp(ksp->ks_class, "net")) {
+                	kstat_read(kc, ksp, NULL);
+			if((knp=kstat_data_lookup(ksp, "ifspeed"))==NULL){
+				/* Not a network interface, so skip to the next entry */
+				continue;
+			}
+			network_iface_stats=network_iface_stat_malloc((ifaces+1), &sizeof_network_iface_stats, network_iface_stats);
+			if(network_iface_stats==NULL){
+				return NULL;
+			}
+			network_iface_stat_ptr = network_iface_stats + interfaces;
+			network_iface_stat_ptr->speed = knp->value.ui64 / (1000*1000);
+
+			if((knp=kstat_data_lookup(ksp, "link_duplex"))==NULL){
+				/* Not a network interface, so skip to the next entry */
+				continue;
+			}
+
+			if(knp->value.ui64 == 0){
+				network_iface_stat_ptr->dup = FULL_DUPLEX;
+			}else{
+				network_iface_stat_ptr->dup = HALF_DUPLEX;
+			}
+
+			network_iface_stat_ptr->interface_name = strdup(ksp->ks_name);
+			interfaces++;
+		}
+	}
+	kstat_close(kc);
+	
+#endif	
+	*entries = interfaces;
+	return network_iface_stats; 
+}
+

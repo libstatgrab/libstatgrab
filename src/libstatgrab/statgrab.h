@@ -111,6 +111,18 @@ typedef struct{
 	time_t systime;
 }network_stat_t;
 
+typedef enum{
+	FULL_DUPLEX,
+	HALF_DUPLEX,
+	NO_DUPLEX
+}duplex;
+
+typedef struct{
+	char *interface_name;
+	int speed;	/* In megabits/sec */
+	duplex dup;	
+}network_iface_stat_t;
+
 typedef struct{
 	long long pages_pagein;
 	long long pages_pageout;
