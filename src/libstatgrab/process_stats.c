@@ -601,6 +601,8 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
 			break;
 		}
+
+		free(kl_stats);
 #else
 #ifdef FREEBSD5
 		switch (kp_stats[i].ki_stat) {
