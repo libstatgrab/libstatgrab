@@ -466,12 +466,6 @@ int statgrab_init(){
 		if (kvmd == NULL) return 1;
 	}
 #endif
-#ifdef NETBSD
-	{
-		struct uvmexp *uvm = get_uvmexp();
-		if (uvm == NULL) return 1;
-	}
-#endif
 #ifdef SOLARIS
 	/* On solaris 7, this will fail if you are not root. But, everything
 	 * will still work, just no disk mappings. So we will ignore the exit
