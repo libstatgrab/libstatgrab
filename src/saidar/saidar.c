@@ -69,7 +69,13 @@ stats_t stats;
 char *size_conv(long long number){
 	char type[] = {'B', 'K', 'M', 'G', 'T'};
 	int x=0;
+	int sign=1;
 	static char string[10];
+
+	if(number < 0){
+		sign=-1;
+		number=-number;
+	}
 
 	for(;x<5;x++){
 		if( (number/1024) < (100)) {
@@ -78,7 +84,9 @@ char *size_conv(long long number){
 		number = (number/1024);
 	}
 
-	snprintf(string, 10, "%lld%c", number, type[x]);	
+	number = number*sign;
+
+	snprintf(string, 10, "%lld%c", number, type[x]);
 	return string;
 	
 }
