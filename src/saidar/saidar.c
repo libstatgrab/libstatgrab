@@ -435,9 +435,7 @@ int main(int argc, char **argv){
 	extern int errno;
 
 	int delay=2;
-#ifdef ALLBSD
-	gid_t gid;
-#endif
+
 	statgrab_init();
 #ifdef ALLBSD
 	if((setegid(getgid())) != 0){
