@@ -6,8 +6,8 @@
 #
 
 # Change these to change the package name and version
-AC_INIT(libstatgrab, 0.10.4, bugs@i-scream.org)
-AM_INIT_AUTOMAKE(libstatgrab, 0.10.4)
+AC_INIT(libstatgrab, 0.10.3, bugs@i-scream.org)
+AM_INIT_AUTOMAKE(libstatgrab, 0.10.3)
 
 # Revision number (automatically updated)
 AC_REVISION($Revision$)
@@ -89,10 +89,10 @@ freebsd4.*)
 	BIN_PERM="2755"
 	LINKFLAGS="-lkvm -ldevstat"
 	;;
-freebsd5.*)
+freebsd[[5-6]].*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x])
+	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x or 6.x])
 	LINKFLAGS="-ldevstat"
 	;;
 netbsdelf1*)
