@@ -162,7 +162,7 @@ sub main () {
 		$speed = 100 if $speed == 0;
 
 		# The speed is reported in Mbit/s; we want KiB/s.
-		$speed = ($speed * 1000000) / (8 * $kib);
+		$speed = int(($speed * 1000000) / (8 * $kib));
 
 		entry("Network interface $name IO", "net.$net.rx", "net.$net.tx", $speed, "Network IO", "KiB/s", "rx", "tx", 0, $KIBIBYTES);
 	}
