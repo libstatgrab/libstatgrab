@@ -9,11 +9,7 @@ libtool to be installed.
 
 Then run the following;
 
-aclocal
-autoheader
-autoconf
-libtoolize -c
-automake -a -c
+./autogen.sh
 
 After this the normal build procedure in the README file can be
 followed.
