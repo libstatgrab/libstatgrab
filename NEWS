@@ -5,6 +5,8 @@ libstatgrab 0.7.1 (06 January 2004)
  * Use cNtNdNsN names on Solaris instead of sdN.
  * Fixes and optimisations to saidar.
  * Fixes to the --disable-saidar and --disable-statgrab configure flags.
+ * New function to drop elevated privileges some OS's require.
+   (after using the init function)
 
 libstatgrab 0.7 (22 October 2003)
 
