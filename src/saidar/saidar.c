@@ -361,7 +361,7 @@ void version_num(char *progname){
 void usage(char *progname){
         fprintf(stderr, "Usage: %s [-d delay] [-v] [-h]\n\n", progname);
         fprintf(stderr, "  -d    Sets the update time in seconds\n");
-	fprintf(stderr, "  -v 	 Prints version number\n");
+	fprintf(stderr, "  -v    Prints version number\n");
         fprintf(stderr, "  -h    Displays this help information.\n");
         fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
         exit(1);
@@ -385,7 +385,7 @@ int main(int argc, char **argv){
 
 	int delay=2;
 
-        while ((c = getopt(argc, argv, "d:")) != EOF){
+        while ((c = getopt(argc, argv, "vhd:")) != EOF){
                 switch (c){
                         case 'd':
                                 delay = atoi(optarg);
