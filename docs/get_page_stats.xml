@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="get_page_stats">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>get_page_stats</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>get_page_stats</refname>
+    <refname>get_page_stats_diff</refname>
+    <refpurpose>get paging statistics</refpurpose>
+  </refnamediv>
+    
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>page_stat_t *<function>get_page_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>page_stat_t *<function>get_page_stats_diff</function></funcdef>
+        <void/>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+    
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <function>get_page_stats</function> and
+      <function>get_page_stats_diff</function> both return a pointer to
+      a static buffer of type <structname>page_stat_t</structname>.
+    </para>
+    <para>
+      <function>get_page_stats</function> will return the number of
+      pages the system has paged in and out since bootup.
+      <function>get_page_stats_diff</function> will return the
+      difference since last time it was called.  If it has not been
+      called before, it will return
+      <function>get_page_stats</function>.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>Return Values</title>
+
+    <programlisting>
+typedef struct{
+        long long pages_pagein;
+        long long pages_pageout;
+        time_t systime;
+}page_stat_t;
+    </programlisting>
+
+    <variablelist>
+      <varlistentry>
+        <term>
+          <structfield>pages_pagein</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of pages swapped into memory.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>pages_pageout</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of pages swapped out of memory (to swap).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>systime</structfield>
+        </term>
+        <listitem>
+          <para>
+            The time period over which <parameter>pages_pagein</parameter>
+            and <parameter>pages_pageout</parameter> were transferred.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Bugs</title>
+    <para>
+      Solaris doesn't seem to report accurately. It reports the number
+      of pages swapped into memory, not necessarily from swap. This
+      feature isn't deemed entirely reliable.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+    <para>Nothing yet</para>
+  </refsect1>
+  
+  <refsect1>
+    <title>Website</title>
+    
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org">http://www.i-scream.org</ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
