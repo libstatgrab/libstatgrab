@@ -9,108 +9,108 @@
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
     <refentrytitle>statgrab</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
     <refname>statgrab</refname>
     <refpurpose>get system statistics</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
 
       <funcprototype>
-        <funcdef>int <function>statgrab_init</function></funcdef>
+        <funcdef>int <function>sg_init</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>int <function>statgrab_drop_privileges</function></funcdef>
-        <void/>
-      </funcprototype>
-
-      <funcprototype>
-        <funcdef>cpu_percent_t *<function>cpu_percent_usage</function></funcdef>
-        <void/>
-      </funcprototype>
-      <funcprototype>
-        <funcdef>cpu_states_t *<function>get_cpu_totals</function></funcdef>
-        <void/>
-      </funcprototype>
-      <funcprototype>
-        <funcdef>cpu_states_t *<function>get_cpu_diff</function></funcdef>
+        <funcdef>int <function>sg_drop_privileges</function></funcdef>
         <void/>
       </funcprototype>
 
       <funcprototype>
-        <funcdef>diskio_stat_t *<function>get_diskio_stats</function></funcdef>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats</function></funcdef>
         <paramdef>int *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
-        <funcdef>diskio_stat_t *<function>get_diskio_stats_diff</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
-      </funcprototype>
-
-      <funcprototype>
-        <funcdef>general_stat_t *<function>get_general_stats</function></funcdef>
-        <void/>
-      </funcprototype>
-
-      <funcprototype>
-        <funcdef>load_stat_t *<function>get_load_stats</function></funcdef>
-        <void/>
-      </funcprototype>
-
-      <funcprototype>
-        <funcdef>mem_stat_t *<function>get_memory_stats</function></funcdef>
-        <void/>
-      </funcprototype>
-      <funcprototype>
-        <funcdef>swap_stat_t *<function>get_swap_stats</function></funcdef>
-        <void/>
-      </funcprototype>
-
-      <funcprototype>
-        <funcdef>network_stat_t *<function>get_network_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
-      </funcprototype>
-      <funcprototype>
-        <funcdef>network_stat_t *<function>get_network_stats_diff</function></funcdef>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_diff</function></funcdef>
         <paramdef>int *<parameter>entries</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
-        <funcdef>network_iface_stat_t *<function>get_network_iface_stats</function></funcdef>
+        <funcdef>sg_host_info *<function>sg_get_host_info</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_load_stats *<function>sg_get_load_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_mem_stats *<function>sg_get_mem_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_swap_stats *<function>sg_get_swap_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_diff</function></funcdef>
         <paramdef>int *<parameter>entries</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
-        <funcdef>page_stat_t *<function>get_page_stats</function></funcdef>
+        <funcdef>sg_network_iface_stats *<function>sg_get_network_iface_stats</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_page_stats *<function>sg_get_page_stats</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>page_stat_t *<function>get_page_stats_diff</function></funcdef>
+        <funcdef>sg_page_stats *<function>sg_get_page_stats_diff</function></funcdef>
         <void/>
       </funcprototype>
 
       <funcprototype>
-        <funcdef>process_stat_t *<function>get_process_stats</function></funcdef>
+        <funcdef>sg_process_count *<function>sg_get_process_stats</function></funcdef>
         <void/>
       </funcprototype>
 
       <funcprototype>
-        <funcdef>user_stat_t *<function>get_user_stats</function></funcdef>
+        <funcdef>sg_user_stats *<function>sg_get_user_stats</function></funcdef>
         <void/>
       </funcprototype>
 
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
@@ -120,7 +120,7 @@
       function for more details on usage.
     </para>
     <para>
-      <function>statgrab_init</function> must be the first
+      <function>sg_init</function> must be the first
       function you call before you start to use libstatgrab; it performs all
       the one-time initialisation operations that need setuid/setgid
       privileges. For instance, on *BSD it opens a descriptor to be able to
@@ -128,14 +128,14 @@
       mappings that in some cases are only accessible by root (machines with
       a /dev/osa). Once this has run, the other libstatgrab functions no longer 
       need elevated privileges. It is therefore a good idea to call
-      <function>statgrab_drop_privileges</function>, which discards
+      <function>sg_drop_privileges</function>, which discards
       setuid and setgid privileges, immediately after you call
-      <function>statgrab_init</function>, unless your application has
+      <function>sg_init</function>, unless your application has
       another reason for needing setuid or setgid privileges.
     </para>
     <para>
-      <function>statgrab_init</function> and
-      <function>statgrab_drop_privileges</function> return 0 on success, and
+      <function>sg_init</function> and
+      <function>sg_drop_privileges</function> return 0 on success, and
       non-zero on failure.
     </para>
     <para>
@@ -145,59 +145,59 @@
       OpenBSD, DragonFly BSD, Solaris and Cygwin.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member>
         <citerefentry>
-          <refentrytitle>cpu_percent_usage</refentrytitle>
+          <refentrytitle>sg_get_cpu_percents</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_diskio_stats</refentrytitle>
+          <refentrytitle>sg_get_disk_io_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_general_stats</refentrytitle>
+          <refentrytitle>sg_get_host_info</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_load_stats</refentrytitle>
+          <refentrytitle>sg_get_load_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_memory_stats</refentrytitle>
+          <refentrytitle>sg_get_mem_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_network_stats</refentrytitle>
+          <refentrytitle>sg_get_network_io_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_network_iface_stats</refentrytitle>
+          <refentrytitle>sg_get_network_iface_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_page_stats</refentrytitle>
+          <refentrytitle>sg_get_page_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_process_stats</refentrytitle>
+          <refentrytitle>sg_get_process_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
-          <refentrytitle>get_user_stats</refentrytitle>
+          <refentrytitle>sg_get_user_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

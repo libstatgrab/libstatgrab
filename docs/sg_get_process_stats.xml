@@ -3,7 +3,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="sg_get_process_stats">
+<refentry id="sg_get_process_count">
 
   <refentryinfo>
     <date>$Date$</date>
@@ -11,7 +11,7 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>sg_get_process_stats</refentrytitle>
+    <refentrytitle>sg_get_process_count</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>

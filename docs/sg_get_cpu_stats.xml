@@ -17,9 +17,9 @@
   </refmeta>
 
   <refnamediv>
-    <refname>sg_get_cpu_percents</refname>
     <refname>sg_get_cpu_stats</refname>
     <refname>sg_get_cpu_stats_diff</refname>
+    <refname>sg_get_cpu_percents</refname>
     <refpurpose>get cpu usage</refpurpose>
   </refnamediv>
 
