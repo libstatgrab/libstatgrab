@@ -29,7 +29,11 @@
 #include <stdlib.h>
 #include "statgrab.h"
 #ifdef SOLARIS
+#ifdef HAVE_SYS_LOADAVG_H
 #include <sys/loadavg.h>
+#else
+#include <kstat.h>
+#endif
 #endif
 
 load_stat_t *get_load_stats(){
@@ -42,11 +46,44 @@ load_stat_t *get_load_stats(){
 	return NULL;
 #else
 
+#if defined(SOLARIS) && !defined(HAVE_SYS_LOADAVG_H)
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+        kstat_named_t *kn;
+
+	if ((kc = kstat_open()) == NULL) {
+                return NULL;
+        }
+
+	if((ksp=kstat_lookup(kc, "unix", 0, "system_pages")) == NULL){
+                return NULL;
+        }
+
+        if (kstat_read(kc, ksp, 0) == -1) {
+                return NULL;
+        }
+
+	if((kn=kstat_data_lookup(ksp, "avenrun_1min")) == NULL){
+                return NULL;
+        }
+	load_stat.min1 = kn->value.ui32;
+
+        if((kn=kstat_data_lookup(ksp, "avenrun_5min")) == NULL){
+                return NULL;
+        }
+        load_stat.min5 = kn->value.ui32;
+
+        if((kn=kstat_data_lookup(ksp, "avenrun_15min")) == NULL){
+                return NULL;
+        }
+        load_stat.min15 = kn->value.ui32;
+#else
 	getloadavg(loadav,3);
 
 	load_stat.min1=loadav[0];
 	load_stat.min5=loadav[1];
 	load_stat.min15=loadav[2];
+#endif
 
 	return &load_stat;
 #endif
