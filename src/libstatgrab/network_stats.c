@@ -129,7 +129,7 @@ network_stat_t *get_network_stats(int *entries){
 	/* Horrible big enough, but it should be easily big enough */
 	char line[8096];
 	regex_t regex;
-	regmatch_t line_match[4];
+	regmatch_t line_match[9];
 #endif
 #ifdef ALLBSD
 	struct ifaddrs *net, *net_ptr;
