@@ -72,7 +72,7 @@
       it fails it will use a name like sd0. On some systems programs
       calling libstatgrab will need elevated privileges to lookup
       some of the names. The mappings are built up when
-      <function>statgrab_init</function> is called.
+      <function>sg_init</function> is called.
     </para>
   </refsect1>
 

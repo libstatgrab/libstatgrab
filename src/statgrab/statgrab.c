@@ -682,7 +682,7 @@ int main(int argc, char **argv) {
 
 	select_interesting(argc - optind, &argv[optind]);
 
-	/* We don't care if statgrab_init fails, because we can just display
+	/* We don't care if sg_init fails, because we can just display
  	   the statistics that can be read as non-root. */
 	sg_init();
 	if (sg_drop_privileges() != 0)

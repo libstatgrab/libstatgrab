@@ -36,17 +36,17 @@ On Linux root privileges are required to get the statistics returned
 by the get_network_iface_stats function. Not having these privileges
 results in NULL being returned.
 
-Also note that this cannot be solved by calling statgrab_init and then
-statgrab_drop_privileges at this stage.
+Also note that this cannot be solved by calling sg_init and then
+sg_drop_privileges at this stage.
 
 FreeBSD 4
 ---------
 
 On FreeBSD 4 (not on 5) programs need to be setgid kmem to get swap
 statistics. It is sufficient to give a program these privileges, call
-statgrab_init, and then drop the privileges using statgrab_drop_privileges.
+sg_init, and then drop the privileges using sg_drop_privileges.
 
-The get_swap_stats function will return NULL if this hasn't been done.
+The sg_get_swap_stats function will return NULL if this hasn't been done.
 
 Solaris 2.6/2.7
 ---------------
@@ -55,7 +55,7 @@ On Solaris 2.6 and 2.7 root privileges are required to build the drive
 mapping list (eg. mapping ssd0 on to c0t0d0s0). If these privileges
 aren't available the names will be left as ssd0, for example.
 
-It is sufficient to use statgrab_init and statgrab_drop_privileges.
+It is sufficient to use sg_init and sg_drop_privileges.
 
 Cygwin
 ------
