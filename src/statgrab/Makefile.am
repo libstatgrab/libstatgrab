@@ -24,6 +24,7 @@ if SETGIDBINS
 endif
 if SETUIDBINS
 # Some operating systems need the binary to be setuid root
+	chown root @bindir@/statgrab
 	chmod u+s @bindir@/statgrab
 endif
 endif
