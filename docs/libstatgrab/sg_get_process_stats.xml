@@ -19,6 +19,14 @@
   <refnamediv>
     <refname>sg_get_process_stats</refname>
     <refname>sg_get_process_count</refname>
+    <refname>sg_process_compare_name</refname>
+    <refname>sg_process_compare_pid</refname>
+    <refname>sg_process_compare_uid</refname>
+    <refname>sg_process_compare_gid</refname>
+    <refname>sg_process_compare_size</refname>
+    <refname>sg_process_compare_res</refname>
+    <refname>sg_process_compare_cpu</refname>
+    <refname>sg_process_compare_time</refname>
     <refpurpose>get process statistics</refpurpose>
   </refnamediv>
 
@@ -33,6 +41,48 @@
         <funcdef>sg_process_count *<function>sg_get_process_count</function></funcdef>
         <void/>
       </funcprototype>
+
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_name</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_pid</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_uid</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_gid</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_size</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_res</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_cpu</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+      	<funcdef>int <function>sg_process_compare_time</function></funcdef>
+	<paramdef>const void *<parameter>va</parameter></paramdef>
+	<paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+
     </funcsynopsis>
   </refsynopsisdiv>
 
@@ -56,6 +106,30 @@
       on the system. In the first case lots of detail is provided, and
       in the second case a summary of the states of the current processes.
     </para>
+    <para>
+      <simplelist type="vert">
+        <member><function>sg_process_compare_name</function></member>
+        <member><function>sg_process_compare_pid</function></member>
+        <member><function>sg_process_compare_uid</function></member>
+        <member><function>sg_process_compare_gid</function></member>
+        <member><function>sg_process_compare_size</function></member>
+        <member><function>sg_process_compare_res</function></member>
+        <member><function>sg_process_compare_cpu</function></member>
+        <member><function>sg_process_compare_time</function></member>
+      </simplelist>
+    </para>
+    <para>
+      These functions compare two sg_process_stats entries, and return an 
+      int to represent which one is greater. The main use of these functions
+      is to be passed to qsort to sort the sg_process_stats by the given type.
+    </para>
+    <para> 
+      For example: 
+    </para>
+    <para>
+        <function>qsort</function>(<structname>sg_process_stats</structname> ps, int ps_size, sizeof *ps, sg_process_compare_pid);
+    </para>
+
   </refsect1>
 
   <refsect1>
