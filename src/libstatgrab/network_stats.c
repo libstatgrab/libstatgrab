@@ -190,6 +190,23 @@ network_stat_t *get_network_stats(int *entries){
 	return network_stats;	
 }
 
+long long transfer_diff(long long new, long long old){
+#ifdef SOL7 
+#define MAXVAL 4294967296
+#else
+#define MAXVAL 18446744073709551616
+#endif
+	long long result;
+	if(new>old){
+		result = (new-old);
+	}else{
+		result = (MAXVAL+(new-old));
+	}
+
+	return result;
+
+}
+
 network_stat_t *get_network_stats_diff(int *entries){
 	static network_stat_t *network_stats_diff=NULL;
 	static int sizeof_net_stats_diff=0;
