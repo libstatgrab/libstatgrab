@@ -454,7 +454,6 @@ int main(int argc, char **argv){
 					fprintf(stderr, "Time must be 1 second or greater\n");
 					exit(1);
 				}
-				delay--;
                                 break;
 			case 'v':
 				version_num(argv[0]);	
@@ -464,7 +463,6 @@ int main(int argc, char **argv){
 				usage(argv[0]);
 				return 1;
 				break;
-				
                 }
         }
 
