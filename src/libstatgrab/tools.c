@@ -466,6 +466,16 @@ int statgrab_init(){
 		if (kvmd == NULL) return 1;
 	}
 #endif
+#if defined(NETBSD) || defined(OPENBSD)
+	{
+		/* This should always succeed, but it seems that on some
+		 * versions of NetBSD the first call to get_uvmexp will return
+		 * a non-filled-in structure; this is a workaround for that.
+		 */
+		struct uvmexp *uvm = get_uvmexp();
+		if (uvm == NULL) return 1;
+	}
+#endif
 #ifdef SOLARIS
 	/* On solaris 7, this will fail if you are not root. But, everything
 	 * will still work, just no disk mappings. So we will ignore the exit
