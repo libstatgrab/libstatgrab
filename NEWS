@@ -1,3 +1,14 @@
+libstatgrab 0.8.1 (21 January 2004)
+
+ * The library part of libstatgrab is now released under the LGPL.
+   (the tools are still released under the GPL)
+ * File descriptor leak fixed on Linux.
+ * strlcpy/strlcat functions added for Solaris 7 to fix compile.
+ * statgrab_init error behaviour fixed (primarly for Solaris 7).
+ * Some incorrect #includes moved.
+ * Significant speed increases to the Solaris disk mapping code in
+   statgrab_init, which improves startup time.
+
 libstatgrab 0.8 (06 January 2004)
 
  * Support for Linux 2.6.
