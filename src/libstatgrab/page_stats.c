@@ -103,6 +103,7 @@ page_stat_t *get_page_stats(){
 		}
 
 		if (sscanf(line_ptr, "page %lld %lld", &page_stats.pages_pagein, &page_stats.pages_pageout) != 2) {
+			fclose(f);
 			return NULL;
 		}
 
