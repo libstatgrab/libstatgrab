@@ -335,7 +335,7 @@ void display_data(){
 		move(13+stats.network_entries+counter, 62);
 		printw("%7s", size_conv(disk_stat_ptr->avail));
 		move(13+stats.network_entries+counter, 73);
-		printw("%5.2f%%", 100.00 * ((float) (disk_stat_ptr->size - disk_stat_ptr->avail) / (float) disk_stat_ptr->size));
+		printw("%5.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
 		disk_stat_ptr++;
 	}
 
