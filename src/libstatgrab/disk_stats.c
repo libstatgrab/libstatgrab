@@ -289,6 +289,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 
 			diskio_stats_ptr->disk_name=strdup(ksp->ks_name);
+			diskio_stats_ptr->systime=time(NULL);
 			num_diskio++;
 		}
 	}
@@ -369,6 +370,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 				break;
 		}
 
+		diskio_stats_ptr->systime=time(NULL);
 		num_diskio++;
 	}
 
