@@ -79,10 +79,7 @@ void clear_stats() {
 
 	for (i = 0; i < num_stats; i++)
 		free(stats[i].name);
-	free(stats);
-	stats = NULL;
 	num_stats = 0;
-	alloc_stats = 0;
 }
 
 /* Add a stat. The varargs make up the name, joined with dots; the name is
