@@ -161,11 +161,11 @@ int main(int argc, char **argv){
 				printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Total Tx", (total_tx  / (1024.00*1024.00)));
 				break;
 		}
-		printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total packets in", total_ipackets);
-		printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total packets out", total_opackets);
-		printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total errors in", total_ierrors);
-		printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total errors out", total_oerrors);
-		printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total collisions", total_collisions);
+		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total packets in", total_ipackets);
+		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total packets out", total_opackets);
+		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total errors in", total_ierrors);
+		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total errors out", total_oerrors);
+		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total collisions", total_collisions);
 
 		fflush(stdout);
 
