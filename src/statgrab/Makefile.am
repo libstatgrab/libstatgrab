@@ -3,6 +3,7 @@
 # $Id$
 
 bin_PROGRAMS = statgrab
+bin_SCRIPTS = statgrab-make-mrtg-config statgrab-make-mrtg-index
 statgrab_SOURCES = statgrab.c
 
 INCLUDES = -I$(top_srcdir) -I$(top_builddir) \

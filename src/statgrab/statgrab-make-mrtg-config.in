@@ -1,0 +1,179 @@
+#!/usr/bin/perl -w
+# i-scream central monitoring system
+# http://www.i-scream.org
+# Copyright (C) 2000-2003 i-scream
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+use strict;
+use Getopt::Long;
+
+my $progname = "statgrab-make-mrtg-config";
+my $statgrab = "statgrab";
+my $workdir = undef;
+
+my $kib = 1024;
+my $mib = $kib * $kib;
+
+# Print an entry in the MRTG config file.
+sub entry ($$$$$$$$$$) {
+	my ($title, $vali, $valo, $max, $ylegend, $yunit, $legendi, $legendo, $gauge, $in_kib) = @_;
+	my $name = $vali;
+	my $options = "";
+	$options .= " noo" unless defined $valo;
+	$options .= " gauge" if $gauge;
+
+	print "\n";
+	print "Title[$name]: $title\n";
+	print "PageTop[$name]: $title\n";
+	print "MaxBytes[$name]: $max\n";
+	print "YLegend[$name]: $ylegend\n";
+	print "ShortLegend[$name]: $yunit\n";
+	print "LegendI[$name]: $legendi\n";
+	print "LegendO[$name]: $legendo\n" if defined $valo;
+	if ($in_kib) {
+		print "kMG[$name]: Ki,Mi,Gi,Ti\n";
+	}
+	$valo = "const.0" unless defined $valo;
+	print "Options[$name]:$options\n" if $options ne "";
+	print "Target[$name]: `$statgrab -p -m $vali $valo`\n";
+}
+
+my $package_version = '@PACKAGE_VERSION@';
+my $package_bugreport = '@PACKAGE_BUGREPORT@';
+my $help_text = <<EOF;
+Usage: $progname [OPTION]...
+Generate MRTG configuration from statgrab output and write it to stdout.
+
+--no-header                  Don't print MRTG global options; useful if you
+                             want to include the output of this script in
+                             another MRTG config file
+--workdir PATH               Use PATH for MRTG's WorkDir option
+--statgrab PATH              Specify location of statgrab binary
+                             (default "statgrab")
+--help                       Display this help and exit
+
+Version $package_version - report bugs to $package_bugreport.
+EOF
+
+sub fatal ($) {
+	my ($message) = @_;
+	die "$progname: $message\n";
+}
+
+sub main () {
+	GetOptions('statgrab=s' => \$statgrab,
+	           'workdir=s' => \$workdir,
+	           'no-header' => \my $no_header,
+	           'help' => \my $help) or die $help_text;
+	if ($help) {
+		print "$help_text";
+		exit 0;
+	}
+
+	unless ($no_header or defined $workdir) {
+		fatal "must specify --workdir or --no-header"
+	}
+
+	my %stats = ();
+	my %toplevel = ();
+	my %disks = ();
+	my %fss = ();
+	my %nets = ();
+	open STATGRAB, "$statgrab|" or fatal "can't run statgrab";
+	while (<STATGRAB>) {
+		chomp;
+		/^([^=]*) = (.*)$/ or fatal "bad line in statgrab output";
+		$stats{$1} = $2;
+
+		my @parts = split /\./, $1;
+		$toplevel{$parts[0]} = 1;
+		$disks{$parts[1]} = 1 if $parts[0] eq "disk";
+		$fss{$parts[1]} = 1 if $parts[0] eq "fs";
+		$nets{$parts[1]} = 1 if $parts[0] eq "net";
+	}
+	close STATGRAB;
+
+	unless ($no_header) {
+		print "WorkDir: $workdir\n";
+		print "Options[^]: growright\n";
+		print "WriteExpires: Yes\n";
+	}
+
+	if (exists $toplevel{"cpu"}) {
+		entry("CPU idle", "cpu.idle", undef, "100", "Idle", "%", "idle", undef, 1, 0);
+		entry("CPU iowait", "cpu.iowait", undef, "100", "iowait", "%", "iowait", undef, 1, 0);
+		entry("CPU kernel", "cpu.kernel", undef, "100", "Kernel", "%", "kernel", undef, 1, 0);
+		entry("CPU nice", "cpu.nice", undef, "100", "Nice", "%", "nice", undef, 1, 0);
+		entry("CPU swap", "cpu.swap", undef, "100", "Swap", "%", "swap", undef, 1, 0);
+		entry("CPU user", "cpu.user", undef, "100", "User", "%", "user", undef, 1, 0);
+	}
+
+	foreach my $disk (sort keys %disks) {
+		my $name = $stats{"disk.$disk.disk_name"};
+		entry("Disk $name IO", "disk.$disk.read_bytes", "disk.$disk.write_bytes", 100*$mib, "IO rate", "B/s", "read", "write", 0, 0);
+	}
+
+	foreach my $fs (sort keys %fss) {
+		my $name = $stats{"fs.$fs.mnt_point"};
+		my $size = $stats{"fs.$fs.size"};
+		my $inodes = $stats{"fs.$fs.total_inodes"};
+		entry("Filesystem $name space usage", "fs.$fs.used", undef, $size, "Space used", "B", "used", undef, 1, 0);
+		entry("Filesystem $name inode usage", "fs.$fs.used_inodes", undef, $inodes, "Inodes used", "inodes", "used", undef, 1, 0);
+	}
+
+	if (exists $toplevel{"load"}) {
+		entry("Load average over 1 minute", "load.min1", undef, 100, "Load average", "running", "load", undef, 1, 0);
+		entry("Load average over 5 minutes", "load.min5", undef, 100, "Load average", "running", "load", undef, 1, 0);
+		entry("Load average over 15 minutes", "load.min15", undef, 100, "Load average", "running", "load", undef, 1, 0);
+	}
+
+	if (exists $toplevel{"mem"}) {
+		my $total = $stats{"mem.total"};
+		entry("Memory usage", "mem.used", "mem.cache", $total, "Memory usage", "B", "total", "cache", 1, 0);
+	}
+
+	foreach my $net (sort keys %nets) {
+		my $name = $stats{"net.$net.interface_name"};
+		# FIXME should be able to discover interface speed
+		entry("Network interface $name IO", "net.$net.rx", "net.$net.tx", 100*$mib, "Network IO", "B", "rx", "tx", 0, 0);
+	}
+
+	if (exists $toplevel{"page"}) {
+		# FIXME what's a sensible maximum?
+		entry("Paging IO", "page.in", "page.out", 1000, "Paging IO", "pages", "in", "out", 0, 0);
+	}
+
+	if (exists $toplevel{"proc"}) {
+		# FIXME mildly silly assumption
+		my $maxproc = 65536;
+		entry("Processes running", "proc.running", undef, $maxproc, "Running", "procs", "running", undef, 1, 0);
+		entry("Processes sleeping", "proc.sleeping", undef, $maxproc, "Sleeping", "procs", "running", undef, 1, 0);
+		entry("Processes stopped", "proc.stopped", undef, $maxproc, "Stopped", "procs", "running", undef, 1, 0);
+		entry("Processes", "proc.total", undef, $maxproc, "Total", "procs", "running", undef, 1, 0);
+		entry("Processes zombie", "proc.zombie", undef, $maxproc, "Zombie", "procs", "running", undef, 1, 0);
+	}
+
+	if (exists $toplevel{"swap"}) {
+		my $swapsize = $stats{"swap.total"};
+		entry("Swap usage", "swap.used", undef, $swapsize, "Swap usage", "B", "used", undef, 1, 0);
+	}
+
+	if (exists $toplevel{"user"}) {
+		entry("Users", "user.num", undef, 1000, "Users", "users", "users", undef, 1, 0);
+	}
+}
+
+main();
