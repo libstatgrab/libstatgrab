@@ -65,7 +65,14 @@ typedef enum{
         HALF_DUPLEX,
         UNKNOWN_DUPLEX
 }statgrab_duplex;
+    </programlisting>
 
+    <para>
+      Note: The <structfield>UNKNOWN_DUPLEX</structfield> value could mean
+      that duplex hasn't been negotiated yet.
+    </para>
+
+    <programlisting>
 typedef struct{
         char *interface_name;
         int speed;
