@@ -50,7 +50,7 @@
 			"ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
 			"jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
 			"rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
-			"umsdos", "vfat", "xfs", "jfs"}
+			"umsdos", "vfat", "xfs", "jfs", "nfs"}
 #endif
 
 #ifdef CYGWIN
@@ -66,14 +66,14 @@
 #include <sys/dkstat.h>
 #include <devstat.h>
 #define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
-			"ufs", "mfs"}
+			"ufs", "mfs", "nfs"}
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 #define VALID_FS_TYPES {"ffs", "mfs", "msdos", "lfs", "adosfs", "ext2fs", \
-			"ntfs"}
+			"ntfs", "nfs"}
 #endif
 
 #ifdef HPUX
@@ -144,7 +144,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 #endif
 
 #ifdef ALLBSD
-	nummnt=getmntinfo(&mp , MNT_LOCAL);
+	nummnt=getmntinfo(&mp, MNT_WAIT);
 	if (nummnt<=0){
 		sg_set_error_with_errno(SG_ERROR_GETMNTINFO, NULL);
 		return NULL;
