@@ -392,8 +392,11 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 			}
 	
 			/* We can't seperate the reads from the writes, we'll
-			   just give the same to each. */
-			rbytes = wbytes = di->psd_dkwds / 2;
+			 * just give the same to each. (This value is in
+			 * 64-byte chunks according to the pstat header file,
+			 * and can wrap to be negative.)
+			 */
+			rbytes = wbytes = ((unsigned long) di->psd_dkwds) * 64LL;
 	
 			/* Skip unused disks. */
 			if (rbytes == 0 && wbytes == 0) {
