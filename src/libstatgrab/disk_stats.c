@@ -351,8 +351,8 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #ifdef FREEBSD
 	if (!stats_init) {
 		stats.dinfo=malloc(sizeof(struct devinfo));
-		bzero(stats.dinfo, sizeof(struct devinfo));
 		if(stats.dinfo==NULL) return NULL;
+		bzero(stats.dinfo, sizeof(struct devinfo));
 		stats_init = 1;
 	}
 #ifdef FREEBSD5
