@@ -3,6 +3,11 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.11.1 (03 March 2005)
+ * Add NFS to list of supported filesystems.
+ * Fix reporting of network interface duplex settings on Linux.
+ * Fix saidar to support negative FS usage.
+
 libstatgrab 0.11 (09 November 2004)
  * Add support for HP-UX 11.11.
     (Patches provided by Roy Keene)
