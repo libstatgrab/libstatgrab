@@ -1,0 +1,13 @@
+user_stats() returns a static user_stat_t structure.
+
+user_stat_t *get_user_stats();
+
+typedef struct{
+        char *name_list;
+        int num_entries;
+}user_stat_t;
+
+name_list contains a list of all the logged in users. The
+list is a single char * and the users are space seperated.
+
+num_entries contains the number of users logged in.
