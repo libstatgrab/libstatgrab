@@ -89,9 +89,6 @@ void add_mapping(char *bsd, char *svr){
 	mapping_t *map_ptr;
 	mapping_t *map_end_ptr;
 
-	bsd = strdup(bsd);
-	svr = strdup(svr);
-
 	if (mapping == NULL){
 		mapping = malloc(sizeof(mapping_t));
 		if (mapping == NULL) return;
@@ -114,8 +111,8 @@ void add_mapping(char *bsd, char *svr){
 	}
 
 	map_ptr->next = NULL;
-	map_ptr->bsd = bsd;
-	map_ptr->svr = svr;
+	map_ptr->bsd = strdup(bsd);
+	map_ptr->svr = strdup(svr);
 
 	return;
 }
