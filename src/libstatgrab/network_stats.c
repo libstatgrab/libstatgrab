@@ -108,7 +108,8 @@ network_stat_t *get_network_stats(int *entries){
 			interfaces++;
 		}
 	}
-			
+		
+	kstat_close(kc);	
 
 	*entries=interfaces;
 

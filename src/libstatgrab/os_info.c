@@ -24,7 +24,6 @@
 
 #include "statgrab.h"
 #include <sys/utsname.h>
-#include "ukcprog.h"
 #include <stdio.h>
 #ifdef SOLARIS
 #include <kstat.h>
@@ -42,7 +41,6 @@ general_stat_t *get_general_stats(){
 	kstat_named_t *kn;
 
 	if((uname(&os)) < 0){
-		errf("Failed to get os stats (%m)");
 		return NULL;
 	}
 	
@@ -54,26 +52,20 @@ general_stat_t *get_general_stats(){
 
 	/* get uptime */
 	if ((kc = kstat_open()) == NULL) {
-		errf("kstat_open failure (%m)");
 		return NULL;
 	}
 	if((ksp=kstat_lookup(kc, "unix", -1, "system_misc"))==NULL){
-		errf("failed to find lookup information (%m)");
 		return NULL;
 	}
 	if (kstat_read(kc, ksp, 0) == -1) {
-		errf("Failed to read kernel information (%m)");
 		return NULL;
 	}
 	if((kn=kstat_data_lookup(ksp, "boot_time")) == NULL){
-		errf("Failed to get uptime (%m)");
 		return NULL;
 	}
 	boottime=(kn->value.ui32);
-	if((kstat_close(kc)) != 0){
-		errf("Failed to close kstat control structure (%m)");
-		return NULL;
-	}
+
+	kstat_close(kc);
 
 	time(&curtime);
 	general_stat.uptime = curtime - boottime;

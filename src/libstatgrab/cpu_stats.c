@@ -42,7 +42,6 @@
 static cpu_states_t cpu_now;
 static int cpu_now_uninit=1;
 
-
 cpu_states_t *get_cpu_totals(){
 
 #ifdef SOLARIS
@@ -77,10 +76,7 @@ cpu_states_t *get_cpu_totals(){
 	cpu_now.total=cpu_now.user+cpu_now.iowait+cpu_now.kernel+cpu_now.idle+cpu_now.swap;
 	cpu_now_uninit=0;
 
-        if((kstat_close(kc)) != 0){
-                return NULL;
-        }
-
+        kstat_close(kc);
 #endif
 
 	cpu_now.systime=time(NULL);
