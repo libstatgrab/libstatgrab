@@ -278,9 +278,9 @@ network_stat_t *get_network_stats(int *entries){
 
 long long transfer_diff(long long new, long long old){
 #if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD)
-#define MAXVAL 4294967296LL
+#define MAXVAL 0xffffffffLL
 #else
-#define MAXVAL 18446744073709551616LL
+#define MAXVAL 0xffffffffffffffffLL
 #endif
 	long long result;
 	if(new>=old){
