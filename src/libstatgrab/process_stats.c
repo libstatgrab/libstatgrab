@@ -73,13 +73,13 @@ process_stat_t *get_process_stats(){
 	int procs;
 #endif
 
-#if defined(SOLARIS) || defined(LINUX)
 	process_stat.sleeping=0;
         process_stat.running=0;
         process_stat.zombie=0;
         process_stat.stopped=0;
         process_stat.total=0;
 
+#if defined(SOLARIS) || defined(LINUX)
 	if((proc_dir=opendir(PROC_LOCATION))==NULL){
 		return NULL;
 	}
