@@ -249,9 +249,9 @@ typedef enum {
 	SG_PS_RES,
 	SG_PS_CPU,
 	SG_PS_TIME
-} sg_sort_method;
+} sg_process_sort_method;
 
-void sg_process_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm);
+void sg_process_sort(sg_process_stats *ps, int num_ps, sg_process_sort_method sm);
 
 int sg_process_compare_pid(const void *va, const void *vb);
 int sg_process_compare_uid(const void *va, const void *vb);

@@ -767,7 +767,7 @@ int sg_process_compare_time(const void *va, const void *vb) {
 	}
 }
 
-void sg_process_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm){
+void sg_process_sort(sg_process_stats *ps, int num_ps, sg_process_sort_method sm){
 	int (*sortby_ptr)(const void *a, const void *b);
 
 	switch(sm){
