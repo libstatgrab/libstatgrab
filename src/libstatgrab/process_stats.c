@@ -343,6 +343,9 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 			proc_state_ptr->state = ZOMBIE;
 			break;
+		default:
+			proc_state_ptr->state = UNKNOWN;
+			break;
 		}
 		proc_state_size++;
 	}
