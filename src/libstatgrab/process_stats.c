@@ -93,9 +93,8 @@ int get_proc_snapshot(proc_state_t **ps){
 	char *proctitle;
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	kvm_t *kvmd;
-	char **args;
-	int alloc;
-	char *proctitletmp;
+	char **args, **argsp;
+	int argslen = 0;
 #else
 	long buflen;
 	char *p;
@@ -344,24 +343,19 @@ int get_proc_snapshot(proc_state_t **ps){
 		if(kvmd != NULL) {
 			args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
 			if(args != NULL) {
-				alloc = 1;
-				proctitle = malloc(alloc);
+				argsp = args;
+				while(*argsp != NULL) {
+					argslen += strlen(*args);
+					args++;
+				}
+				proctitle = malloc(argslen + 1);
+				proctitle[0] = '\0';
 				if(proctitle == NULL) {
 					return -1;
 				}
-				proctitle[0] = '\0';
 				while(*args != NULL) {
-					if(strlen(proctitle) + strlen(*args) >= alloc) {
-						alloc = (alloc + strlen(*args)) * 2;
-						proctitletmp = realloc(proctitle, alloc);
-						if(proctitletmp == NULL) {
-							free(proctitle);
-							return -1;
-						}
-						proctitle = proctitletmp;
-					}
-					strlcat(proctitle, *args, alloc);
-					strlcat(proctitle, " ", alloc);
+					strlcat(proctitle, *args, argslen);
+					strlcat(proctitle, " ", argslen);
 					args++;
 				}
 				/* remove trailing space */
