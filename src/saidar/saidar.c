@@ -152,12 +152,12 @@ void display_headings(){
 	printw("Mem Free  :");
 
 	/* Swap */
-        move(6, 21);
-        printw("Swap Total:");
-        move(7, 21);
-        printw("Swap Used :");
-        move(8, 21);
-        printw("Swap Free :");
+	move(6, 21);
+	printw("Swap Total:");
+	move(7, 21);
+	printw("Swap Used :");
+	move(8, 21);
+	printw("Swap Free :");
 
 	/* VM */
 	move(6, 42);
@@ -354,7 +354,7 @@ void display_data(){
 		/* Network */
 		network_stat_ptr = stats.network_io_stats;
 		for(counter=0;counter<stats.network_io_entries;counter++){
-	                move(line, 42);
+			move(line, 42);
 			printw("%s", network_stat_ptr->interface_name);
 			move(line, 62);
 			rt = (network_stat_ptr->systime)? (network_stat_ptr->rx / network_stat_ptr->systime): network_stat_ptr->rx;
@@ -390,7 +390,7 @@ void sig_winch_handler(int sig){
 	clear();
 	display_headings();
 	display_data();
-        signal(SIGWINCH, sig_winch_handler);
+	signal(SIGWINCH, sig_winch_handler);
 }
 
 int get_stats(){
@@ -416,18 +416,18 @@ void version_num(char *progname){
 }
 
 void usage(char *progname){
-        fprintf(stderr, "Usage: %s [-d delay] [-v] [-h]\n\n", progname);
-        fprintf(stderr, "  -d    Sets the update time in seconds\n");
+	fprintf(stderr, "Usage: %s [-d delay] [-v] [-h]\n\n", progname);
+	fprintf(stderr, "  -d    Sets the update time in seconds\n");
 	fprintf(stderr, "  -v    Prints version number\n");
-        fprintf(stderr, "  -h    Displays this help information.\n");
-        fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
-        exit(1);
+	fprintf(stderr, "  -h    Displays this help information.\n");
+	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
+	exit(1);
 }
 
 int main(int argc, char **argv){
 
-        extern char *optarg;
-        int c;
+	extern char *optarg;
+	int c;
 
 	time_t last_update = 0;
 
@@ -443,15 +443,15 @@ int main(int argc, char **argv){
 		return 1;
 	}
 		
-        while ((c = getopt(argc, argv, "vhd:")) != -1){
-                switch (c){
-                        case 'd':
-                                delay = atoi(optarg);
+	while ((c = getopt(argc, argv, "vhd:")) != -1){
+		switch (c){
+			case 'd':
+				delay = atoi(optarg);
 				if (delay < 1){
 					fprintf(stderr, "Time must be 1 second or greater\n");
 					exit(1);
 				}
-                                break;
+				break;
 			case 'v':
 				version_num(argv[0]);	
 				break;
@@ -460,16 +460,16 @@ int main(int argc, char **argv){
 				usage(argv[0]);
 				return 1;
 				break;
-                }
-        }
+		}
+	}
 
 	signal(SIGWINCH, sig_winch_handler);
-        initscr();
-        nonl();
-        cbreak();
-        noecho();
+	initscr();
+	nonl();
+	cbreak();
+	noecho();
 	timeout(delay * 1000);
-        window=newwin(0, 0, 0, 0);
+	window=newwin(0, 0, 0, 0);
 	clear();
 
 	if(!get_stats()){

@@ -26,9 +26,9 @@
 #include <unistd.h>
 
 int main(){
-        sg_process_stats *ps;
-        int ps_size;
-        int x;
+	sg_process_stats *ps;
+	int ps_size;
+	int x;
 	char *state = NULL;
 
 	/* Initialise statgrab */
@@ -40,7 +40,7 @@ int main(){
 		return 1;
 	}
 
-        ps = sg_get_process_stats(&ps_size);
+	ps = sg_get_process_stats(&ps_size);
 
 	if(ps == NULL){
 		fprintf(stderr, "Failed to get process snapshot\n");
@@ -50,7 +50,7 @@ int main(){
 	printf("%5s %5s %5s %5s %5s %5s %5s %6s %6s %9s %-10s %-4s %-8s %-20s %s\n",
 	 	"pid", "ppid", "pgid", "uid", "euid", "gid", "egid", "size", "res", "time", "cpu", "nice", "state", "name", "title");
 
-        for(x=0;x<ps_size;x++){
+	for(x=0;x<ps_size;x++){
 		switch (ps->state) {
 		case SG_PROCESS_STATE_RUNNING:
 			state = "RUNNING";
@@ -77,7 +77,7 @@ int main(){
 			(int)ps->time_spent, (float)ps->cpu_percent,
 			(int)ps->nice, state,
 			ps->process_name, ps->proctitle);
-                ps++;
-        }
+		ps++;
+	}
 	return 0;
 }

@@ -170,42 +170,42 @@ void populate_cpu() {
 
 		if (cpu_p != NULL) {
 			add_stat(FLOAT, &cpu_p->user,
-			         "cpu", "user", NULL);
+				 "cpu", "user", NULL);
 			add_stat(FLOAT, &cpu_p->kernel,
-			         "cpu", "kernel", NULL);
+				 "cpu", "kernel", NULL);
 			add_stat(FLOAT, &cpu_p->idle,
-			         "cpu", "idle", NULL);
+				 "cpu", "idle", NULL);
 			add_stat(FLOAT, &cpu_p->iowait,
-			         "cpu", "iowait", NULL);
+				 "cpu", "iowait", NULL);
 			add_stat(FLOAT, &cpu_p->swap,
-			         "cpu", "swap", NULL);
+				 "cpu", "swap", NULL);
 			add_stat(FLOAT, &cpu_p->nice,
-			         "cpu", "nice", NULL);
+				 "cpu", "nice", NULL);
 			add_stat(TIME_T, &cpu_p->time_taken,
-			         "cpu", "time_taken", NULL);
+				 "cpu", "time_taken", NULL);
 		}
 	} else {
 		sg_cpu_stats *cpu_s;
 
 		cpu_s = use_diffs ? sg_get_cpu_stats_diff()
-		                  : sg_get_cpu_stats();
+				  : sg_get_cpu_stats();
 		if (cpu_s != NULL) {
 			add_stat(LONG_LONG, &cpu_s->user,
-			         "cpu", "user", NULL);
+				 "cpu", "user", NULL);
 			add_stat(LONG_LONG, &cpu_s->kernel,
-			         "cpu", "kernel", NULL);
+				 "cpu", "kernel", NULL);
 			add_stat(LONG_LONG, &cpu_s->idle,
-			         "cpu", "idle", NULL);
+				 "cpu", "idle", NULL);
 			add_stat(LONG_LONG, &cpu_s->iowait,
-			         "cpu", "iowait", NULL);
+				 "cpu", "iowait", NULL);
 			add_stat(LONG_LONG, &cpu_s->swap,
-			         "cpu", "swap", NULL);
+				 "cpu", "swap", NULL);
 			add_stat(LONG_LONG, &cpu_s->nice,
-			         "cpu", "nice", NULL);
+				 "cpu", "nice", NULL);
 			add_stat(LONG_LONG, &cpu_s->total,
-			         "cpu", "total", NULL);
+				 "cpu", "total", NULL);
 			add_stat(TIME_T, &cpu_s->systime,
-			         "cpu", "systime", NULL);
+				 "cpu", "systime", NULL);
 		}
 	}
 }
@@ -256,11 +256,11 @@ void populate_general() {
 
 	if (host != NULL) {
 		add_stat(STRING, &host->os_name,
-		         "general", "os_name", NULL);
+			 "general", "os_name", NULL);
 		add_stat(STRING, &host->os_release,
-		         "general", "os_release", NULL);
+			 "general", "os_release", NULL);
 		add_stat(STRING, &host->os_version,
-		         "general", "os_version", NULL);
+			 "general", "os_version", NULL);
 		add_stat(STRING, &host->platform, "general", "platform", NULL);
 		add_stat(STRING, &host->hostname, "general", "hostname", NULL);
 		add_stat(TIME_T, &host->uptime, "general", "uptime", NULL);
@@ -293,23 +293,23 @@ void populate_fs() {
 				*p = '_';
 
 			add_stat(STRING, &disk[i].device_name,
-			         "fs", name, "device_name", NULL);
+				 "fs", name, "device_name", NULL);
 			add_stat(STRING, &disk[i].fs_type,
-			         "fs", name, "fs_type", NULL);
+				 "fs", name, "fs_type", NULL);
 			add_stat(STRING, &disk[i].mnt_point,
-			         "fs", name, "mnt_point", NULL);
+				 "fs", name, "mnt_point", NULL);
 			add_stat(LONG_LONG, &disk[i].size,
-			         "fs", name, "size", NULL);
+				 "fs", name, "size", NULL);
 			add_stat(LONG_LONG, &disk[i].used,
-			         "fs", name, "used", NULL);
+				 "fs", name, "used", NULL);
 			add_stat(LONG_LONG, &disk[i].avail,
-			         "fs", name, "avail", NULL);
+				 "fs", name, "avail", NULL);
 			add_stat(LONG_LONG, &disk[i].total_inodes,
-			         "fs", name, "total_inodes", NULL);
+				 "fs", name, "total_inodes", NULL);
 			add_stat(LONG_LONG, &disk[i].used_inodes,
-			         "fs", name, "used_inodes", NULL);
+				 "fs", name, "used_inodes", NULL);
 			add_stat(LONG_LONG, &disk[i].free_inodes,
-			         "fs", name, "free_inodes", NULL);
+				 "fs", name, "free_inodes", NULL);
 
 			free(buf);
 		}
@@ -321,19 +321,19 @@ void populate_disk() {
 	sg_disk_io_stats *diskio;
 
 	diskio = use_diffs ? sg_get_disk_io_stats_diff(&n)
-	                   : sg_get_disk_io_stats(&n);
+			   : sg_get_disk_io_stats(&n);
 	if (diskio != NULL) {
 		for (i = 0; i < n; i++) {
 			const char *name = diskio[i].disk_name;
 	
 			add_stat(STRING, &diskio[i].disk_name,
-			         "disk", name, "disk_name", NULL);
+				 "disk", name, "disk_name", NULL);
 			add_stat(LONG_LONG, &diskio[i].read_bytes,
-			         "disk", name, "read_bytes", NULL);
+				 "disk", name, "read_bytes", NULL);
 			add_stat(LONG_LONG, &diskio[i].write_bytes,
-			         "disk", name, "write_bytes", NULL);
+				 "disk", name, "write_bytes", NULL);
 			add_stat(TIME_T, &diskio[i].systime,
-			         "disk", name, "systime", NULL);
+				 "disk", name, "systime", NULL);
 		}
 	}
 }
@@ -357,29 +357,29 @@ void populate_net() {
 	sg_network_iface_stats *iface;
 
 	io = use_diffs ? sg_get_network_io_stats_diff(&n)
-	               : sg_get_network_io_stats(&n);
+		       : sg_get_network_io_stats(&n);
 	if (io != NULL) {
 		for (i = 0; i < n; i++) {
 			const char *name = io[i].interface_name;
 	
 			add_stat(STRING, &io[i].interface_name,
-			         "net", name, "interface_name", NULL);
+				 "net", name, "interface_name", NULL);
 			add_stat(LONG_LONG, &io[i].tx,
-			         "net", name, "tx", NULL);
+				 "net", name, "tx", NULL);
 			add_stat(LONG_LONG, &io[i].rx,
-			         "net", name, "rx", NULL);
+				 "net", name, "rx", NULL);
 			add_stat(LONG_LONG, &io[i].ipackets,
-			         "net", name, "ipackets", NULL);
+				 "net", name, "ipackets", NULL);
 			add_stat(LONG_LONG, &io[i].opackets,
-			         "net", name, "opackets", NULL);
+				 "net", name, "opackets", NULL);
 			add_stat(LONG_LONG, &io[i].ierrors,
-			         "net", name, "ierrors", NULL);
+				 "net", name, "ierrors", NULL);
 			add_stat(LONG_LONG, &io[i].oerrors,
-			         "net", name, "oerrors", NULL);
+				 "net", name, "oerrors", NULL);
 			add_stat(LONG_LONG, &io[i].collisions,
-			         "net", name, "collisions", NULL);
+				 "net", name, "collisions", NULL);
 			add_stat(TIME_T, &io[i].systime,
-			         "net", name, "systime", NULL);
+				 "net", name, "systime", NULL);
 		}
 	}
 
@@ -389,11 +389,11 @@ void populate_net() {
 			const char *name = iface[i].interface_name;
 
 			add_stat(INT, &iface[i].speed,
-			         "net", name, "speed", NULL);
+				 "net", name, "speed", NULL);
 			add_stat(BOOL, &iface[i].up,
-			         "net", name, "up", NULL);
+				 "net", name, "up", NULL);
 			add_stat(DUPLEX, &iface[i].dup,
-			         "net", name, "duplex", NULL);
+				 "net", name, "duplex", NULL);
 		}
 	}
 }
@@ -444,7 +444,7 @@ void select_interesting(int argc, char **argv) {
 		for (i = 0; i < argc; i++) {
 			for (t = &toplevels[0]; t->name != NULL; t++) {
 				if (strncmp(argv[i], t->name,
-				            strlen(t->name)) == 0) {
+					    strlen(t->name)) == 0) {
 					t->interesting = 1;
 					break;
 				}
@@ -557,9 +557,9 @@ void print_stats(int argc, char **argv) {
 				s = NULL;
 			} else {
 				s = (const stat *)bsearch(&key, stats,
-				                          num_stats,
-				                          sizeof *stats,
-				                          compare);
+							  num_stats,
+							  sizeof *stats,
+							  compare);
 			}
 
 			if (s == NULL) {
@@ -593,16 +593,16 @@ void usage() {
 	       "If no STATs are given, all will be displayed. Specify 'STAT.' to display all\n"
 	       "statistics starting with that prefix.\n"
 	       "\n");
-	printf("  -l         Linux sysctl-style output (default)\n"
-	       "  -b         BSD sysctl-style output\n"
-	       "  -m         MRTG-compatible output\n"
-	       "  -u         Plain output (only show values)\n"
-	       "  -n         Display cumulative stats once (default)\n"
-	       "  -s         Display stat differences repeatedly\n"
-	       "  -o         Display stat differences once\n"
+	printf("  -l	 Linux sysctl-style output (default)\n"
+	       "  -b	 BSD sysctl-style output\n"
+	       "  -m	 MRTG-compatible output\n"
+	       "  -u	 Plain output (only show values)\n"
+	       "  -n	 Display cumulative stats once (default)\n"
+	       "  -s	 Display stat differences repeatedly\n"
+	       "  -o	 Display stat differences once\n"
 	       "  -t DELAY   When repeating, wait DELAY seconds between updates (default 1)\n"
-	       "  -p         Display CPU usage differences as percentages rather than\n"
-	       "             absolute values\n"
+	       "  -p	 Display CPU usage differences as percentages rather than\n"
+	       "	     absolute values\n"
 	       "\n");
 	printf("Version %s - report bugs to <%s>.\n",
 	       PACKAGE_VERSION, PACKAGE_BUGREPORT);
