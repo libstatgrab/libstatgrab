@@ -260,7 +260,6 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	int major, minor;
 	char dev_letter;
 #endif
-
 	num_diskio=0;
 
 #ifdef SOLARIS
@@ -300,28 +299,45 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #ifdef LINUX
 	f=fopen("/proc/stat", "r");
 	if(f==NULL){
+		*entries=0;
+		fclose(f);
 		return NULL;
 	}
 	if((line_ptr=f_read_line(f, "disk_io:"))==NULL){
+		*entries=0;
+		fclose(f);
 		return NULL;
 	}
 	while((line_ptr=strchr(line_ptr, ' '))!=NULL){
+		line_ptr++;
+		if(*line_ptr=='\0'){
+			break;
+		}
 		if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
 			fclose(f);
+			*entries=0;
 			return NULL;
 		}
 		diskio_stats_ptr=diskio_stats+num_diskio;
 
 
-		sscanf(line_ptr, "(%d,%d):(%*d, %lld, %*d, %lld, %*d)", \
+		if((sscanf(line_ptr, "(%d,%d):(%*d, %lld, %*d, %lld, %*d)", \
 			&major, \
 			&minor, \
 			&diskio_stats_ptr->read_bytes, \
-			&diskio_stats_ptr->write_bytes);
+			&diskio_stats_ptr->write_bytes))!=4) {
+				continue;
+		}
 
 		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 
 		switch(major){
+			case 2:
+				if(minor==0){
+					diskio_stats_ptr->disk_name=strdup("fd0");
+				}
+				break;
+
 			case 3: 
 				if(minor==0){
 					diskio_stats_ptr->disk_name=strdup("hda");
@@ -336,14 +352,17 @@ diskio_stat_t *get_diskio_stats(int *entries){
 				}else{
 					diskio_stats_ptr->disk_name=strdup("hdd");
 				}
+				break;
 			case 8:
 				dev_letter='a'+(minor/16);
 				diskio_stats_ptr->disk_name=malloc(4);
 				snprintf(diskio_stats_ptr->disk_name, 4, "sd%c", dev_letter);
+				break;
 			default:
 				/* I have no idea what it is then :) */
 				diskio_stats_ptr->disk_name=malloc(16);
 				snprintf(diskio_stats_ptr->disk_name, 16, "%d %d", major, minor);
+				break;
 		}
 
 		num_diskio++;
