@@ -344,7 +344,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 
 	size = sizeof(diskcount);
 	if (sysctl(mib, MIBSIZE, &diskcount, &size, NULL, 0) < 0) {
-		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKCOUNT");
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKCOUNT");
 		return NULL;
 	}
 
@@ -352,7 +352,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	mib[1] = HW_DISKNAMES;
 
 	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
-		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
 		return NULL;
 	}
 
@@ -362,7 +362,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 
 	if (sysctl(mib, MIBSIZE, disknames, &size, NULL, 0) < 0) {
-		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
 		return NULL;
 	}
 
@@ -381,7 +381,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 
 	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
-		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
 		return NULL;
 	}
 
@@ -397,7 +397,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 
 	if (sysctl(mib, MIBSIZE, stats, &size, NULL, 0) < 0) {
-		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
 		return NULL;
 	}
 
