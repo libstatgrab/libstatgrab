@@ -36,7 +36,13 @@ AC_CHECK_FUNCS(atoll)
 
 # Disk IO read and write statistics are only present on recent NetBSD.
 AC_CHECK_MEMBER(struct disk_sysctl.dk_rbytes,
-                [AC_DEFINE(HAVE_DK_RBYTES, , [New-style NetBSD stats])],
+                [AC_DEFINE(HAVE_DK_RBYTES, , [New-style NetBSD disk stats])],
+                [],
+                [#include <sys/disk.h>])
+
+# Disk IO read and write statistics are only present on recent OpenBSD.
+AC_CHECK_MEMBER(struct diskstats.ds_rbytes,
+                [AC_DEFINE(HAVE_DS_RBYTES, , [New-style OpenBSD disk stats])],
                 [],
                 [#include <sys/disk.h>])
 
