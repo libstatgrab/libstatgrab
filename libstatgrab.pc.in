@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libstatgrab
+Description: Provides a useful interface to system statistics
+Version: @VERSION@
+Libs: -L${libdir} -lstatgrab
+Cflags: -I${includedir}
