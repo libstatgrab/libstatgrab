@@ -369,7 +369,7 @@ void populate_page() {
 	if (page != NULL) {
 		add_stat(LONG_LONG, &page->pages_pagein, "page", "in", NULL);
 		add_stat(LONG_LONG, &page->pages_pageout, "page", "out", NULL);
-		add_stat(LONG_LONG, &page->systime, "page", "systime", NULL);
+		add_stat(TIME_T, &page->systime, "page", "systime", NULL);
 	}
 }
 
