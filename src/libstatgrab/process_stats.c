@@ -63,6 +63,12 @@ int get_proc_snapshot(proc_state_t **ps){
 	proc_state_t *proc_state = NULL;
 	proc_state_t *proc_state_ptr;
 	int proc_state_size = 0;
+#ifdef ALLBSD
+	int mib[3];
+	size_t size;
+	struct kinfo_proc *kp_stats;
+	int procs, i;
+#endif
 #if defined(SOLARIS) || defined(LINUX)
         DIR *proc_dir;
         struct dirent *dir_entry;
@@ -186,14 +192,91 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
 		proc_state_size++;
-#endif
-
 
                 fclose(f);
         }
         closedir(proc_dir);
-	*ps = proc_state;
+#endif
 
+#ifdef ALLBSD
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC;
+	mib[2] = KERN_PROC_ALL;
+
+	if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	procs = size / sizeof(struct kinfo_proc);
+
+	kp_stats = malloc(size);
+	if (kp_stats == NULL) {
+		return NULL;
+	}
+
+	if (sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
+		free(kp_stats);
+		return NULL;
+	}
+
+	for (i = 0; i < procs; i++) {
+		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
+		proc_state_ptr = proc_state+proc_state_size;
+		
+		proc_state_ptr->process_name = strdup(kp_stats[i].ki_comm);
+		/* Seems we don't have access to that bit of memory */
+		/*proc_state_ptr->proctitle = strdup(kp_stats[i].ki_args->ar_args);*/
+
+		proc_state_ptr->pid = kp_stats[i].ki_pid;
+		proc_state_ptr->parent = kp_stats[i].ki_ppid;
+		proc_state_ptr->pgid = kp_stats[i].ki_pgid;
+
+		proc_state_ptr->uid = kp_stats[i].ki_ruid;
+		proc_state_ptr->euid = kp_stats[i].ki_uid;
+		proc_state_ptr->gid = kp_stats[i].ki_rgid;
+		proc_state_ptr->egid = kp_stats[i].ki_svgid;
+
+		proc_state_ptr->proc_size = kp_stats[i].ki_size;
+		/* This is in pages */
+		proc_state_ptr->proc_resident = kp_stats[i].ki_rssize * getpagesize();
+		/* This seems to be in microseconds */
+		proc_state_ptr->time_spent = kp_stats[i].ki_runtime / 1000000;
+		proc_state_ptr->cpu_percent = kp_stats[i].ki_pctcpu;
+		proc_state_ptr->nice = kp_stats[i].ki_nice;
+
+		switch (kp_stats[i].ki_stat) {
+		case SIDL:
+		case SRUN:
+#ifdef SONPROC
+		case SONPROC: /* NetBSD */
+#endif
+			proc_state_ptr->state = RUNNING;
+			break;
+		case SSLEEP:
+#ifdef SWAIT
+		case SWAIT: /* FreeBSD 5 */
+#endif
+#ifdef SLOCK
+		case SLOCK: /* FreeBSD 5 */
+#endif
+			proc_state_ptr->state = SLEEPING;
+			break;
+		case SSTOP:
+			proc_state_ptr->state = STOPPED;
+			break;
+		case SZOMB:
+#ifdef SDEAD
+		case SDEAD: /* OpenBSD & NetBSD */
+#endif
+			proc_state_ptr->state = ZOMBIE;
+			break;
+		}
+		proc_state_size++;
+	}
+
+	free(kp_stats);
+#endif
+
+	*ps = proc_state;
 	return proc_state_size;
 }
-

@@ -157,7 +157,7 @@ typedef struct{
 
 	unsigned long long proc_size; /* in bytes */
 	unsigned long long proc_resident; /* in bytes */
-	time_t time_spent;
+	time_t time_spent; /* time running in seconds */
 	double cpu_percent;
 	int nice;
 	process_status state;
