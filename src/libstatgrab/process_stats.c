@@ -470,7 +470,6 @@ process_stat_t *get_process_stats() {
 
 	for(x = 0; x < ps_size; x++) {
 		switch (ps->state) {
-		/* currently no mapping for UNKNOWN in process_stat_t */
 		case RUNNING:
 			process_stat.running++;
 			break;
@@ -482,6 +481,9 @@ process_stat_t *get_process_stats() {
 			break;
 		case ZOMBIE:
 			process_stat.zombie++;
+			break;
+		default:
+			/* currently no mapping for UNKNOWN in process_stat_t */
 			break;
 		}
 		ps++;
