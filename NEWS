@@ -3,6 +3,13 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.11 (09 November 2004)
+ * Add support for HP-UX 11.11.
+    (Patches provided by Roy Keene)
+ * Minor fixes to statgrab mrtg tools.
+ * Minor fixes to saidar.
+ * Minor code cleanups and fixes to libstatgrab.
+
 libstatgrab 0.10.3 (24 August 2004)
 
  * Add -f flag to statgrab to display floating-point numbers multiplied
