@@ -23,15 +23,22 @@
 #endif
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "statgrab.h"
 
 #ifdef SOLARIS
+#include <stdio.h>
 #include <sys/mnttab.h>
 #include <sys/statvfs.h>
 #include <kstat.h>
 #define VALID_FS_TYPES {"ufs", "tmpfs"}
+#endif
+
+#ifdef LINUX
+#include <stdio.h>
+#include <sys/vfs.h>
+#include <mntent.h>
+#define VALID_FS_TYPES {"ext2", "ext3", "xfs", "reiserfs", "vfat", "tmpfs"}
 #endif
 
 #define START_VAL 1
@@ -67,13 +74,19 @@ disk_stat_t *get_disk_stats(int *entries){
 
 	char *fs_types[] = VALID_FS_TYPES;
 	int x, valid_type;
-
 	int num_disks=0;
-	struct mnttab mp;
-	struct statvfs fs;
 	FILE *f;
 
 	disk_stat_t *disk_ptr;
+
+#ifdef SOLARIS
+	struct mnttab *mp;
+	struct statvfs fs;
+#endif
+#ifdef LINUX
+	struct mntent *mp;
+	struct statfs fs;
+#endif
 
 	if(watermark==-1){
 		disk_stats=malloc(START_VAL * sizeof(disk_stat_t));
@@ -83,8 +96,26 @@ disk_stat_t *get_disk_stats(int *entries){
 		watermark=START_VAL;
 		init_disk_stat(0, watermark-1, disk_stats);
 	}
+#ifdef LINUX
+	if ((f=setmntent("/etc/mtab", "r" ))==NULL){
+		return NULL;
+	}
 
+	while((mp=getmntent(f))){
+		if((statfs(mp->mnt_dir, &fs)) !=0){
+			continue;
+		}	
 
+		valid_type=0;
+		for(x=0;x<((sizeof(fs_types))/(sizeof(char*)));x++){
+                        if(strcmp(mp->mnt_type, fs_types[x]) ==0){
+                                valid_type=1;
+                                break;
+                        }
+                }
+#endif
+
+#ifdef SOLARIS
 	if ((f=fopen("/etc/mnttab", "r" ))==NULL){
 		return NULL;
 	}
@@ -92,7 +123,6 @@ disk_stat_t *get_disk_stats(int *entries){
 		if ((statvfs(mp.mnt_mountp, &fs)) !=0){
 			continue;
 		}
-
 		valid_type=0;
 		for(x=0;x<((sizeof(fs_types))/(sizeof(char*)));x++){
 			if(strcmp(mp.mnt_fstype, fs_types[x]) ==0){
@@ -100,6 +130,7 @@ disk_stat_t *get_disk_stats(int *entries){
 				break;
 			}
 		}
+#endif
 
 		if(valid_type){
 			if(num_disks>watermark-1){
@@ -114,11 +145,34 @@ disk_stat_t *get_disk_stats(int *entries){
 			}
 
 			disk_ptr=disk_stats+num_disks;
-	
+#ifdef LINUX
+			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->mnt_fsname))==NULL){
+				return NULL;
+			}
+				
+			if((disk_ptr->fs_type=copy_string(disk_ptr->fs_type, mp->mnt_type))==NULL){	
+				return NULL;
+			}
+
+			if((disk_ptr->mnt_point=copy_string(disk_ptr->mnt_point, mp->mnt_dir))==NULL){
+				return NULL;
+			}
+			disk_ptr->size = (long long)fs.f_bsize * (long long)fs.f_blocks;
+			disk_ptr->avail = (long long)fs.f_bsize * (long long)fs.f_bavail;
+			disk_ptr->used = (disk_ptr->size) - ((long long)fs.f_bsize * (long long)fs.f_bfree);
+
+			disk_ptr->total_inodes=(long long)fs.f_files;
+			disk_ptr->free_inodes=(long long)fs.f_ffree;
+			/* Linux doesn't have a "available" inodes */
+			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
+#endif
+
+#ifdef SOLARIS
 			/* Memory leak in event of realloc failing */
 			/* Maybe make this char[bigenough] and do strncpy's and put a null in the end? 
-			   Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE woul prob be upwards
-			   of a k each */
+			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
+			 * be upwards of a k each 
+			 */
 			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp.mnt_special))==NULL){
 				return NULL;
 			}
@@ -138,7 +192,7 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr->total_inodes=(long long)fs.f_files;
 			disk_ptr->used_inodes=disk_ptr->total_inodes - (long long)fs.f_ffree;
 			disk_ptr->free_inodes=(long long)fs.f_favail;
-
+#endif
 			num_disks++;
 		}
 	}
@@ -151,7 +205,7 @@ disk_stat_t *get_disk_stats(int *entries){
 	return disk_stats;
 
 }
-
+#ifdef SOLARIS
 void diskio_stat_init(int start, int end, diskio_stat_t *diskio_stats){
 
 	for(diskio_stats+=start; start<end; start++){
@@ -303,3 +357,4 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 	*entries=sizeof_diskio_stats_diff;
 	return diskio_stats_diff;
 }
+#endif
