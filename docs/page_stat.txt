@@ -1,5 +1,10 @@
-page_stat_t *get_page_stats();
-page_stat_t *get_page_stats_diff();
+Page Statistics
+===============
+
+$Id$
+
+Data Structure
+--------------
 
 typedef struct{
         long long pages_pagein;
@@ -7,18 +12,31 @@ typedef struct{
         time_t systime;
 }page_stat_t;
 
-pages_pagein is the number of pages swapped into memory
-pages_pageout is the number of pages swapped from memory to swap
+pages_pagein	is the number of pages swapped in to memory
+pages_pageout	is the number of pages swapped out of memory (to swap)
 
-get_page_stats() and get_page_stats_diff() both 
-return a pointer to a static buffer of type page_stat_t
+Functions
+---------
 
-get_page_stats() will return the number of pages the system
-has paged in and out since bootup. get_page_stats_diff() 
-will return the difference since last time it was called.
-If it has not been called before, it will return get_page_stats()
+page_stat_t *get_page_stats();
+page_stat_t *get_page_stats_diff();
 
-BUGS
+get_page_stats() and get_page_stats_diff() both return a pointer
+to a static buffer of type page_stat_t.
+
+get_page_stats() will return the number of pages the system has
+paged in and out since bootup. get_page_stats_diff() will return
+the difference since last time it was called.  If it has not been
+called before, it will return get_page_stats().
+
+Bugs
+----
+
 Solaris doesn't seem to report accurately. It reports the number
-of pages swapped into memory, not necessarily from swap. This 
-feature isn't deamed entirely reliable :)
+of pages swapped into memory, not necessarily from swap. This feature
+isn't deemed entirely reliable :)
+
+Example
+-------
+
+An example can be found in examples/page_stats.c
