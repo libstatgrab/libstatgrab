@@ -466,6 +466,7 @@ void get_stats() {
 /* Print the value of a stat. */
 void print_stat_value(const stat *s) {
 	void *v = s->stat;
+	long l;
 
 	switch (s->type) {
 	case LONG_LONG:
@@ -473,7 +474,8 @@ void print_stat_value(const stat *s) {
 		break;
 	case TIME_T:
 		/* FIXME option for formatted time? */
-		printf("%ld", *(time_t *)v);
+		l = *(time_t *)v;
+		printf("%ld", l);
 		break;
 	case FLOAT:
 		printf("%f", *(float *)v);
