@@ -25,12 +25,14 @@
 #include "statgrab.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include "ukcprog.h"
 #include <string.h>
 
 #ifdef SOLARIS
 #include <sys/mnttab.h>
 #include <sys/types.h>
 #include <sys/statvfs.h>
+#include <kstat.h>
 
 #define VALID_FS_TYPES {"ufs", "tmpfs"}
 
@@ -60,7 +62,6 @@ void init_disk_stat(int start, int end, disk_stat_t *disk_stats){
 		
 		disk_stats++;
 	}
-
 }
 
 disk_stat_t *get_disk_stats(int *entries){
@@ -155,8 +156,90 @@ disk_stat_t *get_disk_stats(int *entries){
 
 }
 
+void diskio_stat_init(int start, int end, diskio_stat_t *diskio_stats){
+
+	for(diskio_stats+=start; start<end; start++){
+		diskio_stats->disk_name=NULL;
+		
+		diskio_stats++;
+	}
+}
+
+diskio_stat_t *diskio_stat_malloc(int needed_entries, int *cur_entries, diskio_stat_t *diskio_stats){
+
+        if(diskio_stats==NULL){
+
+                if((diskio_stats=malloc(needed_entries * sizeof(diskio_stat_t)))==NULL){
+                        return NULL;
+                }
+                diskio_stat_init(0, needed_entries, diskio_stats);
+                *cur_entries=needed_entries;
+
+                return diskio_stats;
+        }
+
+
+        if(*cur_entries<needed_entries){
+                diskio_stats=realloc(diskio_stats, (sizeof(diskio_stat_t)*needed_entries));
+                if(diskio_stats==NULL){
+                        return NULL;
+                }
+                diskio_stat_init(*cur_entries, needed_entries, diskio_stats);
+                *cur_entries=needed_entries;
+        }
+
+        return diskio_stats;
+}
+
+static diskio_stat_t *diskio_stats=NULL;	
+
 diskio_stat_t *get_diskio_stats(int *entries){
 
-	/* Do jibble */
-	return NULL;
+	static int sizeof_diskio_stats=0;
+	int disks=0;	
+	diskio_stat_t *diskio_stats_ptr;
+
+        kstat_ctl_t *kc;
+        kstat_t *ksp;
+	kstat_io_t kios;
+
+	if ((kc = kstat_open()) == NULL) {
+                return NULL;
+        }
+
+	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+		fflush(stdout);
+                if (!strcmp(ksp->ks_class, "disk")) {
+			fflush(stdout);
+
+			if(ksp->ks_type != KSTAT_TYPE_IO) continue;
+			/* We dont want metadevices appearins as disks */
+			if(strcmp(ksp->ks_module, "md")==0) continue;
+                        if((kstat_read(kc, ksp, &kios))==-1){	
+				fflush(stdout);
+			}
+			
+			if((diskio_stats=diskio_stat_malloc(disks+1, &sizeof_diskio_stats, diskio_stats))==NULL){
+				kstat_close(kc);
+				return NULL;
+			}
+			diskio_stats_ptr=diskio_stats+disks;
+			
+			diskio_stats_ptr->read_bytes=kios.nread;
+			
+			diskio_stats_ptr->write_bytes=kios.nwritten;
+
+			if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
+
+			diskio_stats_ptr->disk_name=strdup(ksp->ks_name);
+			disks++;
+			fflush(stdout);
+		}
+	}
+
+	kstat_close(kc);
+
+	*entries=disks;
+
+	return diskio_stats;
 }

@@ -137,6 +137,7 @@ swap_stat_t *get_swap_stats();
 general_stat_t *get_general_stats();
 
 disk_stat_t *get_disk_stats(int *entries);
+diskio_stat_t *get_diskio_stats(int *entries);
 
 process_stat_t *get_process_stats();
 
