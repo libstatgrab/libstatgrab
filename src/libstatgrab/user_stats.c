@@ -26,10 +26,15 @@
 #include <stdio.h>
 #include <string.h>
 #include "statgrab.h"
-#ifdef FREEBSD
+#ifdef ALLBSD
 #include <sys/types.h>
 #endif
 #include <utmp.h>
+#ifdef NETBSD
+#include <limits.h>
+#undef MAX_LOGIN_NAME_SIZE
+#define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
+#endif
 
 #define START_VAL (5*(1+MAX_LOGIN_NAME_SIZE))
 
@@ -42,7 +47,7 @@ user_stat_t *get_user_stats(){
 #if defined(SOLARIS) || defined(LINUX)	
 	struct utmp *entry;
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 	struct utmp entry;
         FILE *f;
 #endif
@@ -80,7 +85,7 @@ user_stat_t *get_user_stats(){
 	}
 	endutent();
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 	if ((f=fopen(_PATH_UTMP, "r")) == NULL){
 		return NULL;
 	}

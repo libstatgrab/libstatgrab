@@ -23,6 +23,7 @@
 #endif
 
 #include "statgrab.h"
+#include "tools.h"
 #include <time.h>
 #ifdef SOLARIS
 #include <kstat.h>
@@ -31,7 +32,6 @@
 #endif
 #ifdef LINUX
 #include <stdio.h>
-#include "tools.h"
 #endif
 #ifdef FREEBSD
 #include <sys/types.h>
@@ -54,7 +54,11 @@ page_stat_t *get_page_stats(){
 #ifdef FREEBSD
 	size_t size;
 #endif
+#ifdef NETBSD
+	struct uvmexp *uvm;
+#endif
 
+	page_stats.systime = time(NULL);
         page_stats.pages_pagein=0;
         page_stats.pages_pageout=0;
 
@@ -72,8 +76,6 @@ page_stat_t *get_page_stats(){
 		page_stats.pages_pageout+=(long long)cs.cpu_vminfo.pgpgout;
 	}
 
-	page_stats.systime=time(NULL);
-
 	kstat_close(kc);
 #endif
 #ifdef LINUX
@@ -87,7 +89,6 @@ page_stat_t *get_page_stats(){
 	if((sscanf(line_ptr, "page %lld %lld", &page_stats.pages_pagein, &page_stats.pages_pageout))!=2){
 		return NULL;
 	}
-	page_stats.systime=time(NULL);
 	fclose(f);
 
 #endif
@@ -100,7 +101,13 @@ page_stat_t *get_page_stats(){
         if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, 0) < 0){
                 return NULL;
         }
-
+#endif
+#ifdef NETBSD
+	if ((uvm = get_uvmexp()) == NULL) {
+		return NULL;
+	}
+	page_stats.pages_pagein = uvm->pgswapin;
+	page_stats.pages_pageout = uvm->pgswapout;
 #endif
 
 	return &page_stats;

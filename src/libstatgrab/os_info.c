@@ -24,6 +24,7 @@
 
 #include <sys/utsname.h>
 #include "statgrab.h"
+#include <stdlib.h>
 #ifdef SOLARIS
 #include <kstat.h>
 #include <time.h>
@@ -31,9 +32,14 @@
 #ifdef LINUX
 #include <stdio.h>
 #endif
+#ifdef ALLBSD
 #ifdef FREEBSD
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#else
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
 #include <time.h>
 #include <sys/time.h>
 #endif
@@ -52,7 +58,8 @@ general_stat_t *get_general_stats(){
 #ifdef LINUX
 	FILE *f;
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
+	int mib[2];
 	struct timeval boottime;
 	time_t curtime;
 	size_t size;
@@ -92,15 +99,18 @@ general_stat_t *get_general_stats(){
 #ifdef LINUX
 	if ((f=fopen("/proc/uptime", "r")) == NULL) {
 		return NULL;
+	size = sizeof boottime;
 	}
 	if((fscanf(f,"%lu %*d",&general_stat.uptime)) != 1){
 		return NULL;
 	}
 	fclose(f);
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BOOTTIME;
 	size = sizeof boottime;
-	if (sysctlbyname("kern.boottime", &boottime, &size, NULL, 0) < 0){
+	if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0){
 		return NULL;
 	}
 	time(&curtime);

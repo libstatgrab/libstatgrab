@@ -23,6 +23,7 @@
 #endif
 
 #include "statgrab.h"
+#include "tools.h"
 #ifdef SOLARIS
 #include <unistd.h>
 #include <kstat.h>
@@ -30,11 +31,15 @@
 #ifdef LINUX
 #include <stdio.h>
 #include <string.h>
-#include "tools.h"
 #endif
+#ifdef ALLBSD
 #ifdef FREEBSD
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#else
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
 #include <unistd.h>
 #endif
 
@@ -53,13 +58,19 @@ mem_stat_t *get_memory_stats(){
 	char *line_ptr;
 	FILE *f;
 #endif
+#ifdef ALLBSD
+	int mib[2];
 #ifdef FREEBSD
 	u_int free_count;
 	u_int cache_count;
 	u_int inactive_count;
+	int pagesize;
+#endif
+#ifdef NETBSD
+	struct uvmexp *uvm;
+#endif
 	u_long physmem;
 	size_t size;
-	int pagesize;
 #endif
 
 #ifdef SOLARIS
@@ -108,6 +119,7 @@ mem_stat_t *get_memory_stats(){
 	 * problem for sometime yet :) 
 	 */
 	if((sscanf(line_ptr,"Mem:  %lld %lld %lld %*d %*d %lld", \
+	size = sizeof physmem;
 		&mem_stat.total, \
 		&mem_stat.used, \
 		&mem_stat.free, \
@@ -117,14 +129,18 @@ mem_stat_t *get_memory_stats(){
 
 #endif
 
-#ifdef FREEBSD
+#ifdef ALLBSD
 	/* Returns bytes */
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM;
 	size = sizeof physmem;
-  	if (sysctlbyname("hw.physmem", &physmem, &size, NULL, 0) < 0){
+	if (sysctl(mib, 2, &physmem, &size, NULL, 0) < 0) {
 		return NULL;
-  	}
+	}
+	mem_stat.total = physmem;
 
 	/*returns pages*/
+#ifdef FREEBSD
 	size = sizeof free_count;
   	if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &size, NULL, 0) < 0){
 		return NULL;
@@ -148,7 +164,6 @@ mem_stat_t *get_memory_stats(){
 		return NULL;
 	}
 
-	mem_stat.total=physmem;
 	mem_stat.cache=cache_count*pagesize;
 
 	/* Of couse nothing is ever that simple :) And I have inactive pages to
@@ -156,6 +171,16 @@ mem_stat_t *get_memory_stats(){
 	 */
 	mem_stat.free=(free_count*pagesize)+(inactive_count*pagesize);
 	mem_stat.used=physmem-mem_stat.free;
+#endif
+#ifdef NETBSD
+	/* FIXME This is not consistent with the FreeBSD logic above. */
+	if ((uvm = get_uvmexp()) == NULL) {
+		return NULL;
+	}
+	mem_stat.cache = uvm->pagesize * (uvm->filepages + uvm->execpages);
+	mem_stat.free = uvm->pagesize * uvm->free;
+	mem_stat.used = uvm->pagesize * (uvm->npages - uvm->free);
+#endif
 #endif
 
 	return &mem_stat;

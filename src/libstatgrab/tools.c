@@ -27,9 +27,12 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <regex.h>
-#ifdef FREEBSD
+#ifdef ALLBSD
 #include <fcntl.h>
 #include <kvm.h>
+#endif
+#ifdef NETBSD
+#include <uvm/uvm_extern.h>
 #endif
 
 #include "tools.h"
@@ -69,7 +72,7 @@ long long get_ll_match(char *line, regmatch_t *match){
 }
 #endif
 
-#ifdef FREEBSD
+#ifdef ALLBSD
 kvm_t *get_kvm() {
 	static kvm_t *kvmd = NULL;
 
@@ -81,3 +84,33 @@ kvm_t *get_kvm() {
 	return kvmd;
 }
 #endif
+
+#ifdef NETBSD
+struct uvmexp *get_uvmexp() {
+	static u_long addr = 0;
+	static struct uvmexp uvm;
+	kvm_t *kvmd = get_kvm();
+
+	if (kvmd == NULL) {
+		return NULL;
+	}
+
+	if (addr == 0) {
+		struct nlist symbols[] = {
+			{ "_uvmexp" },
+			{ NULL }
+		};
+
+		if (kvm_nlist(kvmd, symbols) != 0) {
+			return NULL;
+		}
+		addr = symbols[0].n_value;
+	}
+
+	if (kvm_read(kvmd, addr, &uvm, sizeof uvm) != sizeof uvm) {
+		return NULL;
+	}
+	return &uvm;
+}
+#endif
+

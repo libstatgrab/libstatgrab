@@ -31,6 +31,7 @@
 #include <string.h>
 #endif
 
+#include "tools.h"
 #ifdef SOLARIS
 #include <procfs.h>
 #include <limits.h>
@@ -38,15 +39,16 @@
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
 #ifdef LINUX
-#include "tools.h"
 #include <linux/limits.h>
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 #include <kvm.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#endif
+#ifdef FREEBSD
 #include <sys/user.h>
 #endif
 
@@ -66,7 +68,7 @@ process_stat_t *get_process_stats(){
 #ifdef SOLARIS
 	psinfo_t process_info;
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 	struct kinfo_proc *kp_stats;	
 	kvm_t *kvmd;
 	int procs;
@@ -133,7 +135,7 @@ process_stat_t *get_process_stats(){
 	}
 	closedir(proc_dir);
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 	if((kvmd = get_kvm()) == NULL){
 		return NULL;
 	}

@@ -55,6 +55,9 @@ swap_stat_t *get_swap_stats(){
 	int pagesize;
 	kvm_t *kvmd;
 #endif
+#ifdef NETBSD
+	struct uvmexp *uvm;
+#endif
 
 #ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
@@ -93,6 +96,15 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.total= (long long)swapinfo.ksw_total * (long long)pagesize;
 	swap_stat.used = (long long)swapinfo.ksw_used * (long long)pagesize;
 	swap_stat.free = swap_stat.total-swap_stat.used;
+#endif
+#ifdef NETBSD
+	if ((uvm = get_uvmexp()) == NULL) {
+		return NULL;
+	}
+
+	swap_stat.total = (long long)uvm->pagesize * (long long)uvm->swpages;
+	swap_stat.used = (long long)uvm->pagesize * (long long)uvm->swpginuse;
+	swap_stat.free = swap_stat.total - swap_stat.used;
 #endif
 	return &swap_stat;
 

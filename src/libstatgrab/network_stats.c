@@ -36,7 +36,7 @@
 #include <regex.h>
 #include "tools.h"
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
@@ -101,12 +101,12 @@ network_stat_t *get_network_stats(int *entries){
 	regex_t regex;
 	regmatch_t line_match[4];
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 	struct ifaddrs *net, *net_ptr;
 	struct if_data *net_data;
 #endif
 
-#ifdef FREEBSD
+#ifdef ALLBSD
 	if(getifaddrs(&net) != 0){
 		return NULL;
 	}

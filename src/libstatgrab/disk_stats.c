@@ -42,14 +42,17 @@
 #define VALID_FS_TYPES {"ext2", "ext3", "xfs", "reiserfs", "vfat", "tmpfs"}
 #endif
 
-#ifdef FREEBSD
+#ifdef ALLBSD
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
+#define VALID_FS_TYPES {"ufs", "mfs", "ffs"}
+#endif
+#ifdef FREEBSD
 #include <sys/dkstat.h>
 #include <devstat.h>
-#define VALID_FS_TYPES {"ufs", "mfs"}
 #endif
+
 #define START_VAL 1
 
 char *copy_string(char *orig_ptr, const char *newtext){
@@ -98,7 +101,7 @@ disk_stat_t *get_disk_stats(int *entries){
 	struct mntent *mp;
 	struct statfs fs;
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
 	int nummnt;
 	struct statfs *mp;
 #endif
@@ -111,7 +114,7 @@ disk_stat_t *get_disk_stats(int *entries){
 		watermark=START_VAL;
 		init_disk_stat(0, watermark-1, disk_stats);
 	}
-#ifdef FREEBSD
+#ifdef ALLBSD
 	nummnt=getmntinfo(&mp , MNT_LOCAL);
 	if (nummnt<=0){
 		return NULL;
@@ -175,7 +178,7 @@ disk_stat_t *get_disk_stats(int *entries){
 			}
 
 			disk_ptr=disk_stats+num_disks;
-#ifdef FREEBSD
+#ifdef ALLBSD
 			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->f_mntfromname))==NULL){
 				return NULL;
 			}
@@ -333,6 +336,11 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	int n_selected, n_selections;
 	long sel_gen;
 	struct devstat *dev_ptr;
+#endif
+#ifdef NETBSD
+	/* FIXME get_diskio_stats NYI on NetBSD.
+         * See vmstat/dkstats.c in NetBSD source for examples.
+         */
 #endif
 	num_diskio=0;
 

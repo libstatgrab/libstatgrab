@@ -36,6 +36,12 @@
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
 #endif
+#ifdef NETBSD
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/sched.h>
+#endif
 
 static cpu_states_t cpu_now;
 static int cpu_now_uninit=1;
@@ -50,8 +56,15 @@ cpu_states_t *get_cpu_totals(){
 #ifdef LINUX
 	FILE *f;
 #endif
-#ifdef FREEBSD
+#ifdef ALLBSD
+#ifndef FREEBSD
+	int mib[2];
+#endif
+#ifdef NETBSD
+	u_int64_t cp_time[CPUSTATES];
+#else
 	long cp_time[CPUSTATES];
+#endif
 	size_t size;
 #endif
         
@@ -104,11 +117,20 @@ cpu_states_t *get_cpu_totals(){
 
 	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
 #endif
+#ifdef ALLBSD
 #ifdef FREEBSD
 	size = sizeof cp_time;
 	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0){
 		return NULL;
   	}
+#else
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CP_TIME;
+	size = sizeof cp_time;
+	if (sysctl(mib, 2, &cp_time, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+#endif
 
 	cpu_now.user=cp_time[CP_USER];
 	cpu_now.nice=cp_time[CP_NICE];
