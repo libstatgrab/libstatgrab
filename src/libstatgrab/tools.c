@@ -54,7 +54,7 @@
 #include <dirent.h>
 #endif
 
-#if defined(SOLARIS) && !defined(HAVE_LIBDEVINFO_H)
+#if defined(SOLARIS) && defined(HAVE_LIBDEVINFO_H)
 struct map{
 	char *bsd;
 	char *svr;
@@ -64,15 +64,20 @@ struct map{
 typedef struct map mapping_t;
 
 static mapping_t *mapping = NULL; 
+#endif
 
+#ifdef SOLARIS
 char *get_svr_from_bsd(char *bsd){
+#ifdef HAVE_LIBDEVINFO_H
 	mapping_t *map_ptr;
 	for(map_ptr = mapping; map_ptr != NULL; map_ptr = map_ptr->next)
 		if(!strcmp(map_ptr->bsd, bsd)) return map_ptr->svr;
-
+#endif
 	return bsd;
 }
+#endif
 
+#if defined(SOLARIS) && defined(HAVE_LIBDEVINFO_H)
 void add_mapping(char *bsd, char *svr){
 	mapping_t *map_ptr;
 	mapping_t *map_end_ptr;
@@ -469,7 +474,7 @@ int statgrab_init(){
 	 * will still work, just no disk mappings. So we will ignore the exit
 	 * status of this, and carry on merrily.
 	 */
-#ifdef(HAVE_LIBDEVINFO_H)
+#ifdef HAVE_LIBDEVINFO_H
 	build_mapping();
 #endif
 #endif
