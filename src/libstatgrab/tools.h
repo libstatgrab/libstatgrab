@@ -31,6 +31,10 @@
 #ifdef NETBSD
 #include <uvm/uvm_extern.h>
 #endif
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#endif
 
 #ifdef SOLARIS
 const char *sg_get_svr_from_bsd(const char *bsd);
@@ -55,6 +59,10 @@ kvm_t *sg_get_kvm2(void);
 
 #if defined(NETBSD) || defined(OPENBSD)
 struct uvmexp *sg_get_uvmexp(void);
+#endif
+
+#ifdef HPUX
+struct pst_static *sg_get_pstat_static(void);
 #endif
 
 void *sg_realloc(void *ptr, size_t size);

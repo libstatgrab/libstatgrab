@@ -56,7 +56,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	static sg_mem_stats mem_stat;
 
 #ifdef HPUX
-	struct pst_static pstat_static;
+	struct pst_static *pstat_static;
 	struct pst_dynamic pstat_dynamic;
 	long long pagesize;
 #endif
@@ -95,12 +95,13 @@ sg_mem_stats *sg_get_mem_stats(){
 		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_dynamic");
 		return NULL;
 	}
-	if (pstat_getstatic(&pstat_static, sizeof(pstat_static), 1, 0) == -1) {
-		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_static");
+	pstat_static = sg_get_pstat_static();
+	if (pstat_static == NULL) {
 		return NULL;
 	}
 
-	mem_stat.total = ((long long) pstat_static.physical_memory) * pagesize;
+	/* FIXME Does this include swap? */
+	mem_stat.total = ((long long) pstat_static->physical_memory) * pagesize;
 	mem_stat.free = ((long long) pstat_dynamic.psd_free) * pagesize;
 	mem_stat.used = mem_stat.total - mem_stat.free;
 #endif

@@ -58,7 +58,7 @@ sg_host_info *sg_get_host_info(){
 	static struct utsname os;
 
 #ifdef HPUX
-	struct pst_static pstat_static;
+	struct pst_static *pstat_static;
 	time_t currtime;
 	long boottime;
 #endif
@@ -91,14 +91,14 @@ sg_host_info *sg_get_host_info(){
 
 	/* get uptime */
 #ifdef HPUX
-	if (pstat_getstatic(&pstat_static, sizeof(pstat_static), 1, 0) == -1) {
-		sg_set_error_with_errno(SG_ERROR_PSTAT, "pstat_static");
+	pstat_static = sg_get_pstat_static();
+	if (pstat_static == NULL) {
 		return NULL;
 	}
 
 	currtime = time(NULL);
 
-	boottime = pstat_static.boot_time;
+	boottime = pstat_static->boot_time;
 
 	general_stat.uptime = currtime - boottime;
 #endif

@@ -42,6 +42,10 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #endif
+#ifdef HPUX
+#include <sys/param.h>
+#include <sys/pstat.h>
+#endif
 
 #include "tools.h"
 #include "statgrab.h"
@@ -486,6 +490,23 @@ struct uvmexp *sg_get_uvmexp() {
 	}
 
 	return &uvm;
+}
+#endif
+
+#ifdef HPUX
+struct pst_static *sg_get_pstat_static() {
+	static int got = 0;
+	static struct pst_static pst;
+
+	if (!got) {
+		if (pstat_getstatic(&pst, sizeof pst, 1, 0) == -1) {
+			sg_set_error_with_errno(SG_ERROR_PSTAT,
+			                        "pstat_static");
+			return NULL;
+		}
+		got = 1;
+	}
+	return &pst;
 }
 #endif
 
