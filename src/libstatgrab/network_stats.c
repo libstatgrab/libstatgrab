@@ -502,9 +502,11 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 				continue;
 			}
 
-			if(knp->value.ui64 == 0){
+			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+			if(knp->value.ui64 == 2){
 				network_iface_stat_ptr->dup = FULL_DUPLEX;
-			}else{
+			}
+			if(knp->value.ui64 == 1){
 				network_iface_stat_ptr->dup = HALF_DUPLEX;
 			}
 
