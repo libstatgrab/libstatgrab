@@ -325,6 +325,7 @@ char *drive_map(char *sunos_name){
 				y = y*2;
 				file_lines = realloc(file_lines, sizeof(file_line_t) * y);
 				if (file_lines == NULL) return NULL;
+				f_ptr=file_lines+x;
 			}
 			f_ptr++;
 		}
