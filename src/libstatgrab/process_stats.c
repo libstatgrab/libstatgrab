@@ -685,9 +685,16 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		return NULL;
 	}
 
-	do {
+	while (1) {
 		num = pstat_getproc(pstat_procinfo, sizeof pstat_procinfo[0],
 		                    PROCESS_BATCH, procidx);
+		if (num == -1) {
+			sg_set_error_with_errno(SG_ERROR_PSTAT,
+			                        "pstat_getproc");
+			return NULL;
+		} else if (num == 0) {
+			break;
+		}
 
 		for (i = 0; i < num; i++) {
 			struct pst_status *pi = &pstat_procinfo[i];
@@ -740,8 +747,8 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	
 			proc_state_size++;
 		}
-		procidx = pstat_procinfo[n - 1].pst_idx + 1;
-	} while (num > 0);
+		procidx = pstat_procinfo[num - 1].pst_idx + 1;
+	}
 #endif
 
 #ifdef CYGWIN
