@@ -36,6 +36,7 @@
 #endif
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 #include <kvm.h>
+#include <paths.h>
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <uvm/uvm_extern.h>

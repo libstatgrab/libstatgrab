@@ -42,7 +42,6 @@
 int main(int argc, char **argv){
 
 	extern char *optarg;
-	extern int optind;
 	int c;
 
 	/* We default to 1 second updates and displaying in bytes*/

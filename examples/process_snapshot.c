@@ -29,7 +29,7 @@ int main(){
         proc_state_t *ps;
         int ps_size;
         int x;
-	char *state;
+	char *state = NULL;
 
 	/* Initialise statgrab */
 	statgrab_init();

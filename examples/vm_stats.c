@@ -27,23 +27,10 @@
 
 int main(int argc, char **argv){
 
-	extern char *optarg;
-	extern int optind;
-	int c;
-
-	int delay = 1;
 	mem_stat_t *mem_stats;
 	swap_stat_t *swap_stats;
 
 	long long total, free;
-
-	while ((c = getopt(argc, argv, "d:")) != -1){
-		switch (c){
-			case 'd':
-				delay = atoi(optarg);
-				break;
-		}
-	}
 
 	/* Initialise statgrab */
 	statgrab_init();
@@ -69,6 +56,10 @@ int main(int argc, char **argv){
 
 		printf("Total VM usage : %5.2f%%\n", 100 - (((float)total/(float)free)));
 
+	}
+	else {
+		printf("Unable to get VM stats.\n");
+		exit(1);
 	}
 	exit(0);
 }

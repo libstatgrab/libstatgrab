@@ -28,7 +28,6 @@
 int main(int argc, char **argv){
 
 	extern char *optarg;
-	extern int optind;
 	int c;
 
 	int delay = 1;

@@ -427,7 +427,6 @@ void usage(char *progname){
 int main(int argc, char **argv){
 
         extern char *optarg;
-        extern int optind;
         int c;
 
 	time_t last_update = 0;

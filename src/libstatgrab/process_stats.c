@@ -63,6 +63,7 @@
 #include <limits.h>
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 #include <kvm.h>
+#include <tools.h>
 #endif
 #include <unistd.h>
 #endif

@@ -44,8 +44,9 @@ char *f_read_line(FILE *f, const char *string);
 
 char *get_string_match(char *line, regmatch_t *match);
 
-#if defined(FREEBSD) || defined(DFBSD)
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 kvm_t *get_kvm(void);
+kvm_t *get_kvm2(void);
 #endif
 
 #if defined(NETBSD) || defined(OPENBSD)
