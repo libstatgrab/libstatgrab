@@ -33,6 +33,9 @@
 #include <sys/types.h>
 #endif
 #include <utmp.h>
+#ifdef CYGWIN
+#include <sys/unistd.h>
+#endif
 
 #ifdef SOLARIS
 #define MAX_LOGIN_NAME_SIZE 8
