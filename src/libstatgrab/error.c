@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "statgrab.h"
+#include "tools.h"
 
 static sg_error error = SG_ERROR_NONE;
 #define ERROR_ARG_MAX 256
