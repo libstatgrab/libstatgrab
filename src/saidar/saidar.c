@@ -490,8 +490,7 @@ int main(int argc, char **argv){
 		int ch = getch();
 
 		if (ch == 'q'){
-			endwin();
-			return 0;
+			break;
 		}
 
 		/* To keep the numbers slightly accurate we do not want them
