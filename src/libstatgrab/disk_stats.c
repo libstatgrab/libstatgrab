@@ -297,8 +297,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	char *line_ptr;
 	int major, minor;
 	int has_pp_stats = 1;
-	static partition *parts = NULL;
-	static int alloc_parts = 0;
+	VECTOR_DECLARE_STATIC(parts, partition, 16, NULL, NULL);
 	int i, n;
 	time_t now;
 	const char *format;
@@ -575,13 +574,8 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		if (VECTOR_RESIZE(diskio_stats, n + 1) < 0) {
 			goto out;
 		}
-		if (n >= alloc_parts) {
-			alloc_parts += 16;
-			parts = realloc(parts, alloc_parts * sizeof *parts);
-			if (parts == NULL) {
-				alloc_parts = 0;
-				goto out;
-			}
+		if (VECTOR_RESIZE(parts, n + 1) < 0) {
+			goto out;
 		}
 
 		if (diskio_stats[n].disk_name != NULL)
