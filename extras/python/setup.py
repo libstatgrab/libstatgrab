@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 
 from distutils.core import setup, Extension
+from commands import getstatusoutput
+from sys import exit
+
+cflags = getstatusoutput("pkg-config --cflags libstatgrab")
+libs = getstatusoutput("pkg-config --libs libstatgrab")
+
+if cflags[0] != 0:
+	exit("Failed to get cflags: " + cflags[1])
+
+if libs[0] != 0:
+	exit("Failed to get libs: " + libs[1])
 
 setup(	name = "statgrab",
 	version = "0.8.1",
@@ -12,8 +23,7 @@ setup(	name = "statgrab",
 	ext_modules=[Extension(
 		"statgrab",
 		["statgrab.c"],
-		libraries = ["statgrab", "kvm", "devstat"],
-		include_dirs = ["/usr/local/include"],
-		library_dirs = ["/usr/local/lib"],
+		extra_compile_args = cflags[1].split(),
+		extra_link_args = libs[1].split(),
 	)],
 )
