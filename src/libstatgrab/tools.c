@@ -187,12 +187,18 @@ int get_alias(char *alias){
 	return 0;
 }
 
+
+#define BIG_ENOUGH 512
 int build_mapping(){
-	char device_name[512];
+	char device_name[BIG_ENOUGH];
 	int x;
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
 	kstat_io_t kios;
+
+	char driver_list[BIG_ENOUGH][BIG_ENOUGH];
+	int list_entries = 0;
+	int found;
 
 	if ((kc = kstat_open()) == NULL) {
 		return;
@@ -210,8 +216,27 @@ int build_mapping(){
 			}
 			if(x == sizeof device_name) x--;
 			device_name[x] = '\0';
-			if((get_alias(device_name)) != 0){
-				return 1;
+
+			/* Check if we've not already looked it up */
+			found = 0;
+			for(x=0;x<list_entries;x++){
+				if (x>=BIG_ENOUGH){
+					/* We've got bigger than we thought was massive */
+					/* If we hit this.. Make big enough bigger */
+					return 1;
+				}
+				if( !strncmp(driver_list[x], device_name, BIG_ENOUGH)){
+					found = 1;
+					break;
+				}
+			}
+
+			if(!found){
+				if((get_alias(device_name)) != 0){
+					return 1;
+				}
+				strncpy(driver_list[x], device_name, BIG_ENOUGH);
+				list_entries++;
 			}
 		}
 	}
