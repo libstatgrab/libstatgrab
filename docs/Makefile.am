@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/docs
-# http://www.i-scream.org.uk/
+# http://www.i-scream.org/
 # $Id$
 
 DOCS = network.txt
