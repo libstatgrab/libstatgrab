@@ -191,6 +191,10 @@
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
+          <refentrytitle>sg_get_fs_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
           <refentrytitle>sg_get_host_info</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
