@@ -127,7 +127,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 		network_stat_ptr=network_stats+interfaces;
 		
 		if (sg_update_string(&network_stat_ptr->interface_name,
-		                     net_ptr->ifa_name) == NULL) {
+		                     net_ptr->ifa_name) < 0) {
 			return NULL;
 		}
 		net_data=(struct if_data *)net_ptr->ifa_data;
@@ -227,7 +227,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 			/* Read interface name */
 			if (sg_update_string(&network_stat_ptr->interface_name,
-			                     ksp->ks_name) == NULL) {
+			                     ksp->ks_name) < 0) {
 				return NULL;
 			}
 
@@ -334,7 +334,7 @@ sg_network_io_stats *sg_get_network_io_stats_diff(int *entries) {
 		dest = &diff[i];
 
 		if (sg_update_string(&dest->interface_name,
-		                     src->interface_name) == NULL) {
+		                     src->interface_name) < 0) {
 			return NULL;
 		}
 		dest->rx = src->rx;
@@ -452,7 +452,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		}
 
 		if (sg_update_string(&network_iface_stat_ptr->interface_name,
-		                     net_ptr->ifa_name) == NULL) {
+		                     net_ptr->ifa_name) < 0) {
 			return NULL;
 		}
 
@@ -554,7 +554,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			ifaces++;
 
 			if (sg_update_string(&network_iface_stat_ptr->interface_name,
-			                     ksp->ks_name) == NULL) {
+			                     ksp->ks_name) < 0) {
 				return NULL;
 			}
 
@@ -631,7 +631,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		network_iface_stat_ptr = network_iface_stats + ifaces;
 		
 		if (sg_update_string(&network_iface_stat_ptr->interface_name,
-		                     name) == NULL) {
+		                     name) < 0) {
 			return NULL;
 		}
 		if ((ifr.ifr_flags & IFF_UP) != 0) {

@@ -37,7 +37,7 @@ const char *sg_get_svr_from_bsd(const char *bsd);
 size_t sg_strlcat(char *dst, const char *src, size_t siz);
 size_t sg_strlcpy(char *dst, const char *src, size_t siz);
 
-char *sg_update_string(char **dest, const char *src);
+int sg_update_string(char **dest, const char *src);
 
 long long sg_get_ll_match(char *line, regmatch_t *match);
 char *sg_get_string_match(char *line, regmatch_t *match);

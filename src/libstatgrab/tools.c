@@ -403,17 +403,24 @@ size_t sg_strlcat(char *dst, const char *src, size_t siz){
         return(dlen + (s - src));       /* count does not include NUL */
 }
 
-char *sg_update_string(char **dest, const char *src) {
+int sg_update_string(char **dest, const char *src) {
 	char *new;
+
+	if (src == NULL) {
+		/* We're being told to set it to NULL. */
+		free(*dest);
+		*dest = NULL;
+		return 0;
+	}
 
 	new = realloc(*dest, strlen(src) + 1);
 	if (new == NULL) {
-		return NULL;
+		return -1;
 	}
 
 	strcpy(new, src);
 	*dest = new;
-	return new;
+	return 0;
 }
 
 long long sg_get_ll_match(char *line, regmatch_t *match){

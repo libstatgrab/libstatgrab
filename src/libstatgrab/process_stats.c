@@ -183,7 +183,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		if(ptr !=NULL) *ptr='\0';
 
 		if (sg_update_string(&proc_state_ptr->process_name,
-		                  &ps_name[1]) == NULL) {
+		                     &ps_name[1]) < 0) {
 			return NULL;
 		}
 
@@ -204,7 +204,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #define READ_BLOCK_SIZE 128
 		len = 0;
 		do {
-			if (VECTOR_RESIZE(psargs, len + READ_BLOCK_SIZE + 1) < 0) {
+			if (VECTOR_RESIZE(psargs, len + READ_BLOCK_SIZE) < 0) {
 				return NULL;
 			}
 			rc = read(fn, psargs + len, READ_BLOCK_SIZE);
@@ -225,10 +225,21 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			if (*ptr == '\0') *ptr = ' ';
 			ptr++;
 		}
-		/* for safety's sake */
-		psargs[len] = '\0';
 
-		if (sg_update_string(&proc_state_ptr->proctitle, psargs) == NULL) {
+		if (len == 0) {
+			/* We want psargs to be NULL. */
+			if (VECTOR_RESIZE(psargs, 0) < 0) {
+				return NULL;
+			}
+		} else {
+			/* Not empty, so append a \0. */
+			if (VECTOR_RESIZE(psargs, len + 1) < 0) {
+				return NULL;
+			}
+			psargs[len] = '\0';
+		}
+
+		if (sg_update_string(&proc_state_ptr->proctitle, psargs) < 0) {
 			return NULL;
 		}
 #endif
@@ -278,7 +289,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #else
 		name = kp_stats[i].kp_proc.p_comm;
 #endif
-		if (sg_update_string(&proc_state_ptr->process_name, name) == NULL) {
+		if (sg_update_string(&proc_state_ptr->process_name, name) < 0) {
 			return NULL;
 		}
 

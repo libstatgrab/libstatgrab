@@ -165,13 +165,13 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			disk_ptr=disk_stats+num_disks;
 
 #ifdef ALLBSD
-			if (sg_update_string(&disk_ptr->device_name, mp->f_mntfromname) == NULL) {
+			if (sg_update_string(&disk_ptr->device_name, mp->f_mntfromname) < 0) {
 				return NULL;
 			}
-			if (sg_update_string(&disk_ptr->fs_type, mp->f_fstypename) == NULL) {
+			if (sg_update_string(&disk_ptr->fs_type, mp->f_fstypename) < 0) {
 				return NULL;
 			}
-			if (sg_update_string(&disk_ptr->mnt_point, mp->f_mntonname) == NULL) {
+			if (sg_update_string(&disk_ptr->mnt_point, mp->f_mntonname) < 0) {
 				return NULL;
 			}
 
@@ -185,15 +185,15 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
 #endif
 #if defined(LINUX) || defined(CYGWIN)
-			if (sg_update_string(&disk_ptr->device_name, mp->mnt_fsname) == NULL) {
+			if (sg_update_string(&disk_ptr->device_name, mp->mnt_fsname) < 0) {
 				return NULL;
 			}
 				
-			if (sg_update_string(&disk_ptr->fs_type, mp->mnt_type) == NULL) {	
+			if (sg_update_string(&disk_ptr->fs_type, mp->mnt_type) < 0) {	
 				return NULL;
 			}
 
-			if (sg_update_string(&disk_ptr->mnt_point, mp->mnt_dir) == NULL) {
+			if (sg_update_string(&disk_ptr->mnt_point, mp->mnt_dir) < 0) {
 				return NULL;
 			}
 			disk_ptr->size = (long long)fs.f_bsize * (long long)fs.f_blocks;
@@ -211,15 +211,15 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
 			 * be upwards of a k each 
 			 */
-			if (sg_update_string(&disk_ptr->device_name, mp.mnt_special) == NULL) {
+			if (sg_update_string(&disk_ptr->device_name, mp.mnt_special) < 0) {
 				return NULL;
 			}
 
-			if (sg_update_string(&disk_ptr->fs_type, mp.mnt_fstype) == NULL) {
+			if (sg_update_string(&disk_ptr->fs_type, mp.mnt_fstype) < 0) {
                                 return NULL;
                         }
 	
-			if (sg_update_string(&disk_ptr->mnt_point, mp.mnt_mountp) == NULL) {
+			if (sg_update_string(&disk_ptr->mnt_point, mp.mnt_mountp) < 0) {
                                 return NULL;
                         }
 			
@@ -412,7 +412,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #else
 		name = dk_name[i];
 #endif
-		if (sg_update_string(&diskio_stats_ptr->disk_name, name) == NULL) {
+		if (sg_update_string(&diskio_stats_ptr->disk_name, name) < 0) {
 			return NULL;
 		}
 		diskio_stats_ptr->systime = time(NULL);
@@ -509,7 +509,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 			diskio_stats_ptr->read_bytes=kios.nread;
 			diskio_stats_ptr->write_bytes=kios.nwritten;
 			if (sg_update_string(&diskio_stats_ptr->disk_name,
-			                     sg_get_svr_from_bsd(ksp->ks_name)) == NULL) {
+			                     sg_get_svr_from_bsd(ksp->ks_name)) < 0) {
 				return NULL;
 			}
 			diskio_stats_ptr->systime=time(NULL);
@@ -568,7 +568,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 			goto out;
 		}
 
-		if (sg_update_string(&diskio_stats[n].disk_name, name) == NULL) {
+		if (sg_update_string(&diskio_stats[n].disk_name, name) < 0) {
 			goto out;
 		}
 		diskio_stats[n].read_bytes = rsect * 512;
@@ -686,7 +686,7 @@ sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries){
 		src = &diskio_stats[i];
 		dest = &diff[i];
 
-		if (sg_update_string(&dest->disk_name, src->disk_name) == NULL) {
+		if (sg_update_string(&dest->disk_name, src->disk_name) < 0) {
 			return NULL;
 		}
 		dest->read_bytes = src->read_bytes;
