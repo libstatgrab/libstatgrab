@@ -208,7 +208,7 @@ int get_proc_snapshot(proc_state_t **ps){
 
 #ifdef ALLBSD
 
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 	kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
 #else
 	kvmd = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
@@ -311,7 +311,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state_ptr->proc_resident =
 			kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
 		/* This is in microseconds */
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 		proc_state_ptr->time_spent =
 			kp_stats[i].kp_proc.p_rtime.tv_sec;
 #else
