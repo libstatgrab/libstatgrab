@@ -268,13 +268,22 @@ void populate_fs() {
 	if (disk != NULL) {
 		for (i = 0; i < n; i++) {
 			/* FIXME it'd be nicer if libstatgrab did this */
-			const char *name = disk[i].device_name,
-			           *p = strrchr(name, '/');
-			if (p != NULL)
-				name = p + 1;
-			if (*name == '\0')
-				name = "root";
-	
+			char *buf, *name, *p;
+			const char *device = disk[i].device_name;
+
+			if (strcmp(device, "/") == 0)
+				device = "root";
+
+			buf = strdup(device);
+			if (buf == NULL)
+				die("out of memory");
+
+			name = buf;
+			if (strncmp(name, "/dev/", 5) == 0)
+				name += 5;
+			while ((p = strchr(name, '/')) != NULL)
+				*p = '_';
+
 			add_stat(STRING, &disk[i].device_name,
 			         "fs", name, "device_name", NULL);
 			add_stat(STRING, &disk[i].fs_type,
@@ -293,6 +302,8 @@ void populate_fs() {
 			         "fs", name, "used_inodes", NULL);
 			add_stat(LONG_LONG, &disk[i].free_inodes,
 			         "fs", name, "free_inodes", NULL);
+
+			free(buf);
 		}
 	}
 }
