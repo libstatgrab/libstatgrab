@@ -251,15 +251,15 @@ typedef enum {
 	SG_PS_TIME
 } sg_sort_method;
 
-void sg_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm);
+void sg_process_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm);
 
-int sg_compare_pid(const void *va, const void *vb);
-int sg_compare_uid(const void *va, const void *vb);
-int sg_compare_gid(const void *va, const void *vb);
-int sg_compare_size(const void *va, const void *vb);
-int sg_compare_res(const void *va, const void *vb);
-int sg_compare_cpu(const void *va, const void *vb);
-int sg_compare_time(const void *va, const void *vb);
+int sg_process_compare_pid(const void *va, const void *vb);
+int sg_process_compare_uid(const void *va, const void *vb);
+int sg_process_compare_gid(const void *va, const void *vb);
+int sg_process_compare_size(const void *va, const void *vb);
+int sg_process_compare_res(const void *va, const void *vb);
+int sg_process_compare_cpu(const void *va, const void *vb);
+int sg_process_compare_time(const void *va, const void *vb);
 
 
 #ifdef SG_ENABLE_DEPRECATED

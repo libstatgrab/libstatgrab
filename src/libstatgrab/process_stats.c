@@ -676,7 +676,7 @@ sg_process_count *sg_get_process_count() {
 	return &process_stat;
 }
 
-int sg_compare_pid(const void *va, const void *vb) {
+int sg_process_compare_pid(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -689,7 +689,7 @@ int sg_compare_pid(const void *va, const void *vb) {
 	}
 }
 
-int sg_compare_uid(const void *va, const void *vb) {
+int sg_process_compare_uid(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -702,7 +702,7 @@ int sg_compare_uid(const void *va, const void *vb) {
 	}
 }
 
-int sg_compare_gid(const void *va, const void *vb) {
+int sg_process_compare_gid(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -715,7 +715,7 @@ int sg_compare_gid(const void *va, const void *vb) {
 	}
 }
 
-int sg_compare_size(const void *va, const void *vb) {
+int sg_process_compare_size(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -728,7 +728,7 @@ int sg_compare_size(const void *va, const void *vb) {
 	}
 }
 
-int sg_compare_res(const void *va, const void *vb) {
+int sg_process_compare_res(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -741,7 +741,7 @@ int sg_compare_res(const void *va, const void *vb) {
 	}
 }
 
-int sg_compare_cpu(const void *va, const void *vb) {
+int sg_process_compare_cpu(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -754,7 +754,7 @@ int sg_compare_cpu(const void *va, const void *vb) {
 	}
 }
 
-int sg_compare_time(const void *va, const void *vb) {
+int sg_process_compare_time(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;
 
@@ -767,30 +767,30 @@ int sg_compare_time(const void *va, const void *vb) {
 	}
 }
 
-void sg_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm){
+void sg_process_sort(sg_process_stats *ps, int num_ps, sg_sort_method sm){
 	int (*sortby_ptr)(const void *a, const void *b);
 
 	switch(sm){
 	case SG_PS_PID:
-		sortby_ptr = sg_compare_pid;
+		sortby_ptr = sg_process_compare_pid;
 		break;
 	case SG_PS_UID:
-		sortby_ptr = sg_compare_uid;
+		sortby_ptr = sg_process_compare_uid;
 		break;
 	case SG_PS_GID:
-		sortby_ptr = sg_compare_gid;
+		sortby_ptr = sg_process_compare_gid;
 		break;
 	case SG_PS_SIZE:
-		sortby_ptr = sg_compare_size;
+		sortby_ptr = sg_process_compare_size;
 		break;
 	case SG_PS_RES:
-		sortby_ptr = sg_compare_res;
+		sortby_ptr = sg_process_compare_res;
 		break;
 	case SG_PS_CPU:
-		sortby_ptr = sg_compare_cpu;
+		sortby_ptr = sg_process_compare_cpu;
 		break;
 	case SG_PS_TIME:
-		sortby_ptr = sg_compare_time;
+		sortby_ptr = sg_process_compare_time;
 		break;
 	}
 
