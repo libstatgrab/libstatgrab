@@ -98,6 +98,11 @@ cdef extern from "statgrab.h":
         char *interface_name
         long long tx
         long long rx
+        long long ipackets
+        long long opackets
+        long long ierrors
+        long long oerrors
+        long long collisions
         time_t systime
 
     ctypedef enum statgrab_duplex:
@@ -357,6 +362,11 @@ def py_get_network_stats():
             {'interface_name': s.interface_name,
              'tx': s.tx,
              'rx': s.rx,
+             'ipackets': s.ipackets,
+             'opackets': s.opackets,
+             'ierrors': s.ierrors,
+             'oerrors': s.oerrors,
+             'collisions': s.collisions,
              'systime': s.systime,
             }
         ))
@@ -375,6 +385,11 @@ def py_get_network_stats_diff():
             {'interface_name': s.interface_name,
              'tx': s.tx,
              'rx': s.rx,
+             'ipackets': s.ipackets,
+             'opackets': s.opackets,
+             'ierrors': s.ierrors,
+             'oerrors': s.oerrors,
+             'collisions': s.collisions,
              'systime': s.systime,
             }
         ))
