@@ -384,7 +384,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		rbytes = stats[i].dk_rbytes;
 		wbytes = stats[i].dk_wbytes;
 #else
-		/* Before 1.6.1, NetBSD merged reads and writes. */
+		/* Before 1.7, NetBSD merged reads and writes. */
 		rbytes = wbytes = stats[i].dk_bytes;
 #endif
 
