@@ -474,6 +474,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		ifaces++;
 	}	
 	freeifaddrs(net);
+	close(s);
 #endif
 
 #ifdef SOLARIS
@@ -583,7 +584,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}
 		ifaces++;
 	}
-
+	close(sock);
 	free(eth_tool_cmd_buf);
 #endif
 	*entries = ifaces;
