@@ -102,6 +102,8 @@ char *hr_uptime(time_t time){
 }
 
 void display_headings(){
+	int line;
+
 	move(0,0);
 	printw("Hostname  :");
 	move(0,27);
@@ -177,19 +179,23 @@ void display_headings(){
 	move(10,28);
 	printw("Write");	
 
-	/* Network IO */
-	move(10, 42);
-	printw("Network Interface");
-	move(10, 67);
-	printw("rx");
-	move(10,77);
-	printw("tx");
+	line = 10;
+	if (stats.network_stats != NULL) {
+		/* Network IO */
+		move(line, 42);
+		printw("Network Interface");
+		move(line, 67);
+		printw("rx");
+		move(line, 77);
+		printw("tx");
+		line += 2 + stats.network_entries;
+	}
 
-	move(12+stats.network_entries, 42);
+	move(line, 42);
 	printw("Mount Point");
-	move(12+stats.network_entries, 65);
+	move(line, 65);
 	printw("Free");
-	move(12+stats.network_entries, 75);
+	move(line, 75);
 	printw("Used");
 
 	refresh();
@@ -199,7 +205,7 @@ void display_data(){
 	char cur_time[20];
 	struct tm *tm_time;
 	time_t epoc_time;
-	int counter;
+	int counter, line;
 	long long r,w;
 	long long rt, wt;
 	diskio_stat_t *diskio_stat_ptr;
@@ -209,134 +215,165 @@ void display_data(){
 	char hostname[15];
 	char *ptr;
 
-	move(0,12);
-	strncpy(hostname, stats.general_stats->hostname, (sizeof(hostname) - 1));
-	/* strncpy does not NULL terminate.. If only strlcpy was on all platforms :) */
-	hostname[14] = '\0';
-	ptr=strchr(hostname, '.');
-	/* Some hosts give back a FQDN for hostname. To avoid this, we'll
-	 * just blank out everything after the first "."
-	 */
-	if (ptr != NULL){
-		*ptr = '\0';
-	}	
-	printw("%s", hostname);
-	move(0,36);
-	printw("%s", hr_uptime(stats.general_stats->uptime));
-	epoc_time=time(NULL);
-	tm_time = localtime(&epoc_time);
-	strftime(cur_time, 20, "%Y-%m-%d %T", tm_time);
-	move(0,61);
-	printw("%s", cur_time);
+	if (stats.general_stats != NULL) {
+		move(0,12);
+		strncpy(hostname, stats.general_stats->hostname, (sizeof(hostname) - 1));
+		/* strncpy does not NULL terminate.. If only strlcpy was on all platforms :) */
+		hostname[14] = '\0';
+		ptr=strchr(hostname, '.');
+		/* Some hosts give back a FQDN for hostname. To avoid this, we'll
+		 * just blank out everything after the first "."
+		 */
+		if (ptr != NULL){
+			*ptr = '\0';
+		}	
+		printw("%s", hostname);
+		move(0,36);
+		printw("%s", hr_uptime(stats.general_stats->uptime));
+		epoc_time=time(NULL);
+		tm_time = localtime(&epoc_time);
+		strftime(cur_time, 20, "%Y-%m-%d %T", tm_time);
+		move(0,61);
+		printw("%s", cur_time);
+	}
 
-	/* Load */
-	move(2,12);
-	printw("%6.2f", stats.load_stats->min1);
-	move(3,12);
-	printw("%6.2f", stats.load_stats->min5);
-	move(4,12);
-	printw("%6.2f", stats.load_stats->min15);
+	if (stats.load_stats != NULL) {
+		/* Load */
+		move(2,12);
+		printw("%6.2f", stats.load_stats->min1);
+		move(3,12);
+		printw("%6.2f", stats.load_stats->min5);
+		move(4,12);
+		printw("%6.2f", stats.load_stats->min15);
+	}
 
-	/* CPU */
-	move(2,33);
-	printw("%6.2f%%", stats.cpu_percents->idle);
-	move(3,33);
-	printw("%6.2f%%", (stats.cpu_percents->kernel + stats.cpu_percents->iowait + stats.cpu_percents->swap));
-	move(4,33);
-	printw("%6.2f%%", (stats.cpu_percents->user + stats.cpu_percents->nice));
+	if (stats.cpu_percents != NULL) {
+		/* CPU */
+		move(2,33);
+		printw("%6.2f%%", stats.cpu_percents->idle);
+		move(3,33);
+		printw("%6.2f%%", (stats.cpu_percents->kernel + stats.cpu_percents->iowait + stats.cpu_percents->swap));
+		move(4,33);
+		printw("%6.2f%%", (stats.cpu_percents->user + stats.cpu_percents->nice));
+	}
 
-	/* Process */
-	move(2, 54);
-	printw("%5d", stats.process_stats->running);
-	move(2,74);
-	printw("%5d", stats.process_stats->zombie);
-	move(3, 54);
-	printw("%5d", stats.process_stats->sleeping);
-	move(3, 74);
-	printw("%5d", stats.process_stats->total);
-	move(4, 54);
-	printw("%5d", stats.process_stats->stopped);
-	move(4,74);
-	printw("%5d", stats.user_stats->num_entries);
+	if (stats.process_stats != NULL) {
+		/* Process */
+		move(2, 54);
+		printw("%5d", stats.process_stats->running);
+		move(2,74);
+		printw("%5d", stats.process_stats->zombie);
+		move(3, 54);
+		printw("%5d", stats.process_stats->sleeping);
+		move(3, 74);
+		printw("%5d", stats.process_stats->total);
+		move(4, 54);
+		printw("%5d", stats.process_stats->stopped);
+	}
+	if (stats.user_stats != NULL) {
+		move(4,74);
+		printw("%5d", stats.user_stats->num_entries);
+	}
 
-	/* Mem */
-	move(6, 12);
-	printw("%7s", size_conv(stats.mem_stats->total));	
-	move(7, 12);
-	printw("%7s", size_conv(stats.mem_stats->used));	
-	move(8, 12);
-	printw("%7s", size_conv(stats.mem_stats->free));
+	if (stats.mem_stats != NULL) {
+		/* Mem */
+		move(6, 12);
+		printw("%7s", size_conv(stats.mem_stats->total));	
+		move(7, 12);
+		printw("%7s", size_conv(stats.mem_stats->used));	
+		move(8, 12);
+		printw("%7s", size_conv(stats.mem_stats->free));
+	}
 	
-	/* Swap */
-	move(6, 32);
-	printw("%8s", size_conv(stats.swap_stats->total));
-	move(7, 32);
-	printw("%8s", size_conv(stats.swap_stats->used));
-	move(8, 32);
-	printw("%8s", size_conv(stats.swap_stats->free));
-
-	/* VM */
-	move(6, 54);
-	printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total));
-	move(7, 54);
-	printw("%5.2f%%", (100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total));
-	move(8, 54);
-	printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used+stats.swap_stats->used)/(stats.mem_stats->total+stats.swap_stats->total)));
-
-	/* Paging */
-	move(6, 74);
-	printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
-	move(7, 74);
-	printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
-
-	/* Disk IO */
-	diskio_stat_ptr = stats.diskio_stats;
-	r=0;
-	w=0;
-	for(counter=0;counter<stats.diskio_entries;counter++){
-		move(11+counter, 0);
-		printw("%s", diskio_stat_ptr->disk_name);
-		move(11+counter, 12);
-		rt = (diskio_stat_ptr->systime)? (diskio_stat_ptr->read_bytes/diskio_stat_ptr->systime): diskio_stat_ptr->read_bytes;
-		printw("%7s", size_conv(rt));
-		r+=rt;
-		move(11+counter, 26);
-		wt = (diskio_stat_ptr->systime)? (diskio_stat_ptr->write_bytes/diskio_stat_ptr->systime): diskio_stat_ptr->write_bytes;
-		printw("%7s", size_conv(wt));
-		w+=wt;
-		diskio_stat_ptr++;
-	}
-	move(12+counter, 0);
-	printw("Total");
-	move(12+counter, 12);
-	printw("%7s", size_conv(r));
-	move(12+counter, 26);
-	printw("%7s", size_conv(w));
-
-	/* Network */
-	network_stat_ptr = stats.network_stats;
-	for(counter=0;counter<stats.network_entries;counter++){
-                move(11+counter, 42);
-		printw("%s", network_stat_ptr->interface_name);
-		move(11+counter, 62);
-		rt = (network_stat_ptr->systime)? (network_stat_ptr->rx / network_stat_ptr->systime): network_stat_ptr->rx;
-		printw("%7s", size_conv(rt));
-		move(11+counter, 72);
-		wt = (network_stat_ptr->systime)? (network_stat_ptr->tx / network_stat_ptr->systime): network_stat_ptr->tx; 
-		printw("%7s", size_conv(wt));
-		network_stat_ptr++;
+	if (stats.swap_stats != NULL) {	
+		/* Swap */
+		move(6, 32);
+		printw("%8s", size_conv(stats.swap_stats->total));
+		move(7, 32);
+		printw("%8s", size_conv(stats.swap_stats->used));
+		move(8, 32);
+		printw("%8s", size_conv(stats.swap_stats->free));
 	}
 
-	/* Disk */
-	disk_stat_ptr = stats.disk_stats;
-	for(counter=0;counter<stats.disk_entries;counter++){
-		move(13+stats.network_entries+counter, 42);
-		printw("%s", disk_stat_ptr->mnt_point);
-		move(13+stats.network_entries+counter, 62);
-		printw("%7s", size_conv(disk_stat_ptr->avail));
-		move(13+stats.network_entries+counter, 73);
-		printw("%5.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
-		disk_stat_ptr++;
+	if (stats.mem_stats != NULL && stats.swap_stats != NULL) {	
+		/* VM */
+		move(6, 54);
+		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total));
+		move(7, 54);
+		printw("%5.2f%%", (100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total));
+		move(8, 54);
+		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used+stats.swap_stats->used)/(stats.mem_stats->total+stats.swap_stats->total)));
+	}
+
+	if (stats.page_stats != NULL) {	
+		/* Paging */
+		move(6, 74);
+		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
+		move(7, 74);
+		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
+	}
+
+	line = 11;
+	if (stats.diskio_stats != NULL) {	
+		/* Disk IO */
+		diskio_stat_ptr = stats.diskio_stats;
+		r=0;
+		w=0;
+		for(counter=0;counter<stats.diskio_entries;counter++){
+			move(line, 0);
+			printw("%s", diskio_stat_ptr->disk_name);
+			move(line, 12);
+			rt = (diskio_stat_ptr->systime)? (diskio_stat_ptr->read_bytes/diskio_stat_ptr->systime): diskio_stat_ptr->read_bytes;
+			printw("%7s", size_conv(rt));
+			r+=rt;
+			move(line, 26);
+			wt = (diskio_stat_ptr->systime)? (diskio_stat_ptr->write_bytes/diskio_stat_ptr->systime): diskio_stat_ptr->write_bytes;
+			printw("%7s", size_conv(wt));
+			w+=wt;
+			diskio_stat_ptr++;
+			line++;
+		}
+		line++;
+		move(line, 0);
+		printw("Total");
+		move(line, 12);
+		printw("%7s", size_conv(r));
+		move(line, 26);
+		printw("%7s", size_conv(w));
+	}
+
+	line = 11;
+	if (stats.network_stats != NULL) {	
+		/* Network */
+		network_stat_ptr = stats.network_stats;
+		for(counter=0;counter<stats.network_entries;counter++){
+	                move(line, 42);
+			printw("%s", network_stat_ptr->interface_name);
+			move(line, 62);
+			rt = (network_stat_ptr->systime)? (network_stat_ptr->rx / network_stat_ptr->systime): network_stat_ptr->rx;
+			printw("%7s", size_conv(rt));
+			move(line, 72);
+			wt = (network_stat_ptr->systime)? (network_stat_ptr->tx / network_stat_ptr->systime): network_stat_ptr->tx; 
+			printw("%7s", size_conv(wt));
+			network_stat_ptr++;
+			line++;
+		}
+		line += 2;
+	}
+
+	if (stats.disk_stats != NULL) {	
+		/* Disk */
+		disk_stat_ptr = stats.disk_stats;
+		for(counter=0;counter<stats.disk_entries;counter++){
+			move(line, 42);
+			printw("%s", disk_stat_ptr->mnt_point);
+			move(line, 62);
+			printw("%7s", size_conv(disk_stat_ptr->avail));
+			move(line, 73);
+			printw("%5.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
+			disk_stat_ptr++;
+			line++;
+		}
 	}
 
 	refresh();
@@ -350,19 +387,19 @@ void sig_winch_handler(int sig){
 }
 
 int get_stats(){
-                if((stats.cpu_percents = cpu_percent_usage()) == NULL) return 0;
-                if((stats.mem_stats = get_memory_stats()) == NULL) return 0;
-                if((stats.swap_stats = get_swap_stats()) == NULL) return 0;
-                if((stats.load_stats = get_load_stats()) == NULL) return 0;
-                if((stats.process_stats = get_process_stats()) == NULL) return 0;
-                if((stats.page_stats = get_page_stats_diff()) == NULL) return 0;
-                if((stats.network_stats = get_network_stats_diff(&(stats.network_entries))) == NULL) return 0;
-                if((stats.diskio_stats = get_diskio_stats_diff(&(stats.diskio_entries))) == NULL) return 0;
-                if((stats.disk_stats = get_disk_stats(&(stats.disk_entries))) == NULL) return 0;
-                if((stats.general_stats = get_general_stats()) == NULL) return 0;
-                if((stats.user_stats = get_user_stats()) == NULL) return 0;
+	stats.cpu_percents = cpu_percent_usage();
+	stats.mem_stats = get_memory_stats();
+	stats.swap_stats = get_swap_stats();
+	stats.load_stats = get_load_stats();
+	stats.process_stats = get_process_stats();
+	stats.page_stats = get_page_stats_diff();
+	stats.network_stats = get_network_stats_diff(&(stats.network_entries));
+	stats.diskio_stats = get_diskio_stats_diff(&(stats.diskio_entries));
+	stats.disk_stats = get_disk_stats(&(stats.disk_entries));
+	stats.general_stats = get_general_stats();
+	stats.user_stats = get_user_stats();
 
-		return 1;
+	return 1;
 }
 
 void version_num(char *progname){
@@ -378,7 +415,6 @@ void usage(char *progname){
         fprintf(stderr, "  -h    Displays this help information.\n");
         fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
         exit(1);
-
 }
 
 int main(int argc, char **argv){
@@ -400,10 +436,7 @@ int main(int argc, char **argv){
 #ifdef ALLBSD
 	gid_t gid;
 #endif
-	if(statgrab_init() != 0){
-		fprintf(stderr, "statgrab_init failed. Please check the permissions\n");
-		return 1; 
-	}
+	statgrab_init();
 #ifdef ALLBSD
 	if((setegid(getgid())) != 0){
 		fprintf(stderr, "Failed to lose setgid'ness\n");
@@ -480,10 +513,7 @@ int main(int argc, char **argv){
   		 * frequently than once a second.
 		 */
 		sleep(1);
-
 	}	
-
-
 
 	endwin();
 	return 0;
