@@ -29,13 +29,19 @@ Usage: $progname [OPTION]... [CONFIGFILE]...
 Generate an XHTML index page on stdout from MRTG config files specified
 on the command line or read from stdin.
 
+--title TITLE                Use TITLE as the title of the generated page
 --help                       Display this help and exit
 
 Version $package_version - report bugs to $package_bugreport.
 EOF
 
 sub main () {
-	GetOptions('help' => \my $help) or die $help_text;
+	my $hostname = `hostname`;
+	chomp $hostname;
+	my $pagetitle = "MRTG: $hostname";
+
+	GetOptions('title=s' => \$pagetitle,
+	           'help' => \my $help) or die $help_text;
 	if ($help) {
 		print "$help_text";
 		exit 0;
@@ -53,10 +59,10 @@ sub main () {
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>MRTG</title>
+    <title>$pagetitle</title>
 </head>
 <body>
-<h1>MRTG</h1>
+<h1>$pagetitle</h1>
 EOF
 	foreach my $title (sort keys %pages) {
 		my $page = $pages{$title};
