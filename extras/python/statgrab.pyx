@@ -1,4 +1,24 @@
-# TODO: deal with failures better (return nothing, or raise error?)
+#
+# i-scream central monitoring system
+# http://www.i-scream.org
+# Copyright (C) 2000-2004 i-scream
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+# $Id$
+#
 
 ctypedef long time_t
 
@@ -115,10 +135,18 @@ class Result:
     def __repr__(self):
         return str(self.attrs)
 
+class StatgrabException:
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
 
 def py_get_cpu_totals():
     cdef cpu_states_t *s
     s = get_cpu_totals()
+    if s == NULL:
+        raise StatgrabException, 'get_cpu_totals() returned NULL'
     return Result(
         {'user': s.user,
          'kernel': s.kernel,
@@ -134,6 +162,8 @@ def py_get_cpu_totals():
 def py_get_cpu_diff():
     cdef cpu_states_t *s
     s = get_cpu_diff()
+    if s == NULL:
+        raise StatgrabException, 'get_cpu_diff() returned NULL'
     return Result(
         {'user': s.user,
          'kernel': s.kernel,
@@ -149,6 +179,8 @@ def py_get_cpu_diff():
 def py_cpu_percent_usage():
     cdef cpu_percent_t *s
     s = cpu_percent_usage()
+    if s == NULL:
+        raise StatgrabException, 'cpu_percent_usage() returned NULL'
     return Result(
         {'user': s.user,
          'kernel': s.kernel,
@@ -163,6 +195,8 @@ def py_cpu_percent_usage():
 def py_get_memory_stats():
     cdef mem_stat_t *s
     s = get_memory_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_memory_stats() returned NULL'
     return Result(
         {'total': s.total,
          'used': s.used,
@@ -174,6 +208,8 @@ def py_get_memory_stats():
 def py_get_load_stats():
     cdef load_stat_t *s
     s = get_load_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_load_stats() returned NULL'
     return Result(
         {'min1': s.min1,
          'min5': s.min5,
@@ -184,6 +220,8 @@ def py_get_load_stats():
 def py_get_user_stats():
     cdef user_stat_t *s
     s = get_user_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_user_stats() returned NULL'
     return Result(
         {'name_list': s.name_list,
          'num_entries': s.num_entries,
@@ -193,6 +231,8 @@ def py_get_user_stats():
 def py_get_swap_stats():
     cdef swap_stat_t *s
     s = get_swap_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_swap_stats() returned NULL'
     return Result(
         {'total': s.total,
          'used': s.used,
@@ -203,6 +243,8 @@ def py_get_swap_stats():
 def py_get_general_stats():
     cdef general_stat_t *s
     s = get_general_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_general_stats() returned NULL'
     return Result(
         {'os_name': s.os_name,
          'os_release': s.os_release,
@@ -217,6 +259,8 @@ def py_get_disk_stats():
     cdef disk_stat_t *s
     cdef int entries
     s = get_disk_stats(&entries)
+    if s == NULL:
+        raise StatgrabException, 'get_disk_stats() returned NULL'
     list = [entries]
     for i from 0 <= i < entries:
         list.append(Result(
@@ -238,6 +282,8 @@ def py_get_diskio_stats():
     cdef diskio_stat_t *s
     cdef int entries
     s = get_diskio_stats(&entries)
+    if s == NULL:
+        raise StatgrabException, 'get_diskio_stats() returned NULL'
     list = [entries]
     for i from 0 <= i < entries:
         list.append(Result(
@@ -254,6 +300,8 @@ def py_get_diskio_stats_diff():
     cdef diskio_stat_t *s
     cdef int entries
     s = get_diskio_stats_diff(&entries)
+    if s == NULL:
+        raise StatgrabException, 'get_diskio_stats_diff() returned NULL'
     list = [entries]
     for i from 0 <= i < entries:
         list.append(Result(
@@ -269,6 +317,8 @@ def py_get_diskio_stats_diff():
 def py_get_process_stats():
     cdef process_stat_t *s
     s = get_process_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_process_stats() returned NULL'
     return Result(
         {'total': s.total,
          'running': s.running,
@@ -282,6 +332,8 @@ def py_get_network_stats():
     cdef network_stat_t *s
     cdef int entries
     s = get_network_stats(&entries)
+    if s == NULL:
+        raise StatgrabException, 'get_network_stats() returned NULL'
     list = [entries]
     for i from 0 <= i < entries:
         list.append(Result(
@@ -298,6 +350,8 @@ def py_get_network_stats_diff():
     cdef network_stat_t *s
     cdef int entries
     s = get_network_stats_diff(&entries)
+    if s == NULL:
+        raise StatgrabException, 'get_network_stats_diff() returned NULL'
     list = [entries]
     for i from 0 <= i < entries:
         list.append(Result(
@@ -313,6 +367,8 @@ def py_get_network_stats_diff():
 def py_get_page_stats():
     cdef page_stat_t *s
     s = get_page_stats()
+    if s == NULL:
+        raise StatgrabException, 'get_page_stats() returned NULL'
     return Result(
         {'pages_pagein': s.pages_pagein,
          'pages_pageout': s.pages_pageout,
@@ -322,6 +378,8 @@ def py_get_page_stats():
 def py_get_page_stats_diff():
     cdef page_stat_t *s
     s = get_page_stats_diff()
+    if s == NULL:
+        raise StatgrabException, 'get_page_stats_diff() returned NULL'
     return Result(
         {'pages_pagein': s.pages_pagein,
          'pages_pageout': s.pages_pageout,
