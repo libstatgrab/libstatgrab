@@ -337,7 +337,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 		return NULL;
 	}
 
-	disknames = malloc(size);
+	disknames = sg_malloc(size);
 	if (disknames == NULL) {
 		return NULL;
 	}
@@ -346,7 +346,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 		return NULL;
 	}
 
-	dk_name = calloc(diskcount, sizeof(char *));
+	dk_name = sg_malloc(diskcount * sizeof(char *));
 	bufpp = disknames;
 	for (i = 0; i < diskcount && (name = strsep(&bufpp, ",")) != NULL; i++) {
 		dk_name[i] = name;
@@ -370,7 +370,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	num_disks = size / sizeof(struct diskstats);
 #endif
 
-	stats = malloc(size);
+	stats = sg_malloc(size);
 	if (stats == NULL) {
 		return NULL;
 	}
@@ -429,7 +429,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 
 #if defined(FREEBSD) || defined(DFBSD)
 	if (!stats_init) {
-		stats.dinfo=malloc(sizeof(struct devinfo));
+		stats.dinfo=sg_malloc(sizeof(struct devinfo));
 		if(stats.dinfo==NULL) return NULL;
 		bzero(stats.dinfo, sizeof(struct devinfo));
 		stats_init = 1;

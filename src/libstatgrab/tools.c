@@ -91,7 +91,7 @@ static void add_mapping(char *bsd, char *svr){
 	mapping_t *map_end_ptr;
 
 	if (mapping == NULL){
-		mapping = malloc(sizeof(mapping_t));
+		mapping = sg_malloc(sizeof(mapping_t));
 		if (mapping == NULL) return;
 		map_ptr = mapping;
 	}else{
@@ -106,7 +106,7 @@ static void add_mapping(char *bsd, char *svr){
 		/* We've reached end of list and not found the entry.. So we need to malloc
 		 * new mapping_t
 		 */
-		map_end_ptr->next = malloc(sizeof(mapping_t));
+		map_end_ptr->next = sg_malloc(sizeof(mapping_t));
 		if (map_end_ptr->next == NULL) return;
 		map_ptr = map_end_ptr->next;
 	}
@@ -283,7 +283,7 @@ char *sg_f_read_line(FILE *f, const char *string){
 
 char *sg_get_string_match(char *line, regmatch_t *match){
 	int len=match->rm_eo - match->rm_so;
-	char *match_string=malloc(len+1);
+	char *match_string=sg_malloc(len+1);
 
 	match_string=strncpy(match_string, line+match->rm_so, len);
 	match_string[len]='\0';
@@ -421,7 +421,7 @@ int sg_update_string(char **dest, const char *src) {
 		return 0;
 	}
 
-	new = realloc(*dest, strlen(src) + 1);
+	new = sg_realloc(*dest, strlen(src) + 1);
 	if (new == NULL) {
 		return -1;
 	}

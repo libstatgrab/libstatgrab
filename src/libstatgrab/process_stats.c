@@ -285,7 +285,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 	procs = size / sizeof(struct kinfo_proc);
 
-	kp_stats = malloc(size);
+	kp_stats = sg_malloc(size);
 	if(kp_stats == NULL) {
 		return NULL;
 	}
@@ -350,7 +350,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		}
 #endif
 
-		proctitle = malloc(buflen);
+		proctitle = sg_malloc(buflen);
 		if(proctitle == NULL) {
 			return NULL;
 		}
@@ -372,7 +372,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			proc_state_ptr->proctitle = NULL;
 		}
 		else if(size > 0) {
-			proc_state_ptr->proctitle = malloc(size+1);
+			proc_state_ptr->proctitle = sg_malloc(size+1);
 			if(proc_state_ptr->proctitle == NULL) {
 				return NULL;
 			}
@@ -401,7 +401,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 					argslen += strlen(*argsp) + 1;
 					argsp++;
 				}
-				proctitle = malloc(argslen + 1);
+				proctitle = sg_malloc(argslen + 1);
 				proctitle[0] = '\0';
 				if(proctitle == NULL) {
 					return NULL;
@@ -503,7 +503,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			lwps = size / sizeof(struct kinfo_lwp);
 			mib[4] = lwps;
 
-			kl_stats = malloc(size);
+			kl_stats = sg_malloc(size);
 			if(kl_stats == NULL) {
 				return NULL;
 			}

@@ -52,7 +52,7 @@ void *sg_vector_resize(void *vector, vector_header *h, int count) {
 	if (new_count != h->alloc_count) {
 		char *new_vector;
 
-		new_vector = realloc(vector, new_count * h->item_size);
+		new_vector = sg_realloc(vector, new_count * h->item_size);
 		if (new_vector == NULL && new_count != 0) {
 			/* Out of memory -- free the contents of the vector. */
 			sg_vector_resize(vector, h, 0);
