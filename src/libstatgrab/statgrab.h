@@ -58,10 +58,8 @@ typedef struct{
 #define MAX_LOGIN_NAME_SIZE 8
 #endif
 
-typedef char name[MAX_LOGIN_NAME_SIZE+1];
-
 typedef struct{
-	name *name_list;
+	char *name_list;
 	int num_entries;
 }user_stat_t;
 

@@ -28,49 +28,55 @@
 #include <utmp.h>
 #include "statgrab.h"
 
-#define START_VAL 5
+#define START_VAL (5*(1+MAX_LOGIN_NAME_SIZE))
 
 user_stat_t *get_user_stats(){
 	int num_users=0;
 
-	static user_stat_t user_stat;
-	static int watermark=-1;
+	static user_stat_t user_stats;
+	static int size_of_namelist=-1;
+	char *tmp;
 	struct utmp *entry;
 
-	name *name_ptr;
-
 	/* First case call */
-	if (watermark==-1){
-		user_stat.name_list=malloc(START_VAL * sizeof(user_stat.name_list));
-		if(user_stat.name_list==NULL){
+	if (size_of_namelist==-1){
+		user_stats.name_list=malloc(START_VAL);
+		if(user_stats.name_list==NULL){
 			return NULL;
 		}
-		watermark=START_VAL;
+		size_of_namelist=START_VAL;
+		printf("Initially started at %d\n", size_of_namelist);
 	}	
 
+	/* Essentially blank the list, or give it a inital starting string */
+	strcpy(user_stats.name_list, "");
 	setutent();
 	while((entry=getutent()) != NULL) {
 		if(entry->ut_type==USER_PROCESS) {
-			if(num_users>watermark-1){
-				name_ptr=user_stat.name_list;
-				if((user_stat.name_list=realloc(user_stat.name_list, (watermark*2* sizeof(user_stat.name_list))))==NULL){
-					user_stat.name_list=name_ptr;
+			if((strlen(user_stats.name_list)+MAX_LOGIN_NAME_SIZE+2) > size_of_namelist){
+				tmp=user_stats.name_list;
+				user_stats.name_list=realloc(user_stats.name_list, 1+(size_of_namelist*2));
+				printf("realloc to %d\n", 1+(size_of_namelist*2));
+				if(user_stats.name_list==NULL){
+					printf("realloc failed\n");
+					user_stats.name_list=tmp;
 					return NULL;
 				}
-				watermark=watermark*2;
+				size_of_namelist=1+(size_of_namelist*2);
 			}
 
-			strncpy(user_stat.name_list[num_users], entry->ut_user, MAX_LOGIN_NAME_SIZE);
-			/* NULL terminate just in case , the size of user_stat.name_list is MAX_LOGIN_NAME_SIZE+1 */
-
-			user_stat.name_list[num_users][MAX_LOGIN_NAME_SIZE]='\0';
-				
+			strncat(user_stats.name_list, entry->ut_user, MAX_LOGIN_NAME_SIZE);
+			strcat(user_stats.name_list, " ");
 			num_users++;
 		}
 	}
 	endutent();
-	user_stat.num_entries=num_users;
 
-	return &user_stat;
+	/* We want to remove the last " " */
+	tmp=strrchr(user_stats.name_list, ' ');
+	*tmp='\0';
+	user_stats.num_entries=num_users;
+
+	return &user_stats;
 
 }
