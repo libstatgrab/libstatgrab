@@ -8,7 +8,7 @@ endif
 include_HEADERS = statgrab.h $(include_DEPRECATEDHEADERS)
 lib_LTLIBRARIES = libstatgrab.la
 
-libstatgrab_la_LDFLAGS = -version-info 4:0:3
+libstatgrab_la_LDFLAGS = -version-info 5:0:0
 
 if DEPRECATED
 libstatgrab_la_DEPRECATEDSOURCES = statgrab_deprecated.c

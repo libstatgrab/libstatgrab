@@ -3,6 +3,27 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.10 (20 May 2004)
+
+ * All function and structure names now follow a standardised
+   naming scheme. This will break compatibility with existing
+   programs. To use pre-0.10 compatibility functions:
+
+     #define SG_ENABLE_DEPRECATED
+     #include <statgrab.h>
+
+ * New process stats function added to provide full details
+   on currently running processes. See sg_get_process_stats
+   for details.
+ * Compare functions provided for process, network, and disk io
+   statistics. These can be used with qsort.
+ * Error reporting functions added. See sg_get_error and
+   associated functions.
+ * Support added for NetBSD 2.0.
+ * Lots of code tidying.
+ * Python bindings now exist in a separate package:
+     http://www.i-scream.org/pystatgrab/
+
 libstatgrab 0.9 (10 March 2004)
 
  * Added network interface information:
