@@ -1,6 +1,6 @@
-libstatgrab and saidar written by Pete Saunders <pajs@i-scream.org>
-statgrab written by Adam Sampson <ats@i-scream.org>
-Autoconf/Automake scripts written by Tim Bishop <tdb@i-scream.org>
+Peter Saunders <pajs@i-scream.org>
+Adam Sampson <ats@i-scream.org>
+Tim Bishop <tdb@i-scream.org>
 
 All code is released under the GPL or LGPL.
 
