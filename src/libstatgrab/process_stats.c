@@ -69,13 +69,20 @@ int get_proc_snapshot(proc_state_t **ps){
 	proc_state_t *proc_state_ptr;
 	int proc_state_size = 0;
 #ifdef ALLBSD
-	int mib[3];
+	int mib[4];
 	size_t size;
 	struct kinfo_proc *kp_stats;
 	int procs, i, alloc;
+	char *proctitle;
+#if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
+	long buflen;
+	char *p;
+	int argc;
+	int j = 0;
+#else
 	static kvm_t *kvmd;
 	char **args;
-	char *proctitle;
+#endif
 #endif
 #if defined(SOLARIS) || defined(LINUX)
         DIR *proc_dir;
@@ -227,9 +234,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		return NULL;
 	}
 
-#if defined(NETBSD) || defined(OPENBSD)
-	kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
-#else
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	kvmd = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
 #endif
 
@@ -253,39 +258,93 @@ int get_proc_snapshot(proc_state_t **ps){
 			strdup(kp_stats[i].kp_proc.p_comm);
 #endif
 
-		args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
-		if(args != NULL) {
-			alloc = 1;
-			proctitle = malloc(alloc);
-			if(proctitle == NULL) {
-				return NULL;
-			}
-			while(*args != NULL) {
-				if(strlen(proctitle) + strlen(*args) >= alloc) {
-					alloc = (alloc + strlen(*args)) << 1;
-					proctitle = realloc(proctitle, alloc);
-					if(proctitle == NULL) {
-						return NULL;
-					}
-				}
-				strncat(proctitle, *args, strlen(*args));
-				strncat(proctitle, " ", 1);
-				args++;
-			}
-			/* remove trailing space */
-			proctitle[strlen(proctitle)-1] = NULL;
-			proc_state_ptr->proctitle = proctitle;
+#if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
+		size = sizeof(buflen);
+
+#ifdef FREEBSD5
+		if(sysctlbyname("kern.ps_arg_cache_limit", &buflen, &size, NULL, 0) < 0) {
+			return NULL;
 		}
-		else {
-			/* Should probably be returning NULL here */
-			proc_state_ptr->proctitle =
-				malloc(strlen(proc_state_ptr->process_name)+4);
+#else
+		mib[1] = KERN_ARGMAX;
+
+		if(sysctl(mib, 2, &buflen, &size, NULL, 0) < 0) {
+			return NULL;
+		}
+#endif
+
+		proctitle = malloc(buflen);
+		if(proctitle == NULL) {
+			return NULL;
+		}
+
+		size = buflen;
+
+#ifdef FREEBSD5
+		mib[2] = KERN_PROC_ARGS;
+		mib[3] = kp_stats[i].ki_pid;
+#else
+		mib[1] = KERN_PROC_ARGS;
+		mib[2] = kp_stats[i].kp_proc.p_pid;
+		mib[3] = KERN_PROC_ARGV;
+#endif
+
+		if(sysctl(mib, 4, proctitle, &size, NULL, 0) < 0) {
+			free(proctitle);
+			proc_state_ptr->proctitle = NULL;
+		}
+		else if(size > 0) {
+			proc_state_ptr->proctitle = malloc(size);
 			if(proc_state_ptr->proctitle == NULL) {
 				return NULL;
 			}
-			sprintf(proc_state_ptr->proctitle, " (%s)",
-				proc_state_ptr->process_name);
+			p = proctitle;
+			proc_state_ptr->proctitle[0] = NULL;
+			do {
+				strncat(proc_state_ptr->proctitle, p, strlen(p));
+				strncat(proc_state_ptr->proctitle, " ", 1);
+				p += strlen(p) + 1;
+			} while (p < proctitle + size);
+			free(proctitle);
+			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = NULL;
 		}
+		else {
+			free(proctitle);
+			proc_state_ptr->proctitle = NULL;
+		}
+#else
+		if(kvmd != NULL) {
+			args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
+			if(args != NULL) {
+				alloc = 1;
+				proctitle = malloc(alloc);
+				if(proctitle == NULL) {
+					return NULL;
+				}
+				while(*args != NULL) {
+					if(strlen(proctitle) + strlen(*args) >= alloc) {
+						alloc = (alloc + strlen(*args)) << 1;
+						proctitle = realloc(proctitle, alloc);
+						if(proctitle == NULL) {
+							return NULL;
+						}
+					}
+					strncat(proctitle, *args, strlen(*args));
+					strncat(proctitle, " ", 1);
+					args++;
+				}
+				/* remove trailing space */
+				proctitle[strlen(proctitle)-1] = NULL;
+				proc_state_ptr->proctitle = proctitle;
+			}
+			else {
+				proc_state_ptr->proctitle = NULL;
+			}
+		}
+		else {
+			proc_state_ptr->proctitle = NULL;
+		}
+#endif
 
 #ifdef FREEBSD5
 		proc_state_ptr->pid = kp_stats[i].ki_pid;
