@@ -267,7 +267,6 @@ static int build_mapping(){
 #endif
 
 
-
 char *sg_f_read_line(FILE *f, const char *string){
 	/* Max line length. 8k should be more than enough */
 	static char line[8192];
@@ -278,6 +277,7 @@ char *sg_f_read_line(FILE *f, const char *string){
 		}
 	}
 
+	sg_set_error(SG_ERROR_PARSE, NULL);
 	return NULL;
 }
 
@@ -290,7 +290,6 @@ char *sg_get_string_match(char *line, regmatch_t *match){
 
 	return match_string;
 }
-
 
 
 #ifndef HAVE_ATOLL
@@ -450,6 +449,9 @@ kvm_t *sg_get_kvm() {
 	}
 
 	kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
+	if(kvmd == NULL) {
+		sg_set_error(SG_ERROR_KVM_OPENFILES, NULL);
+	}
 	return kvmd;
 }
 
@@ -462,6 +464,9 @@ kvm_t *sg_get_kvm2() {
 	}
 
 	kvmd2 = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
+	if(kvmd2 == NULL) {
+		sg_set_error(SG_ERROR_KVM_OPENFILES, NULL);
+	}
 	return kvmd2;
 }
 #endif
@@ -477,6 +482,7 @@ struct uvmexp *sg_get_uvmexp() {
 	mib[1] = VM_UVMEXP;
 
 	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP");
 		return NULL;
 	}
 
@@ -506,8 +512,14 @@ int sg_init(){
 }
 
 int sg_drop_privileges() {
-	if (setegid(getgid()) != 0) return -1;
-	if (seteuid(getuid()) != 0) return -1;
+	if (setegid(getgid()) != 0) {
+		sg_set_error(SG_ERROR_SETEGID, NULL);
+		return -1;
+	}
+	if (seteuid(getuid()) != 0) {
+		sg_set_error(SG_ERROR_SETEUID, NULL);
+		return -1;
+	}
 	return 0;
 }
 

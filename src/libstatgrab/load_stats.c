@@ -43,6 +43,7 @@ sg_load_stats *sg_get_load_stats(){
 	double loadav[3];
 
 #ifdef CYGWIN
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
 	return NULL;
 #else
 
@@ -53,28 +54,34 @@ sg_load_stats *sg_get_load_stats(){
 	kstat_named_t *kn;
 
 	if ((kc = kstat_open()) == NULL) {
+		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
 		return NULL;
 	}
 
 	if((ksp=kstat_lookup(kc, "unix", 0, "system_misc")) == NULL){
+		sg_set_error(SG_ERROR_KSTAT_LOOKUP, "unix,0,system_misc");
 		return NULL;
 	}
 
 	if (kstat_read(kc, ksp, 0) == -1) {
+		sg_set_error(SG_ERROR_KSTAT_READ, NULL);
 		return NULL;
 	}
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_1min")) == NULL){
+		sg_set_error(SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_1min");
 		return NULL;
 	}
 	load_stat.min1 = (double)kn->value.ui32 / (double)256;
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_5min")) == NULL){
+		sg_set_error(SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_5min");
 		return NULL;
 	}
 	load_stat.min5 = (double)kn->value.ui32 / (double)256;
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_15min")) == NULL){
+		sg_set_error(SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_15min");
 		return NULL;
 	}
 	load_stat.min15 = (double)kn->value.ui32 / (double)256;

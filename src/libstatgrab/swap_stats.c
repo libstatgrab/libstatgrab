@@ -84,9 +84,11 @@ sg_swap_stats *sg_get_swap_stats(){
 
 #ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
+		sg_set_error(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 		return NULL;
 	}
 	if (swapctl(SC_AINFO, &ai) == -1) {
+		sg_set_error(SG_ERROR_SWAPCTL, NULL);
 		return NULL;
 	}
 	swap_stat.total = (long long)ai.ani_max * (long long)pagesize;
@@ -95,6 +97,7 @@ sg_swap_stats *sg_get_swap_stats(){
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
+		sg_set_error(SG_ERROR_OPEN, "/proc/meminfo");
 		return NULL;
 	}
 
@@ -123,6 +126,7 @@ sg_swap_stats *sg_get_swap_stats(){
 
 	mibsize = sizeof mib / sizeof mib[0];
 	if (sysctlnametomib("vm.swap_info", mib, &mibsize) < 0) {
+		sg_set_error(SG_ERROR_SYSCTLNAMETOMIB, "vm.swap_info");
 		return NULL;
 	}
 	for (n = 0; ; ++n) {
@@ -132,12 +136,14 @@ sg_swap_stats *sg_get_swap_stats(){
 			break;
 		}
 		if (xsw.xsw_version != XSWDEV_VERSION) {
+			sg_set_error(SG_ERROR_XSW_VER_MISMATCH, NULL);
 			return NULL;
 		}
 		swap_stat.total += (long long) xsw.xsw_nblks;
 		swap_stat.used += (long long) xsw.xsw_used;
 	}
 	if (errno != ENOENT) {
+		sg_set_error(SG_ERROR_ENOENT, NULL);
 		return NULL;
 	}
 #else
@@ -145,6 +151,7 @@ sg_swap_stats *sg_get_swap_stats(){
 		return NULL;
 	}
 	if ((kvm_getswapinfo(kvmd, &swapinfo, 1,0)) == -1){
+		sg_set_error(SG_ERROR_KVM_GETSWAPINFO, NULL);
 		return NULL;
 	}
 

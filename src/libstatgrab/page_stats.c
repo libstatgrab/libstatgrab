@@ -72,6 +72,7 @@ sg_page_stats *sg_get_page_stats(){
 
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
+		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
 		return NULL;
 	}
 	for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
@@ -105,27 +106,32 @@ sg_page_stats *sg_get_page_stats(){
 		fclose(f);
 	} else if ((f = fopen("/proc/stat", "r")) != NULL) {
 		if ((line_ptr = sg_f_read_line(f, "page")) == NULL) {
+			sg_set_error(SG_ERROR_PARSE, "page");
 			fclose(f);
 			return NULL;
 		}
 
 		if (sscanf(line_ptr, "page %lld %lld", &page_stats.pages_pagein, &page_stats.pages_pageout) != 2) {
+			sg_set_error(SG_ERROR_PARSE, "page");
 			fclose(f);
 			return NULL;
 		}
 
 		fclose(f);
 	} else {
+		sg_set_error(SG_ERROR_OPEN, "/proc/stat");
 		return NULL;
 	}
 #endif
 #if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof page_stats.pages_pagein;
 	if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, 0) < 0){
+		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsin");
 		return NULL;
 	}
 	size = sizeof page_stats.pages_pageout;
 	if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, 0) < 0){
+		sg_set_error(SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsout");
 		return NULL;
 	}
 #endif

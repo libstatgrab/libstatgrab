@@ -113,6 +113,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 #ifdef ALLBSD
 	if(getifaddrs(&net) != 0){
+		sg_set_error(SG_ERROR_GETIFADDRS, NULL);
 		return NULL;
 	}
 
@@ -146,12 +147,13 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
+		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
 		return NULL;
 	}
 
 	interfaces=0;
 
-    	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
 		if (!strcmp(ksp->ks_class, "net")) {
 			kstat_read(kc, ksp, NULL);
 
@@ -243,6 +245,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 #ifdef LINUX
 	f=fopen("/proc/net/dev", "r");
 	if(f==NULL){
+		sg_set_error(SG_ERROR_OPEN, "/proc/net/dev");
 		return NULL;
 	}
 	/* read the 2 lines.. Its the title, so we dont care :) */
@@ -251,6 +254,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 
 	if((regcomp(&regex, "^ *([^:]+): *([0-9]+) +([0-9]+) +([0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+ +([0-9]+) +([0-9]+) +([0-9]+) +[0-9]+ +[0-9]+ +([0-9]+)", REG_EXTENDED))!=0){
+		sg_set_error(SG_ERROR_PARSE, NULL);
 		return NULL;
 	}
 
@@ -288,6 +292,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 #endif
 
 #ifdef CYGWIN
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
 	return NULL;
 #endif
 
@@ -426,6 +431,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 #ifdef ALLBSD
 	if(getifaddrs(&net) != 0){
+		sg_set_error(SG_ERROR_GETIFADDRS, NULL);
 		return NULL;
 	}
 
@@ -528,10 +534,12 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
+		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
 		return NULL;
 	}
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0) {
+		sg_set_error(SG_ERROR_SOCKET, NULL);
 		return NULL;
 	}
 
@@ -590,17 +598,25 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #ifdef LINUX
 	f = fopen("/proc/net/dev", "r");
 	if(f == NULL){
+		sg_set_error(SG_ERROR_OPEN, "/proc/net/dev");
 		return NULL;
 	}
 
 	/* Setup stuff so we can do the ioctl to get the info */
 	if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+		sg_set_error(SG_ERROR_SOCKET, NULL);
 		return NULL;
 	}
 
 	/* Ignore first 2 lines.. Just headings */
-	if((fgets(line, sizeof(line), f)) == NULL) return NULL;
-	if((fgets(line, sizeof(line), f)) == NULL) return NULL;
+	if((fgets(line, sizeof(line), f)) == NULL) {
+		sg_set_error(SG_ERROR_PARSE, NULL);
+		return NULL;
+	}
+	if((fgets(line, sizeof(line), f)) == NULL) {
+		sg_set_error(SG_ERROR_PARSE, NULL);
+		return NULL;
+	}
 
 	while((fgets(line, sizeof(line), f)) != NULL){
 		char *name, *ptr;

@@ -130,15 +130,18 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 #ifdef LINUX
 	if ((f=fopen("/proc/uptime", "r")) == NULL) {
+		sg_set_error(SG_ERROR_OPEN, "/proc/uptime");
 		return NULL;
 	}
 	if((fscanf(f,"%lu %*d",&uptime)) != 1){
+		sg_set_error(SG_ERROR_PARSE, NULL);
 		return NULL;
 	}
 	fclose(f);
 #endif
 
 	if((proc_dir=opendir(PROC_LOCATION))==NULL){
+		sg_set_error(SG_ERROR_OPENDIR, PROC_LOCATION);
 		return NULL;
 	}
 
@@ -303,6 +306,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	mib[2] = KERN_PROC_ALL;
 
 	if(sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
 		return NULL;
 	}
 
@@ -315,6 +319,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	memset(kp_stats, 0, size);
 
 	if(sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
 		free(kp_stats);
 		return NULL;
 	}
@@ -360,6 +365,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 #ifdef FREEBSD5
 		if(sysctlbyname("kern.ps_arg_cache_limit", &buflen, &size, NULL, 0) < 0) {
+			sg_set_error(SG_ERROR_SYSCTLBYNAME, "kern.ps_arg_cache_limit");
 			return NULL;
 		}
 #else
@@ -369,6 +375,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		mib[1] = KERN_ARGMAX;
 
 		if(sysctl(mib, 2, &buflen, &size, NULL, 0) < 0) {
+			sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_ARGMAX");
 			return NULL;
 		}
 #endif
@@ -520,6 +527,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			mib[4] = 0;
 
 			if(sysctl(mib, 5, NULL, &size, NULL, 0) < 0) {
+				sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_LWP.pid.structsize.0");
 				return NULL;
 			}
 
@@ -532,6 +540,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			}
 
 			if(sysctl(mib, 5, kl_stats, &size, NULL, 0) < 0) {
+				sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_LWP.pid.structsize.buffersize");
 				return NULL;
 			}
 		}
@@ -616,6 +625,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #endif
 
 #ifdef CYGWIN
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
 	return NULL;
 #endif
 
