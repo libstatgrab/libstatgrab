@@ -26,7 +26,7 @@ char *get_string_match(char *line, regmatch_t *match){
 
 	return match_string;
 }
-
+#ifdef HAVE_ATOLL
 long long get_ll_match(char *line, regmatch_t *match){
 	char *ptr;
 	long long num;
@@ -36,3 +36,4 @@ long long get_ll_match(char *line, regmatch_t *match){
 
 	return num;
 }
+#endif
