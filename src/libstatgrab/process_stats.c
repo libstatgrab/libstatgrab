@@ -223,19 +223,19 @@ int get_proc_snapshot(proc_state_t **ps){
 	mib[2] = KERN_PROC_ALL;
 
 	if(sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
-		return NULL;
+		return -1;
 	}
 
 	procs = size / sizeof(struct kinfo_proc);
 
 	kp_stats = malloc(size);
 	if(kp_stats == NULL) {
-		return NULL;
+		return -1;
 	}
 
 	if(sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
 		free(kp_stats);
-		return NULL;
+		return -1;
 	}
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
@@ -247,7 +247,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state = realloc(proc_state,
 				(1+proc_state_size)*sizeof(proc_state_t));
 		if(proc_state == NULL ) {
-			return NULL;
+			return -1;
 		}
 		proc_state_ptr = proc_state+proc_state_size;
 
@@ -267,19 +267,19 @@ int get_proc_snapshot(proc_state_t **ps){
 
 #ifdef FREEBSD5
 		if(sysctlbyname("kern.ps_arg_cache_limit", &buflen, &size, NULL, 0) < 0) {
-			return NULL;
+			return -1;
 		}
 #else
 		mib[1] = KERN_ARGMAX;
 
 		if(sysctl(mib, 2, &buflen, &size, NULL, 0) < 0) {
-			return NULL;
+			return -1;
 		}
 #endif
 
 		proctitle = malloc(buflen);
 		if(proctitle == NULL) {
-			return NULL;
+			return -1;
 		}
 
 		size = buflen;
@@ -300,7 +300,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		else if(size > 0) {
 			proc_state_ptr->proctitle = malloc(size+1);
 			if(proc_state_ptr->proctitle == NULL) {
-				return NULL;
+				return -1;
 			}
 			p = proctitle;
 			proc_state_ptr->proctitle[0] = NULL;
@@ -324,14 +324,14 @@ int get_proc_snapshot(proc_state_t **ps){
 				alloc = 1;
 				proctitle = malloc(alloc);
 				if(proctitle == NULL) {
-					return NULL;
+					return -1;
 				}
 				while(*args != NULL) {
 					if(strlen(proctitle) + strlen(*args) >= alloc) {
 						alloc = (alloc + strlen(*args)) * 2;
 						proctitletmp = realloc(proctitle, alloc);
 						if(proctitletmp == NULL) {
-							return NULL;
+							return -1;
 						}
 						proctitle = proctitletmp;
 					}
@@ -470,7 +470,7 @@ process_stat_t *get_process_stats() {
 
 	ps_size = get_proc_snapshot(&ps);
 
-	if(ps_size == 0) {
+	if(ps_size < 0) {
 		return NULL;
 	}
 
