@@ -142,11 +142,19 @@ process_stat_t *get_process_stats(){
 	kp_stats=kvm_getprocs(kvmd, KERN_PROC_ALL, 0, &procs);
 
 	while(procs--){
+#ifdef FREEBSD5
+               	if (kp_stats[procs].ki_stat == SSLEEP) process_stat.sleeping++;
+               	if (kp_stats[procs].ki_stat == SRUN) process_stat.running++;
+               	if (kp_stats[procs].ki_stat == SIDL) process_stat.running++;
+               	if (kp_stats[procs].ki_stat == SZOMB) process_stat.zombie++;
+               	if (kp_stats[procs].ki_stat == SSTOP) process_stat.stopped++;
+#else
 		if (kp_stats[procs].kp_proc.p_stat == SSLEEP) process_stat.sleeping++;	
 		if (kp_stats[procs].kp_proc.p_stat == SRUN) process_stat.running++;
 		if (kp_stats[procs].kp_proc.p_stat == SIDL) process_stat.running++;
 		if (kp_stats[procs].kp_proc.p_stat == SZOMB) process_stat.zombie++;
 		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
+#endif
 	}
 
 	kvm_close(kvmd);
