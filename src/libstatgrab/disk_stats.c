@@ -503,7 +503,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 
 			if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 
-			diskio_stats_ptr->disk_name=strdup(ksp->ks_name);
+			diskio_stats_ptr->disk_name=strdup((char *) get_svr_from_bsd(ksp->ks_name));
 			diskio_stats_ptr->systime=time(NULL);
 			num_diskio++;
 		}

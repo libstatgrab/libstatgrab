@@ -51,12 +51,12 @@ solaris2.[[6-7]])
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	AC_DEFINE(SOL7, , [Building on Solaris 2.7])
-	LINKFLAGS="-lkstat"
+	LINKFLAGS="-lkstat -ldevinfo"
 	;;
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
-	LINKFLAGS="-lkstat"
+	LINKFLAGS="-lkstat -ldevinfo"
 	;;
 freebsd4.*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])

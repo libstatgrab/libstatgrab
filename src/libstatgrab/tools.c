@@ -77,7 +77,6 @@ void add_mapping(char *bsd, char *svr){
 	svr = strdup(svr);
 
 	if (mapping == NULL){
-		printf("New malloc\n");
 		mapping = malloc(sizeof(mapping_t));
 		if (mapping == NULL) return;
 		map_ptr = mapping;
@@ -85,7 +84,6 @@ void add_mapping(char *bsd, char *svr){
 		/* See if its already been added */
 		for(map_ptr = mapping; map_ptr != NULL; map_ptr = map_ptr->next){
 			if( (!strcmp(map_ptr->bsd, bsd)) || (!strcmp(map_ptr->svr, svr)) ){
-				printf("%s matches %s\n", map_ptr->bsd, bsd);
 				return;
 			}
 			map_end_ptr = map_ptr;
@@ -95,12 +93,10 @@ void add_mapping(char *bsd, char *svr){
 		 * new mapping_t
 		 */
 		map_end_ptr->next = malloc(sizeof(mapping_t));
-		printf("Second malloc\n");
 		if (map_end_ptr->next == NULL) return;
 		map_ptr = map_end_ptr->next;
 	}
 
-	printf("Adding %s\n", bsd);
 	map_ptr->next = NULL;
 	map_ptr->bsd = bsd;
 	map_ptr->svr = svr;
@@ -144,8 +140,8 @@ char *read_dir(char *disk_path){
 				return svr_name;
 			}
 		}
-		closedir(dirp);
 	}
+	closedir(dirp);
 	return NULL;
 }
 
@@ -199,7 +195,7 @@ void build_mapping(){
 	kstat_io_t kios;
 
 	if ((kc = kstat_open()) == NULL) {
-		return NULL;
+		return;
 	}
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
