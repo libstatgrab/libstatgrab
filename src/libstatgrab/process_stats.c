@@ -26,6 +26,8 @@
 #endif
 
 #include "statgrab.h"
+#include "tools.h"
+#include "vector.h"
 #if defined(SOLARIS) || defined(LINUX)
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,10 +70,21 @@
 #include <unistd.h>
 #endif
 
+static void proc_state_init(proc_state_t *s) {
+	s->process_name = NULL;
+	s->proctitle = NULL;
+}
+
+static void proc_state_destroy(proc_state_t *s) {
+	free(s->process_name);
+	free(s->proctitle);
+}
+
 int get_proc_snapshot(proc_state_t **ps){
-	proc_state_t *proc_state = NULL;
-	proc_state_t *proc_state_ptr;
+	VECTOR_DECLARE_STATIC(proc_state, proc_state_t, 64,
+	                      proc_state_init, proc_state_destroy);
 	int proc_state_size = 0;
+	proc_state_t *proc_state_ptr;
 #ifdef ALLBSD
 	int mib[4];
 	size_t size;
@@ -101,14 +114,12 @@ int get_proc_snapshot(proc_state_t **ps){
 	/* If someone has a executable of 4k filename length, they deserve to get it truncated :) */
 	char ps_name[4096];
 	char *ptr;
-	static char *psargs = NULL;
-	static int psarg_size = 0;
+	VECTOR_DECLARE_STATIC(psargs, char, 128, NULL, NULL);
 	unsigned long stime, utime;
 	int x;
 	int fn;
-	int toread;
-	ssize_t size;
-	int t_read;
+	int len;
+	int rc;
 #endif
 
         if((proc_dir=opendir(PROC_LOCATION))==NULL){
@@ -133,8 +144,11 @@ int get_proc_snapshot(proc_state_t **ps){
                 fread(&process_info, sizeof(psinfo_t), 1, f);
 #endif
 
-		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
+		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
+			return -1;
+		}
 		proc_state_ptr = proc_state+proc_state_size;
+
 #ifdef SOLARIS		
 		proc_state_ptr->pid = process_info.pr_pid;
 		proc_state_ptr->parent = process_info.pr_ppid;
@@ -168,10 +182,16 @@ int get_proc_snapshot(proc_state_t **ps){
 		/* pa_name[0] should = '(' */
 		ptr = strchr(&ps_name[1], ')');	
 		if(ptr !=NULL) *ptr='\0';
-		proc_state_ptr->process_name = strdup(&ps_name[1]);
+
+		if (update_string(&proc_state_ptr->process_name,
+		                  &ps_name[1]) == NULL) {
+			return -1;
+		}
 
 		/* Need to do cpu */
 		
+
+                fclose(f);
 
 		/* proctitle */	
 		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/cmdline", dir_entry->d_name);
@@ -181,38 +201,40 @@ int get_proc_snapshot(proc_state_t **ps){
                          * Ah well, move onwards to the next one */
                         continue;
                 }
-#define		PSARG_START_SIZE 128
-		if(psargs == NULL){
-			psargs = malloc(PSARG_START_SIZE);
-			psarg_size = PSARG_START_SIZE;
-		}
-		ptr = psargs;	
-		t_read = 0;
-		toread = psarg_size;
-		while((size = read(fn, ptr, toread)) == toread){
-			psargs = realloc(psargs, (psarg_size + PSARG_START_SIZE));
-			ptr = psargs+psarg_size;
-			t_read = psarg_size;
-			psarg_size+=PSARG_START_SIZE;
-			toread = PSARG_START_SIZE;
-		}
-		if(size != -1) t_read+=size;
 
+#define READ_BLOCK_SIZE 128
+		len = 0;
+		do {
+			if (VECTOR_RESIZE(psargs, len + READ_BLOCK_SIZE + 1) < 0) {
+				return -1;
+			}
+			rc = read(fn, psargs + len, READ_BLOCK_SIZE);
+			if (rc > 0) {
+				len += rc;
+			}
+		} while (rc == READ_BLOCK_SIZE);
+		close(fn);
+
+		if (rc == -1) {
+			/* Read failed; move on. */
+			continue;
+		}
+
+		/* Turn \0s into spaces within the command line. */
 		ptr = psargs;
-		for(x=0; x<t_read; x++){
+		for(x = 0; x < len; x++) {
 			if (*ptr == '\0') *ptr = ' ';
 			ptr++;
 		}
-		/*  for safety sake */
-		psargs[t_read] = '\0';
+		/* for safety's sake */
+		psargs[len] = '\0';
 
-		proc_state_ptr->proctitle = strdup(psargs);
-
+		if (update_string(&proc_state_ptr->proctitle, psargs) == NULL) {
+			return -1;
+		}
 #endif
 
 		proc_state_size++;
-
-                fclose(f);
         }
         closedir(proc_dir);
 #endif
@@ -243,24 +265,23 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
 	for (i = 0; i < procs; i++) {
-		/* replace with something more sensible */
-		proc_state = realloc(proc_state,
-				(1+proc_state_size)*sizeof(proc_state_t));
-		if(proc_state == NULL ) {
+		const char *name;
+
+		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
 			return -1;
 		}
 		proc_state_ptr = proc_state+proc_state_size;
 
 #ifdef FREEBSD5
-		proc_state_ptr->process_name =
-			strdup(kp_stats[i].ki_comm);
+		name = kp_stats[i].ki_comm;
 #elif defined(DFBSD)
-		proc_state_ptr->process_name =
-			strdup(kp_stats[i].kp_thread.td_comm);
+		name = kp_stats[i].kp_thread.td_comm;
 #else
-		proc_state_ptr->process_name =
-			strdup(kp_stats[i].kp_proc.p_comm);
+		name = kp_stats[i].kp_proc.p_comm;
 #endif
+		if (update_string(&proc_state_ptr->process_name, name) == NULL) {
+			return -1;
+		}
 
 #if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
 		size = sizeof(buflen);
@@ -293,6 +314,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		mib[3] = KERN_PROC_ARGV;
 #endif
 
+		free(proc_state_ptr->proctitle);
 		if(sysctl(mib, 4, proctitle, &size, NULL, 0) < 0) {
 			free(proctitle);
 			proc_state_ptr->proctitle = NULL;
@@ -318,6 +340,7 @@ int get_proc_snapshot(proc_state_t **ps){
 			proc_state_ptr->proctitle = NULL;
 		}
 #else
+		free(proc_state_ptr->proctitle);
 		if(kvmd != NULL) {
 			args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
 			if(args != NULL) {
