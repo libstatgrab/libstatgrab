@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 
+#include "tools.h"
 #include "vector.h"
 
 void *sg_vector_resize(void *vector, vector_header *h, int count) {
