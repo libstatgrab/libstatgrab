@@ -352,14 +352,14 @@ void populate_proc() {
 }
 
 void populate_net() {
-	int n, i;
+	int num_io, num_iface, i;
 	sg_network_io_stats *io;
 	sg_network_iface_stats *iface;
 
-	io = use_diffs ? sg_get_network_io_stats_diff(&n)
-		       : sg_get_network_io_stats(&n);
+	io = use_diffs ? sg_get_network_io_stats_diff(&num_io)
+		       : sg_get_network_io_stats(&num_io);
 	if (io != NULL) {
-		for (i = 0; i < n; i++) {
+		for (i = 0; i < num_io; i++) {
 			const char *name = io[i].interface_name;
 	
 			add_stat(STRING, &io[i].interface_name,
@@ -383,10 +383,27 @@ void populate_net() {
 		}
 	}
 
-	iface = sg_get_network_iface_stats(&n);
+	iface = sg_get_network_iface_stats(&num_iface);
 	if (iface != NULL) {
-		for (i = 0; i < n; i++) {
+		for (i = 0; i < num_iface; i++) {
 			const char *name = iface[i].interface_name;
+			int had_io = 0, j;
+
+			/* If there wasn't a corresponding io stat,
+			   add interface_name from here. */
+			if (io != NULL) {
+				for (j = 0; j < num_io; j++) {
+					if (strcmp(io[j].interface_name,
+					           name) == 0) {
+						had_io = 1;
+						break;
+					}
+				}
+			}
+			if (!had_io) {
+				add_stat(STRING, &iface[i].interface_name,
+				 	"net", name, "interface_name", NULL);
+			}
 
 			add_stat(INT, &iface[i].speed,
 				 "net", name, "speed", NULL);
