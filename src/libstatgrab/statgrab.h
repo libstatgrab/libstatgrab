@@ -121,6 +121,7 @@ typedef struct{
 	char *interface_name;
 	int speed;	/* In megabits/sec */
 	statgrab_duplex dup;	
+	int up;
 }network_iface_stat_t;
 
 typedef struct{

@@ -465,6 +465,12 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 				break;
 		}
 
+		if((ifmr.ifm_status & IFM_ACTIVE)){
+			network_iface_stat_ptr->up = 1;
+		}else{
+			network_iface_stat_ptr->up = 0;
+		}
+
 		if( (ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active ){
 			network_iface_stat_ptr->dup = FULL_DUPLEX;
 		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
@@ -496,6 +502,13 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			}
 			network_iface_stat_ptr = network_iface_stats + ifaces;
 			network_iface_stat_ptr->speed = knp->value.ui64 / (1000*1000);
+
+                        if((knp=kstat_data_lookup(ksp, "link_up"))==NULL){
+                                /* Not a network interface, so skip to the next entry */
+                                continue;
+                        }
+			/* Solaris has 1 for up, and 0 for not. As we do too */
+                        network_iface_stat_ptr->up = value.ui32;
 
 			if((knp=kstat_data_lookup(ksp, "link_duplex"))==NULL){
 				/* Not a network interface, so skip to the next entry */
@@ -578,6 +591,12 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		network_iface_stat_ptr = network_iface_stats + ifaces;
 		network_iface_stat_ptr->interface_name = strdup(name);
 		network_iface_stat_ptr->speed = ethcmd->speed;
+		if((ifr.ifr_flags & IFF_UP) != 0){
+			network_iface_stat_ptr->up = 1;
+		}else{
+			network_iface_stat_ptr->up = 0;
+		}
+
 		network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		if(ethcmd->duplex == 0x00){
 			network_iface_stat_ptr->dup = FULL_DUPLEX;
