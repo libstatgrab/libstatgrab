@@ -47,7 +47,8 @@ load_stat_t *get_load_stats(){
 #else
 
 #if defined(SOLARIS) && !defined(HAVE_SYS_LOADAVG_H)
-        kstat_ctl_t *kc;
+
+	kstat_ctl_t *kc;	
         kstat_t *ksp;
         kstat_named_t *kn;
 
@@ -55,7 +56,7 @@ load_stat_t *get_load_stats(){
                 return NULL;
         }
 
-	if((ksp=kstat_lookup(kc, "unix", 0, "system_pages")) == NULL){
+	if((ksp=kstat_lookup(kc, "unix", 0, "system_misc")) == NULL){
                 return NULL;
         }
 
@@ -66,17 +67,17 @@ load_stat_t *get_load_stats(){
 	if((kn=kstat_data_lookup(ksp, "avenrun_1min")) == NULL){
                 return NULL;
         }
-	load_stat.min1 = kn->value.ui32;
+	load_stat.min1 = (double)kn->value.ui32 / (double)256;
 
         if((kn=kstat_data_lookup(ksp, "avenrun_5min")) == NULL){
                 return NULL;
         }
-        load_stat.min5 = kn->value.ui32;
+        load_stat.min5 = (double)kn->value.ui32 / (double)256;
 
         if((kn=kstat_data_lookup(ksp, "avenrun_15min")) == NULL){
                 return NULL;
         }
-        load_stat.min15 = kn->value.ui32;
+        load_stat.min15 = (double)kn->value.ui32 / (double)256;
 #else
 	getloadavg(loadav,3);
 
