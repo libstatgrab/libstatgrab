@@ -31,6 +31,7 @@
 #include <time.h>
 #include "statgrab.h"
 #include "vector.h"
+#include "tools.h"
 
 #ifdef SOLARIS
 #include <sys/mnttab.h>
@@ -42,7 +43,6 @@
 #if defined(LINUX) || defined(CYGWIN)
 #include <mntent.h>
 #include <sys/vfs.h>
-#include "tools.h"
 #endif
 
 #ifdef LINUX
@@ -380,6 +380,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	}
 
 	for (i = 0; i < num_disks; i++) {
+		const char *name;
 		u_int64_t rbytes, wbytes;
 
 #ifdef NETBSD
@@ -406,14 +407,14 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		
 		diskio_stats_ptr->read_bytes = rbytes;
 		diskio_stats_ptr->write_bytes = wbytes;
-		if (diskio_stats_ptr->disk_name != NULL) {
-			free(diskio_stats_ptr->disk_name);
-		}
 #ifdef NETBSD
-		diskio_stats_ptr->disk_name = strdup(stats[i].dk_name);
+		name = stats[i].dk_name;
 #else
-		diskio_stats_ptr->disk_name = strdup(dk_name[i]);
+		name = dk_name[i];
 #endif
+		if (update_string(&diskio_stats_ptr->disk_name, name) == NULL) {
+			return NULL;
+		}
 		diskio_stats_ptr->systime = time(NULL);
 	
 		num_diskio++;	
@@ -475,7 +476,9 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		diskio_stats_ptr->write_bytes=dev_ptr->bytes_written;
 #endif
 		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
-		asprintf((&diskio_stats_ptr->disk_name), "%s%d", dev_ptr->device_name, dev_ptr->unit_number);
+		if (asprintf((&diskio_stats_ptr->disk_name), "%s%d", dev_ptr->device_name, dev_ptr->unit_number) == -1) {
+			return NULL;
+		}
 		diskio_stats_ptr->systime=time(NULL);
 
 		num_diskio++;
@@ -504,13 +507,13 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			diskio_stats_ptr=diskio_stats+num_diskio;
 			
 			diskio_stats_ptr->read_bytes=kios.nread;
-			
 			diskio_stats_ptr->write_bytes=kios.nwritten;
-
-			if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
-
-			diskio_stats_ptr->disk_name=strdup((char *) get_svr_from_bsd(ksp->ks_name));
+			if (update_string(&diskio_stats_ptr->disk_name,
+			                  get_svr_from_bsd(ksp->ks_name)) == NULL) {
+				return NULL;
+			}
 			diskio_stats_ptr->systime=time(NULL);
+
 			num_diskio++;
 		}
 	}
@@ -565,9 +568,9 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			goto out;
 		}
 
-		if (diskio_stats[n].disk_name != NULL)
-			free(diskio_stats[n].disk_name);
-		diskio_stats[n].disk_name = strdup(name);
+		if (update_string(&diskio_stats[n].disk_name, name) == NULL) {
+			goto out;
+		}
 		diskio_stats[n].read_bytes = rsect * 512;
 		diskio_stats[n].write_bytes = wsect * 512;
 		diskio_stats[n].systime = now;
@@ -683,10 +686,9 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 		src = &diskio_stats[i];
 		dest = &diff[i];
 
-		if (dest->disk_name != NULL) {
-			free(dest->disk_name);
+		if (update_string(&dest->disk_name, src->disk_name) == NULL) {
+			return NULL;
 		}
-		dest->disk_name = strdup(src->disk_name);
 		dest->read_bytes = src->read_bytes;
 		dest->write_bytes = src->write_bytes;
 		dest->systime = src->systime;
