@@ -32,14 +32,9 @@
 #include <stdio.h>
 #include <string.h>
 #endif
-#ifdef ALLBSD
 #ifdef FREEBSD
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#else
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#endif
 #include <unistd.h>
 #endif
 
@@ -58,9 +53,10 @@ mem_stat_t *get_memory_stats(){
 	char *line_ptr;
 	FILE *f;
 #endif
-#ifdef ALLBSD
-	int mib[2];
 #ifdef FREEBSD
+	int mib[2];
+	u_long physmem;
+	size_t size;
 	u_int free_count;
 	u_int cache_count;
 	u_int inactive_count;
@@ -68,9 +64,6 @@ mem_stat_t *get_memory_stats(){
 #endif
 #ifdef NETBSD
 	struct uvmexp *uvm;
-#endif
-	u_long physmem;
-	size_t size;
 #endif
 
 #ifdef SOLARIS
@@ -128,7 +121,7 @@ mem_stat_t *get_memory_stats(){
 
 #endif
 
-#ifdef ALLBSD
+#ifdef FREEBSD
 	/* Returns bytes */
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM;
@@ -139,7 +132,6 @@ mem_stat_t *get_memory_stats(){
 	mem_stat.total = physmem;
 
 	/*returns pages*/
-#ifdef FREEBSD
 	size = sizeof free_count;
   	if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &size, NULL, 0) < 0){
 		return NULL;
@@ -171,17 +163,16 @@ mem_stat_t *get_memory_stats(){
 	mem_stat.free=(free_count*pagesize)+(inactive_count*pagesize);
 	mem_stat.used=physmem-mem_stat.free;
 #endif
+
 #ifdef NETBSD
-	/* FIXME This is not consistent with the FreeBSD logic above. */
 	if ((uvm = get_uvmexp()) == NULL) {
 		return NULL;
 	}
+	mem_stat.total = uvm->pagesize * uvm->npages;
 	mem_stat.cache = uvm->pagesize * (uvm->filepages + uvm->execpages);
-	mem_stat.free = uvm->pagesize * uvm->free;
-	mem_stat.used = uvm->pagesize * (uvm->npages - uvm->free);
-#endif
+	mem_stat.free = uvm->pagesize * (uvm->free + uvm->inactive);
+	mem_stat.used = mem_stat.total - mem_stat.free;
 #endif
 
 	return &mem_stat;
-
 }
