@@ -66,6 +66,14 @@
       This function copes with wrap arounds by the O/S so should be
       seemless to use.
     </para>
+    <para>
+      On Solaris libstatgrab will attempt to get the cXtXdXsX
+      representation for the <varname>disk_name</varname> string. If
+      it fails it will use a name like sd0. On some systems programs
+      calling libstatgrab will need elevated privileges to lookup
+      some of the names. The mappings are built up when
+      <function>statgrab_init</function> is called.
+    </para>
   </refsect1>
   
   <refsect1>
