@@ -280,3 +280,39 @@ int get_proc_snapshot(proc_state_t **ps){
 	*ps = proc_state;
 	return proc_state_size;
 }
+
+process_stat_t *get_process_stats() {
+	static process_stat_t process_stat;
+	proc_state_t *ps;
+	int ps_size, x;
+
+	process_stat.sleeping=0;
+	process_stat.running=0;
+	process_stat.zombie=0;
+	process_stat.stopped=0;
+	process_stat.total=0;
+
+	ps_size = get_proc_snapshot(&ps);
+
+	for(x = 0; x < ps_size; x++) {
+		switch (ps->state) {
+		case RUNNING:
+			process_stat.running++;
+			break;
+		case SLEEPING:
+			process_stat.sleeping++;
+			break;
+		case STOPPED:
+			process_stat.stopped++;
+			break;
+		case ZOMBIE:
+			process_stat.zombie++;
+			break;
+		}
+		ps++;
+	}
+
+	process_stat.total = ps_size;
+
+	return &process_stat;
+}
