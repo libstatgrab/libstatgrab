@@ -110,19 +110,19 @@ void add_mapping(char *bsd, char *svr){
 
 char *read_dir(char *disk_path){
 	DIR *dirp;
- 	struct dirent *dp;
- 	struct stat stbuf;
+	struct dirent *dp;
+	struct stat stbuf;
 	char *svr_name;
- 	char current_dir[MAXPATHLEN];
- 	char file_name[MAXPATHLEN];
- 	char temp_name[MAXPATHLEN];
- 	char dir_dname[MAXPATHLEN];
+	char current_dir[MAXPATHLEN];
+	char file_name[MAXPATHLEN];
+	char temp_name[MAXPATHLEN];
+	char dir_dname[MAXPATHLEN];
 	char *dsk_dir;
 	int x;
 
 	dsk_dir = "/dev/osa/dev/dsk";
- 	strncpy(current_dir, dsk_dir, sizeof current_dir);
- 	if ((dirp = opendir(current_dir)) == NULL){
+	strncpy(current_dir, dsk_dir, sizeof current_dir);
+	if ((dirp = opendir(current_dir)) == NULL){
 		dsk_dir = "/dev/dsk";
 		snprintf(current_dir, sizeof current_dir, "%s", dsk_dir);
 		if ((dirp = opendir(current_dir)) == NULL){
@@ -130,7 +130,7 @@ char *read_dir(char *disk_path){
 		}
 	}
 
- 	while ((dp = readdir(dirp)) != NULL){
+	while ((dp = readdir(dirp)) != NULL){
 		snprintf(temp_name, sizeof temp_name, "../..%s", disk_path);
 		snprintf(dir_dname, sizeof dir_dname, "%s/%s", dsk_dir, dp->d_name);
 		stat(dir_dname,&stbuf);
@@ -186,7 +186,7 @@ int get_alias(char *alias){
 		}else{
 			node = di_drv_next_node(node);
 		}
-	}                           /* End of the while loop */
+	}
 	di_fini(root_node);
 	return (-1);
 }
@@ -194,21 +194,20 @@ int get_alias(char *alias){
 void build_mapping(){
 	char device_name[512];
 	int x;
-        kstat_ctl_t *kc;
-        kstat_t *ksp;
-        kstat_io_t kios;
+	kstat_ctl_t *kc;
+	kstat_t *ksp;
+	kstat_io_t kios;
 
 	if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
+		return NULL;
+	}
 
-        for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-                if (!strcmp(ksp->ks_class, "disk")) {
-
-                        if(ksp->ks_type != KSTAT_TYPE_IO) continue;
-                        /* We dont want metadevices appearins as num_diskio */
-                        if(strcmp(ksp->ks_module, "md")==0) continue;
-                        if((kstat_read(kc, ksp, &kios))==-1) continue;
+	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+		if (!strcmp(ksp->ks_class, "disk")) {
+			if(ksp->ks_type != KSTAT_TYPE_IO) continue;
+			/* We dont want metadevices appearing as num_diskio */
+			if(strcmp(ksp->ks_module, "md")==0) continue;
+			if((kstat_read(kc, ksp, &kios))==-1) continue;
 			strncpy(device_name, ksp->ks_name, sizeof device_name);
 			for(x=0;x<(sizeof device_name);x++){
 				if( isdigit((int)device_name[x]) ) break;
@@ -216,9 +215,9 @@ void build_mapping(){
 			if(x == sizeof device_name) x--;
 			device_name[x] = '\0';
 			get_alias(device_name);
-                 }
+		}
 	}
-	
+
 	return;
 }
 
@@ -327,7 +326,7 @@ int statgrab_init(){
 #ifdef ALLBSD 
 	{ 
 		kvm_t *kvmd = get_kvm(); 
-        	if (kvmd == NULL) return 1;
+		if (kvmd == NULL) return 1;
 	}
 #endif
 #ifdef NETBSD
