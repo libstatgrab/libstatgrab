@@ -3,51 +3,51 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="get_diskio_stats">
+<refentry id="sg_get_disk_io_stats">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>get_diskio_stats</refentrytitle>
+    <refentrytitle>sg_get_disk_io_stats</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>get_diskio_stats</refname>
-    <refname>get_diskio_stats_diff</refname>
+    <refname>sg_get_disk_io_stats</refname>
+    <refname>sg_get_disk_io_stats_diff</refname>
     <refpurpose>get disk io statistics</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>diskio_stat_t *<function>get_diskio_stats</function></funcdef>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats</function></funcdef>
         <paramdef>int *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
-        <funcdef>diskio_stat_t *<function>get_diskio_stats_diff</function></funcdef>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_diff</function></funcdef>
         <paramdef>int *<parameter>entries</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
       Both calls take a pointer to an int,
       <parameter>entries</parameter>, which is filled with the number
       of disks the machine has. This is needed to know how many
-      <structname>diskio_stat_t</structname> structures have been
+      <structname>sg_disk_io_stats</structname> structures have been
       returned. A pointer is returned to the first
-      <structname>diskio_stat_t</structname>.
+      <structname>sg_disk_io_stats</structname>.
     </para>
     <para>
-      <function>get_diskio_stats</function> returns the disk IO stored
+      <function>sg_get_disk_io_stats</function> returns the disk IO stored
       in the kernel which holds the amount of data transferred since
       bootup. On some platforms, such as Solaris 7, this value is
       stored in a 32bit int, so wraps around when it reaches 4GB. Other
@@ -55,10 +55,10 @@
       which wraps somewhere near 17 million terabytes.
     </para>
     <para>
-      <function>get_diskio_stats_diff</function> is the same as
-      <function>get_diskio_stats</function> except it will return the
+      <function>sg_get_disk_io_stats_diff</function> is the same as
+      <function>sg_get_disk_io_stats</function> except it will return the
       difference since the last call. So, for instance a call to
-      <function>get_diskio_stats_diff</function> is made, and called
+      <function>sg_get_disk_io_stats_diff</function> is made, and called
       again 5 seconds later. Over that time, 2000 bytes of traffic were
       written and 10000 bytes read.  <parameter>write_bytes</parameter>
       will store 2000 bytes, <parameter>read_bytes</parameter> will
@@ -75,13 +75,13 @@
       <function>statgrab_init</function> is called.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
     <para>
       All diskio statistics return a pointer to a structure of type
-      <structname>diskio_stat_t</structname>.
+      <structname>sg_disk_io_stats</structname>.
     </para>
 
     <programlisting>
@@ -90,7 +90,7 @@ typedef struct{
         long long read_bytes;
         long long write_bytes;
         time_t systime;
-}diskio_stat_t;
+}sg_disk_io_stats;
     </programlisting>
 
     <variablelist>
@@ -132,7 +132,7 @@ typedef struct{
         <listitem>
           <para>
             The time period over which <parameter>read_bytes</parameter>
-	    and <parameter>write_bytes</parameter> were transferred.
+            and <parameter>write_bytes</parameter> were transferred.
           </para>
         </listitem>
       </varlistentry>
@@ -142,15 +142,15 @@ typedef struct{
   <refsect1>
     <title>Bugs</title>
     <para>
-      On the very first call <function>get_diskio_stats_diff</function>
-      will return the same as <function>get_diskio_stats</function>.
+      On the very first call <function>sg_get_disk_io_stats_diff</function>
+      will return the same as <function>sg_get_disk_io_stats</function>.
       After the first call it will always return the difference.
     </para>
     <para>
       On operating systems that hold only 32bits of data there is a
       problem if the values wrap twice. For example, on Solaris 7 if
       9GB is transferred and the operating system wraps at 4GB, the
-      <function>get_diskio_stats_diff</function> function will return
+      <function>sg_get_disk_io_stats_diff</function> function will return
       5GB.
     </para>
   </refsect1>
@@ -167,10 +167,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

@@ -3,34 +3,34 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="get_general_stats">
+<refentry id="sg_get_host_info">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>get_general_stats</refentrytitle>
+    <refentrytitle>sg_get_host_info</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>get_general_stats</refname>
+    <refname>sg_get_host_info</refname>
     <refpurpose>get general operating system statistics</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>general_stat_t *<function>get_general_stats</function></funcdef>
+        <funcdef>sg_host_info *<function>sg_get_host_info</function></funcdef>
         <void/>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
@@ -38,16 +38,16 @@
     </para>
     <para>
       It returns a pointer to a static buffer of
-      <structname>general_stat_t</structname>.
+      <structname>sg_host_info</structname>.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
     <para>
       The structure returned is of type
-      <structname>general_stat_t</structname>.
+      <structname>sg_host_info</structname>.
     </para>
 
     <programlisting>
@@ -58,7 +58,7 @@ typedef struct{
         char *platform;
         char *hostname;
         time_t uptime;
-}general_stat_t;
+}sg_host_info;
     </programlisting>
 
     <variablelist>
@@ -127,10 +127,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

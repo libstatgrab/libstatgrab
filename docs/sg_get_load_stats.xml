@@ -3,60 +3,60 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="get_load_stats">
+<refentry id="sg_get_load_stats">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>get_load_stats</refentrytitle>
+    <refentrytitle>sg_get_load_stats</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>get_load_stats</refname>
+    <refname>sg_get_load_stats</refname>
     <refpurpose>get system load</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>load_stat_t *<function>get_load_stats</function></funcdef>
+        <funcdef>sg_load_stats *<function>sg_get_load_stats</function></funcdef>
         <void/>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
       This call returns a pointer to a static buffer of
-      <structname>load_stat_t</structname>.
+      <structname>sg_load_stats</structname>.
     </para>
     <para>
       On most systems this function is just a wrapper to the
       <function>getloadavg</function> system call.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
     <para>
       The structure returned is of type
-      <structname>load_stat_t</structname>.
+      <structname>sg_load_stats</structname>.
     </para>
 
     <programlisting>
 typedef struct{
-	double min1;
-	double min5;
-	double min15;
-}load_stat_t;
+        double min1;
+        double min5;
+        double min15;
+}sg_load_stats;
     </programlisting>
 
     <variablelist>
@@ -99,10 +99,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

@@ -3,52 +3,52 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="get_process_stats">
+<refentry id="sg_get_process_stats">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>get_process_stats</refentrytitle>
+    <refentrytitle>sg_get_process_stats</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>get_process_stats</refname>
+    <refname>sg_get_process_count</refname>
     <refpurpose>get process statistics</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>process_stat_t *<function>get_process_stats</function></funcdef>
+        <funcdef>sg_process_count *<function>sg_get_process_count</function></funcdef>
         <void/>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
-      <function>get_process_stats</function> returns a pointer to a
-      static buffer of type <structname>process_stat_t</structname>.
+      <function>sg_get_process_count</function> returns a pointer to a
+      static buffer of type <structname>sg_process_count</structname>.
     </para>
     <para>
       It provides information on the number of processes and the
       system and the different states they're in.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
     <para>
       The structure returned is of type
-      <structname>process_stat_t</structname>.
+      <structname>sg_process_count</structname>.
     </para>
 
     <programlisting>
@@ -58,7 +58,7 @@ typedef struct{
         int sleeping;
         int stopped;
         int zombie;
-}process_stat_t;
+}sg_process_count;
     </programlisting>
 
     <variablelist>
@@ -117,10 +117,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

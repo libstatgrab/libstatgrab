@@ -3,58 +3,58 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="cpu_percent_usage">
+<refentry id="sg_get_cpu_stats">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>cpu_percent_usage</refentrytitle>
+    <refentrytitle>sg_get_cpu_stats</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>cpu_percent_usage</refname>
-    <refname>get_cpu_totals</refname>
-    <refname>get_cpu_diff</refname>
+    <refname>sg_get_cpu_percents</refname>
+    <refname>sg_get_cpu_stats</refname>
+    <refname>sg_get_cpu_stats_diff</refname>
     <refpurpose>get cpu usage</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>cpu_percent_t *<function>cpu_percent_usage</function></funcdef>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>cpu_states_t *<function>get_cpu_totals</function></funcdef>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>cpu_states_t *<function>get_cpu_diff</function></funcdef>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff</function></funcdef>
         <void/>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
-      <function>get_cpu_totals()</function> and
-      <function>get_cpu_diff()</function> both return static pointers
-      of type <structname>cpu_states_t</structname>.
-      <function>get_cpu_totals()</function> returns the total amount of
+      <function>sg_get_cpu_stats()</function> and
+      <function>sg_get_cpu_stats_diff()</function> both return static pointers
+      of type <structname>sg_cpu_stats</structname>.
+      <function>sg_get_cpu_stats()</function> returns the total amount of
       "ticks" the operating system has spent in each of the different
-      states. <function>get_cpu_diff()</function> returns the
+      states. <function>sg_get_cpu_stats_diff()</function> returns the
       difference in "ticks" for each of the states since last time
-      <function>get_cpu_diff()</function> or
-      <function>get_cpu_totals()</function> was called. If it has never
+      <function>sg_get_cpu_stats_diff()</function> or
+      <function>sg_get_cpu_stats()</function> was called. If it has never
       been called, it will return the result of
-      <function>get_cpu_totals()</function>.
+      <function>sg_get_cpu_stats()</function>.
     </para>
     <para>
       The value stored (the "ticks") will vary between operating
@@ -68,17 +68,17 @@
       against the total, or in percentages.
     </para>
     <para>
-      <function>cpu_percent_usage()</function> returns a pointer to a
-      static <structname>cpu_percent_t</structname>.  The function
-      calls <function>get_cpu_diff()</function> and changes the values
+      <function>sg_get_cpu_percents()</function> returns a pointer to a
+      static <structname>sg_cpu_percents</structname>.  The function
+      calls <function>sg_get_cpu_stats_diff()</function> and changes the values
       into percentages. If it has never been called before (and nor has
-      <function>get_cpu_totals()</function> or
-      <function>get_cpu_diff()</function>), the returned percentages
+      <function>sg_get_cpu_stats()</function> or
+      <function>sg_get_cpu_stats_diff()</function>), the returned percentages
       will be the systems total ever since its uptime. (Unless the
       counters have cycled)
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
@@ -97,7 +97,7 @@ typedef struct{
         long long nice;
         long long total;
         time_t systime;
-}cpu_states_t;
+}sg_cpu_stats;
     </programlisting>
 
     <programlisting>
@@ -109,7 +109,7 @@ typedef struct{
         float swap;
         float nice;
         time_t time_taken;
-}cpu_percent_t;
+}sg_cpu_percents;
     </programlisting>
 
     <variablelist>
@@ -155,10 +155,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

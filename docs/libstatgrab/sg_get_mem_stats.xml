@@ -3,50 +3,50 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="get_memory_stats">
+<refentry id="sg_get_mem_stats">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>get_memory_stats</refentrytitle>
+    <refentrytitle>sg_get_mem_stats</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>get_memory_stats</refname>
-    <refname>get_swap_stats</refname>
+    <refname>sg_get_mem_stats</refname>
+    <refname>sg_get_swap_stats</refname>
     <refpurpose>get VM statistics</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>mem_stat_t *<function>get_memory_stats</function></funcdef>
+        <funcdef>sg_mem_stats *<function>sg_get_mem_stats</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>swap_stat_t *<function>get_swap_stats</function></funcdef>
+        <funcdef>sg_swap_stats *<function>sg_get_swap_stats</function></funcdef>
         <void/>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
       Memory statistics are accessed through the
-      <function>get_memory_stats</function> function. It returns a
-      pointer to a static <structname>mem_stat_t</structname>.
+      <function>sg_get_mem_stats</function> function. It returns a
+      pointer to a static <structname>sg_mem_stats</structname>.
     </para>
     <para>
-      The <function>get_swap_stats</function> returns returns swap
+      The <function>sg_get_swap_stats</function> returns returns swap
       statistics. It returns a pointer to a static
-      <structname>swap_stat_t</structname>.
+      <structname>sg_swap_stats</structname>.
     </para>
     <para>
       On the FreeBSD operating system elevated privileges are required
@@ -55,14 +55,14 @@
       problem.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
     <para>
       The VM system calls can return a pointer to either a
-      <structname>mem_stat_t</structname> or a
-      <structname>swap_stat_t</structname>.
+      <structname>sg_mem_stats</structname> or a
+      <structname>sg_swap_stats</structname>.
     </para>
 
     <programlisting>
@@ -71,7 +71,7 @@ typedef struct{
         long long free;
         long long used;
         long long cache;
-}mem_stat_t;
+}sg_mem_stats;
     </programlisting>
 
     <variablelist>
@@ -122,39 +122,39 @@ typedef struct{
         long long total;
         long long used;
         long long free;
-}swap_stat_t;
+}sg_swap_stats;
     </programlisting>
 
     <variablelist>
       <varlistentry>
         <term>
           <structfield>total</structfield>
-        </term> 
+        </term>
         <listitem>
-          <para> 
+          <para>
             The total swap space in bytes.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>     
+        <term>
           <structfield>used</structfield>
-        </term> 
+        </term>
         <listitem>
-          <para> 
+          <para>
             The used swap in bytes.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>     
+        <term>
           <structfield>free</structfield>
-        </term>                       
-        <listitem>                    
-          <para> 
+        </term>
+        <listitem>
+          <para>
             The free swap in bytes.
-          </para>         
-        </listitem>       
+          </para>
+        </listitem>
       </varlistentry>
     </variablelist>
   </refsect1>
@@ -180,10 +180,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">

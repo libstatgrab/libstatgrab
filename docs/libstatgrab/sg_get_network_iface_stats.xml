@@ -3,82 +3,82 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="get_network_iface_stats">
+<refentry id="sg_get_network_iface_stats">
 
   <refentryinfo>
     <date>$Date$</date>
     <releaseinfo>$Id$</releaseinfo>
   </refentryinfo>
-  
+
   <refmeta>
-    <refentrytitle>get_network_iface_stats</refentrytitle>
+    <refentrytitle>sg_get_network_iface_stats</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv>
-    <refname>get_network_iface_stats</refname>
+    <refname>sg_get_network_iface_stats</refname>
     <refpurpose>get network interface statistics</refpurpose>
   </refnamediv>
-    
+
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>network_iface_stat_t *<function>get_network_iface_stats</function></funcdef>
+        <funcdef>sg_network_iface_stats *<function>sg_get_network_iface_stats</function></funcdef>
         <paramdef>int *<parameter>entries</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
-    
+
   <refsect1>
     <title>Description</title>
     <para>
-      The <function>get_network_iface_stats</function> function
+      The <function>sg_get_network_iface_stats</function> function
       takes a pointer to an int, <parameter>entries</parameter>,
       which is filled with the number of network interfaces the
       machine has. This is needed to know how many
-      <structname>network_iface_stat_t</structname> structures have
+      <structname>sg_network_iface_stats</structname> structures have
       been returned. A pointer is returned to the first
-      <structname>network_iface_stat_t</structname>.
+      <structname>sg_network_iface_stats</structname>.
     </para>
     <para>
-      <function>get_network_iface_stats</function> returns statistics
+      <function>sg_get_network_iface_stats</function> returns statistics
       about the network interfaces in the machine. Specifically,
       it returns the speed of the interface, the duplex state, and
       whether it is currently up.
     </para>
   </refsect1>
-  
+
   <refsect1>
     <title>Return Values</title>
 
     <para>
-      The <function>get_network_iface_stats</function> returns a
+      The <function>sg_get_network_iface_stats</function> returns a
       pointer to a structure of type
-      <structname>network_iface_stat_t</structname>.
+      <structname>sg_network_iface_stats</structname>.
     </para>
 
     <programlisting>
 typedef enum{
-        FULL_DUPLEX,
-        HALF_DUPLEX,
-        UNKNOWN_DUPLEX
-}statgrab_duplex;
+        SG_IFACE_DUPLEX_FULL,
+        SG_IFACE_DUPLEX_HALF,
+        SG_IFACE_DUPLEX_UNKNOWN
+}sg_iface_duplex;
     </programlisting>
 
     <para>
-      Note: The <structfield>UNKNOWN_DUPLEX</structfield> value could mean
-      that duplex hasn't been negotiated yet.
+      Note: The <structfield>SG_IFACE_DUPLEX_UNKNOWN</structfield>
+      value could mean that duplex hasn't been negotiated yet.
     </para>
 
     <programlisting>
 typedef struct{
         char *interface_name;
         int speed;
-        statgrab_duplex dup;    
+        sg_iface_duplex dup;
         int up;
-}network_iface_stat_t;
+}sg_network_iface_stats;
     </programlisting>
 
     <variablelist>
@@ -109,8 +109,8 @@ typedef struct{
         </term>
         <listitem>
           <para>
-	    The duplex state the interface is in. See statgrab_duplex
-	    for permitted values.
+            The duplex state the interface is in. See sg_iface_duplex
+            for permitted values.
           </para>
         </listitem>
       </varlistentry>
@@ -139,10 +139,10 @@ typedef struct{
       </member>
     </simplelist>
   </refsect1>
-  
+
   <refsect1>
     <title>Website</title>
-    
+
     <simplelist type="vert">
       <member>
         <ulink url="http://www.i-scream.org/libstatgrab/">
