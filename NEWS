@@ -1,3 +1,7 @@
+libstatgrab 0.4 (09 April 2003
+
+ * Support added for FreeBSD 4.x (not tested on 5.x).
+
 libstatgrab 0.3.4 (31 March 2003)
 
  * Fixed memory leak, and file descriptor leak on linux.
