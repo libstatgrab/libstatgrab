@@ -60,17 +60,24 @@ char *get_string_match(char *line, regmatch_t *match){
 	return match_string;
 }
 
-#ifdef HAVE_ATOLL
 long long get_ll_match(char *line, regmatch_t *match){
 	char *ptr;
 	long long num;
 
 	ptr=line+match->rm_so;
+#ifdef HAVE_ATOLL
 	num=atoll(ptr);
+#else
+	/* Don't have atoll, so use this bodge instead */
+	{
+		long numl;
+		numl=atol(ptr);
+		num=numl;
+	}
+#endif
 
 	return num;
 }
-#endif
 
 #ifdef ALLBSD
 kvm_t *get_kvm() {

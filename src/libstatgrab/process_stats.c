@@ -39,7 +39,11 @@
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
 #ifdef LINUX
+#ifdef CYGWIN
+#include <limits.h>
+#else
 #include <linux/limits.h>
+#endif
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif

@@ -39,11 +39,15 @@
 #include <sys/vfs.h>
 #include <mntent.h>
 #include "tools.h"
+#ifdef CYGWIN
+#define VALID_FS_TYPES {"user"}
+#else
 #define VALID_FS_TYPES {"adfs", "affs", "befs", "bfs", "efs", "ext2", \
                         "ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
                         "jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
                         "rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
                         "umsdos", "vfat", "xfs", "jfs"}
+#endif
 #endif
 
 #ifdef ALLBSD
@@ -266,8 +270,12 @@ disk_stat_t *get_disk_stats(int *entries){
 
 	*entries=num_disks;	
 
-	/* If this fails, there is very little i can do about it, so i'll ignore it :) */
-#if defined(LINUX) || defined(SOLARIS)
+	/* If this fails, there is very little i can do about it, so
+           I'll ignore it :) */
+#if defined(LINUX)
+	endmntent(f);
+#endif
+#if defined(SOLARIS)
 	fclose(f);
 #endif
 

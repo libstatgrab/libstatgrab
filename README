@@ -30,6 +30,13 @@ There are, of course, the usual GNU-style configure options;
 For more documentation on the installation process, please read the
 INSTALL document.
 
+Cygwin Notes
+------------
+
+If you have installed libncurses-devel but the configure script can't
+find ncurses.h, you've most likely hit a bug in the cygwin package. To
+fix this run: /etc/postinstall/libncurses-devel.sh.done
+
 Problems?
 ---------
 
