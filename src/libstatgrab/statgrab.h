@@ -108,8 +108,10 @@ typedef struct{
 }network_stat_t;
 
 typedef struct{
-	long pgin;
-	long pgout;
+	long long num_pagein;
+	long long num_pageout;
+	long long pages_pagein;
+	long long pages_pageout;
 	time_t systime;
 }page_stat_t;
 
@@ -132,3 +134,5 @@ disk_stat_t *get_disk_stats(int *entries);
 process_stat_t *get_process_stats();
 
 network_stat_t *get_network_stats(int *entries);
+
+page_stat_t *get_page_stats();

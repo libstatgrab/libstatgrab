@@ -23,10 +23,11 @@
 #endif
 
 #include <stdio.h>
-#include <statgrab.h>
+#include "statgrab.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
+#include <string.h>
 #endif
 
 page_stat_t *get_page_stats(){
@@ -34,10 +35,13 @@ page_stat_t *get_page_stats(){
         kstat_ctl_t *kc;
         kstat_t *ksp;
         cpu_stat_t cs;
-	uint_t swapin, swapout;
+
+        page_stats.num_pagein=0;
+        page_stats.num_pageout=0;
+        page_stats.pages_pagein=0;
+        page_stats.pages_pageout=0;
 
         if ((kc = kstat_open()) == NULL) {
-                errf("kstat_open failure (%m)");
                 return NULL;
         }
         for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
@@ -46,7 +50,15 @@ page_stat_t *get_page_stats(){
                         continue;
                 }
 
-		page_stats+=cs.cpu_vminfo.pgswapin;
-		page_stats+=cs.cpu_vminfo.pgswapout;
+		page_stats.num_pagein+=(long long)cs.cpu_vminfo.pgin;
+		page_stats.num_pageout+=(long long)cs.cpu_vminfo.pgout;
+		page_stats.pages_pagein+=(long long)cs.cpu_vminfo.pgpgin;
+		page_stats.pages_pageout+=(long long)cs.cpu_vminfo.pgpgout;
+	}
 
+	page_stats.systime=time(NULL);
+
+	kstat_close(kc);
+
+	return &page_stats;
 }
