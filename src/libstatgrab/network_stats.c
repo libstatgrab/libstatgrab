@@ -197,7 +197,7 @@ long long transfer_diff(long long new, long long old){
 #define MAXVAL 18446744073709551616
 #endif
 	long long result;
-	if(new>old){
+	if(new>=old){
 		result = (new-old);
 	}else{
 		result = (MAXVAL+(new-old));
