@@ -78,7 +78,7 @@ int get_proc_snapshot(proc_state_t **ps){
 	int procs, i;
 	char *proctitle;
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-	static kvm_t *kvmd;
+	kvm_t *kvmd;
 	char **args;
 	int alloc;
 #else
@@ -237,7 +237,7 @@ int get_proc_snapshot(proc_state_t **ps){
 	}
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-	kvmd = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
+	kvmd = get_kvm2();
 #endif
 
 	for (i = 0; i < procs; i++) {

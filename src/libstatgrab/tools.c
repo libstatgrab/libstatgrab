@@ -34,7 +34,7 @@
 #ifdef ALLBSD
 #include <fcntl.h>
 #endif
-#if defined(FREEBSD) || defined(DFBSD)
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 #include <kvm.h>
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
@@ -420,7 +420,7 @@ long long get_ll_match(char *line, regmatch_t *match){
 	return num;
 }
 
-#if defined(FREEBSD) || defined(DFBSD)
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 kvm_t *get_kvm() {
 	static kvm_t *kvmd = NULL;
 
@@ -430,6 +430,18 @@ kvm_t *get_kvm() {
 
 	kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
 	return kvmd;
+}
+
+/* Can't think of a better name for this function */
+kvm_t *get_kvm2() {
+	static kvm_t *kvmd2 = NULL;
+
+	if (kvmd2 != NULL) {
+		return kvmd2;
+	}
+
+	kvmd2 = kvm_openfiles(_PATH_DEVNULL, _PATH_DEVNULL, NULL, O_RDONLY, NULL);
+	return kvmd2;
 }
 #endif
 
@@ -464,6 +476,10 @@ int statgrab_init(){
 	{ 
 		kvm_t *kvmd = get_kvm(); 
 		if (kvmd == NULL) return 1;
+	}
+	{ 
+		kvm_t *kvmd2 = get_kvm2();
+		if (kvmd2 == NULL) return 1;
 	}
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
