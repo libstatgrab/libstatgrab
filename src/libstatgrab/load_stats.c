@@ -38,7 +38,6 @@ load_stat_t *get_load_stats(){
 #ifdef CYGWIN
 	return NULL;
 #else
-	loadav[0] = loadav[1] = loadav[2] = 0;
 
 	getloadavg(loadav,3);
 
