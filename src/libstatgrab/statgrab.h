@@ -231,6 +231,14 @@ typedef struct {
 
 sg_process_stats *sg_get_process_stats(int *entries);
 
+int sg_process_compare_pid(const void *va, const void *vb);
+int sg_process_compare_uid(const void *va, const void *vb);
+int sg_process_compare_gid(const void *va, const void *vb);
+int sg_process_compare_size(const void *va, const void *vb);
+int sg_process_compare_res(const void *va, const void *vb);
+int sg_process_compare_cpu(const void *va, const void *vb);
+int sg_process_compare_time(const void *va, const void *vb);
+
 typedef struct {
 	int total;
 	int running;
@@ -240,27 +248,6 @@ typedef struct {
 } sg_process_count;
 
 sg_process_count *sg_get_process_count();
-
-typedef enum {
-	SG_PS_PID,
-	SG_PS_UID,
-	SG_PS_GID,
-	SG_PS_SIZE,
-	SG_PS_RES,
-	SG_PS_CPU,
-	SG_PS_TIME
-} sg_process_sort_method;
-
-void sg_process_sort(sg_process_stats *ps, int num_ps, sg_process_sort_method sm);
-
-int sg_process_compare_pid(const void *va, const void *vb);
-int sg_process_compare_uid(const void *va, const void *vb);
-int sg_process_compare_gid(const void *va, const void *vb);
-int sg_process_compare_size(const void *va, const void *vb);
-int sg_process_compare_res(const void *va, const void *vb);
-int sg_process_compare_cpu(const void *va, const void *vb);
-int sg_process_compare_time(const void *va, const void *vb);
-
 
 #ifdef SG_ENABLE_DEPRECATED
 #include <statgrab_deprecated.h>
