@@ -411,9 +411,30 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
                 }
                 network_iface_stat_ptr = network_iface_stats + ifaces;
 
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, net_ptr->ifa_name, sizeof(ifr.ifr_name));
+
+		if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0){
+			continue;
+		}	
+		if((ifr.ifr_flags & IFF_UP) != 0){
+			network_iface_stat_ptr->up = 1;
+		}else{
+			network_iface_stat_ptr->up = 0;
+		}
+
+		if (network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
+		network_iface_stat_ptr->interface_name = strdup(net_ptr->ifa_name);
+		if (network_iface_stat_ptr->interface_name == NULL) return NULL;
+
+		network_iface_stat_ptr->speed = 0;
+		network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+		ifaces++;
+
 		memset(&ifmed, 0, sizeof(struct ifmediareq));
 		strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
 		if(ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmed) == -1){
+			/* Not all interfaces support the media ioctls. */
 			continue;
 		}
 
@@ -422,10 +443,6 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			/* Not a ETHER device */
 			continue;
 		}
-
-		if(network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
-		network_iface_stat_ptr->interface_name = strdup(net_ptr->ifa_name);
-		if(network_iface_stat_ptr->interface_name == NULL) return NULL;
 
 		/* Only intrested in the first 4 bits)  - Assuming only ETHER devices */
 		x = ifmed.ifm_active & 0x0f;	
@@ -472,19 +489,6 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		}
 
-		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_name, net_ptr->ifa_name, sizeof(ifr.ifr_name));
-
-		if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0){
-			continue;
-		}	
-		if((ifr.ifr_flags & IFF_UP) != 0){
-			network_iface_stat_ptr->up = 1;
-		}else{
-			network_iface_stat_ptr->up = 0;
-		}
-
-		ifaces++;
 	}	
 	freeifaddrs(net);
 	close(sock);
