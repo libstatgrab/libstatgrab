@@ -155,3 +155,9 @@ disk_stat_t *get_disk_stats(int *entries){
 	return disk_stats;
 
 }
+
+diskio_stat_t get_diskio_stats(int *entries){
+
+	/* Do jibble */
+	return NULL;
+}
