@@ -3,6 +3,10 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.10.2 (27 July 2004)
+
+ * Fix shared library version that when backwards in 0.10.1.
+
 libstatgrab 0.10.1 (26 July 2004)
 
  * Use DESTDIR correctly when setting permissions at install time.
