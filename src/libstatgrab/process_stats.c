@@ -416,7 +416,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proctitle = NULL;
 
 		do {
-			if(size >= buflen) {
+			if((long) size >= buflen) {
 				buflen *= 2;
 				size = buflen;
 				proctitletmp = sg_realloc(proctitle, buflen);
@@ -438,7 +438,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 				size = 0;
 				break;
 			}
-		} while(size >= buflen);
+		} while((long) size >= buflen);
 
 		if(size > 0) {
 			proc_state_ptr->proctitle = sg_malloc(size+1);

@@ -106,7 +106,7 @@ static int is_valid_fs_type(const char *type) {
 	const char *types[] = VALID_FS_TYPES;
 	int i;
 
-	for (i = 0; i < (sizeof types / sizeof *types); i++) {
+	for (i = 0; i < (int) (sizeof types / sizeof *types); i++) {
 		if (strcmp(types[i], type) == 0) {
 			return 1;
 		}

@@ -234,7 +234,7 @@ static int build_mapping(){
 			if(strcmp(ksp->ks_module, "md")==0) continue;
 			if((kstat_read(kc, ksp, &kios))==-1) continue;
 			strncpy(device_name, ksp->ks_name, sizeof device_name);
-			for(x=0;x<(sizeof device_name);x++){
+			for(x=0;x<(int)(sizeof device_name);x++){
 				if( isdigit((int)device_name[x]) ) break;
 			}
 			if(x == sizeof device_name) x--;
