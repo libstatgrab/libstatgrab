@@ -70,7 +70,7 @@ void sg_set_error(sg_error code, const char *arg);
 void sg_set_error_with_errno(sg_error code, const char *arg);
 sg_error sg_get_error();
 const char *sg_get_error_arg();
-const int sg_get_error_errno();
+int sg_get_error_errno();
 const char *sg_str_error(sg_error code);
 
 typedef struct {

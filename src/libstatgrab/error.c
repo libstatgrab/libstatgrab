@@ -62,7 +62,7 @@ const char *sg_get_error_arg() {
 	return error_arg;
 }
 
-const int sg_get_error_errno() {
+int sg_get_error_errno() {
 	return errno_value;
 }
 
