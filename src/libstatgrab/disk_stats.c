@@ -122,7 +122,11 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 #endif
 #ifdef ALLBSD
 	int nummnt;
+#ifdef HAVE_STATVFS
+	struct statvfs *mp;
+#else
 	struct statfs *mp;
+#endif
 #endif
 
 #ifdef ALLBSD
