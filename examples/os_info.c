@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int main(int argc, char **argv){
+int main(){
 
 	sg_host_info *general_stats;
 

@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int main(int argc, char **argv){
+int main(){
 
 	sg_mem_stats *mem_stats;
 	sg_swap_stats *swap_stats;
