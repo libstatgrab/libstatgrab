@@ -22,13 +22,19 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "statgrab.h"
+#include "time.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
-#include <string.h>
+#endif
+#ifdef LINUX
+#include <stdio.h>
+#include <sys/types.h>
+#include <regex.h>
+#include "tools.h"
 #endif
 
 static network_stat_t *network_stats=NULL;
@@ -72,19 +78,30 @@ network_stat_t *network_stat_malloc(int needed_entries, int *cur_entries, networ
 
 
 network_stat_t *get_network_stats(int *entries){
+
+	static int sizeof_network_stats=0;	
+	network_stat_t *network_stat_ptr;
+
+#ifdef SOLARIS
         kstat_ctl_t *kc;
         kstat_t *ksp;
 	kstat_named_t *knp;
+#endif
 
-	static int sizeof_network_stats=0;	
-	
-	network_stat_t *network_stat_ptr;
+#ifdef LINUX
+	FILE *f;
+	/* Horrible big enough, but it should be quite easily */
+	char line[8096];
+	regex_t regex;
+	regmatch_t line_match[4];
+#endif
 
+#ifdef SOLARIS
         if ((kc = kstat_open()) == NULL) {
                 return NULL;
         }
 
-	interfaces=0;	
+	interfaces=0;
 
     	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         	if (!strcmp(ksp->ks_class, "net")) {
@@ -118,7 +135,46 @@ network_stat_t *get_network_stats(int *entries){
 	}
 		
 	kstat_close(kc);	
+#endif
+#ifdef LINUX
+	f=fopen("/proc/net/dev", "r");
+	if(f==NULL){
+		return NULL;
+	}
+	/* read the 2 lines.. Its the title, so we dont care :) */
+	fgets(line, sizeof(line), f);
+	fgets(line, sizeof(line), f);
 
+
+	if((regcomp(&regex, "^[[:space:]]*([^:]+):[[:space:]]*([[:digit:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)", REG_EXTENDED))!=0){
+		return NULL;
+	}
+
+	interfaces=0;
+
+	while((fgets(line, sizeof(line), f)) != NULL){
+		if((regexec(&regex, line, 4, line_match, 0))!=0){
+			continue;
+		}
+        	network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
+       		if(network_stats==NULL){
+      			return NULL;
+		}
+	        network_stat_ptr=network_stats+interfaces;
+
+		if(network_stat_ptr->interface_name!=NULL){
+			free(network_stat_ptr->interface_name);
+		}
+
+		network_stat_ptr->interface_name=get_string_match(line, &line_match[1]);
+		network_stat_ptr->rx=get_ll_match(line, &line_match[2]);
+		network_stat_ptr->tx=get_ll_match(line, &line_match[3]);
+		network_stat_ptr->systime=time(NULL);
+
+		interfaces++;
+	}
+
+#endif
 	*entries=interfaces;
 
 	return network_stats;	

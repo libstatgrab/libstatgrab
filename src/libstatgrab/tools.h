@@ -19,3 +19,6 @@
  */
 
 char *f_read_line(FILE *f, const char *string);
+
+char *get_string_match(char *line, regmatch_t *match);
+long long get_ll_match(char *line, regmatch_t *match);
