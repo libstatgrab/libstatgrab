@@ -6,8 +6,8 @@
 #
 
 # Change these to change the package name and version
-AC_INIT(libstatgrab, 0.4, dev@i-scream.org.uk)
-AM_INIT_AUTOMAKE(libstatgrab, 0.4)
+AC_INIT(libstatgrab, 0.3.1, dev@i-scream.org.uk)
+AM_INIT_AUTOMAKE(libstatgrab, 0.3.1)
 
 # Revision number (automatically updated)
 AC_REVISION($Revision$)
@@ -37,6 +37,12 @@ AC_FUNC_REALLOC
 # We define the name of the OS so the code can act accordingly
 # We also need to add the right LDFLAGS
 case $host_os in
+solaris2.[[6-7]])
+	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
+	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
+	AC_DEFINE(SOL7, , [Building on Solaris 2.7])
+	LDFLAGS="$LDFLAGS -lkstat"
+	;;
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
