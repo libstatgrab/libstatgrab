@@ -182,7 +182,7 @@
       The library was originally written to support the i-scream
       central monitoring system, but has since become a standalone
       package. It has been ported to work on Linux, NetBSD, FreeBSD,
-      OpenBSD, DragonFly BSD, Solaris and Cygwin.
+      OpenBSD, DragonFly BSD, Solaris, HP-UX and Cygwin.
     </para>
   </refsect1>
 
