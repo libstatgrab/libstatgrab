@@ -53,3 +53,6 @@ kvm_t *sg_get_kvm2(void);
 struct uvmexp *sg_get_uvmexp(void);
 #endif
 
+void *sg_realloc(void *ptr, size_t size);
+#define sg_malloc(size) sg_realloc(NULL, size)
+

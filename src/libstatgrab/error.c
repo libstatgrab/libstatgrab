@@ -44,6 +44,8 @@ const char *sg_str_error(sg_error code) {
 	switch (code) {
 	case SG_ERROR_NONE:
 		return "no error";
+	case SG_ERROR_MALLOC_FAILED:
+		return "malloc failed - out of memory";
 	}
 	return "unknown error";
 }

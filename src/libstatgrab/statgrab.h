@@ -33,7 +33,8 @@ int sg_init(void);
 int sg_drop_privileges(void);
 
 typedef enum {
-	SG_ERROR_NONE = 0
+	SG_ERROR_NONE = 0,
+	SG_ERROR_MALLOC_FAILED
 } sg_error;
 
 void sg_set_error(sg_error code, const char *arg);

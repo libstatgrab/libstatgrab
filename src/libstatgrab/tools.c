@@ -45,6 +45,7 @@
 #endif
 
 #include "tools.h"
+#include "statgrab.h"
 
 #ifdef SOLARIS
 #ifdef HAVE_LIBDEVINFO_H
@@ -501,5 +502,14 @@ int sg_drop_privileges() {
 	if (setegid(getgid()) != 0) return -1;
 	if (seteuid(getuid()) != 0) return -1;
 	return 0;
+}
+
+void *sg_realloc(void *ptr, size_t size) {
+	void *tmp = NULL;
+	tmp = realloc(ptr, size);
+	if(tmp == NULL) {
+		sg_set_error(SG_ERROR_MALLOC_FAILED, NULL);
+	}
+	return tmp;
 }
 
