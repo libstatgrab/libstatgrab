@@ -3,6 +3,13 @@ http://www.i-scream.org.uk
 
 $Id$
 
+Description
+-----------
+
+libstatgrab is a library for accessing information from the system
+for statistical purposes. It could be used for software that monitors
+the system for alerting or graphing purposes.
+
 Building and Installation
 -------------------------
 
