@@ -44,9 +44,10 @@ sg_load_stats *sg_get_load_stats(){
 
 	static sg_load_stats load_stat;
 
-	double loadav[3];
 #ifdef HPUX
 	struct pst_dynamic pstat_dynamic;
+#else
+	double loadav[3];
 #endif
 
 #ifdef CYGWIN
