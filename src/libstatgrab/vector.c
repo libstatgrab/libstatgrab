@@ -29,13 +29,13 @@
 
 #include "vector.h"
 
-int statgrab_vector_resize(void **vector, vector_header *h, int count) {
+int statgrab_vector_resize(char **vector, vector_header *h, int count) {
 	int new_count, i;
 
 	/* Destroy any now-unused items. */
 	if (count < h->used_count && h->destroy_fn != NULL) {
 		for (i = count; i < h->used_count; i++) {
-			h->destroy_fn((*vector) + i * h->item_size);
+			h->destroy_fn((void *) ((*vector) + i * h->item_size));
 		}
 	}
 
@@ -45,7 +45,7 @@ int statgrab_vector_resize(void **vector, vector_header *h, int count) {
 
 	/* Resize the vector if necessary. */
 	if (new_count != h->alloc_count) {
-		void *new_vector;
+		char *new_vector;
 
 		new_vector = realloc(*vector, new_count * h->item_size);
 		if (new_vector == NULL && new_count != 0) {
@@ -61,7 +61,7 @@ int statgrab_vector_resize(void **vector, vector_header *h, int count) {
 	/* Initialise any new items. */
 	if (count > h->used_count && h->init_fn != NULL) {
 		for (i = h->used_count; i < count; i++) {
-			h->init_fn((*vector) + i * h->item_size);
+			h->init_fn((void *) ((*vector) + i * h->item_size));
 		}
 	}
 

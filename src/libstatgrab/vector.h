@@ -22,7 +22,7 @@ typedef struct {
 		(vector_destroy_function) destroy_fn \
 	}
 
-int statgrab_vector_resize(void **vector, vector_header *h, int count);
+int statgrab_vector_resize(char **vector, vector_header *h, int count);
 
 /* Declare a vector. Specify the init/destroy functions as NULL if you don't
  * need them. The block size is how many items to allocate at once. */
@@ -43,7 +43,7 @@ int statgrab_vector_resize(void **vector, vector_header *h, int count);
  * out-of-memory, the old contents of the vector will be destroyed and the old
  * vector will be freed. */
 #define VECTOR_RESIZE(name, num_items) \
-	statgrab_vector_resize((void **) &name, &name##_header, num_items)
+	statgrab_vector_resize((char **) &name, &name##_header, num_items)
 
 /* Free a vector, destroying its contents. */
 #define VECTOR_FREE(name) \
