@@ -35,7 +35,7 @@ int main(int argc, char **argv){
 	/* Throw away the first reading as thats averaged over the machines uptime */
 	cpu_percent = cpu_percent_usage();
 
-	while ((c = getopt(argc, argv, "d:")) != EOF){
+	while ((c = getopt(argc, argv, "d:")) != -1){
                 switch (c){
                         case 'd':
                                 delay = atoi(optarg);

@@ -35,7 +35,7 @@ int main(int argc, char **argv){
 
 	long long total, free;
 
-	while ((c = getopt(argc, argv, "d:")) != EOF){
+	while ((c = getopt(argc, argv, "d:")) != -1){
                 switch (c){
                         case 'd':
                                 delay = atoi(optarg);

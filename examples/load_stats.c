@@ -32,7 +32,7 @@ int main(int argc, char **argv){
 	int delay = 1;
 	load_stat_t *load_stat;
 
-	while ((c = getopt(argc, argv, "d:")) != EOF){
+	while ((c = getopt(argc, argv, "d:")) != -1){
                 switch (c){
                         case 'd':
                                 delay = atoi(optarg);

@@ -51,7 +51,7 @@ int main(int argc, char **argv){
 	int num_network_stats;
 
 	/* Parse command line options */
-	while ((c = getopt(argc, argv, "d:bkm")) != EOF){
+	while ((c = getopt(argc, argv, "d:bkm")) != -1){
 		switch (c){
 			case 'd':
 				delay =	atoi(optarg);
