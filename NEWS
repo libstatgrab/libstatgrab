@@ -1,3 +1,7 @@
+libstatgrab 0.3.4 (31 March 2003)
+
+ * Fixed memory leak, and file descriptor leak on linux.
+
 libstatgrab 0.3.3 (22 March 2003)
 
  * Network statistics wraparound code was broken on interfaces that
