@@ -38,6 +38,7 @@ typedef enum {
 	DOUBLE,
 	STRING,
 	INT,
+	BOOL,
 	DUPLEX
 } stat_type;
 
@@ -374,6 +375,8 @@ void populate_net() {
 
 			add_stat(INT, &iface[i].speed,
 			         "net", name, "speed", NULL);
+			add_stat(BOOL, &iface[i].up,
+			         "net", name, "up", NULL);
 			add_stat(DUPLEX, &iface[i].dup,
 			         "net", name, "duplex", NULL);
 		}
@@ -473,6 +476,9 @@ void print_stat_value(const stat *s) {
 		break;
 	case INT:
 		printf("%d", *(int *)v);
+		break;
+	case BOOL:
+		printf("%s", *(int *)v ? "true" : "false");
 		break;
 	case DUPLEX:
 		switch (*(statgrab_duplex *) v) {
