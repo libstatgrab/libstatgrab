@@ -184,6 +184,7 @@ network_stat_t *get_network_stats(int *entries){
 		interfaces++;
 	}
 	fclose(f);
+	regfree(&regex);
 
 #endif
 	*entries=interfaces;
