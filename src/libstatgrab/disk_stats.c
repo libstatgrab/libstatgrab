@@ -22,12 +22,12 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "statgrab.h"
 
 #ifdef SOLARIS
-#include <stdio.h>
 #include <sys/mnttab.h>
 #include <sys/statvfs.h>
 #include <kstat.h>
@@ -35,7 +35,6 @@
 #endif
 
 #ifdef LINUX
-#include <stdio.h>
 #include <sys/vfs.h>
 #include <mntent.h>
 #include "tools.h"
@@ -46,6 +45,8 @@
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
+#include <sys/dkstat.h>
+#include <devstat.h>
 #define VALID_FS_TYPES {"ufs", "mfs"}
 #endif
 #define START_VAL 1
@@ -311,8 +312,51 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	int major, minor;
 	char dev_letter;
 #endif
+#ifdef FREEBSD
+	struct statinfo stats;
+	int counter;
+	struct device_selection *dev_sel = NULL;
+	int n_selected, n_selections;
+	long sel_gen;
+	struct devstat *dev_ptr;
+#endif
 	num_diskio=0;
 
+#ifdef FREEBSD
+	stats.dinfo=malloc(sizeof(struct devinfo));
+	if(stats.dinfo==NULL) return NULL;
+	if ((getdevs(&stats)) < 0) return NULL;
+	/* Not aware of a get all devices, so i said 999. If we ever
+	 * find a machine with more than 999 disks, then i'll change
+	 * this number :)
+	 */
+	if (selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) return NULL;
+
+	for(counter=0;counter<stats.dinfo->numdevs;counter++){
+		dev_ptr=&stats.dinfo->devices[dev_sel[counter].position];
+
+		/* Throw away devices that have done nothing, ever.. Eg "odd" 
+		 * devices.. like mem, proc.. and also doesn't report floppy
+		 * drives etc unless they are doing stuff :)
+		 */
+		if((dev_ptr->bytes_read==0) && (dev_ptr->bytes_written==0)) continue;
+		if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
+			return NULL;
+		}
+		diskio_stats_ptr=diskio_stats+num_diskio;
+		
+		diskio_stats_ptr->read_bytes=dev_ptr->bytes_read;
+		diskio_stats_ptr->write_bytes=dev_ptr->bytes_written;
+		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
+		asprintf((&diskio_stats_ptr->disk_name), "%s%d", dev_ptr->device_name, dev_ptr->unit_number);
+		diskio_stats_ptr->systime=time(NULL);
+
+		num_diskio++;
+	}
+	free(dev_sel);
+	free(stats.dinfo);
+
+#endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
                 return NULL;
