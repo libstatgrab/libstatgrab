@@ -339,7 +339,7 @@ void network_iface_stat_init(int start, int end, network_iface_stat_t *net_stats
 	for(net_stats+=start; start<end; start++){
 		net_stats->interface_name=NULL;
 		net_stats->speed=0;
-		net_stats->dup=UNKNOWN_DUPEX;
+		net_stats->dup=UNKNOWN_DUPLEX;
 		net_stats++;
 	}
 }
@@ -450,11 +450,11 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			case(IFM_1000_SX):
 			case(IFM_1000_LX):
 			case(IFM_1000_CX):
-#ifdef FREEBSD5
-			case(IFM_1000_T):
-#else
+#if defined(FREEBSD) && !defined(FREEBSD5)
 			case(IFM_1000_TX):
 			case(IFM_1000_FX):
+#else
+			case(IFM_1000_T):
 #endif
 				network_iface_stat_ptr->speed = 1000;
 				break;
@@ -469,7 +469,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
 			network_iface_stat_ptr->dup = HALF_DUPLEX;
 		}else{
-			network_iface_stat_ptr->dup = UNKNOWN_DUPEX;
+			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
 		}
 		ifaces++;
 	}	
