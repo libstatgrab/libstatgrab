@@ -109,6 +109,7 @@ cdef extern from "statgrab.h":
         char *interface_name
         int speed
         statgrab_duplex dup
+        int up
 
     ctypedef struct page_stat_t:
         long long pages_pagein
@@ -392,6 +393,7 @@ def py_get_network_iface_stats():
             {'interface_name': s.interface_name,
              'speed': s.speed,
              'dup': s.dup,
+             'up' : s.up,
             }
         ))
         s = s + 1
