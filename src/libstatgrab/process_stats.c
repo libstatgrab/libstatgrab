@@ -60,12 +60,14 @@ int get_proc_snapshot(proc_state_t **ps){
 	proc_state_t *proc_state = NULL;
 	proc_state_t *proc_state_ptr;
 	int proc_state_size = 0;
-#if defined(SOLARIS) 	
+#if defined(SOLARIS) || defined(LINUX)
         DIR *proc_dir;
         struct dirent *dir_entry;
         char filename[MAX_FILE_LENGTH];
         FILE *f;
+#ifdef SOLARIS
 	psinfo_t process_info;
+#endif
 
         if((proc_dir=opendir(PROC_LOCATION))==NULL){
                 return NULL;
@@ -74,17 +76,18 @@ int get_proc_snapshot(proc_state_t **ps){
         while((dir_entry=readdir(proc_dir))!=NULL){
                 if(atoi(dir_entry->d_name) == 0) continue;
 
+#ifdef SOLARIS
                 snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
-
+#endif
                 if((f=fopen(filename, "r"))==NULL){
                         /* Open failed.. Process since vanished, or the path was too long.
                          * Ah well, move onwards to the next one */
                         continue;
                 }
+#ifdef SOLARIS
                 fread(&process_info, sizeof(psinfo_t), 1, f);
 
 		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
-
 		proc_state_ptr = proc_state+proc_state_size;
 		
 		proc_state_ptr->pid = process_info.pr_pid;
@@ -100,6 +103,13 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state_ptr->cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
 		proc_state_ptr->process_name = strdup(process_info.pr_fname);
 		proc_state_ptr->proctitle = strdup(process_info.pr_psargs);
+
+                if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SLEEPING;
+                if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = RUNNING; 
+                if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = ZOMBIE; 
+                if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = STOPPED; 
+                if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = RUNNING; 
+#endif
 
 		proc_state_size++;
 #endif
