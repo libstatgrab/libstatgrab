@@ -33,6 +33,7 @@
 
 typedef enum {
 	LONG_LONG = 0,
+	BYTES,
 	TIME_T,
 	FLOAT,
 	DOUBLE,
@@ -72,6 +73,7 @@ int repeat_time = 1;
 int use_cpu_percent = 0;
 int use_diffs = 0;
 long float_scale_factor = 0;
+long long bytes_scale_factor = 0;
 
 /* Exit with an error message. */
 void die(const char *s) {
@@ -215,10 +217,10 @@ void populate_mem() {
 	sg_mem_stats *mem = sg_get_mem_stats();
 
 	if (mem != NULL) {
-		add_stat(LONG_LONG, &mem->total, "mem", "total", NULL);
-		add_stat(LONG_LONG, &mem->free, "mem", "free", NULL);
-		add_stat(LONG_LONG, &mem->used, "mem", "used", NULL);
-		add_stat(LONG_LONG, &mem->cache, "mem", "cache", NULL);
+		add_stat(BYTES, &mem->total, "mem", "total", NULL);
+		add_stat(BYTES, &mem->free, "mem", "free", NULL);
+		add_stat(BYTES, &mem->used, "mem", "used", NULL);
+		add_stat(BYTES, &mem->cache, "mem", "cache", NULL);
 	}
 }
 
@@ -245,9 +247,9 @@ void populate_swap() {
 	sg_swap_stats *swap = sg_get_swap_stats();
 
 	if (swap != NULL) {
-		add_stat(LONG_LONG, &swap->total, "swap", "total", NULL);
-		add_stat(LONG_LONG, &swap->used, "swap", "used", NULL);
-		add_stat(LONG_LONG, &swap->free, "swap", "free", NULL);
+		add_stat(BYTES, &swap->total, "swap", "total", NULL);
+		add_stat(BYTES, &swap->used, "swap", "used", NULL);
+		add_stat(BYTES, &swap->free, "swap", "free", NULL);
 	}
 }
 
@@ -299,11 +301,11 @@ void populate_fs() {
 				 "fs", name, "fs_type", NULL);
 			add_stat(STRING, &disk[i].mnt_point,
 				 "fs", name, "mnt_point", NULL);
-			add_stat(LONG_LONG, &disk[i].size,
+			add_stat(BYTES, &disk[i].size,
 				 "fs", name, "size", NULL);
-			add_stat(LONG_LONG, &disk[i].used,
+			add_stat(BYTES, &disk[i].used,
 				 "fs", name, "used", NULL);
-			add_stat(LONG_LONG, &disk[i].avail,
+			add_stat(BYTES, &disk[i].avail,
 				 "fs", name, "avail", NULL);
 			add_stat(LONG_LONG, &disk[i].total_inodes,
 				 "fs", name, "total_inodes", NULL);
@@ -329,9 +331,9 @@ void populate_disk() {
 	
 			add_stat(STRING, &diskio[i].disk_name,
 				 "disk", name, "disk_name", NULL);
-			add_stat(LONG_LONG, &diskio[i].read_bytes,
+			add_stat(BYTES, &diskio[i].read_bytes,
 				 "disk", name, "read_bytes", NULL);
-			add_stat(LONG_LONG, &diskio[i].write_bytes,
+			add_stat(BYTES, &diskio[i].write_bytes,
 				 "disk", name, "write_bytes", NULL);
 			add_stat(TIME_T, &diskio[i].systime,
 				 "disk", name, "systime", NULL);
@@ -365,9 +367,9 @@ void populate_net() {
 	
 			add_stat(STRING, &io[i].interface_name,
 				 "net", name, "interface_name", NULL);
-			add_stat(LONG_LONG, &io[i].tx,
+			add_stat(BYTES, &io[i].tx,
 				 "net", name, "tx", NULL);
-			add_stat(LONG_LONG, &io[i].rx,
+			add_stat(BYTES, &io[i].rx,
 				 "net", name, "rx", NULL);
 			add_stat(LONG_LONG, &io[i].ipackets,
 				 "net", name, "ipackets", NULL);
@@ -490,16 +492,24 @@ void get_stats() {
 void print_stat_value(const stat *s) {
 	void *v = s->stat;
 	double fv;
-	long l;
+	long lv;
+	long long llv;
 
 	switch (s->type) {
 	case LONG_LONG:
 		printf("%lld", *(long long *)v);
 		break;
+	case BYTES:
+		llv = *(long long *)v;
+		if (bytes_scale_factor != 0) {
+			llv /= bytes_scale_factor;
+		}
+		printf("%lld", llv);
+		break;
 	case TIME_T:
 		/* FIXME option for formatted time? */
-		l = *(time_t *)v;
-		printf("%ld", l);
+		lv = *(time_t *)v;
+		printf("%ld", lv);
 		break;
 	case FLOAT:
 	case DOUBLE:
@@ -630,6 +640,9 @@ void usage() {
 	       "  -p	 Display CPU usage differences as percentages rather than\n"
 	       "	     absolute values\n"
 	       "  -f SCALE   Display floating-point values as integers scaled by FACTOR\n"
+	       "  -K         Display byte counts in kibibytes\n"
+	       "  -M         Display byte counts in mibibytes\n"
+	       "  -G         Display byte counts in gibibytes\n"
 	       "\n");
 	printf("Version %s - report bugs to <%s>.\n",
 	       PACKAGE_VERSION, PACKAGE_BUGREPORT);
@@ -639,7 +652,7 @@ void usage() {
 int main(int argc, char **argv) {
 	opterr = 0;
 	while (1) {
-		int c = getopt(argc, argv, "lbmunsot:pf:");
+		int c = getopt(argc, argv, "lbmunsot:pf:KMG");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -672,6 +685,15 @@ int main(int argc, char **argv) {
 			break;
 		case 'f':
 			float_scale_factor = atol(optarg);
+			break;
+		case 'K':
+			bytes_scale_factor = 1024;
+			break;
+		case 'M':
+			bytes_scale_factor = 1024 * 1024;
+			break;
+		case 'G':
+			bytes_scale_factor = 1024 * 1024 * 1024;
 			break;
 		default:
 			usage();
