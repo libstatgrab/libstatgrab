@@ -237,7 +237,7 @@ network_stat_t *get_network_stats(int *entries){
 	interfaces=0;
 
 	while((fgets(line, sizeof(line), f)) != NULL){
-		if((regexec(&regex, line, 4, line_match, 0))!=0){
+		if((regexec(&regex, line, 9, line_match, 0))!=0){
 			continue;
 		}
         	network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
