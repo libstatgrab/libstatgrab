@@ -78,5 +78,7 @@ process_stat_t *get_process_stats(){
 	
 	closedir(proc_dir);
 
+
+	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;
 	return &process_stat;
 }
