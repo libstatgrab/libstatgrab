@@ -449,7 +449,8 @@ void get_stats() {
 			t->populate();
 	}
 
-	qsort(stats, num_stats, sizeof *stats, stats_compare);
+	if (stats != NULL)
+		qsort(stats, num_stats, sizeof *stats, stats_compare);
 }
 
 /* Print the value of a stat. */
@@ -535,8 +536,15 @@ void print_stats(int argc, char **argv) {
 			else
 				compare = stats_compare;
 
-			s = (const stat *)bsearch(&key, stats, num_stats,
-			                          sizeof *stats, compare);
+			if (stats == NULL) {
+				s = NULL;
+			} else {
+				s = (const stat *)bsearch(&key, stats,
+				                          num_stats,
+				                          sizeof *stats,
+				                          compare);
+			}
+
 			if (s == NULL) {
 				printf("Unknown stat %s\n", name);
 				continue;
