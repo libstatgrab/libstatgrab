@@ -11,5 +11,5 @@ ChangeLog:
 
 EXTRA_DIST = libstatgrab.pc.in
 
-pkgconfigdir = @PKGCONFIG_DIR@
+pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libstatgrab.pc
