@@ -3,6 +3,21 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.10.1 (20 July 2004)
+
+ * Use DESTDIR correctly when setting permissions at install time.
+ * Fix disk stats to work with OpenBSD 3.5.
+ * Fix disk stats on NetBSD 2.0 (statvfs instead of statfs).
+ * Fix memory leak in process stats on NetBSD 2.0.
+ * Add vxfs (veritas file system) to list of know file systems
+   on Solaris.
+ * Add more variables to the pkg-config file to suggest suitable
+   ownership and permissions for binaries using libstatgrab.
+ * Make sure statgrab.h can't be included twice.
+ * Fix statgrab to display network interface names even if they
+   don't have IO stats (like the loopback interface on Solaris).
+ * Add error reporting function that grabs errno.
+
 libstatgrab 0.10 (20 May 2004)
 
  * All function and structure names now follow a standardised
