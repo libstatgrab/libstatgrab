@@ -35,7 +35,7 @@
 static sg_error error = SG_ERROR_NONE;
 #define ERROR_ARG_MAX 256
 static char error_arg[ERROR_ARG_MAX];
-static char error_strerror[ERROR_ARG_MAX];
+static int errno_value = 0;
 
 void sg_set_error(sg_error code, const char *arg) {
 	error = code;
@@ -48,14 +48,8 @@ void sg_set_error(sg_error code, const char *arg) {
 	}
 }
 
-void sg_set_error_with_errno(sg_error code, const char *arg, int use_errno) {
-	if(use_errno) {
-		sg_strlcpy(error_strerror, strerror(errno), sizeof error_strerror);
-	}
-	else {
-		/* FIXME is this the best idea? */
-		error_strerror[0] = '\0';
-	}
+void sg_set_error_with_errno(sg_error code, const char *arg) {
+	errno_value = errno;
 	sg_set_error(code, arg);
 }
 
@@ -67,8 +61,8 @@ const char *sg_get_error_arg() {
 	return error_arg;
 }
 
-const char *sg_get_error_strerror() {
-	return error_strerror;
+const int sg_get_error_errno() {
+	return errno_value;
 }
 
 const char *sg_str_error(sg_error code) {
