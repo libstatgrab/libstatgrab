@@ -39,11 +39,7 @@
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
 #ifdef LINUX
-#ifdef CYGWIN
-#include <limits.h>
-#else
 #include <linux/limits.h>
-#endif
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
@@ -164,6 +160,10 @@ process_stat_t *get_process_stats(){
 		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
 #endif
 	}
+#endif
+
+#ifdef CYGWIN
+	return NULL;
 #endif
 
 	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;

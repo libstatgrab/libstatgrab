@@ -34,17 +34,18 @@ load_stat_t *get_load_stats(){
 	static load_stat_t load_stat;
 
 	double loadav[3];
+
+#ifdef CYGWIN
+	return NULL;
+#else
 	loadav[0] = loadav[1] = loadav[2] = 0;
 
-	/* No load averages on cygwin */
-#ifndef CYGWIN
-  	getloadavg(loadav,3);
-#endif
+	getloadavg(loadav,3);
 
 	load_stat.min1=loadav[0];
 	load_stat.min5=loadav[1];
 	load_stat.min15=loadav[2];
 
 	return &load_stat;
-
+#endif
 }

@@ -645,8 +645,12 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	num_diskio = n;
 out:
 	if (f != NULL) fclose(f);
-
 #endif
+
+#ifdef CYGWIN
+	return NULL;
+#endif
+
 	*entries=num_diskio;
 
 	return diskio_stats;

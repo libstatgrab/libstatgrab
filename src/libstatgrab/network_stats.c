@@ -224,6 +224,11 @@ network_stat_t *get_network_stats(int *entries){
 	regfree(&regex);
 
 #endif
+
+#ifdef CYGWIN
+	return NULL;
+#endif
+
 	*entries=interfaces;
 
 	return network_stats;	
