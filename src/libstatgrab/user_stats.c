@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "statgrab.h"
+#include "vector.h"
 #ifdef ALLBSD
 #include <sys/types.h>
 #endif
@@ -43,27 +44,10 @@
 #include <sys/unistd.h>
 #endif
 
-#ifdef SOLARIS
-#define MAX_LOGIN_NAME_SIZE 8
-#endif
-#if defined(LINUX) || defined(FREEBSD) || defined(DFBSD)
-#define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
-#endif
-#if defined(NETBSD) || defined(OPENBSD)
-#define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
-#endif
-#if defined(CYGWIN)
-#define MAX_LOGIN_NAME_SIZE _SC_LOGIN_NAME_MAX
-#endif
-
-#define START_VAL (5*(1+MAX_LOGIN_NAME_SIZE))
-
 user_stat_t *get_user_stats(){
-	int num_users=0;
-
+	int num_users = 0, pos = 0, new_pos;
+	VECTOR_DECLARE_STATIC(name_list, char, 128, NULL, NULL);
 	static user_stat_t user_stats;
-	static int size_of_namelist=-1;
-	char *tmp;
 #if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
 	struct utmp *entry;
 #endif
@@ -72,36 +56,20 @@ user_stat_t *get_user_stats(){
         FILE *f;
 #endif
 
-	/* First case call */
-	if (size_of_namelist==-1){
-		user_stats.name_list=malloc(START_VAL);
-		if(user_stats.name_list==NULL){
-			return NULL;
-		}
-		size_of_namelist=START_VAL;
-	}	
-
-	/* Essentially blank the list, or give it a inital starting string */
-	strcpy(user_stats.name_list, "");
-
 #if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
 	setutent();
 	while((entry=getutent()) != NULL) {
-		if(entry->ut_type==USER_PROCESS) {
-			if((strlen(user_stats.name_list)+MAX_LOGIN_NAME_SIZE+2) > size_of_namelist){
-				tmp=user_stats.name_list;
-				user_stats.name_list=realloc(user_stats.name_list, 1+(size_of_namelist*2));
-				if(user_stats.name_list==NULL){
-					user_stats.name_list=tmp;
-					return NULL;
-				}
-				size_of_namelist=1+(size_of_namelist*2);
-			}
+		if (entry->ut_type != USER_PROCESS) continue;
 
-			strncat(user_stats.name_list, entry->ut_user, MAX_LOGIN_NAME_SIZE);
-			strcat(user_stats.name_list, " ");
-			num_users++;
+		new_pos = pos + strlen(entry->ut_user) + 1;
+		if (VECTOR_RESIZE(name_list, new_pos) < 0) {
+			return NULL;
 		}
+
+		strcpy(name_list + pos, entry->ut_user);
+		name_list[new_pos - 1] = ' ';
+		pos = new_pos;
+		num_users++;
 	}
 	endutent();
 #endif
@@ -111,32 +79,28 @@ user_stat_t *get_user_stats(){
 	}
 	while((fread(&entry, sizeof(entry),1,f)) != 0){
 		if (entry.ut_name[0] == '\0') continue;
-		if((strlen(user_stats.name_list)+MAX_LOGIN_NAME_SIZE+2) > size_of_namelist){
-			tmp=user_stats.name_list;
-			user_stats.name_list=realloc(user_stats.name_list, 1+(size_of_namelist*2));
-			if(user_stats.name_list==NULL){
-				user_stats.name_list=tmp;
-				return NULL;
-			}
-			size_of_namelist=1+(size_of_namelist*2);
-			
+
+		new_pos = pos + strlen(entry.ut_name) + 1;
+		if (VECTOR_RESIZE(name_list, new_pos) < 0) {
+			return NULL;
 		}
-		strncat(user_stats.name_list, entry.ut_name, MAX_LOGIN_NAME_SIZE);
-		strcat(user_stats.name_list, " ");
+
+		strcpy(name_list + pos, entry.ut_name);
+		name_list[new_pos - 1] = ' ';
+		pos = new_pos;
 		num_users++;
 	}
 	fclose(f);
+#endif
 
-#endif	
-	/* We want to remove the last " " */
-	if(num_users!=0){
-		tmp=strrchr(user_stats.name_list, ' ');
-		if(tmp!=NULL){
-			*tmp='\0';
-			user_stats.num_entries=num_users;
-		}
+	/* Remove the extra space at the end, and append a \0. */
+	if (num_users != 0) {
+		pos--;
 	}
+	VECTOR_RESIZE(name_list, pos + 1);
+	name_list[pos] = '\0';
 
+	user_stats.num_entries = num_users;
+	user_stats.name_list = name_list;
 	return &user_stats;
-
 }
