@@ -24,8 +24,11 @@
 #include <unistd.h>
 
 int main(int argc, char **argv){
-	
+
 	general_stat_t *general_stats;
+
+	/* Initialise statgrab */
+	statgrab_init();
 
 	general_stats = get_general_stats();
 
@@ -43,6 +46,3 @@ int main(int argc, char **argv){
 
 	exit(0);
 }
-
-
-

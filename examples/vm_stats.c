@@ -24,10 +24,10 @@
 #include <unistd.h>
 
 int main(int argc, char **argv){
-	
+
 	extern char *optarg;
-        extern int optind;
-        int c;
+	extern int optind;
+	int c;
 
 	int delay = 1;
 	mem_stat_t *mem_stats;
@@ -36,12 +36,15 @@ int main(int argc, char **argv){
 	long long total, free;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
-                switch (c){
-                        case 'd':
-                                delay = atoi(optarg);
-                                break;
+		switch (c){
+			case 'd':
+				delay = atoi(optarg);
+				break;
 		}
 	}
+
+	/* Initialise statgrab */
+	statgrab_init();
 
 	if( ((mem_stats=get_memory_stats()) != NULL) && (swap_stats=get_swap_stats()) != NULL){
 		printf("Total memory in bytes : %lld\n", mem_stats->total);
@@ -61,6 +64,3 @@ int main(int argc, char **argv){
 	}
 	exit(0);
 }
-
-
-

@@ -22,14 +22,14 @@
  * and diaply them. Also it adds up all the traffic to create and print out
  * a total 
  * Takes several arguments :
- * -d <number> 	Takes the number of seconds to wait to get traffic sent since last call
- *              Note, this is not disk traffic per second. Its the traffic since last
- * 	  	call. If you want it traffic per second averaged over time since last call
+ * -d <number>	Takes the number of seconds to wait to get traffic sent since last call
+ * 		Note, this is not disk traffic per second. Its the traffic since last
+ * 		call. If you want it traffic per second averaged over time since last call
  * 		You need to divide against the time since last time this was called. The time
  * 		between 2 calls is stored in systime in the disk_stat_t structure.
  * -b		Display in bytes
  * -k		Display in kilobytes
- * -m 		Display in megabytes
+ * -m		Display in megabytes
  */
 
 #include <stdio.h>
@@ -68,10 +68,13 @@ int main(int argc, char **argv){
 		}
 	}
 
-	/* We are not intrested in the amount of traffic ever transmitted, just differences. 
+	/* Initialise statgrab */
+	statgrab_init();
+
+	/* We are not interested in the amount of traffic ever transmitted, just differences. 
 	 * Because of this, we do nothing for the very first call.
 	 */
-	
+
 	diskio_stats = get_diskio_stats_diff(&num_diskio_stats);
 	if (diskio_stats == NULL){
 		perror("Error. Failed to get disk stats");
@@ -80,7 +83,7 @@ int main(int argc, char **argv){
 
 	/* Clear the screen ready for display the disk stats */
 	printf("\033[2J");
-	
+
 	/* Keep getting the disk stats */
 	while ( (diskio_stats = get_diskio_stats_diff(&num_diskio_stats)) != NULL){
 		int x;
@@ -100,14 +103,14 @@ int main(int argc, char **argv){
 					break;
 				case 'k':
 					printf("\033[%d;2H%-25s : %5lld k", line_number++, "Disk read", (diskio_stats->read_bytes / 1024));
-                                        printf("\033[%d;2H%-25s : %5lld", line_number++, "Disk write", (diskio_stats->write_bytes / 1024));
-                                        break;
+					printf("\033[%d;2H%-25s : %5lld", line_number++, "Disk write", (diskio_stats->write_bytes / 1024));
+					break;
 				case 'm':
 					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk read", diskio_stats->read_bytes / (1024.00*1024.00));
 					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk write", diskio_stats->write_bytes / (1024.00*1024.00));
 			}
 			printf("\033[%d;2H%-25s : %ld ", line_number++, "Disk systime", (long) diskio_stats->systime);
-		
+
 			/* Add a blank line between interfaces */	
 			line_number++;
 
@@ -119,7 +122,7 @@ int main(int argc, char **argv){
 			 * to keep track of the orginal pointer to free later */
 			diskio_stats++;
 		}
-		
+
 		printf("\033[%d;2H%-25s : %-10s", line_number++, "Disk Name", "Total Disk IO");
 		switch(units){
 			case 'b':
@@ -135,7 +138,7 @@ int main(int argc, char **argv){
 				printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk Total write", (total_write  / (1024.00*1024.00)));
 				break;
 		}
-		
+
 		fflush(stdout);
 
 		sleep(delay);

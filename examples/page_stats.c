@@ -24,21 +24,24 @@
 #include <unistd.h>
 
 int main(int argc, char **argv){
-	
+
 	extern char *optarg;
-        extern int optind;
-        int c;
+	extern int optind;
+	int c;
 
 	int delay = 1;
 	page_stat_t *page_stats;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
-                switch (c){
-                        case 'd':
-                                delay = atoi(optarg);
-                                break;
+		switch (c){
+			case 'd':
+				delay = atoi(optarg);
+				break;
 		}
 	}
+
+	/* Initialise statgrab */
+	statgrab_init();
 
 	while( (page_stats = get_page_stats_diff()) != NULL){
 		printf("Pages in : %lld\n", page_stats->pages_pagein);
@@ -48,6 +51,3 @@ int main(int argc, char **argv){
 
 	exit(0);
 }
-
-
-

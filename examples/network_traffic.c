@@ -23,13 +23,13 @@
  * a total 
  * Takes several arguments :
  * -d <number> 	Takes the number of seconds to wait to get traffic sent since last call
- *              Note, this is not network traffic per second. Its the traffic since last
- * 	  	call. If you want it traffic per second averaged over time since last call
+ * 		Note, this is not network traffic per second. Its the traffic since last
+ * 		call. If you want it traffic per second averaged over time since last call
  * 		You need to divide against the time since last time this was called. The time
  * 		between 2 calls is stored in systime in the network_stat_t structure.
  * -b		Display in bytes
  * -k		Display in kilobytes
- * -m 		Display in megabytes
+ * -m		Display in megabytes
  */
 
 #include <stdio.h>
@@ -68,10 +68,13 @@ int main(int argc, char **argv){
 		}
 	}
 
-	/* We are not intrested in the amount of traffic ever transmitted, just differences. 
+	/* Initialise statgrab */
+	statgrab_init();
+
+	/* We are not interested in the amount of traffic ever transmitted, just differences. 
 	 * Because of this, we do nothing for the very first call.
 	 */
-	
+
 	network_stats = get_network_stats_diff(&num_network_stats);
 	if (network_stats == NULL){
 		perror("Error. Failed to get network stats");
@@ -80,7 +83,7 @@ int main(int argc, char **argv){
 
 	/* Clear the screen ready for display the network stats */
 	printf("\033[2J");
-	
+
 	/* Keep getting the network stats */
 	while ( (network_stats = get_network_stats_diff(&num_network_stats)) != NULL){
 		int x;
@@ -100,14 +103,14 @@ int main(int argc, char **argv){
 					break;
 				case 'k':
 					printf("\033[%d;2H%-25s : %5lld k", line_number++, "Network Interface Rx", (network_stats->rx / 1024));
-                                        printf("\033[%d;2H%-25s : %5lld", line_number++, "Network Interface Tx", (network_stats->tx / 1024));
-                                        break;
+					printf("\033[%d;2H%-25s : %5lld", line_number++, "Network Interface Tx", (network_stats->tx / 1024));
+					break;
 				case 'm':
 					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Network Interface Rx", network_stats->rx / (1024.00*1024.00));
 					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Network Interface Tx", network_stats->tx / (1024.00*1024.00));
 			}
 			printf("\033[%d;2H%-25s : %ld ", line_number++, "Network Interface systime", (long) network_stats->systime);
-		
+
 			/* Add a blank line between interfaces */	
 			line_number++;
 
@@ -119,7 +122,7 @@ int main(int argc, char **argv){
 			 * to keep track of the orginal pointer to free later */
 			network_stats++;
 		}
-		
+
 		printf("\033[%d;2H%-25s : %-10s", line_number++, "Network Interface Name", "Total Network IO");
 		switch(units){
 			case 'b':
@@ -135,7 +138,7 @@ int main(int argc, char **argv){
 				printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Network Total Tx", (total_tx  / (1024.00*1024.00)));
 				break;
 		}
-		
+
 		fflush(stdout);
 
 		sleep(delay);

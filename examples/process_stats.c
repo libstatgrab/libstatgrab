@@ -24,21 +24,24 @@
 #include <unistd.h>
 
 int main(int argc, char **argv){
-	
+
 	extern char *optarg;
-        extern int optind;
-        int c;
+	extern int optind;
+	int c;
 
 	int delay = 1;
 	process_stat_t *process_stat;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
-                switch (c){
-                        case 'd':
-                                delay = atoi(optarg);
-                                break;
+		switch (c){
+			case 'd':
+				delay = atoi(optarg);
+				break;
 		}
 	}
+
+	/* Initialise statgrab */
+	statgrab_init();
 
 	while( (process_stat = get_process_stats()) != NULL){
 		printf("Running:%3d \t", process_stat->running);
@@ -51,6 +54,3 @@ int main(int argc, char **argv){
 
 	exit(0);
 }
-
-
-

@@ -24,21 +24,24 @@
 #include <unistd.h>
 
 int main(int argc, char **argv){
-	
+
 	extern char *optarg;
-        extern int optind;
-        int c;
+	extern int optind;
+	int c;
 
 	int delay = 1;
 	load_stat_t *load_stat;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
-                switch (c){
-                        case 'd':
-                                delay = atoi(optarg);
-                                break;
+		switch (c){
+			case 'd':
+				delay = atoi(optarg);
+				break;
 		}
 	}
+
+	/* Initialise statgrab */
+	statgrab_init();
 
 	while( (load_stat = get_load_stats()) != NULL){
 		printf("Load 1 : %5.2f\t Load 5 : %5.2f\t Load 15 : %5.2f\n", load_stat->min1, load_stat->min5, load_stat->min15);
@@ -47,6 +50,3 @@ int main(int argc, char **argv){
 
 	exit(0);
 }
-
-
-

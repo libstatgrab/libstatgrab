@@ -24,27 +24,30 @@
 #include <unistd.h>
 
 int main(int argc, char **argv){
-	
+
 	extern char *optarg;
-        extern int optind;
-        int c;
+	extern int optind;
+	int c;
 
 	int delay = 1;
 	cpu_percent_t *cpu_percent;
 
-	/* Throw away the first reading as thats averaged over the machines uptime */
-	cpu_percent = cpu_percent_usage();
-
 	while ((c = getopt(argc, argv, "d:")) != -1){
-                switch (c){
-                        case 'd':
-                                delay = atoi(optarg);
-                                break;
+		switch (c){
+			case 'd':
+				delay = atoi(optarg);
+				break;
 		}
 	}
 
-	 /* Clear the screen ready for display the cpu usage */
-        printf("\033[2J");
+	/* Initialise statgrab */
+	statgrab_init();
+
+	/* Throw away the first reading as thats averaged over the machines uptime */
+	cpu_percent = cpu_percent_usage();
+
+	/* Clear the screen ready for display the cpu usage */
+	printf("\033[2J");
 
 	while( (cpu_percent = cpu_percent_usage()) != NULL){
 		printf("\033[2;2H%-12s : %6.2f", "User CPU", cpu_percent->user);
@@ -59,6 +62,3 @@ int main(int argc, char **argv){
 
 	exit(0);
 }
-
-
-
