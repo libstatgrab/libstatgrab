@@ -269,7 +269,7 @@ static long long atoll(const char *s) {
 #endif
 
 #ifndef HAVE_STRLCPY
-*      $OpenBSD: strlcpy.c,v 1.8 2003/06/17 21:56:24 millert Exp $     */
+/*      $OpenBSD: strlcpy.c,v 1.8 2003/06/17 21:56:24 millert Exp $     */
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
