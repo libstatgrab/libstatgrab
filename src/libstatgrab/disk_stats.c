@@ -128,6 +128,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 #ifdef ALLBSD
 	nummnt=getmntinfo(&mp , MNT_LOCAL);
 	if (nummnt<=0){
+		sg_set_error(SG_ERROR_GETMNTINFO, NULL);
 		return NULL;
 	}
 	for(;nummnt--; mp++){
@@ -136,6 +137,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f=setmntent("/etc/mtab", "r" ))==NULL){
+		sg_set_error(SG_ERROR_SETMNTENT, NULL);
 		return NULL;
 	}
 
@@ -149,6 +151,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 
 #ifdef SOLARIS
 	if ((f=fopen("/etc/mnttab", "r" ))==NULL){
+		sg_set_error(SG_ERROR_OPEN, "/etc/mnttab");
 		return NULL;
 	}
 	while((getmntent(f, &mp)) == 0){
@@ -327,6 +330,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 
 	size = sizeof(diskcount);
 	if (sysctl(mib, MIBSIZE, &diskcount, &size, NULL, 0) < 0) {
+		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKCOUNT");
 		return NULL;
 	}
 
@@ -334,6 +338,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	mib[1] = HW_DISKNAMES;
 
 	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
+		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
 		return NULL;
 	}
 
@@ -343,6 +348,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 
 	if (sysctl(mib, MIBSIZE, disknames, &size, NULL, 0) < 0) {
+		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKNAMES");
 		return NULL;
 	}
 
@@ -361,6 +367,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 
 	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
+		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
 		return NULL;
 	}
 
@@ -376,6 +383,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	}
 
 	if (sysctl(mib, MIBSIZE, stats, &size, NULL, 0) < 0) {
+		sg_error(SG_ERROR_SYSCTL, "CTL_HW.HW_DISKSTATS");
 		return NULL;
 	}
 
@@ -435,19 +443,31 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 		stats_init = 1;
 	}
 #ifdef FREEBSD5
-	if ((devstat_getdevs(NULL, &stats)) < 0) return NULL;
+	if ((devstat_getdevs(NULL, &stats)) < 0) {
+		sg_set_error(SG_ERROR_DEVSTAT_GETDEVS, NULL);
+		return NULL;
+	}
 	/* Not aware of a get all devices, so i said 999. If we ever
 	 * find a machine with more than 999 disks, then i'll change
 	 * this number :)
 	 */
-	if (devstat_selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) return NULL;
+	if (devstat_selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) {
+		sg_set_error(SG_ERROR_DEVSTAT_SELECTDEVS, NULL);
+		return NULL;
+	}
 #else
-	if ((getdevs(&stats)) < 0) return NULL;
+	if ((getdevs(&stats)) < 0) {
+		sg_set_error(SG_ERROR_DEVSTAT_GETDEVS, NULL);
+		return NULL;
+	}
 	/* Not aware of a get all devices, so i said 999. If we ever
 	 * find a machine with more than 999 disks, then i'll change
 	 * this number :)
 	 */
-	if (selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) return NULL;
+	if (selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) {
+		sg_set_error(SG_ERROR_DEVSTAT_SELECTDEVS, NULL);
+		return NULL;
+	}
 #endif
 
 	for(counter=0;counter<stats.dinfo->numdevs;counter++){
@@ -477,6 +497,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 		if (asprintf((&diskio_stats_ptr->disk_name), "%s%d", dev_ptr->device_name, dev_ptr->unit_number) == -1) {
+			sg_set_error(SG_ERROR_ASPRINTF, NULL);
 			return NULL;
 		}
 		diskio_stats_ptr->systime=time(NULL);
@@ -488,6 +509,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
+		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
 		return NULL;
 	}
 
@@ -656,6 +678,7 @@ out:
 #endif
 
 #ifdef CYGWIN
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
 	return NULL;
 #endif
 

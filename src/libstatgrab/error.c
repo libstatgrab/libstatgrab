@@ -44,6 +44,8 @@ const char *sg_str_error(sg_error code) {
 	switch (code) {
 	case SG_ERROR_NONE:
 		return "no error";
+	case SG_ERROR_UNSUPPORTED:
+		return "unsupported function";
 	case SG_ERROR_MALLOC:
 		return "malloc failed";
 	case SG_ERROR_KSTAT_OPEN:
@@ -52,8 +54,20 @@ const char *sg_str_error(sg_error code) {
 		return "failed to open file";
 	case SG_ERROR_SYSCTLBYNAME:
 		return "sysctlbyname failed";
+	case SG_ERROR_SYSCTL:
+		return "sysctl failed";
 	case SG_ERROR_PARSE:
 		return "failed to parse input";
+	case SG_ERROR_GETMNTINFO:
+		return "getmntinfo failed";
+	case SG_ERROR_SETMNTENT:
+		return "setmntent failed";
+	case SG_ERROR_DEVSTAT_GETDEVS:
+		return "devstat_getdevs failed";
+	case SG_ERROR_DEVSTAT_SELECTDEVS:
+		return "devstat_selectdevs failed";
+	case SG_ERROR_ASPRINTF:
+		return "asprintf failed";
 	default:
 		return "unknown error";
 	}
