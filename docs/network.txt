@@ -1,0 +1,45 @@
+Network Statistics
+
+All network statistics return a network_stat_t structure.
+
+typedef struct{
+        char *interface_name;
+        long long tx;
+        long long rx;
+        time_t systime;
+}network_stat_t;
+
+Interface name is the name known to the OS. E.g. eth0 on linux.
+tx is a long long with the number of bytes transmitted.
+rx is a long long with the number of bytes recieved.
+sysname is time_t covering the time the amount of data in rx/tx was 
+generated.
+
+
+network_stat_t *get_network_stats(int *entries);
+
+network_stat_t *get_network_stats_diff(int *entries);
+
+Both calls takes a pointer to a int, entries. This is filled with the number 
+of network interfaces the machine has. You need to know this to know how 
+many network_stat_t how many network_stat_t have been returned.
+
+get_network_stats returns the network traffic stored in the kernel. E.g. 
+since bootup as long as the way it is stored in the kernel can store a large 
+enough number. Solaris 7 can not, it only stores it in a 32bit int, so it 
+can only store upto 4gb before it will wrap around. Solaris 8 upwards stores 
+it in a 64bit int and so is a very large number :)
+
+get_network_stats_diff is the same as get_network_stats except it will 
+return the difference since the last call. So, for instance a call to 
+get_network_stats_diff is made, and called again 5 seconds later. Over that 
+time, 20 bytes of traffic was transmitted and 10 bytes received. Tx will 
+store 20, rx will store 10 and systime will store 5. This function copes 
+with wrap arounds by the O/S so should be seemless to use.
+
+Bugs:
+get_network_stats_diff on very first call will return the same as  
+get_network_stats. After first call it will always return the difference.
+
+Very basic example in examples/network_traffic.c
+
