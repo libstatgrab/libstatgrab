@@ -65,7 +65,6 @@ solaris2.[[6-7]])
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
-	AM_CONDITIONAL(SETUIDBINS, true)
 	LINKFLAGS="-lkstat -ldevinfo -lsocket -lnsl"
 	;;
 freebsd4.*)
