@@ -213,9 +213,30 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 		/* cpu */
 		proc_state_ptr->cpu_percent = (100.0 * (utime + stime)) / ((uptime * 100.0) - starttime);
-		printf("%s  ut: %lu st: %lu up: %lu start: %lu\n", proc_state_ptr->process_name, utime, stime, uptime , starttime);
 
                 fclose(f);
+
+		/* uid / gid */
+		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/status", dir_entry->d_name);
+	        if ((f=fopen(filename, "r")) == NULL) {
+                        /* Open failed.. Process since vanished, or the path was too long.
+                         * Ah well, move onwards to the next one */
+                        continue;
+                }
+
+		if((ptr=sg_f_read_line(f, "Uid:"))==NULL){
+			fclose(f);
+			continue;
+		}
+		sscanf(ptr, "Uid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->uid), &(proc_state_ptr->euid));
+
+		if((ptr=sg_f_read_line(f, "Gid:"))==NULL){
+                        fclose(f);
+                        continue;
+                }
+                sscanf(ptr, "Gid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->gid), &(proc_state_ptr->egid));
+
+		fclose(f);
 
 		/* proctitle */	
 		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/cmdline", dir_entry->d_name);
