@@ -192,11 +192,11 @@ diskio_stat_t *diskio_stat_malloc(int needed_entries, int *cur_entries, diskio_s
 }
 
 static diskio_stat_t *diskio_stats=NULL;	
+static int num_diskio=0;	
 
 diskio_stat_t *get_diskio_stats(int *entries){
 
 	static int sizeof_diskio_stats=0;
-	int disks=0;	
 	diskio_stat_t *diskio_stats_ptr;
 
         kstat_ctl_t *kc;
@@ -207,23 +207,22 @@ diskio_stat_t *get_diskio_stats(int *entries){
                 return NULL;
         }
 
+	num_diskio=0;
+
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-		fflush(stdout);
                 if (!strcmp(ksp->ks_class, "disk")) {
-			fflush(stdout);
 
 			if(ksp->ks_type != KSTAT_TYPE_IO) continue;
-			/* We dont want metadevices appearins as disks */
+			/* We dont want metadevices appearins as num_diskio */
 			if(strcmp(ksp->ks_module, "md")==0) continue;
                         if((kstat_read(kc, ksp, &kios))==-1){	
-				fflush(stdout);
 			}
 			
-			if((diskio_stats=diskio_stat_malloc(disks+1, &sizeof_diskio_stats, diskio_stats))==NULL){
+			if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
 				kstat_close(kc);
 				return NULL;
 			}
-			diskio_stats_ptr=diskio_stats+disks;
+			diskio_stats_ptr=diskio_stats+num_diskio;
 			
 			diskio_stats_ptr->read_bytes=kios.nread;
 			
@@ -232,14 +231,78 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 
 			diskio_stats_ptr->disk_name=strdup(ksp->ks_name);
-			disks++;
-			fflush(stdout);
+			num_diskio++;
 		}
 	}
 
 	kstat_close(kc);
 
-	*entries=disks;
+	*entries=num_diskio;
 
 	return diskio_stats;
+}
+
+diskio_stat_t *get_diskio_stat_diff(int *entries){
+	static diskio_stat_t *diskio_stats_diff=NULL;
+	static int sizeof_diskio_stats_diff=0;
+	diskio_stat_t *diskio_stats_diff_ptr, *diskio_stats_ptr;
+	int disks, x, y;
+
+	if(diskio_stats==NULL){
+		diskio_stats_ptr=get_diskio_stats(&disks);
+		*entries=disks;
+		return diskio_stats_ptr;
+	}
+
+	diskio_stats_diff=diskio_stat_malloc(num_diskio, &sizeof_diskio_stats_diff, diskio_stats_diff);
+	if(diskio_stats_diff==NULL){
+		return NULL;
+	}
+
+	diskio_stats_diff_ptr=diskio_stats_diff;
+	diskio_stats_ptr=diskio_stats;
+
+	for(disks=0;disks<num_diskio;disks++){
+		if(diskio_stats_diff_ptr->disk_name!=NULL){
+			free(diskio_stats_diff_ptr->disk_name);
+		}
+		diskio_stats_diff_ptr->disk_name=strdup(diskio_stats_ptr->disk_name);
+		diskio_stats_diff_ptr->read_bytes=diskio_stats_ptr->read_bytes;
+		diskio_stats_diff_ptr->write_bytes=diskio_stats_ptr->write_bytes;
+		diskio_stats_diff_ptr->systime=diskio_stats_ptr->systime;
+
+		diskio_stats_diff_ptr++;
+		diskio_stats_ptr++;
+	}
+
+	diskio_stats_ptr=get_diskio_stats(&disks);
+	diskio_stats_diff_ptr=diskio_stats_diff;
+
+	for(x=0;x<sizeof_diskio_stats_diff;x++){
+
+		if((strcmp(diskio_stats_diff_ptr->disk_name, diskio_stats_ptr->disk_name))==0){
+			diskio_stats_diff_ptr->read_bytes=diskio_stats_ptr->read_bytes-diskio_stats_diff_ptr->read_bytes;
+			diskio_stats_diff_ptr->write_bytes=diskio_stats_ptr->write_bytes-diskio_stats_diff_ptr->write_bytes;
+			diskio_stats_diff_ptr->systime=diskio_stats_ptr->systime-diskio_stats_diff_ptr->systime;
+		}else{
+			diskio_stats_ptr=diskio_stats;
+			for(y=0;y<disks;y++){
+				if((strcmp(diskio_stats_diff_ptr->disk_name, diskio_stats_ptr->disk_name))==0){
+					diskio_stats_diff_ptr->read_bytes=diskio_stats_ptr->read_bytes-diskio_stats_diff_ptr->read_bytes;
+					diskio_stats_diff_ptr->write_bytes=diskio_stats_ptr->write_bytes-diskio_stats_diff_ptr->write_bytes;
+					diskio_stats_diff_ptr->systime=diskio_stats_ptr->systime-diskio_stats_diff_ptr->systime;
+
+					break;
+				}
+				
+				diskio_stats_ptr++;
+			}
+		}
+
+		diskio_stats_ptr++;
+		diskio_stats_diff_ptr++;	
+
+	}
+
+	return diskio_stats_diff;
 }
