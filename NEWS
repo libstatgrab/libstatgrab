@@ -5,6 +5,7 @@ $Id$
 
 libstatgrab 0.11 (09 November 2004)
  * Add support for HP-UX 11.11.
+    (Patches provided by Roy Keene)
  * Minor fixes to statgrab mrtg tools.
  * Minor fixes to saidar.
  * Minor code cleanups and fixes to libstatgrab.
