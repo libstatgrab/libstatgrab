@@ -18,12 +18,12 @@ install-exec-local:
 if SAIDAR
 if SETGIDBINS
 # Some operating systems need the binary to be setgid kmem
-	chgrp kmem @bindir@/saidar
-	chmod g+s @bindir@/saidar
+	chgrp kmem $(DESTDIR)@bindir@/saidar
+	chmod g+s $(DESTDIR)@bindir@/saidar
 endif
 if SETUIDBINS
 # Some operating systems need the binary to be setuid root
-	chown root @bindir@/saidar
-	chmod u+s @bindir@/saidar
+	chown root $(DESTDIR)@bindir@/saidar
+	chmod u+s $(DESTDIR)@bindir@/saidar
 endif
 endif

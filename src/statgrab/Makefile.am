@@ -19,12 +19,12 @@ install-exec-local:
 if STATGRAB
 if SETGIDBINS
 # Some operating systems need the binary to be setgid kmem
-	chgrp kmem @bindir@/statgrab
-	chmod g+s @bindir@/statgrab
+	chgrp kmem $(DESTDIR)@bindir@/statgrab
+	chmod g+s $(DESTDIR)@bindir@/statgrab
 endif
 if SETUIDBINS
 # Some operating systems need the binary to be setuid root
-	chown root @bindir@/statgrab
-	chmod u+s @bindir@/statgrab
+	chown root $(DESTDIR)@bindir@/statgrab
+	chmod u+s $(DESTDIR)@bindir@/statgrab
 endif
 endif
