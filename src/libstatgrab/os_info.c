@@ -1,5 +1,5 @@
 /*
- * i-scream central monitoring system
+ * i-scream libstatgrab
  * http://www.i-scream.org
  * Copyright (C) 2000-2004 i-scream
  * 
