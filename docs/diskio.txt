@@ -1,0 +1,46 @@
+Diskio Statistics
+
+All diskio statistics return a diskio_stat_t structure.
+
+typedef struct{
+        char *disk_name;
+        long long read_bytes;
+        long long write_bytes;
+        time_t systime;
+}diskio_stat_t;
+
+disk_name is the name know to the OS. E.g. hda on linux.
+read_bytes is the number of bytes that disk has read.
+write_bytes is the number of bytes that disk has written.
+sysname is time_t covering the time the amount of data in rx/tx was
+generated.
+
+diskio_stat_t *get_diskio_stats(int *entries);
+
+diskio_stat_t *get_diskio_stats_diff(int *entries);
+
+Both calls take a pointer to an int, "entries". This is filled with the number
+of disks the machine has. You need to know this to know how many diskio_stat_t 
+have been returned.
+
+get_diskio_stats returns the disk io stored in the kernel. E.g.
+since bootup as long as the way it is stored in the kernel can store a large
+enough number. Solaris 7 can not, it only stores it in a 32bit int, so it
+can only store upto 4gb before it will wrap around. Solaris 8 upwards stores
+it in a 64bit int and so is a very large number :)
+
+get_diskio_stats_diff is the same as get_diskio_stats except it will
+return the difference since the last call. So, for instance a call to
+get_diskio_stats_diff is made, and called again 5 seconds later. Over that
+time, 2000 bytes of traffic was written and 10000 bytes read. write_bytes will
+store 2000 bytes, read_bytes will store 10000 and systime will store 5. This 
+function copes with wrap arounds by the O/S so should be seemless to use.
+
+Bugs:
+get_diskio_stats_diff on very first call will return the same as
+get_diskio_stats. After first call it will always return the difference.
+On machines that hold only 32bits of information, if the call is made 2x
+wrap around (eg sol7 9gb has been transferred, and it wraps at 4gb) it will
+return incorrect results (case above, it would say 5gb transferred).
+
+Very basic example in examples/disk_traffic.c
