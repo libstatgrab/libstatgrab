@@ -200,7 +200,9 @@
     
     <simplelist type="vert">
       <member>
-        <ulink url="http://www.i-scream.org">http://www.i-scream.org</ulink>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
       </member>
     </simplelist>
   </refsect1>
