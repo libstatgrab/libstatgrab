@@ -50,7 +50,12 @@ solaris2.*)
 	LINKFLAGS="-lkstat"
 	;;
 freebsd4.*)
-	AC_DEFINE(FREEBSD, , [Building on FreeBSD 4.x])
+	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
+	LINKFLAGS="-lkvm -ldevstat"
+	;;
+freebsd5.*)
+	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
+	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x])
 	LINKFLAGS="-lkvm -ldevstat"
 	;;
 linux-gnu)
