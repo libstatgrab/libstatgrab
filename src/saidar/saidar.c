@@ -296,15 +296,16 @@ void display_data(){
 	}
 
 	/* VM */
-	if (stats.mem_stats != NULL) {	
+	if (stats.mem_stats != NULL && stats.mem_stats->total != 0) {	
 		move(6, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total));
 	}
-	if (stats.swap_stats != NULL) {	
+	if (stats.swap_stats != NULL && stats.swap_stats->total != 0) {	
 		move(7, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total));
 	}
-	if (stats.mem_stats != NULL && stats.swap_stats != NULL) {	
+	if (stats.mem_stats != NULL && stats.swap_stats != NULL &&
+	    stats.mem_stats->total != 0 && stats.swap_stats->total != 0) {	
 		move(8, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used+stats.swap_stats->used)/(stats.mem_stats->total+stats.swap_stats->total)));
 	}
