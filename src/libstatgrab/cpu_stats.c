@@ -53,7 +53,7 @@ cpu_states_t *get_cpu_totals(){
         kstat_t *ksp;
 	cpu_stat_t cs;
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(CYGWIN)
 	FILE *f;
 #endif
 #ifdef ALLBSD

@@ -64,14 +64,13 @@ typedef struct{
 #define MAX_LOGIN_NAME_SIZE 8
 #endif
 #if defined(LINUX) || defined(FREEBSD)
-#if defined(CYGWIN)
-#define MAX_LOGIN_NAME_SIZE _SC_LOGIN_NAME_MAX
-#else
 #define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
-#endif
 #endif
 #ifdef NETBSD
 #define MAX_LOGIN_NAME_SIZE _POSIX_LOGIN_NAME_MAX
+#endif
+#if defined(CYGWIN)
+#define MAX_LOGIN_NAME_SIZE _SC_LOGIN_NAME_MAX
 #endif
 
 typedef struct{
