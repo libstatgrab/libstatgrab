@@ -345,8 +345,8 @@ int get_proc_snapshot(proc_state_t **ps){
 			if(args != NULL) {
 				argsp = args;
 				while(*argsp != NULL) {
-					argslen += strlen(*args);
-					args++;
+					argslen += strlen(*argsp) + 1;
+					argsp++;
 				}
 				proctitle = malloc(argslen + 1);
 				proctitle[0] = '\0';
@@ -354,8 +354,8 @@ int get_proc_snapshot(proc_state_t **ps){
 					return -1;
 				}
 				while(*args != NULL) {
-					strlcat(proctitle, *args, argslen);
-					strlcat(proctitle, " ", argslen);
+					strlcat(proctitle, *args, argslen + 1);
+					strlcat(proctitle, " ", argslen + 1);
 					args++;
 				}
 				/* remove trailing space */
