@@ -153,7 +153,7 @@ int get_proc_snapshot(proc_state_t **ps){
                 if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = RUNNING; 
 #endif
 #ifdef LINUX
-		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*lu %*lu %*lu %*lu %*lu %lu %lu %*ld %*ld %*ld %d %*ld %*ld %*lu %llu %llu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
+		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %*u %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
 		proc_state_ptr->proc_resident = proc_state_ptr->proc_resident * getpagesize();
 		if(s == 'S') proc_state_ptr->state = SLEEPING;
 		if(s == 'R') proc_state_ptr->state = RUNNING;
