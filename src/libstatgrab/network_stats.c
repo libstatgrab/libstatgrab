@@ -44,6 +44,8 @@
 #include <sys/socket.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <net/if_media.h>
+#include <sys/ioctl.h>
 #endif
 
 static network_stat_t *network_stats=NULL;
@@ -360,20 +362,100 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 	static network_iface_stat_t *network_iface_stats;
 	network_iface_stat_t *network_iface_stat_ptr;
 	static int sizeof_network_iface_stats=0;	
-	int ifaces;
+	static int ifaces;
 
 #ifdef SOLARIS
         kstat_ctl_t *kc;
         kstat_t *ksp;
 	kstat_named_t *knp;
 #endif
+#ifdef ALLBSD
+        struct ifaddrs *net, *net_ptr;
+	struct ifmediareq ifmed;
+	int s;
+	int x;
+#endif
+
+	ifaces = 0;
+#ifdef ALLBSD
+        if(getifaddrs(&net) != 0){
+                return NULL;
+        }
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == NULL) return NULL;
+
+	for(net_ptr=net; net_ptr!=NULL; net_ptr=net_ptr->ifa_next){
+                if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
+                network_iface_stats=network_iface_stat_malloc((ifaces+1), &sizeof_network_iface_stats, network_iface_stats);
+                if(network_iface_stats==NULL){
+                        return NULL;
+                }
+                network_iface_stat_ptr = network_iface_stats + ifaces;
+
+		memset(&ifmed, 0, sizeof(struct ifmediareq));
+		strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
+		if(ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmed) == -1){
+			continue;
+		}
+
+		/* We may need to change this if we start doing wireless devices too */
+		if( (ifmed.ifm_active | IFM_ETHER) != ifmed.ifm_active ){
+			/* Not a ETHER device */
+			continue;
+		}
+
+		if(network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
+		network_iface_stat_ptr->interface_name = strdup(net_ptr->ifa_name);
+		if(network_iface_stat_ptr->interface_name == NULL) return NULL;
+
+		/* Only intrested in the first 4 bits)  - Assuming only ETHER devices */
+		x = ifmed.ifm_active & 0x0f;	
+		switch(x){
+			/* 10 Mbit connections. Speedy :) */
+			case(IFM_10_T):
+			case(IFM_10_2):
+			case(IFM_10_5):
+			case(IFM_10_STP):
+			case(IFM_10_FL):
+				network_iface_stat_ptr->speed = 10;
+				break;
+			/* 100 Mbit conneections */
+			case(IFM_100_TX):
+			case(IFM_100_FX):
+			case(IFM_100_T4):
+			case(IFM_100_VG):
+			case(IFM_100_T2):
+				network_iface_stat_ptr->speed = 100;
+				break;
+			/* 1000 Mbit connections */
+			case(IFM_1000_SX):
+			case(IFM_1000_LX):
+			case(IFM_1000_CX):
+			case(IFM_1000_TX):
+				network_iface_stat_ptr->speed = 1000;
+				break;
+			/* We don't know what it is */
+			default:
+				network_iface_stat_ptr->speed = 0;
+				break;
+		}
+
+		if( (ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active ){
+			network_iface_stat_ptr->dup = FULL_DUPLEX;
+		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
+			network_iface_stat_ptr->dup = HALF_DUPLEX;
+		}else{
+			network_iface_stat_ptr->dup = NO_DUPLEX;
+		}
+		ifaces++;
+	}	
+	freeifaddrs(net);
+#endif
 
 #ifdef SOLARIS
         if ((kc = kstat_open()) == NULL) {
                 return NULL;
         }
-
-	ifaces=0;
 
     	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         	if (!strcmp(ksp->ks_class, "net")) {
@@ -386,7 +468,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			if(network_iface_stats==NULL){
 				return NULL;
 			}
-			network_iface_stat_ptr = network_iface_stats + interfaces;
+			network_iface_stat_ptr = network_iface_stats + ifaces;
 			network_iface_stat_ptr->speed = knp->value.ui64 / (1000*1000);
 
 			if((knp=kstat_data_lookup(ksp, "link_duplex"))==NULL){
@@ -400,14 +482,16 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 				network_iface_stat_ptr->dup = HALF_DUPLEX;
 			}
 
+			if(network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
 			network_iface_stat_ptr->interface_name = strdup(ksp->ks_name);
-			interfaces++;
+			if(network_iface_stat_ptr->interface_name == NULL) return NULL;
+			ifaces++;
 		}
 	}
 	kstat_close(kc);
 	
 #endif	
-	*entries = interfaces;
+	*entries = ifaces;
 	return network_iface_stats; 
 }
 
