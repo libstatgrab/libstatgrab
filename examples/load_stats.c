@@ -43,6 +43,12 @@ int main(int argc, char **argv){
 	/* Initialise statgrab */
 	statgrab_init();
 
+	/* Drop setuid/setgid privileges. */
+	if (statgrab_drop_privileges() != 0) {
+		perror("Error. Failed to drop privileges");
+		return 1;
+	}
+
 	while( (load_stat = get_load_stats()) != NULL){
 		printf("Load 1 : %5.2f\t Load 5 : %5.2f\t Load 15 : %5.2f\n", load_stat->min1, load_stat->min5, load_stat->min15);
 		sleep(delay);

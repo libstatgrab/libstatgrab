@@ -43,6 +43,12 @@ int main(int argc, char **argv){
 	/* Initialise statgrab */
 	statgrab_init();
 
+	/* Drop setuid/setgid privileges. */
+	if (statgrab_drop_privileges() != 0) {
+		perror("Error. Failed to drop privileges");
+		return 1;
+	}
+
 	/* Throw away the first reading as thats averaged over the machines uptime */
 	cpu_percent = cpu_percent_usage();
 

@@ -71,6 +71,12 @@ int main(int argc, char **argv){
 	/* Initialise statgrab */
 	statgrab_init();
 
+	/* Drop setuid/setgid privileges. */
+	if (statgrab_drop_privileges() != 0) {
+		perror("Error. Failed to drop privileges");
+		return 1;
+	}
+
 	/* We are not interested in the amount of traffic ever transmitted, just differences. 
 	 * Because of this, we do nothing for the very first call.
 	 */

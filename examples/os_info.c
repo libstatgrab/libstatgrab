@@ -30,6 +30,12 @@ int main(int argc, char **argv){
 	/* Initialise statgrab */
 	statgrab_init();
 
+	/* Drop setuid/setgid privileges. */
+	if (statgrab_drop_privileges() != 0) {
+		perror("Error. Failed to drop privileges");
+		return 1;
+	}
+
 	general_stats = get_general_stats();
 
 	if(general_stats == NULL){

@@ -43,6 +43,12 @@ int main(int argc, char **argv){
 	/* Initialise statgrab */
 	statgrab_init();
 
+	/* Drop setuid/setgid privileges. */
+	if (statgrab_drop_privileges() != 0) {
+		perror("Error. Failed to drop privileges");
+		return 1;
+	}
+
 	while( (page_stats = get_page_stats_diff()) != NULL){
 		printf("Pages in : %lld\n", page_stats->pages_pagein);
 		printf("Pages out : %lld\n", page_stats->pages_pageout);

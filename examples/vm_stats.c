@@ -46,6 +46,12 @@ int main(int argc, char **argv){
 	/* Initialise statgrab */
 	statgrab_init();
 
+	/* Drop setuid/setgid privileges. */
+	if (statgrab_drop_privileges() != 0) {
+		perror("Error. Failed to drop privileges");
+		return 1;
+	}
+
 	if( ((mem_stats=get_memory_stats()) != NULL) && (swap_stats=get_swap_stats()) != NULL){
 		printf("Total memory in bytes : %lld\n", mem_stats->total);
 		printf("Used memory in bytes : %lld\n", mem_stats->used);
