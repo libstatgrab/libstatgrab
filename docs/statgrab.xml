@@ -85,6 +85,11 @@
       </funcprototype>
 
       <funcprototype>
+        <funcdef>network_iface_stat_t *<function>get_network_iface_stats</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
         <funcdef>page_stat_t *<function>get_page_stats</function></funcdef>
         <void/>
       </funcprototype>
@@ -134,9 +139,10 @@
       non-zero on failure.
     </para>
     <para>
-      The library was originally written to support the i-scream central
-      monitoring system, but has since become a standalone package. It
-      has been ported to work on Linux, NetBSD, FreeBSD, Solaris and Cygwin.
+      The library was originally written to support the i-scream
+      central monitoring system, but has since become a standalone
+      package. It has been ported to work on Linux, NetBSD, FreeBSD,
+      OpenBSD, DragonFly BSD, Solaris and Cygwin.
     </para>
   </refsect1>
   
@@ -167,6 +173,10 @@
         </citerefentry>
         <citerefentry>
           <refentrytitle>get_network_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_network_iface_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>

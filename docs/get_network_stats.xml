@@ -55,6 +55,11 @@
       in a 64bit int, which wraps somewhere near 17 million terabytes.
     </para>
     <para>
+      <function>get_network_stats</function> also returns the number
+      of packets sent and received, and the number of errors that
+      have occured. It also makes the number of collisions available.
+    </para>
+    <para>
       <function>get_network_stats_diff</function> is the same as
       <function>get_network_stats</function> except it will return the
       difference since the last call. So, for instance a call to
@@ -79,6 +84,11 @@ typedef struct{
         char *interface_name;
         long long tx;
         long long rx;
+        long long ipackets;
+        long long opackets;
+        long long ierrors;
+        long long oerrors;
+        long long collisions;
         time_t systime;
 }network_stat_t;
     </programlisting>
@@ -112,6 +122,56 @@ typedef struct{
         <listitem>
           <para>
             The number of bytes received.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>ipackets</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of packets received.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>opackets</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of packets transmitted.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>ierrors</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of receive errors.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>oerrors</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of transmit errors.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>collisions</structfield>
+        </term>
+        <listitem>
+          <para>
+            The number of collisions.
           </para>
         </listitem>
       </varlistentry>
