@@ -192,21 +192,41 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			return NULL;
 		}
 
-		if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
-		if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
-		if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE; 
-		if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = SG_PROCESS_STATE_STOPPED; 
-		if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
+		switch (process_info.pr_lwp.pr_state) {
+		case 1:
+			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+			break;
+		case 2:
+		case 5:
+			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
+			break;
+		case 3:
+			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE; 
+			break;
+		case 4:
+			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED; 
+			break;
+		}
 #endif
 #ifdef LINUX
 		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %lu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &starttime, &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
 		/* +3 becuase man page says "Resident  Set Size: number of pages the process has in real memory, minus 3 for administrative purposes." */
 		proc_state_ptr->proc_resident = (proc_state_ptr->proc_resident + 3) * getpagesize();
-		if(s == 'S') proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
-		if(s == 'R') proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
-		if(s == 'Z') proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
-		if(s == 'T') proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
-		if(s == 'D') proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+		switch (s) {
+		case 'S':
+			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+			break;
+		case 'R':
+			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+			break;
+		case 'Z':
+			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+			break;
+		case 'T':
+		case 'D':
+			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+			break;
+		}
 	
 		/* pa_name[0] should = '(' */
 		ptr = strchr(&ps_name[1], ')');	
