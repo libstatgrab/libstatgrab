@@ -25,6 +25,9 @@ Solaris 2.9 (sparc & x86)
 Platform Specific Notes
 =======================
 
+Unless explicitly mentioned below assume that libstatgrab will run on
+any of the platforms above without any elevated privileges.
+
 Linux
 -----
 
@@ -55,6 +58,10 @@ It is sufficient to use statgrab_init and statgrab_drop_privileges.
 
 Cygwin
 ------
+
+Full support for libstatgrab isn't yet provided on cygwin - there are
+some stats which we just can't get. In these cases the functions will
+return NULL to indicate failure.
 
 If you have installed libncurses-devel but the configure script can't
 find ncurses.h, you've most likely hit a bug in the cygwin package. To
