@@ -112,8 +112,12 @@ static void add_mapping(char *bsd, char *svr){
 	}
 
 	map_ptr->next = NULL;
-	map_ptr->bsd = strdup(bsd);
-	map_ptr->svr = strdup(svr);
+	map_ptr->bsd = NULL;
+	map_ptr->svr = NULL;
+	if (sg_update_string(&map_ptr->bsd, bsd) < 0
+	    || sg_update_string(&map_ptr->svr, svr) < 0) {
+		return;
+	}
 
 	return;
 }
@@ -123,7 +127,7 @@ static char *read_dir(char *disk_path){
 	DIR *dirp;
 	struct dirent *dp;
 	struct stat stbuf;
-	char *svr_name;
+	char *svr_name = NULL;
 	char current_dir[MAXPATHLEN];
 	char file_name[MAXPATHLEN];
 	char temp_name[MAXPATHLEN];
@@ -150,7 +154,10 @@ static char *read_dir(char *disk_path){
 			x = readlink(dir_dname, file_name, sizeof(file_name));
 			file_name[x] = '\0';
 			if (strcmp(file_name, temp_name) == 0) {
-				svr_name = strdup(dp->d_name);
+				if (sg_update_string(&svr_name,
+				                     dp->d_name) < 0) {
+					return NULL;
+				}
 				closedir(dirp);
 				return svr_name;
 			}

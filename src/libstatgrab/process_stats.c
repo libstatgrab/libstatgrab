@@ -177,8 +177,14 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->proc_resident = (process_info.pr_rssize) * 1024;
 		proc_state_ptr->time_spent = process_info.pr_time.tv_sec;
 		proc_state_ptr->cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
-		proc_state_ptr->process_name = strdup(process_info.pr_fname);
-		proc_state_ptr->proctitle = strdup(process_info.pr_psargs);
+		if (sg_update_string(&proc_state_ptr->process_name,
+		                     process_info.pr_fname) < 0) {
+			return NULL;
+		}
+		if (sg_update_string(&proc_state_ptr->proctitle,
+		                     process_info.pr_psargs) < 0) {
+			return NULL;
+		}
 
                 if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
                 if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
