@@ -180,16 +180,21 @@ network_stat_t *get_network_stats(int *entries){
                 	kstat_read(kc, ksp, NULL);
 
 #ifdef SOL7
-#define RLOOKUP "rbytes"
-#define WLOOKUP "obytes"
+#define LRX "rbytes"
+#define LTX "obytes"
+#define LIPACKETS "ipackets"
+#define LOPACKETS "opackets"
 #define VALTYPE value.ui32
 #else
-#define RLOOKUP "rbytes64"
-#define WLOOKUP "obytes64"
+#define LRX "rbytes64"
+#define LTX "obytes64"
+#define LIPACKETS "ipackets64"
+#define LOPACKETS "opackets64"
 #define VALTYPE value.ui64
 #endif
 
-			if((knp=kstat_data_lookup(ksp, RLOOKUP))==NULL){
+			/* Read rx */
+			if((knp=kstat_data_lookup(ksp, LRX))==NULL){
 				/* This is a network interface, but it doesn't
 				 * have the rbytes/obytes values; for instance,
 				 * the loopback devices have this behaviour
@@ -197,23 +202,61 @@ network_stat_t *get_network_stats(int *entries){
 				continue;
 			}
 
+			/* Create new network_stats */
 			network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
 			if(network_stats==NULL){
 				return NULL;
 			}
 			network_stat_ptr=network_stats+interfaces;
+
+			/* Finish reading rx */
 			network_stat_ptr->rx=knp->VALTYPE;
 
-			if((knp=kstat_data_lookup(ksp, WLOOKUP))==NULL){
+			/* Read tx */
+			if((knp=kstat_data_lookup(ksp, LTX))==NULL){
 				continue;
 			}
 			network_stat_ptr->tx=knp->VALTYPE;
+
+			/* Read ipackets */
+			if((knp=kstat_data_lookup(ksp, LIPACKETS))==NULL){
+				continue;
+			}
+			network_stat_ptr->ipackets=knp->VALTYPE;
+
+			/* Read opackets */
+			if((knp=kstat_data_lookup(ksp, LOPACKETS))==NULL){
+				continue;
+			}
+			network_stat_ptr->opackets=knp->VALTYPE;
+
+			/* Read ierrors */
+			if((knp=kstat_data_lookup(ksp, "ierrors"))==NULL){
+				continue;
+			}
+			network_stat_ptr->ierrors=knp->value.ui32;
+
+			/* Read oerrors */
+			if((knp=kstat_data_lookup(ksp, "oerrors"))==NULL){
+				continue;
+			}
+			network_stat_ptr->oerrors=knp->value.ui32;
+
+			/* Read collisions */
+			if((knp=kstat_data_lookup(ksp, "collisions"))==NULL){
+				continue;
+			}
+			network_stat_ptr->collisions=knp->value.ui32;
+
+			/* Read interface name */
 			if(network_stat_ptr->interface_name!=NULL){
 				free(network_stat_ptr->interface_name);
 			}
 			network_stat_ptr->interface_name=strdup(ksp->ks_name);
 
+			/* Store systime */
 			network_stat_ptr->systime=time(NULL);
+
 			interfaces++;
 		}
 	}
