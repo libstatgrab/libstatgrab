@@ -42,7 +42,7 @@ int main(){
 
         ps_size = get_proc_snapshot(&ps);
 
-	if(ps_size == NULL){
+	if(ps_size == 0){
 		fprintf(stderr, "Failed to get process snapshot\n");
 		exit(1);
 	}
