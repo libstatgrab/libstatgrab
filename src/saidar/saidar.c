@@ -210,7 +210,9 @@ void display_data(){
 	char *ptr;
 
 	move(0,12);
-	strncpy(hostname, stats.general_stats->hostname, sizeof(hostname));
+	strncpy(hostname, stats.general_stats->hostname, (sizeof(hostname) - 1));
+	/* strncpy does not NULL terminate.. If only strlcpy was on all platforms :) */
+	hostname[14] = '\0';
 	ptr=strchr(hostname, '.');
 	/* Some hosts give back a FQDN for hostname. To avoid this, we'll
 	 * just blank out everything after the first "."
