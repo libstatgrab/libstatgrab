@@ -154,12 +154,16 @@ process_stat_t *get_process_stats(){
 		if (kp_stats[procs].kp_proc.p_stat == SIDL) process_stat.running++;
 		if (kp_stats[procs].kp_proc.p_stat == SZOMB) process_stat.zombie++;
 		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
+		process_stat.total++;
 #endif
 	}
 
 	kvm_close(kvmd);
 #endif
 
+#ifndef FREEBSD5
 	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;
+#endif
+
 	return &process_stat;
 }
