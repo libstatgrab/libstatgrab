@@ -430,10 +430,6 @@ int main(int argc, char **argv){
 
 	WINDOW *window;
 
-	int stdin_fileno;
-	fd_set infds;
-	struct timeval timeout;
-
 	extern int errno;
 	char ch;
 
@@ -476,6 +472,7 @@ int main(int argc, char **argv){
         nonl();
         cbreak();
         noecho();
+	timeout(delay * 1000);
         window=newwin(0, 0, 0, 0);
 	clear();
 
@@ -486,28 +483,12 @@ int main(int argc, char **argv){
 	}
 
 	display_headings();
-	stdin_fileno=fileno(stdin);
 
 	for(;;){
-
-		FD_ZERO(&infds);
-		FD_SET(stdin_fileno, &infds);
-		timeout.tv_sec = delay;
-		timeout.tv_usec = 0;
-		
-		if((select((stdin_fileno+1), &infds, NULL, NULL, &timeout)) == -1){
-			if(errno!=EINTR){
-				perror("select failed");
-				exit(1);
-			}
-		}
-
-		if(FD_ISSET(stdin_fileno, &infds)){
-			ch=getch();
-			if (ch == 'q'){
-				endwin();
-				return 0;
-			}
+		ch = getch();
+		if (ch == 'q'){
+			endwin();
+			return 0;
 		}
 
 		get_stats();
