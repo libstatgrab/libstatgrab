@@ -22,12 +22,14 @@
 #include "config.h"
 #endif
 
+#include "statgrab.h"
+#if defined(SOLARIS) || defined(LINUX)
 #include <stdio.h>
 #include <stdlib.h>
-#include "statgrab.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#endif
 
 #ifdef SOLARIS
 #include <procfs.h>
@@ -41,22 +43,37 @@
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
+#ifdef FREEBSD
+#include <kvm.h>
+#include <fcntl.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
+#endif
 
 process_stat_t *get_process_stats(){
 
 	static process_stat_t process_stat;
 
+#if defined(SOLARIS) || defined(LINUX)
 	DIR *proc_dir; 
 	struct dirent *dir_entry;
 	char filename[MAX_FILE_LENGTH];
 	FILE *f;
+#endif
 #ifdef LINUX
 	char *line_ptr;
 #endif
 #ifdef SOLARIS
 	psinfo_t process_info;
 #endif
+#ifdef FREEBSD
+	struct kinfo_proc *kp_stats;	
+	kvm_t *kvmd = NULL;
+	int procs;
+#endif
 
+#if defined(SOLARIS) || defined(LINUX)
 	process_stat.sleeping=0;
         process_stat.running=0;
         process_stat.zombie=0;
@@ -116,7 +133,24 @@ process_stat_t *get_process_stats(){
 		fclose(f);
 	}
 	closedir(proc_dir);
+#endif
+#ifdef FREEBSD
+	if((kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL)) == NULL){
+		return NULL;
+	}
 
+	kp_stats=kvm_getprocs(kvmd, KERN_PROC_ALL, 0, &procs);
+
+	while(procs--){
+		if (kp_stats[procs].kp_proc.p_stat == SSLEEP) process_stat.sleeping++;	
+		if (kp_stats[procs].kp_proc.p_stat == SRUN) process_stat.running++;
+		if (kp_stats[procs].kp_proc.p_stat == SIDL) process_stat.running++;
+		if (kp_stats[procs].kp_proc.p_stat == SZOMB) process_stat.zombie++;
+		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
+	}
+
+	kvm_close(kvmd);
+#endif
 
 	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;
 	return &process_stat;
