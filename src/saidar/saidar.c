@@ -448,7 +448,7 @@ int main(int argc, char **argv){
                 switch (c){
                         case 'd':
                                 delay = atoi(optarg);
-				if (delay == 0){
+				if (delay < 1){
 					fprintf(stderr, "Time must be 1 second or greater\n");
 					exit(1);
 				}

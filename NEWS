@@ -13,6 +13,7 @@ libstatgrab 0.8.1 (21 January 2004)
  * Some incorrect #includes moved.
  * Significant speed increases to the Solaris disk mapping code in
    statgrab_init, which improves startup time.
+ * Minor fix for saidar's -d flag and negative numbers.
 
 libstatgrab 0.8 (06 January 2004)
 
