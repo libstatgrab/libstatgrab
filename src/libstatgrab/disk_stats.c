@@ -590,16 +590,16 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	   the same format. */
 
 	f = fopen("/proc/diskstats", "r");
-	format = " %d %d %19s %*d %*d %lld %*d %*d %*d %lld";
+	format = " %d %d %99s %*d %*d %lld %*d %*d %*d %lld";
 	if (f == NULL) {
 		f = fopen("/proc/partitions", "r");
-		format = " %d %d %*d %19s %*d %*d %lld %*d %*d %*d %lld";
+		format = " %d %d %*d %99s %*d %*d %lld %*d %*d %*d %lld";
 	}
 	if (f == NULL) goto out;
 	now = time(NULL);
 
 	while ((line_ptr = f_read_line(f, "")) != NULL) {
-		char name[20];
+		char name[100];
 		char *s;
 		long long rsect, wsect;
 
