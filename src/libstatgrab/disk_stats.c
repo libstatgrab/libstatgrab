@@ -30,6 +30,7 @@
 #include <string.h>
 #include <time.h>
 #include "statgrab.h"
+#include "vector.h"
 
 #ifdef SOLARIS
 #include <sys/mnttab.h>
@@ -75,8 +76,6 @@
                         "ntfs"}
 #endif
 
-#define START_VAL 1
-
 char *copy_string(char *orig_ptr, const char *newtext){
 
 	/* Maybe free if not NULL, and strdup rather than realloc and strcpy? */
@@ -89,16 +88,16 @@ char *copy_string(char *orig_ptr, const char *newtext){
 	return orig_ptr;
 }
 
+static void disk_stat_init(disk_stat_t *d) {
+	d->device_name = NULL;
+	d->fs_type = NULL;
+	d->mnt_point = NULL;
+}
 
-void init_disk_stat(int start, int end, disk_stat_t *disk_stats){
-
-	for(disk_stats+=start; start<=end; start++){
-		disk_stats->device_name=NULL;
-		disk_stats->fs_type=NULL;
-		disk_stats->mnt_point=NULL;
-		
-		disk_stats++;
-	}
+static void disk_stat_destroy(disk_stat_t *d) {
+	free(d->device_name);
+	free(d->fs_type);
+	free(d->mnt_point);
 }
 
 int is_valid_fs_type(const char *type) {
@@ -114,9 +113,8 @@ int is_valid_fs_type(const char *type) {
 }
 
 disk_stat_t *get_disk_stats(int *entries){
-
-	static disk_stat_t *disk_stats;
-	static int watermark=-1;
+	VECTOR_DECLARE_STATIC(disk_stats, disk_stat_t, 10,
+	                      disk_stat_init, disk_stat_destroy);
 
 	int valid_type;
 	int num_disks=0;
@@ -139,14 +137,6 @@ disk_stat_t *get_disk_stats(int *entries){
 	struct statfs *mp;
 #endif
 
-	if(watermark==-1){
-		disk_stats=malloc(START_VAL * sizeof(disk_stat_t));
-		if(disk_stats==NULL){
-			return NULL;
-		}
-		watermark=START_VAL;
-		init_disk_stat(0, watermark-1, disk_stats);
-	}
 #ifdef ALLBSD
 	nummnt=getmntinfo(&mp , MNT_LOCAL);
 	if (nummnt<=0){
@@ -181,18 +171,11 @@ disk_stat_t *get_disk_stats(int *entries){
 #endif
 
 		if(valid_type){
-			if(num_disks>watermark-1){
-				disk_ptr=disk_stats;
-				if((disk_stats=realloc(disk_stats, (watermark*2 * sizeof(disk_stat_t))))==NULL){
-					disk_stats=disk_ptr;
-					return NULL;
-				}
-
-				watermark=watermark*2;
-				init_disk_stat(num_disks, watermark-1, disk_stats);
+			if (VECTOR_RESIZE(disk_stats, num_disks + 1) < 0) {
+				return NULL;
 			}
-
 			disk_ptr=disk_stats+num_disks;
+
 #ifdef ALLBSD
 			if((disk_ptr->device_name=copy_string(disk_ptr->device_name, mp->f_mntfromname))==NULL){
 				return NULL;
@@ -281,43 +264,17 @@ disk_stat_t *get_disk_stats(int *entries){
 	return disk_stats;
 
 }
-void diskio_stat_init(int start, int end, diskio_stat_t *diskio_stats){
 
-	for(diskio_stats+=start; start<end; start++){
-		diskio_stats->disk_name=NULL;
-		
-		diskio_stats++;
-	}
+static void diskio_stat_init(diskio_stat_t *d) {
+	d->disk_name = NULL;
 }
 
-diskio_stat_t *diskio_stat_malloc(int needed_entries, int *cur_entries, diskio_stat_t *diskio_stats){
-
-        if(diskio_stats==NULL){
-
-                if((diskio_stats=malloc(needed_entries * sizeof(diskio_stat_t)))==NULL){
-                        return NULL;
-                }
-                diskio_stat_init(0, needed_entries, diskio_stats);
-                *cur_entries=needed_entries;
-
-                return diskio_stats;
-        }
-
-
-        if(*cur_entries<needed_entries){
-                diskio_stats=realloc(diskio_stats, (sizeof(diskio_stat_t)*needed_entries));
-                if(diskio_stats==NULL){
-                        return NULL;
-                }
-                diskio_stat_init(*cur_entries, needed_entries, diskio_stats);
-                *cur_entries=needed_entries;
-        }
-
-        return diskio_stats;
+static void diskio_stat_destroy(diskio_stat_t *d) {
+	free(d->disk_name);
 }
 
-static diskio_stat_t *diskio_stats=NULL;	
-static int num_diskio=0;	
+VECTOR_DECLARE_STATIC(diskio_stats, diskio_stat_t, 10,
+                      diskio_stat_init, diskio_stat_destroy);
 
 #ifdef LINUX
 typedef struct {
@@ -327,8 +284,7 @@ typedef struct {
 #endif
 
 diskio_stat_t *get_diskio_stats(int *entries){
-
-	static int sizeof_diskio_stats=0;
+	int num_diskio;
 #ifndef LINUX
 	diskio_stat_t *diskio_stats_ptr;
 #endif
@@ -459,10 +415,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			continue;
 		}
 
-		diskio_stats = diskio_stat_malloc(num_diskio + 1,
-		                                  &sizeof_diskio_stats,
-		                                  diskio_stats);
-		if (diskio_stats == NULL) {
+		if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
 			return NULL;
 		}
 		diskio_stats_ptr = diskio_stats + num_diskio;
@@ -524,7 +477,8 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #else
 		if((dev_ptr->bytes_read==0) && (dev_ptr->bytes_written==0)) continue;
 #endif
-		if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
+
+		if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
 			return NULL;
 		}
 		diskio_stats_ptr=diskio_stats+num_diskio;
@@ -559,7 +513,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
                         if((kstat_read(kc, ksp, &kios))==-1){	
 			}
 			
-			if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
+			if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
 				kstat_close(kc);
 				return NULL;
 			}
@@ -620,9 +574,9 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			wsect = 0;
 		}
 
-		diskio_stats = diskio_stat_malloc(n + 1, &sizeof_diskio_stats,
-			diskio_stats);
-		if (diskio_stats == NULL) goto out;
+		if (VECTOR_RESIZE(diskio_stats, n + 1) < 0) {
+			goto out;
+		}
 		if (n >= alloc_parts) {
 			alloc_parts += 16;
 			parts = realloc(parts, alloc_parts * sizeof *parts);
@@ -729,10 +683,10 @@ out:
 }
 
 diskio_stat_t *get_diskio_stats_diff(int *entries){
-	static diskio_stat_t *diff = NULL;
-	static int diff_count = 0;
+	VECTOR_DECLARE_STATIC(diff, diskio_stat_t, 1,
+	                      diskio_stat_init, diskio_stat_destroy);
 	diskio_stat_t *src = NULL, *dest;
-	int i, j, new_count;
+	int i, j, diff_count, new_count;
 
 	if (diskio_stats == NULL) {
 		/* No previous stats, so we can't calculate a difference. */
@@ -740,8 +694,8 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 	}
 
 	/* Resize the results array to match the previous stats. */
-	diff = diskio_stat_malloc(num_diskio, &diff_count, diff);
-	if (diff == NULL) {
+	diff_count = VECTOR_SIZE(diskio_stats);
+	if (VECTOR_RESIZE(diff, diff_count) < 0) {
 		return NULL;
 	}
 
