@@ -353,7 +353,7 @@ int get_stats(){
 }
 
 void version_num(char *progname){
-	fprintf(stderr, "%s version %s\n", PACKAGE_VERSION);
+	fprintf(stderr, "%s version %s\n", progname, PACKAGE_VERSION);
 	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
 	exit(1);
 }
