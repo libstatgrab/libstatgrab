@@ -347,7 +347,11 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	 * find a machine with more than 999 disks, then i'll change
 	 * this number :)
 	 */
+#ifdef FREEBSD5
+	if ((devstat_getdevs(NULL, &stats)) < 0) return NULL;
+#else
 	if (selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) return NULL;
+#endif
 
 	for(counter=0;counter<stats.dinfo->numdevs;counter++){
 		dev_ptr=&stats.dinfo->devices[dev_sel[counter].position];
@@ -356,14 +360,23 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		 * devices.. like mem, proc.. and also doesn't report floppy
 		 * drives etc unless they are doing stuff :)
 		 */
+#ifdef FREEBSD5
+		if((dev_ptr->bytes[DEVSTAT_READ]==0) && (dev_ptr->bytes[DEVSTAT_WRITE]==0)) continue;
+#else
 		if((dev_ptr->bytes_read==0) && (dev_ptr->bytes_written==0)) continue;
+#endif
 		if((diskio_stats=diskio_stat_malloc(num_diskio+1, &sizeof_diskio_stats, diskio_stats))==NULL){
 			return NULL;
 		}
 		diskio_stats_ptr=diskio_stats+num_diskio;
-		
+
+#ifdef FREEBSD5		
+		diskio_stats_ptr->read_bytes=dev_ptr->bytes[DEVSTAT_READ];
+		diskio_stats_ptr->write_bytes=dev_ptr->bytes[DEVSTAT_WRITE];
+#else
 		diskio_stats_ptr->read_bytes=dev_ptr->bytes_read;
 		diskio_stats_ptr->write_bytes=dev_ptr->bytes_written;
+#endif
 		if(diskio_stats_ptr->disk_name!=NULL) free(diskio_stats_ptr->disk_name);
 		asprintf((&diskio_stats_ptr->disk_name), "%s%d", dev_ptr->device_name, dev_ptr->unit_number);
 		diskio_stats_ptr->systime=time(NULL);
