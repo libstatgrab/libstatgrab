@@ -2,7 +2,7 @@
 # http://www.i-scream.org/
 # $Id$
 
-DOCS = network.txt
+DOCS = network.txt diskio.txt
 
 docdir = $(datadir)/libstatgrab/doc
 

@@ -1,6 +1,11 @@
 Network Statistics
+==================
 
-All network statistics return a network_stat_t structure.
+Data Structure
+--------------
+
+All network statistics return a structure of type network_stat_t that
+looks like this:
 
 typedef struct{
         char *interface_name;
@@ -9,26 +14,31 @@ typedef struct{
         time_t systime;
 }network_stat_t;
 
-Interface name is the name known to the OS. E.g. eth0 on linux.
-tx is a long long with the number of bytes transmitted.
-rx is a long long with the number of bytes recieved.
-sysname is time_t covering the time the amount of data in rx/tx was 
-generated.
+interface_name	is the name know to the operating system.
+		(eg. on linux is might be eth0)
+tx		is the number of bytes transmitted.
+rx		is the number of bytes received.
+sysname		is the time period over which tx and rx were
+		transferred.
 
+Functions
+---------
 
 network_stat_t *get_network_stats(int *entries);
 
 network_stat_t *get_network_stats_diff(int *entries);
 
-Both calls take a pointer to an int, "entries". This is filled with the number 
-of network interfaces the machine has. You need to know this to know how 
-many network_stat_t have been returned.
+Both calls take a pointer to an int, "entries", which is filled with
+the number of network interfaces the machine has. This is needed to
+know how many network_stat_t structures have been returned. A pointer
+is returned to the first network_stat_t.
 
-get_network_stats returns the network traffic stored in the kernel. E.g. 
-since bootup as long as the way it is stored in the kernel can store a large 
-enough number. Solaris 7 can not, it only stores it in a 32bit int, so it 
-can only store upto 4gb before it will wrap around. Solaris 8 upwards stores 
-it in a 64bit int and so is a very large number :)
+get_network_stats returns the network traffic stored in the kernel
+which holds the amount of data transferred since bootup. On some
+platforms, such as Solaris 7, this value is stored in a 32bit int, so
+wraps around when it reaches 4GB. Other platforms, such as Solaris 8,
+hold the value in a 64bit int, which wraps somewhere near 17 million
+terabytes.
 
 get_network_stats_diff is the same as get_network_stats except it will 
 return the difference since the last call. So, for instance a call to 
@@ -37,12 +47,20 @@ time, 20 bytes of traffic was transmitted and 10 bytes received. Tx will
 store 20, rx will store 10 and systime will store 5. This function copes 
 with wrap arounds by the O/S so should be seemless to use.
 
-Bugs:
-get_network_stats_diff on very first call will return the same as  
-get_network_stats. After first call it will always return the difference.
-On machines that hold only 32bits of information, if the call is made 2x
-wrap around (eg sol7 9gb has been transferred, and it wraps at 4gb) it will
-return incorrect results (case above, it would say 5gb transferred).
+Bugs
+----
 
-Very basic example in examples/network_traffic.c
+On the very first call get_network_stats_diff will return the same as
+get_network_stats. After the first call it will always return the
+difference.
+
+On operating system that hold only 32bits of data there is a problem if
+the values wrap twice. For example, on Solaris 7 if 9GB is transferred
+and the operating system wraps at 4GB, the get_network_stats_diff
+function will return 5GB.
+
+Example
+-------
+
+A very basic example can be found in examples/network_traffic.c
 
