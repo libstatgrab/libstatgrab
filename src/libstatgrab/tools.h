@@ -18,6 +18,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <regex.h>
+
 char *f_read_line(FILE *f, const char *string);
 
 char *get_string_match(char *line, regmatch_t *match);

@@ -22,12 +22,16 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
 #include "statgrab.h"
+#include <time.h>
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
 #include <string.h>
+#endif
+#ifdef LINUX
+#include <stdio.h>
+#include "tools.h"
 #endif
 
 
@@ -35,15 +39,20 @@ static page_stat_t page_stats;
 static int page_stats_uninit=1;
 
 page_stat_t *get_page_stats(){
+#ifdef SOLARIS
         kstat_ctl_t *kc;
         kstat_t *ksp;
         cpu_stat_t cs;
+#endif
+#ifdef LINUX
+	FILE *f;
+	char *line_ptr;
+#endif
 
-        page_stats.num_pagein=0;
-        page_stats.num_pageout=0;
         page_stats.pages_pagein=0;
         page_stats.pages_pageout=0;
 
+#ifdef SOLARIS
         if ((kc = kstat_open()) == NULL) {
                 return NULL;
         }
@@ -53,8 +62,6 @@ page_stat_t *get_page_stats(){
                         continue;
                 }
 
-		page_stats.num_pagein+=(long long)cs.cpu_vminfo.pgin;
-		page_stats.num_pageout+=(long long)cs.cpu_vminfo.pgout;
 		page_stats.pages_pagein+=(long long)cs.cpu_vminfo.pgpgin;
 		page_stats.pages_pageout+=(long long)cs.cpu_vminfo.pgpgout;
 	}
@@ -62,6 +69,22 @@ page_stat_t *get_page_stats(){
 	page_stats.systime=time(NULL);
 
 	kstat_close(kc);
+#endif
+#ifdef LINUX
+	if((f=fopen("/proc/stat", "r"))==NULL){
+		return NULL;
+	}
+	if((line_ptr=f_read_line(f, "page"))==NULL){
+		fclose(f);
+		return NULL;
+	}
+	if((sscanf(line_ptr, "page %lld %lld", &page_stats.pages_pagein, &page_stats.pages_pageout))!=2){
+		return NULL;
+	}
+	page_stats.systime=time(NULL);
+	fclose(f);
+
+#endif
 
 	return &page_stats;
 }
@@ -79,8 +102,6 @@ page_stat_t *get_page_stats_diff(){
 		return page_ptr;
 	}
 
-	page_stats_diff.num_pagein=page_stats.num_pagein;
-	page_stats_diff.num_pageout=page_stats.num_pageout;
 	page_stats_diff.pages_pagein=page_stats.pages_pagein;
 	page_stats_diff.pages_pageout=page_stats.pages_pageout;
 	page_stats_diff.systime=page_stats.systime;
@@ -90,8 +111,6 @@ page_stat_t *get_page_stats_diff(){
 		return NULL;
 	}
 
-	page_stats_diff.num_pagein=page_stats.num_pagein-page_stats_diff.num_pagein;
-        page_stats_diff.num_pageout=page_stats.num_pageout-page_stats_diff.num_pageout;
         page_stats_diff.pages_pagein=page_stats.pages_pagein-page_stats_diff.pages_pagein;
         page_stats_diff.pages_pageout=page_stats.pages_pageout-page_stats_diff.pages_pageout;
         page_stats_diff.systime=page_stats.systime-page_stats_diff.systime;

@@ -116,8 +116,6 @@ typedef struct{
 }network_stat_t;
 
 typedef struct{
-	long long num_pagein;
-	long long num_pageout;
 	long long pages_pagein;
 	long long pages_pageout;
 	time_t systime;
