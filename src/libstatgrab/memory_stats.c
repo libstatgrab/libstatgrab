@@ -57,7 +57,7 @@ mem_stat_t *get_memory_stats(){
 	u_int free_count;
 	u_int cache_count;
 	u_int inactive_count;
-	u_int physmem;
+	u_long physmem;
 	size_t size;
 	int pagesize;
 #endif
