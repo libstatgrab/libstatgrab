@@ -230,7 +230,7 @@ network_stat_t *get_network_stats(int *entries){
 	fgets(line, sizeof(line), f);
 
 
-	if((regcomp(&regex, "^[[:space:]]*([^:]+):[[:space:]]*([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)", REG_EXTENDED))!=0){
+	if((regcomp(&regex, "^ *([^:]+): *([0-9]+) +([0-9]+) +([0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+ +([0-9]+) +([0-9]+) +([0-9]+) +[0-9]+ +[0-9]+ +([0-9]+)", REG_EXTENDED))!=0){
 		return NULL;
 	}
 
