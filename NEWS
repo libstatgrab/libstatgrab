@@ -3,7 +3,7 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
-libstatgrab 0.10.1 (20 July 2004)
+libstatgrab 0.10.1 (26 July 2004)
 
  * Use DESTDIR correctly when setting permissions at install time.
  * Fix disk stats to work with OpenBSD 3.5.
