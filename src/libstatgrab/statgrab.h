@@ -160,3 +160,5 @@ page_stat_t *get_page_stats();
 page_stat_t *get_page_stats_diff();
 
 int statgrab_init(void);
+int statgrab_drop_privileges(void);
+

@@ -29,6 +29,10 @@
         <funcdef>int <function>statgrab_init</function></funcdef>
         <void/>
       </funcprototype>
+      <funcprototype>
+        <funcdef>int <function>statgrab_drop_privileges</function></funcdef>
+        <void/>
+      </funcprototype>
 
       <funcprototype>
         <funcdef>cpu_percent_t *<function>cpu_percent_usage</function></funcdef>
@@ -117,10 +121,15 @@
       leaves them open for future use. Because of this, any special
       privileges the program has (e.g. setgid kmem) can be dropped
       after this call, and all the libstatgrab calls should continue to
-      work.
+      work. It is therefore a good idea to call
+      <function>statgrab_drop_privileges</function>, which discards
+      setuid and setgid privileges, immediately after you call
+      <function>statgrab_init</function>, unless your application has
+      another reason for needing setuid or setgid privileges.
     </para>
     <para>
-      <function>statgrab_init</function> returns 0 on success, and
+      <function>statgrab_init</function> and
+      <function>statgrab_drop_privileges</function> return 0 on success, and
       non-zero on failure.
     </para>
     <para>

@@ -608,14 +608,8 @@ int main(int argc, char **argv) {
 	/* We don't care if statgrab_init fails, because we can just display
  	   the statistics that can be read as non-root. */
 	statgrab_init();
-#ifdef ALLBSD
-	if (setegid(getgid()) != 0)
-		die("Failed to lose effective group");
-#endif
-#ifdef SOLARIS
-	if (seteuid(getuid()) != 0)
-		die("Failed to lose effective user");
-#endif
+	if (statgrab_drop_privileges() != 0)
+		die("Failed to drop setuid/setgid privileges");
 
 	switch (repeat_mode) {
 	case REPEAT_NONE:

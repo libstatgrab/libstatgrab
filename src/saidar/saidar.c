@@ -437,18 +437,10 @@ int main(int argc, char **argv){
 	int delay=2;
 
 	statgrab_init();
-#ifdef ALLBSD
-	if((setegid(getgid())) != 0){
-		fprintf(stderr, "Failed to lose setgid'ness\n");
+	if(statgrab_drop_privileges() != 0){
+		fprintf(stderr, "Failed to drop setuid/setgid privileges\n");
 		return 1;
 	}
-#endif
-#ifdef SOLARIS
-	if((seteuid(getuid())) != 0){
-		fprintf(stderr, "Failed to lose setuid'ness\n");
-		return 1;
-	}	
-#endif
 		
         while ((c = getopt(argc, argv, "vhd:")) != -1){
                 switch (c){

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <regex.h>
 #ifdef ALLBSD
@@ -337,3 +338,10 @@ int statgrab_init(){
 #endif
 	return 0;
 }
+
+int statgrab_drop_privileges() {
+	if (setegid(getgid()) != 0) return -1;
+	if (seteuid(getuid()) != 0) return -1;
+	return 0;
+}
+
