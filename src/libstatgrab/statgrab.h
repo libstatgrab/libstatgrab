@@ -25,8 +25,6 @@
 
 /* FIXME typedefs for 32/64-bit types */
 /* FIXME maybe tidy up field names? */
-/* FIXME tab/space damage */
-/* FIXME prefixes for util functions too */
 /* FIXME comments for less obvious fields */
 
 int sg_init(void);
