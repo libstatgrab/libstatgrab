@@ -41,10 +41,8 @@
 #include <sys/types.h>
 #include <kvm.h>
 #endif
-#ifdef OPENBSD
-#include <stdlib.h>
+#if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
-#include <sys/sysctl.h>
 #include <uvm/uvm.h>
 #endif
 
@@ -68,10 +66,6 @@ swap_stat_t *get_swap_stats(){
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
-#endif
-#ifdef OPENBSD
-	int mib[2];
-	size_t size;
 #endif
 
 #ifdef SOLARIS
@@ -119,37 +113,14 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.used = (long long)swapinfo.ksw_used * (long long)pagesize;
 	swap_stat.free = swap_stat.total-swap_stat.used;
 #endif
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 	if ((uvm = get_uvmexp()) == NULL) {
 		return NULL;
 	}
-#endif
-#ifdef OPENBSD
-	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
 
-	if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0) {
-		return NULL;
-	}
-
-	uvm = malloc(size);
-	if (uvm == NULL) {
-		return NULL;
-	}
-
-	if (sysctl(mib, 2, uvm, &size, NULL, 0) < 0) {
-		return NULL;
-	}
-#endif
-
-#if defined(NETBSD) || defined(OPENBSD)
 	swap_stat.total = (long long)uvm->pagesize * (long long)uvm->swpages;
 	swap_stat.used = (long long)uvm->pagesize * (long long)uvm->swpginuse;
 	swap_stat.free = swap_stat.total - swap_stat.used;
-#endif
-
-#ifdef OPENBSD
-	free(uvm);
 #endif
 
 	return &swap_stat;

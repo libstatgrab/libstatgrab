@@ -52,7 +52,7 @@ char *get_string_match(char *line, regmatch_t *match);
 kvm_t *get_kvm(void);
 #endif
 
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 struct uvmexp *get_uvmexp(void);
 #endif
 

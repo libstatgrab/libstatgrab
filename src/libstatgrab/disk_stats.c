@@ -362,6 +362,9 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	struct disk_sysctl *stats;
 #endif
 #ifdef OPENBSD
+	int diskcount;
+	char *disknames, *name, *bufpp;
+	char **dk_name;
 	struct diskstats *stats;
 #endif
 #ifdef NETBSD
@@ -377,6 +380,38 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #endif
 
 	num_diskio=0;
+
+#ifdef OPENBSD
+	mib[0] = CTL_HW;
+	mib[1] = HW_DISKCOUNT;
+
+	size = sizeof(diskcount);
+	if (sysctl(mib, MIBSIZE, &diskcount, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_DISKNAMES;
+
+	if (sysctl(mib, MIBSIZE, NULL, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	disknames = malloc(size);
+	if (disknames == NULL) {
+		return NULL;
+	}
+
+	if (sysctl(mib, MIBSIZE, disknames, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	dk_name = calloc(diskcount, sizeof(char *));
+	bufpp = disknames;
+	for (i = 0; i < diskcount && (name = strsep(&bufpp, ",")) != NULL; i++) {
+		dk_name[i] = name;
+	}
+#endif
 
 #if defined(NETBSD) || defined(OPENBSD)
 	mib[0] = CTL_HW;
@@ -440,7 +475,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #ifdef NETBSD
 		diskio_stats_ptr->disk_name = strdup(stats[i].dk_name);
 #else
-		asprintf((&diskio_stats_ptr->disk_name), "%s%d", "disk", i);
+		diskio_stats_ptr->disk_name = strdup(dk_name[i]);
 #endif
 		diskio_stats_ptr->systime = time(NULL);
 	
@@ -448,6 +483,10 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	}
 
 	free(stats);
+#ifdef OPENBSD
+	free(dk_name);
+	free(disknames);
+#endif
 #endif
 
 #ifdef FREEBSD

@@ -40,10 +40,8 @@
 #include <sys/sysctl.h>
 #include <unistd.h>
 #endif
-#ifdef OPENBSD
-#include <stdlib.h>
+#if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
-#include <sys/sysctl.h>
 #include <uvm/uvm.h>
 #endif
 
@@ -74,10 +72,6 @@ mem_stat_t *get_memory_stats(){
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
-#endif
-#ifdef OPENBSD
-	int mib[2];
-	size_t size;
 #endif
 
 #ifdef SOLARIS
@@ -175,41 +169,20 @@ mem_stat_t *get_memory_stats(){
 	mem_stat.used=physmem-mem_stat.free;
 #endif
 
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 	if ((uvm = get_uvmexp()) == NULL) {
 		return NULL;
 	}
-#endif
-#ifdef OPENBSD
-	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
 
-	if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0) {
-		return NULL;
-	}
-
-	uvm = malloc(size);
-	if (uvm == NULL) {
-		return NULL;
-	}
-
-	if (sysctl(mib, 2, uvm, &size, NULL, 0) < 0) {
-		return NULL;
-	}
-#endif
-#if defined(NETBSD) || defined(OPENBSD)
 	mem_stat.total = uvm->pagesize * uvm->npages;
 #ifdef NETBSD
 	mem_stat.cache = uvm->pagesize * (uvm->filepages + uvm->execpages);
 #else
+	/* Can't find cache memory on OpenBSD */
 	mem_stat.cache = 0;
 #endif
 	mem_stat.free = uvm->pagesize * (uvm->free + uvm->inactive);
 	mem_stat.used = mem_stat.total - mem_stat.free;
-#endif
-
-#ifdef OPENBSD
-	free(uvm);
 #endif
 
 	return &mem_stat;
