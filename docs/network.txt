@@ -20,9 +20,9 @@ network_stat_t *get_network_stats(int *entries);
 
 network_stat_t *get_network_stats_diff(int *entries);
 
-Both calls takes a pointer to a int, entries. This is filled with the number 
+Both calls take a pointer to an int, "entries". This is filled with the number 
 of network interfaces the machine has. You need to know this to know how 
-many network_stat_t how many network_stat_t have been returned.
+many network_stat_t have been returned.
 
 get_network_stats returns the network traffic stored in the kernel. E.g. 
 since bootup as long as the way it is stored in the kernel can store a large 
@@ -40,6 +40,9 @@ with wrap arounds by the O/S so should be seemless to use.
 Bugs:
 get_network_stats_diff on very first call will return the same as  
 get_network_stats. After first call it will always return the difference.
+On machines that hold only 32bits of information, if the call is made 2x
+wrap around (eg sol7 9gb has been transferred, and it wraps at 4gb) it will
+return incorrect results (case above, it would say 5gb transferred).
 
 Very basic example in examples/network_traffic.c
 
