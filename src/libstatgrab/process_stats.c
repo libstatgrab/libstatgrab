@@ -412,6 +412,15 @@ sg_process_stats *sg_get_process_stats(int *entries){
 				return NULL;
 			}
 			p = proctitle;
+#ifdef OPENBSD
+			/* On OpenBSD, this value has the argv pointers (which
+			 * are terminated by a NULL) at the front, so we have
+			 * to skip over them to get to the strings. */
+			while (*(char ***)p != NULL) {
+				p += sizeof(char **);
+			}
+			p += sizeof(char **);
+#endif
 			proc_state_ptr->proctitle[0] = '\0';
 			do {
 				sg_strlcat(proc_state_ptr->proctitle, p, size+1);
