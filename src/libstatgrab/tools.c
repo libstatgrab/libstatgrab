@@ -451,6 +451,7 @@ struct uvmexp *get_uvmexp() {
 	int mib[2];
 	size_t size;
 	static struct uvmexp *uvm = NULL;
+	struct uvmexp *new;
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
@@ -459,10 +460,11 @@ struct uvmexp *get_uvmexp() {
 		return NULL;
 	}
 
-	uvm = realloc(uvm, size);
-	if (uvm == NULL) {
+	new = realloc(uvm, size);
+	if (new == NULL) {
 		return NULL;
 	}
+	uvm = new;
 
 	if (sysctl(mib, 2, uvm, &size, NULL, 0) < 0) {
 		return NULL;
