@@ -22,7 +22,7 @@
  */
 
 #define SG_ENABLE_DEPRECATED
-#include <statgrab.h>
+#include "statgrab.h"
 
 int statgrab_init() {
 	return sg_init();
