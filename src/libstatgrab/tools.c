@@ -411,6 +411,19 @@ size_t strlcat(char *dst, const char *src, size_t siz){
 
 #endif
 
+char *update_string(char **dest, const char *src) {
+	char *new;
+
+	new = realloc(*dest, strlen(src) + 1);
+	if (new == NULL) {
+		return NULL;
+	}
+
+	strcpy(new, src);
+	*dest = new;
+	return new;
+}
+
 long long get_ll_match(char *line, regmatch_t *match){
 	char *ptr;
 	long long num;

@@ -76,19 +76,6 @@
                         "ntfs"}
 #endif
 
-static char *copy_string(char **dest, const char *src) {
-	char *new;
-
-	new = realloc(*dest, strlen(src) + 1);
-	if (new == NULL) {
-		return NULL;
-	}
-
-	strcpy(new, src);
-	*dest = new;
-	return new;
-}
-
 static void disk_stat_init(disk_stat_t *d) {
 	d->device_name = NULL;
 	d->fs_type = NULL;
@@ -178,13 +165,13 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr=disk_stats+num_disks;
 
 #ifdef ALLBSD
-			if (copy_string(&disk_ptr->device_name, mp->f_mntfromname) == NULL) {
+			if (update_string(&disk_ptr->device_name, mp->f_mntfromname) == NULL) {
 				return NULL;
 			}
-			if (copy_string(&disk_ptr->fs_type, mp->f_fstypename) == NULL) {
+			if (update_string(&disk_ptr->fs_type, mp->f_fstypename) == NULL) {
 				return NULL;
 			}
-			if (copy_string(&disk_ptr->mnt_point, mp->f_mntonname) == NULL) {
+			if (update_string(&disk_ptr->mnt_point, mp->f_mntonname) == NULL) {
 				return NULL;
 			}
 
@@ -198,15 +185,15 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
 #endif
 #if defined(LINUX) || defined(CYGWIN)
-			if (copy_string(&disk_ptr->device_name, mp->mnt_fsname) == NULL) {
+			if (update_string(&disk_ptr->device_name, mp->mnt_fsname) == NULL) {
 				return NULL;
 			}
 				
-			if (copy_string(&disk_ptr->fs_type, mp->mnt_type) == NULL) {	
+			if (update_string(&disk_ptr->fs_type, mp->mnt_type) == NULL) {	
 				return NULL;
 			}
 
-			if (copy_string(&disk_ptr->mnt_point, mp->mnt_dir) == NULL) {
+			if (update_string(&disk_ptr->mnt_point, mp->mnt_dir) == NULL) {
 				return NULL;
 			}
 			disk_ptr->size = (long long)fs.f_bsize * (long long)fs.f_blocks;
@@ -224,15 +211,15 @@ disk_stat_t *get_disk_stats(int *entries){
 			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
 			 * be upwards of a k each 
 			 */
-			if (copy_string(&disk_ptr->device_name, mp.mnt_special) == NULL) {
+			if (update_string(&disk_ptr->device_name, mp.mnt_special) == NULL) {
 				return NULL;
 			}
 
-			if (copy_string(&disk_ptr->fs_type, mp.mnt_fstype) == NULL) {
+			if (update_string(&disk_ptr->fs_type, mp.mnt_fstype) == NULL) {
                                 return NULL;
                         }
 	
-			if (copy_string(&disk_ptr->mnt_point, mp.mnt_mountp) == NULL) {
+			if (update_string(&disk_ptr->mnt_point, mp.mnt_mountp) == NULL) {
                                 return NULL;
                         }
 			

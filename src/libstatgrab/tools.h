@@ -38,6 +38,8 @@ size_t strlcat(char *dst, const char *src, size_t siz);
 size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
+char *update_string(char **dest, const char *src);
+
 long long get_ll_match(char *line, regmatch_t *match);
 
 char *f_read_line(FILE *f, const char *string);
