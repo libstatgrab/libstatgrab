@@ -28,39 +28,13 @@
 #ifdef SOLARIS
 #include <sys/loadavg.h>
 #endif
-#include "ukcprog.h"
 
 load_stat_t *get_load_stats(){
 
 	static load_stat_t load_stat;
 
 	double loadav[3];
-#if !defined(HAVE_GETLOADAVG) && defined(LINUX)
-	FILE *f;
-	char *loadavg;
-	char *load_p;
-#endif
-
-#if !defined(HAVE_GETLOADAVG) && defined(LINUX)
-	if ((f=fopen("/proc/loadavg", "r" ))==NULL) {
-		errf("Failed to open load averages (%m)");
-		return NULL;
-	}
-
-	if((fscanf(f,"%lf %lf %lf", &loadav[0], &loadav[1], &loadav[2])) != 3){
-		errf("Failed to read in sufficent loads");
-		return NULL;
-	}
-
-	if ((fclose(f)) != 0) {
-		errf("Failed to close file (%m).");
-		return NULL;
-  	}
-#else
-  	if((getloadavg(loadav,3)) == -1){
-    		errf("Failed to get load averages (%m)");
-  	}
-#endif
+  	getloadavg(loadav,3);
 
 	load_stat.min1=loadav[0];
 	load_stat.min5=loadav[1];

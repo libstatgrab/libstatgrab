@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 #include "statgrab.h"
-#include "ukcprog.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -23,7 +23,6 @@
 #endif
 
 #include <stdio.h>
-#include "ukcprog.h"
 #include "statgrab.h"
 #ifdef SOLARIS
 #include <sys/stat.h>

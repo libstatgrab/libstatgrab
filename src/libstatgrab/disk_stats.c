@@ -25,7 +25,6 @@
 #include "statgrab.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "ukcprog.h"
 #include <string.h>
 
 #ifdef SOLARIS
@@ -156,7 +155,7 @@ disk_stat_t *get_disk_stats(int *entries){
 
 }
 
-diskio_stat_t get_diskio_stats(int *entries){
+diskio_stat_t *get_diskio_stats(int *entries){
 
 	/* Do jibble */
 	return NULL;

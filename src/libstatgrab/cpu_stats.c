@@ -23,7 +23,6 @@
 #endif
 
 #include <stdio.h>
-#include <ukcprog.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>

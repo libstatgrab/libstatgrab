@@ -36,7 +36,6 @@
 #include <sys/sysctl.h>
 #include <unistd.h>
 #endif
-#include "ukcprog.h"
 
 mem_stat_t *get_memory_stats(){
 
