@@ -460,7 +460,7 @@ struct uvmexp *get_uvmexp() {
 #endif
 
 int statgrab_init(){
-#if defined(FREEBSD) || defined(DFBSD)
+#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	{ 
 		kvm_t *kvmd = get_kvm(); 
 		if (kvmd == NULL) return 1;
