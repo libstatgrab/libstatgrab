@@ -69,7 +69,7 @@ AC_ARG_WITH([curses-prefix],
                         SAIDARLIBS="-L${withval}/lib ${SAIDARLIBS}"
                 fi
                 if test -d "$withval/include"; then
-                        SAIDARCPPFLAGS="-I${withval}/include ${SAIRDARCPPFLAGS}"
+                        SAIDARCPPFLAGS="-I${withval}/include -I${withval}/include/ncurses ${SAIRDARCPPFLAGS}"
                 fi
         ]
 )
