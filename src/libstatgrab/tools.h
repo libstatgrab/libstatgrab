@@ -27,13 +27,23 @@
 #include <uvm/uvm_extern.h>
 #endif
 
+#ifndef HAVE_ATOLL
+static long long atoll(const char *s);
+#endif
+
+#ifndef HAVE_STRLCPY
+size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
+
+#ifndef HAVE_STRLCPY
+size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
+
+long long get_ll_match(char *line, regmatch_t *match);
+
 char *f_read_line(FILE *f, const char *string);
 
 char *get_string_match(char *line, regmatch_t *match);
-
-#ifdef HAVE_ATOLL
-long long get_ll_match(char *line, regmatch_t *match);
-#endif
 
 #ifdef ALLBSD
 kvm_t *get_kvm(void);
