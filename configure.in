@@ -50,7 +50,7 @@ solaris2.*)
 	;;
 freebsd4.*)
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD 4.x])
-	LDFLAGS="$LDFLAGS -lkvm"
+	LDFLAGS="$LDFLAGS -lkvm -ldevstat"
 	;;
 linux-gnu)
 	AC_DEFINE(LINUX, , [Building on GNU/Linux])
