@@ -376,7 +376,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 	static network_iface_stat_t *network_iface_stats;
 	network_iface_stat_t *network_iface_stat_ptr;
 	static int sizeof_network_iface_stats=0;	
-	static int ifaces;
+	int ifaces = 0;
 
 #ifdef SOLARIS
         kstat_ctl_t *kc;
@@ -396,7 +396,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
         char line[8096];
 	int sock;
 #endif
-	ifaces = 0;
+
 #ifdef ALLBSD
         if(getifaddrs(&net) != 0){
                 return NULL;
