@@ -325,7 +325,7 @@ int get_proc_snapshot(proc_state_t **ps){
 				return -1;
 			}
 			p = proctitle;
-			proc_state_ptr->proctitle[0] = NULL;
+			proc_state_ptr->proctitle[0] = '\0';
 			do {
 				strlcat(proc_state_ptr->proctitle, p, size+1);
 				strlcat(proc_state_ptr->proctitle, " ", size+1);
@@ -349,11 +349,13 @@ int get_proc_snapshot(proc_state_t **ps){
 				if(proctitle == NULL) {
 					return -1;
 				}
+				proctitle[0] = '\0';
 				while(*args != NULL) {
 					if(strlen(proctitle) + strlen(*args) >= alloc) {
 						alloc = (alloc + strlen(*args)) * 2;
 						proctitletmp = realloc(proctitle, alloc);
 						if(proctitletmp == NULL) {
+							free(proctitle);
 							return -1;
 						}
 						proctitle = proctitletmp;
