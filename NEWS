@@ -13,6 +13,7 @@ libstatgrab 0.9 (10 March 2004)
  * Added support for DragonFly BSD 1.0.
  * No longer need elevated privileges on most platforms:
      FreeBSD 5, NetBSD, and OpenBSD.
+     (see PLATFORMS file for details on which OS's need elevated privileges)
  * Minor changes to the return types of the python bindings functions.
 
  * PLEASE NOTE: this will break binary (only) compatibility.
