@@ -32,6 +32,7 @@ my $mib = $kib * $kib;
 # Type 0 is plain integers.
 my $KIBIBYTES = 1;
 my $PERCENT = 2;
+my $FLOAT = 3;
 
 # Print an entry in the MRTG config file.
 sub entry ($$$$$$$$$$) {
@@ -42,6 +43,7 @@ sub entry ($$$$$$$$$$) {
 	$options .= " gauge" if $gauge;
 	my $sgoptions = "";
 	$sgoptions .= " -o -p" if $type == $PERCENT;
+	$sgoptions .= " -f 1000" if $type == $FLOAT;
 
 	print "\n";
 	print "Title[$name]: $title\n";
@@ -53,6 +55,7 @@ sub entry ($$$$$$$$$$) {
 	print "LegendO[$name]: $legendo\n" if defined $valo;
 	if ($type == $KIBIBYTES) {
 		print "kMG[$name]: Ki,Mi,Gi,Ti\n";
+		$sgoptions .= " -K";
 	}
 	$valo = "const.0" unless defined $valo;
 	print "Options[$name]:$options\n" if $options ne "";
@@ -131,32 +134,32 @@ sub main () {
 
 	foreach my $disk (sort keys %disks) {
 		my $name = $stats{"disk.$disk.disk_name"};
-		entry("Disk $name IO", "disk.$disk.read_bytes", "disk.$disk.write_bytes", 100*$mib, "IO rate", "B/s", "read", "write", 0, 0);
+		entry("Disk $name IO", "disk.$disk.read_bytes", "disk.$disk.write_bytes", 100*$mib, "IO rate", "KiB/s", "read", "write", 0, $KIBIBYTES);
 	}
 
 	foreach my $fs (sort keys %fss) {
 		my $name = $stats{"fs.$fs.mnt_point"};
 		my $size = $stats{"fs.$fs.size"};
 		my $inodes = $stats{"fs.$fs.total_inodes"};
-		entry("Filesystem $name space usage", "fs.$fs.used", undef, $size, "Space used", "B", "used", undef, 1, 0);
+		entry("Filesystem $name space usage", "fs.$fs.used", undef, $size, "Space used", "KiB", "used", undef, 1, $KIBIBYTES);
 		entry("Filesystem $name inode usage", "fs.$fs.used_inodes", undef, $inodes, "Inodes used", "inodes", "used", undef, 1, 0);
 	}
 
 	if (exists $toplevel{"load"}) {
-		entry("Load average over 1 minute", "load.min1", undef, 100, "Load average", "running", "load", undef, 1, 0);
-		entry("Load average over 5 minutes", "load.min5", undef, 100, "Load average", "running", "load", undef, 1, 0);
-		entry("Load average over 15 minutes", "load.min15", undef, 100, "Load average", "running", "load", undef, 1, 0);
+		entry("Load average over 1 minute", "load.min1", undef, 100, "Load average", "running * 1000", "load", undef, 1, $FLOAT);
+		entry("Load average over 5 minutes", "load.min5", undef, 100, "Load average", "running * 1000", "load", undef, 1, $FLOAT);
+		entry("Load average over 15 minutes", "load.min15", undef, 100, "Load average", "running * 1000", "load", undef, 1, $FLOAT);
 	}
 
 	if (exists $toplevel{"mem"}) {
 		my $total = $stats{"mem.total"};
-		entry("Memory usage", "mem.used", "mem.cache", $total, "Memory usage", "B", "total", "cache", 1, 0);
+		entry("Memory usage", "mem.used", "mem.cache", $total, "Memory usage", "KiB", "total", "cache", 1, $KIBIBYTES);
 	}
 
 	foreach my $net (sort keys %nets) {
 		my $name = $stats{"net.$net.interface_name"};
 		# FIXME should be able to discover interface speed
-		entry("Network interface $name IO", "net.$net.rx", "net.$net.tx", 100*$mib, "Network IO", "B", "rx", "tx", 0, 0);
+		entry("Network interface $name IO", "net.$net.rx", "net.$net.tx", 100*$mib, "Network IO", "KiB/s", "rx", "tx", 0, $KIBIBYTES);
 	}
 
 	if (exists $toplevel{"page"}) {
@@ -176,7 +179,7 @@ sub main () {
 
 	if (exists $toplevel{"swap"}) {
 		my $swapsize = $stats{"swap.total"};
-		entry("Swap usage", "swap.used", undef, $swapsize, "Swap usage", "B", "used", undef, 1, 0);
+		entry("Swap usage", "swap.used", undef, $swapsize, "Swap usage", "KiB", "used", undef, 1, $KIBIBYTES);
 	}
 
 	if (exists $toplevel{"user"}) {
