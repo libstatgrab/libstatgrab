@@ -444,7 +444,7 @@ int main(int argc, char **argv){
 	}
 #endif
 		
-        while ((c = getopt(argc, argv, "vhd:")) != EOF){
+        while ((c = getopt(argc, argv, "vhd:")) != -1){
                 switch (c){
                         case 'd':
                                 delay = atoi(optarg);
