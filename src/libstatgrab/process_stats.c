@@ -77,11 +77,12 @@ int get_proc_snapshot(proc_state_t **ps){
 	size_t size;
 	struct kinfo_proc *kp_stats;
 	int procs, i;
-	char *proctitle, *proctitletmp;
+	char *proctitle;
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	kvm_t *kvmd;
 	char **args;
 	int alloc;
+	char *proctitletmp;
 #else
 	long buflen;
 	char *p;
@@ -309,8 +310,8 @@ int get_proc_snapshot(proc_state_t **ps){
 				p += strlen(p) + 1;
 			} while (p < proctitle + size);
 			free(proctitle);
-				/* remove trailing space */
-			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = \0;
+			/* remove trailing space */
+			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = '\0';
 		}
 		else {
 			free(proctitle);
@@ -339,7 +340,7 @@ int get_proc_snapshot(proc_state_t **ps){
 					args++;
 				}
 				/* remove trailing space */
-				proctitle[strlen(proctitle)-1] = \0;
+				proctitle[strlen(proctitle)-1] = '\0';
 				proc_state_ptr->proctitle = proctitle;
 			}
 			else {
