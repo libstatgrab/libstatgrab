@@ -39,7 +39,11 @@
 #include <sys/vfs.h>
 #include <mntent.h>
 #include "tools.h"
-#define VALID_FS_TYPES {"ext2", "ext3", "xfs", "reiserfs", "vfat", "tmpfs"}
+#define VALID_FS_TYPES {"adfs", "affs", "befs", "bfs", "efs", "ext2", \
+                        "ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
+                        "jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
+                        "rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
+                        "umsdos", "vfat", "xfs", "jfs"}
 #endif
 
 #ifdef ALLBSD
