@@ -415,10 +415,11 @@ void usage() {
 	       "  -s         Display stat differences repeatedly\n"
 	       "  -o         Display stat differences once\n"
 	       "  -t DELAY   When repeating, wait DELAY seconds between updates (default 1)\n"
-	       "  -p         Display CPU usage as percentages rather than absolute values\n"
+	       "  -p         Display CPU usage differences as percentages rather than\n"
+	       "             absolute values\n"
 	       "\n");
 	printf("Version %s - report bugs to <%s>.\n",
-		PACKAGE_VERSION, PACKAGE_BUGREPORT);
+	       PACKAGE_VERSION, PACKAGE_BUGREPORT);
 	exit(1);
 }
 
@@ -464,9 +465,12 @@ int main(int argc, char **argv) {
 	if (display_mode == DISPLAY_MRTG) {
 		if ((argc - optind) != 2)
 			die("mrtg mode: must specify exactly two stats");
-		if (repeat_mode != REPEAT_NONE)
+		if (repeat_mode == REPEAT_FOREVER)
 			die("mrtg mode: cannot repeat display");
 	}
+
+	if (use_cpu_percent && repeat_mode == REPEAT_NONE)
+		die("CPU percentage usage display requires stat differences");
 
 	switch (repeat_mode) {
 	case REPEAT_NONE:

@@ -27,13 +27,19 @@ my $workdir = undef;
 my $kib = 1024;
 my $mib = $kib * $kib;
 
+# Type 0 is plain integers.
+my $KIBIBYTES = 1;
+my $PERCENT = 2;
+
 # Print an entry in the MRTG config file.
 sub entry ($$$$$$$$$$) {
-	my ($title, $vali, $valo, $max, $ylegend, $yunit, $legendi, $legendo, $gauge, $in_kib) = @_;
+	my ($title, $vali, $valo, $max, $ylegend, $yunit, $legendi, $legendo, $gauge, $type) = @_;
 	my $name = $vali;
 	my $options = "";
 	$options .= " noo" unless defined $valo;
 	$options .= " gauge" if $gauge;
+	my $sgoptions = "";
+	$sgoptions .= " -o -p" if $type == $PERCENT;
 
 	print "\n";
 	print "Title[$name]: $title\n";
@@ -43,12 +49,12 @@ sub entry ($$$$$$$$$$) {
 	print "ShortLegend[$name]: $yunit\n";
 	print "LegendI[$name]: $legendi\n";
 	print "LegendO[$name]: $legendo\n" if defined $valo;
-	if ($in_kib) {
+	if ($type == $KIBIBYTES) {
 		print "kMG[$name]: Ki,Mi,Gi,Ti\n";
 	}
 	$valo = "const.0" unless defined $valo;
 	print "Options[$name]:$options\n" if $options ne "";
-	print "Target[$name]: `$statgrab -p -m $vali $valo`\n";
+	print "Target[$name]: `$statgrab$sgoptions -m $vali $valo`\n";
 }
 
 my $package_version = '@PACKAGE_VERSION@';
@@ -113,12 +119,12 @@ sub main () {
 	}
 
 	if (exists $toplevel{"cpu"}) {
-		entry("CPU idle", "cpu.idle", undef, "100", "Idle", "%", "idle", undef, 1, 0);
-		entry("CPU iowait", "cpu.iowait", undef, "100", "iowait", "%", "iowait", undef, 1, 0);
-		entry("CPU kernel", "cpu.kernel", undef, "100", "Kernel", "%", "kernel", undef, 1, 0);
-		entry("CPU nice", "cpu.nice", undef, "100", "Nice", "%", "nice", undef, 1, 0);
-		entry("CPU swap", "cpu.swap", undef, "100", "Swap", "%", "swap", undef, 1, 0);
-		entry("CPU user", "cpu.user", undef, "100", "User", "%", "user", undef, 1, 0);
+		entry("CPU idle", "cpu.idle", undef, "100", "Idle", "%", "idle", undef, 1, $PERCENT);
+		entry("CPU iowait", "cpu.iowait", undef, "100", "iowait", "%", "iowait", undef, 1, $PERCENT);
+		entry("CPU kernel", "cpu.kernel", undef, "100", "Kernel", "%", "kernel", undef, 1, $PERCENT);
+		entry("CPU nice", "cpu.nice", undef, "100", "Nice", "%", "nice", undef, 1, $PERCENT);
+		entry("CPU swap", "cpu.swap", undef, "100", "Swap", "%", "swap", undef, 1, $PERCENT);
+		entry("CPU user", "cpu.user", undef, "100", "User", "%", "user", undef, 1, $PERCENT);
 	}
 
 	foreach my $disk (sort keys %disks) {
