@@ -151,6 +151,9 @@ typedef struct {
 
 sg_fs_stats *sg_get_fs_stats(int *entries);
 
+int sg_fs_compare_device_name(const void *va, const void *vb);
+int sg_fs_compare_mnt_point(const void *va, const void *vb);
+
 typedef struct {
 	char *disk_name;
 	long long read_bytes;
@@ -160,6 +163,8 @@ typedef struct {
 
 sg_disk_io_stats *sg_get_disk_io_stats(int *entries);
 sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries);
+
+int sg_disk_io_compare_name(const void *va, const void *vb);
 
 typedef struct {
 	char *interface_name;
@@ -176,6 +181,8 @@ typedef struct {
 sg_network_io_stats *sg_get_network_io_stats(int *entries);
 sg_network_io_stats *sg_get_network_io_stats_diff(int *entries);
 
+int sg_network_io_compare_name(const void *va, const void *vb);
+
 typedef enum {
 	SG_IFACE_DUPLEX_FULL,
 	SG_IFACE_DUPLEX_HALF,
@@ -190,6 +197,8 @@ typedef struct {
 } sg_network_iface_stats;
 
 sg_network_iface_stats *sg_get_network_iface_stats(int *entries);
+
+int sg_network_iface_compare_name(const void *va, const void *vb);
 
 typedef struct {
 	long long pages_pagein;
@@ -231,6 +240,7 @@ typedef struct {
 
 sg_process_stats *sg_get_process_stats(int *entries);
 
+int sg_process_compare_name(const void *va, const void *vb);
 int sg_process_compare_pid(const void *va, const void *vb);
 int sg_process_compare_uid(const void *va, const void *vb);
 int sg_process_compare_gid(const void *va, const void *vb);

@@ -676,6 +676,13 @@ sg_process_count *sg_get_process_count() {
 	return &process_stat;
 }
 
+int sg_process_compare_name(const void *va, const void *vb) {
+	const sg_process_stats *a = (sg_process_stats *)va;
+	const sg_process_stats *b = (sg_process_stats *)vb;
+
+	return strcmp(a->process_name, b->process_name);
+}
+
 int sg_process_compare_pid(const void *va, const void *vb) {
 	const sg_process_stats *a = (sg_process_stats *)va;
 	const sg_process_stats *b = (sg_process_stats *)vb;

@@ -390,6 +390,13 @@ sg_network_io_stats *sg_get_network_io_stats_diff(int *entries) {
 	return diff;
 }
 
+int sg_network_io_compare_name(const void *va, const void *vb) {
+	const sg_network_io_stats *a = (const sg_network_io_stats *)va;
+	const sg_network_io_stats *b = (const sg_network_io_stats *)vb;
+
+	return strcmp(a->interface_name, b->interface_name);
+}
+
 /* NETWORK INTERFACE STATS */
 
 static void network_iface_stat_init(sg_network_iface_stats *s) {
@@ -686,5 +693,12 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #endif
 	*entries = ifaces;
 	return network_iface_stats; 
+}
+
+int sg_network_iface_compare_name(const void *va, const void *vb) {
+	const sg_network_iface_stats *a = (const sg_network_iface_stats *)va;
+	const sg_network_iface_stats *b = (const sg_network_iface_stats *)vb;
+
+	return strcmp(a->interface_name, b->interface_name);
 }
 

@@ -46,6 +46,23 @@ int main(int argc, char **argv){
 		exit(1);
 	}
 
+	if (argc != 1) {
+		/* If an argument is given, use bsearch to find just that
+		 * interface. */
+		sg_network_iface_stats key;
+
+		key.interface_name = argv[1];
+		network_iface_stats = bsearch(&key, network_iface_stats,
+		                              iface_count,
+		                              sizeof *network_iface_stats,
+		                              sg_network_iface_compare_name);
+		if (network_iface_stats == NULL) {
+			fprintf(stderr, "Interface %s not found\n", argv[1]);
+			exit(1);
+		}
+		iface_count = 1;
+	}
+
 	printf("Name\tSpeed\tDuplex\n");
 	for(i = 0; i < iface_count; i++) {
 		printf("%s\t%d\t", network_iface_stats->interface_name, network_iface_stats->speed);

@@ -253,6 +253,20 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 
 }
 
+int sg_fs_compare_device_name(const void *va, const void *vb) {
+	const sg_fs_stats *a = (const sg_fs_stats *)va;
+	const sg_fs_stats *b = (const sg_fs_stats *)vb;
+
+	return strcmp(a->device_name, b->device_name);
+}
+
+int sg_fs_compare_mnt_point(const void *va, const void *vb) {
+	const sg_fs_stats *a = (const sg_fs_stats *)va;
+	const sg_fs_stats *b = (const sg_fs_stats *)vb;
+
+	return strcmp(a->mnt_point, b->mnt_point);
+}
+
 static void diskio_stat_init(sg_disk_io_stats *d) {
 	d->disk_name = NULL;
 }
@@ -749,5 +763,12 @@ sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries){
 
 	*entries = diff_count;
 	return diff;
+}
+
+int sg_disk_io_compare_name(const void *va, const void *vb) {
+	const sg_disk_io_stats *a = (const sg_disk_io_stats *)va;
+	const sg_disk_io_stats *b = (const sg_disk_io_stats *)vb;
+
+	return strcmp(a->disk_name, b->disk_name);
 }
 
