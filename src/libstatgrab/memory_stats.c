@@ -96,7 +96,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	if((kn=kstat_data_lookup(ksp, "freemem")) == NULL){
 		return NULL;
 	}
-        kstat_close(kc);
+	kstat_close(kc);
 
 	mem_stat.total = (long long)totalmem * (long long)pagesize;
 	mem_stat.free = ((long long)kn->value.ul) * (long long)pagesize;

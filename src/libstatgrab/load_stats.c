@@ -49,35 +49,35 @@ sg_load_stats *sg_get_load_stats(){
 #if defined(SOLARIS) && !defined(HAVE_SYS_LOADAVG_H)
 
 	kstat_ctl_t *kc;	
-        kstat_t *ksp;
-        kstat_named_t *kn;
+	kstat_t *ksp;
+	kstat_named_t *kn;
 
 	if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
+		return NULL;
+	}
 
 	if((ksp=kstat_lookup(kc, "unix", 0, "system_misc")) == NULL){
-                return NULL;
-        }
+		return NULL;
+	}
 
-        if (kstat_read(kc, ksp, 0) == -1) {
-                return NULL;
-        }
+	if (kstat_read(kc, ksp, 0) == -1) {
+		return NULL;
+	}
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_1min")) == NULL){
-                return NULL;
-        }
+		return NULL;
+	}
 	load_stat.min1 = (double)kn->value.ui32 / (double)256;
 
-        if((kn=kstat_data_lookup(ksp, "avenrun_5min")) == NULL){
-                return NULL;
-        }
-        load_stat.min5 = (double)kn->value.ui32 / (double)256;
+	if((kn=kstat_data_lookup(ksp, "avenrun_5min")) == NULL){
+		return NULL;
+	}
+	load_stat.min5 = (double)kn->value.ui32 / (double)256;
 
-        if((kn=kstat_data_lookup(ksp, "avenrun_15min")) == NULL){
-                return NULL;
-        }
-        load_stat.min15 = (double)kn->value.ui32 / (double)256;
+	if((kn=kstat_data_lookup(ksp, "avenrun_15min")) == NULL){
+		return NULL;
+	}
+	load_stat.min15 = (double)kn->value.ui32 / (double)256;
 #else
 	getloadavg(loadav,3);
 

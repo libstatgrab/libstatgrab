@@ -47,10 +47,10 @@
 
 #ifdef LINUX
 #define VALID_FS_TYPES {"adfs", "affs", "befs", "bfs", "efs", "ext2", \
-                        "ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
-                        "jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
-                        "rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
-                        "umsdos", "vfat", "xfs", "jfs"}
+			"ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
+			"jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
+			"rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
+			"umsdos", "vfat", "xfs", "jfs"}
 #endif
 
 #ifdef CYGWIN
@@ -66,14 +66,14 @@
 #include <sys/dkstat.h>
 #include <devstat.h>
 #define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
-                        "ufs", "mfs"}
+			"ufs", "mfs"}
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 #define VALID_FS_TYPES {"ffs", "mfs", "msdos", "lfs", "adosfs", "ext2fs", \
-                        "ntfs"}
+			"ntfs"}
 #endif
 
 static void disk_stat_init(sg_fs_stats *d) {
@@ -102,7 +102,7 @@ static int is_valid_fs_type(const char *type) {
 
 sg_fs_stats *sg_get_fs_stats(int *entries){
 	VECTOR_DECLARE_STATIC(disk_stats, sg_fs_stats, 10,
-	                      disk_stat_init, disk_stat_destroy);
+			      disk_stat_init, disk_stat_destroy);
 
 	int valid_type;
 	int num_disks=0;
@@ -216,12 +216,12 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			}
 
 			if (sg_update_string(&disk_ptr->fs_type, mp.mnt_fstype) < 0) {
-                                return NULL;
-                        }
+				return NULL;
+			}
 	
 			if (sg_update_string(&disk_ptr->mnt_point, mp.mnt_mountp) < 0) {
-                                return NULL;
-                        }
+				return NULL;
+			}
 			
 			disk_ptr->size = (long long)fs.f_frsize * (long long)fs.f_blocks;
 			disk_ptr->avail = (long long)fs.f_frsize * (long long)fs.f_bavail;
@@ -238,7 +238,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 	*entries=num_disks;	
 
 	/* If this fails, there is very little i can do about it, so
-           I'll ignore it :) */
+	   I'll ignore it :) */
 #if defined(LINUX) || defined(CYGWIN)
 	endmntent(f);
 #endif
@@ -259,7 +259,7 @@ static void diskio_stat_destroy(sg_disk_io_stats *d) {
 }
 
 VECTOR_DECLARE_STATIC(diskio_stats, sg_disk_io_stats, 10,
-                      diskio_stat_init, diskio_stat_destroy);
+		      diskio_stat_init, diskio_stat_destroy);
 
 #ifdef LINUX
 typedef struct {
@@ -275,8 +275,8 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 
 #ifdef SOLARIS
-        kstat_ctl_t *kc;
-        kstat_t *ksp;
+	kstat_ctl_t *kc;
+	kstat_t *ksp;
 	kstat_io_t kios;
 #endif
 #ifdef LINUX
@@ -488,16 +488,16 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
+		return NULL;
+	}
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-                if (!strcmp(ksp->ks_class, "disk")) {
+		if (!strcmp(ksp->ks_class, "disk")) {
 
 			if(ksp->ks_type != KSTAT_TYPE_IO) continue;
 			/* We dont want metadevices appearins as num_diskio */
 			if(strcmp(ksp->ks_module, "md")==0) continue;
-                        if((kstat_read(kc, ksp, &kios))==-1){	
+			if((kstat_read(kc, ksp, &kios))==-1){	
 			}
 			
 			if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
@@ -509,7 +509,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 			diskio_stats_ptr->read_bytes=kios.nread;
 			diskio_stats_ptr->write_bytes=kios.nwritten;
 			if (sg_update_string(&diskio_stats_ptr->disk_name,
-			                     sg_get_svr_from_bsd(ksp->ks_name)) < 0) {
+					     sg_get_svr_from_bsd(ksp->ks_name)) < 0) {
 				return NULL;
 			}
 			diskio_stats_ptr->systime=time(NULL);
@@ -666,7 +666,7 @@ out:
 
 sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries){
 	VECTOR_DECLARE_STATIC(diff, sg_disk_io_stats, 1,
-	                      diskio_stat_init, diskio_stat_destroy);
+			      diskio_stat_init, diskio_stat_destroy);
 	sg_disk_io_stats *src = NULL, *dest;
 	int i, j, diff_count, new_count;
 

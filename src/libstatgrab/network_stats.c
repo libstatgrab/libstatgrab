@@ -87,15 +87,15 @@ static void network_stat_destroy(sg_network_io_stats *s) {
 }
 
 VECTOR_DECLARE_STATIC(network_stats, sg_network_io_stats, 5,
-                      network_stat_init, network_stat_destroy);
+		      network_stat_init, network_stat_destroy);
 
 sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	int interfaces;
 	sg_network_io_stats *network_stat_ptr;
 
 #ifdef SOLARIS
-        kstat_ctl_t *kc;
-        kstat_t *ksp;
+	kstat_ctl_t *kc;
+	kstat_t *ksp;
 	kstat_named_t *knp;
 #endif
 
@@ -127,7 +127,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 		network_stat_ptr=network_stats+interfaces;
 		
 		if (sg_update_string(&network_stat_ptr->interface_name,
-		                     net_ptr->ifa_name) < 0) {
+				     net_ptr->ifa_name) < 0) {
 			return NULL;
 		}
 		net_data=(struct if_data *)net_ptr->ifa_data;
@@ -145,15 +145,15 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 #endif
 
 #ifdef SOLARIS
-        if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
+	if ((kc = kstat_open()) == NULL) {
+		return NULL;
+	}
 
 	interfaces=0;
 
     	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-        	if (!strcmp(ksp->ks_class, "net")) {
-                	kstat_read(kc, ksp, NULL);
+		if (!strcmp(ksp->ks_class, "net")) {
+			kstat_read(kc, ksp, NULL);
 
 #ifdef SOL7
 #define LRX "rbytes"
@@ -227,7 +227,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 			/* Read interface name */
 			if (sg_update_string(&network_stat_ptr->interface_name,
-			                     ksp->ks_name) < 0) {
+					     ksp->ks_name) < 0) {
 				return NULL;
 			}
 
@@ -264,7 +264,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 		if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
 			return NULL;
 		}
-	        network_stat_ptr=network_stats+interfaces;
+		network_stat_ptr=network_stats+interfaces;
 
 		if(network_stat_ptr->interface_name!=NULL){
 			free(network_stat_ptr->interface_name);
@@ -313,7 +313,7 @@ static long long transfer_diff(long long new, long long old){
 
 sg_network_io_stats *sg_get_network_io_stats_diff(int *entries) {
 	VECTOR_DECLARE_STATIC(diff, sg_network_io_stats, 1,
-	                      network_stat_init, network_stat_destroy);
+			      network_stat_init, network_stat_destroy);
 	sg_network_io_stats *src = NULL, *dest;
 	int i, j, diff_count, new_count;
 
@@ -334,7 +334,7 @@ sg_network_io_stats *sg_get_network_io_stats_diff(int *entries) {
 		dest = &diff[i];
 
 		if (sg_update_string(&dest->interface_name,
-		                     src->interface_name) < 0) {
+				     src->interface_name) < 0) {
 			return NULL;
 		}
 		dest->rx = src->rx;
@@ -400,44 +400,44 @@ static void network_iface_stat_destroy(sg_network_iface_stats *s) {
 
 sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	VECTOR_DECLARE_STATIC(network_iface_stats, sg_network_iface_stats, 5,
-	                      network_iface_stat_init, network_iface_stat_destroy);
+			      network_iface_stat_init, network_iface_stat_destroy);
 	sg_network_iface_stats *network_iface_stat_ptr;
 	int ifaces = 0;
 
 #ifdef SOLARIS
-        kstat_ctl_t *kc;
-        kstat_t *ksp;
+	kstat_ctl_t *kc;
+	kstat_t *ksp;
 	kstat_named_t *knp;
 	int sock;
 #endif
 #ifdef ALLBSD
-        struct ifaddrs *net, *net_ptr;
+	struct ifaddrs *net, *net_ptr;
 	struct ifmediareq ifmed;
 	struct ifreq ifr;
 	int sock;
 	int x;
 #endif
 #ifdef LINUX
-        FILE *f;
-        /* Horrible big enough, but it should be easily big enough */
-        char line[8096];
+	FILE *f;
+	/* Horrible big enough, but it should be easily big enough */
+	char line[8096];
 	int sock;
 #endif
 
 #ifdef ALLBSD
-        if(getifaddrs(&net) != 0){
-                return NULL;
-        }
+	if(getifaddrs(&net) != 0){
+		return NULL;
+	}
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == 0) return NULL;
 
 	for(net_ptr=net; net_ptr!=NULL; net_ptr=net_ptr->ifa_next){
-                if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
+		if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
 
 		if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
-                        return NULL;
-                }
-                network_iface_stat_ptr = network_iface_stats + ifaces;
+			return NULL;
+		}
+		network_iface_stat_ptr = network_iface_stats + ifaces;
 
 		memset(&ifr, 0, sizeof(ifr));
 		strncpy(ifr.ifr_name, net_ptr->ifa_name, sizeof(ifr.ifr_name));
@@ -452,7 +452,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		}
 
 		if (sg_update_string(&network_iface_stat_ptr->interface_name,
-		                     net_ptr->ifa_name) < 0) {
+				     net_ptr->ifa_name) < 0) {
 			return NULL;
 		}
 
@@ -554,7 +554,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			ifaces++;
 
 			if (sg_update_string(&network_iface_stat_ptr->interface_name,
-			                     ksp->ks_name) < 0) {
+					     ksp->ks_name) < 0) {
 				return NULL;
 			}
 
@@ -589,9 +589,9 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #endif	
 #ifdef LINUX
 	f = fopen("/proc/net/dev", "r");
-        if(f == NULL){
-                return NULL;
-        }
+	if(f == NULL){
+		return NULL;
+	}
 
 	/* Setup stuff so we can do the ioctl to get the info */
 	if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
@@ -599,26 +599,26 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	}
 
 	/* Ignore first 2 lines.. Just headings */
-        if((fgets(line, sizeof(line), f)) == NULL) return NULL;
-        if((fgets(line, sizeof(line), f)) == NULL) return NULL;
+	if((fgets(line, sizeof(line), f)) == NULL) return NULL;
+	if((fgets(line, sizeof(line), f)) == NULL) return NULL;
 
-        while((fgets(line, sizeof(line), f)) != NULL){
-                char *name, *ptr;
-                struct ifreq ifr;
-                struct ethtool_cmd ethcmd;
-                int err;
+	while((fgets(line, sizeof(line), f)) != NULL){
+		char *name, *ptr;
+		struct ifreq ifr;
+		struct ethtool_cmd ethcmd;
+		int err;
 
 		/* Get the interface name */
-                ptr = strchr(line, ':');
-                if (ptr == NULL) continue;
-                *ptr='\0';
-                name = line;
-                while(isspace(*(name))){
-                        name++;
-                }
+		ptr = strchr(line, ':');
+		if (ptr == NULL) continue;
+		*ptr='\0';
+		name = line;
+		while(isspace(*(name))){
+			name++;
+		}
 
-                memset(&ifr, 0, sizeof ifr);
-                strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
+		memset(&ifr, 0, sizeof ifr);
+		strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 
 		if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0) {
 			continue;
@@ -631,7 +631,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		network_iface_stat_ptr = network_iface_stats + ifaces;
 		
 		if (sg_update_string(&network_iface_stat_ptr->interface_name,
-		                     name) < 0) {
+				     name) < 0) {
 			return NULL;
 		}
 		if ((ifr.ifr_flags & IFF_UP) != 0) {
@@ -640,12 +640,12 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			network_iface_stat_ptr->up = 0;
 		}
 
-                memset(&ethcmd, 0, sizeof ethcmd);
-                ethcmd.cmd = ETHTOOL_GSET;
-                ifr.ifr_data = (caddr_t) &ethcmd;
+		memset(&ethcmd, 0, sizeof ethcmd);
+		ethcmd.cmd = ETHTOOL_GSET;
+		ifr.ifr_data = (caddr_t) &ethcmd;
 
-                err = ioctl(sock, SIOCETHTOOL, &ifr);
-                if (err == 0) {
+		err = ioctl(sock, SIOCETHTOOL, &ifr);
+		if (err == 0) {
 			network_iface_stat_ptr->speed = ethcmd.speed;
 
 			switch (ethcmd.duplex) {

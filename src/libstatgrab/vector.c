@@ -34,7 +34,7 @@ void *sg_vector_resize(void *vector, vector_header *h, int count) {
 	int new_count, i;
 
 	/* Destroy any now-unused items.
-         *
+	 *
 	 * Note that there's an assumption here that making the vector smaller
 	 * will never fail; if it did, then we would have destroyed items here
 	 * but not actually got rid of the vector pointing to them before the
@@ -47,7 +47,7 @@ void *sg_vector_resize(void *vector, vector_header *h, int count) {
 
 	/* Round up the desired size to the next multiple of the block size. */
 	new_count =  ((count - 1 + h->block_size) / h->block_size)
-	             * h->block_size;
+		     * h->block_size;
 
 	/* Resize the vector if necessary. */
 	if (new_count != h->alloc_count) {

@@ -53,7 +53,7 @@ sg_user_stats *sg_get_user_stats(){
 #endif
 #ifdef ALLBSD
 	struct utmp entry;
-        FILE *f;
+	FILE *f;
 #endif
 
 #if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)

@@ -51,9 +51,9 @@ static int page_stats_uninit=1;
 
 sg_page_stats *sg_get_page_stats(){
 #ifdef SOLARIS
-        kstat_ctl_t *kc;
-        kstat_t *ksp;
-        cpu_stat_t cs;
+	kstat_ctl_t *kc;
+	kstat_t *ksp;
+	cpu_stat_t cs;
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	FILE *f;
@@ -67,18 +67,18 @@ sg_page_stats *sg_get_page_stats(){
 #endif
 
 	page_stats.systime = time(NULL);
-        page_stats.pages_pagein=0;
-        page_stats.pages_pageout=0;
+	page_stats.pages_pagein=0;
+	page_stats.pages_pageout=0;
 
 #ifdef SOLARIS
-        if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
-        for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
-                if ((strcmp(ksp->ks_module, "cpu_stat")) != 0) continue;
-                if (kstat_read(kc, ksp, &cs) == -1) {
-                        continue;
-                }
+	if ((kc = kstat_open()) == NULL) {
+		return NULL;
+	}
+	for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
+		if ((strcmp(ksp->ks_module, "cpu_stat")) != 0) continue;
+		if (kstat_read(kc, ksp, &cs) == -1) {
+			continue;
+		}
 
 		page_stats.pages_pagein+=(long long)cs.cpu_vminfo.pgpgin;
 		page_stats.pages_pageout+=(long long)cs.cpu_vminfo.pgpgout;
@@ -121,13 +121,13 @@ sg_page_stats *sg_get_page_stats(){
 #endif
 #if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof page_stats.pages_pagein;
-        if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, 0) < 0){
-                return NULL;
-        }
+	if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, 0) < 0){
+		return NULL;
+	}
 	size = sizeof page_stats.pages_pageout;
-        if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, 0) < 0){
-                return NULL;
-        }
+	if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, 0) < 0){
+		return NULL;
+	}
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	if ((uvm = sg_get_uvmexp()) == NULL) {
@@ -163,9 +163,9 @@ sg_page_stats *sg_get_page_stats_diff(){
 		return NULL;
 	}
 
-        page_stats_diff.pages_pagein=page_stats.pages_pagein-page_stats_diff.pages_pagein;
-        page_stats_diff.pages_pageout=page_stats.pages_pageout-page_stats_diff.pages_pageout;
-        page_stats_diff.systime=page_stats.systime-page_stats_diff.systime;
+	page_stats_diff.pages_pagein=page_stats.pages_pagein-page_stats_diff.pages_pagein;
+	page_stats_diff.pages_pageout=page_stats.pages_pageout-page_stats_diff.pages_pageout;
+	page_stats_diff.systime=page_stats.systime-page_stats_diff.systime;
 	
 	return &page_stats_diff;
 }

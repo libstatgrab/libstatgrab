@@ -84,7 +84,7 @@ static void proc_state_destroy(sg_process_stats *s) {
 
 sg_process_stats *sg_get_process_stats(int *entries){
 	VECTOR_DECLARE_STATIC(proc_state, sg_process_stats, 64,
-	                      proc_state_init, proc_state_destroy);
+			      proc_state_init, proc_state_destroy);
 	int proc_state_size = 0;
 	sg_process_stats *proc_state_ptr;
 #ifdef ALLBSD
@@ -107,10 +107,10 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #endif
 #endif
 #if defined(SOLARIS) || defined(LINUX)
-        DIR *proc_dir;
-        struct dirent *dir_entry;
-        char filename[MAX_FILE_LENGTH];
-        FILE *f;
+	DIR *proc_dir;
+	struct dirent *dir_entry;
+	char filename[MAX_FILE_LENGTH];
+	FILE *f;
 #ifdef SOLARIS
 	psinfo_t process_info;
 #endif
@@ -138,26 +138,26 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	fclose(f);
 #endif
 
-        if((proc_dir=opendir(PROC_LOCATION))==NULL){
-                return NULL;
-        }
+	if((proc_dir=opendir(PROC_LOCATION))==NULL){
+		return NULL;
+	}
 
-        while((dir_entry=readdir(proc_dir))!=NULL){
-                if(atoi(dir_entry->d_name) == 0) continue;
+	while((dir_entry=readdir(proc_dir))!=NULL){
+		if(atoi(dir_entry->d_name) == 0) continue;
 
 #ifdef SOLARIS
-                snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
+		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
 #endif
 #ifdef LINUX
 		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/stat", dir_entry->d_name);
 #endif
-                if((f=fopen(filename, "r"))==NULL){
-                        /* Open failed.. Process since vanished, or the path was too long.
-                         * Ah well, move onwards to the next one */
-                        continue;
-                }
+		if((f=fopen(filename, "r"))==NULL){
+			/* Open failed.. Process since vanished, or the path was too long.
+			 * Ah well, move onwards to the next one */
+			continue;
+		}
 #ifdef SOLARIS
-                fread(&process_info, sizeof(psinfo_t), 1, f);
+		fread(&process_info, sizeof(psinfo_t), 1, f);
 #endif
 
 		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
@@ -178,19 +178,19 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->time_spent = process_info.pr_time.tv_sec;
 		proc_state_ptr->cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
 		if (sg_update_string(&proc_state_ptr->process_name,
-		                     process_info.pr_fname) < 0) {
+				     process_info.pr_fname) < 0) {
 			return NULL;
 		}
 		if (sg_update_string(&proc_state_ptr->proctitle,
-		                     process_info.pr_psargs) < 0) {
+				     process_info.pr_psargs) < 0) {
 			return NULL;
 		}
 
-                if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
-                if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
-                if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE; 
-                if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = SG_PROCESS_STATE_STOPPED; 
-                if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
+		if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+		if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
+		if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE; 
+		if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = SG_PROCESS_STATE_STOPPED; 
+		if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
 #endif
 #ifdef LINUX
 		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %lu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &starttime, &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
@@ -207,22 +207,22 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		if(ptr !=NULL) *ptr='\0';
 
 		if (sg_update_string(&proc_state_ptr->process_name,
-		                     &ps_name[1]) < 0) {
+				     &ps_name[1]) < 0) {
 			return NULL;
 		}
 
 		/* cpu */
 		proc_state_ptr->cpu_percent = (100.0 * (utime + stime)) / ((uptime * 100.0) - starttime);
 
-                fclose(f);
+		fclose(f);
 
 		/* uid / gid */
 		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/status", dir_entry->d_name);
-	        if ((f=fopen(filename, "r")) == NULL) {
-                        /* Open failed.. Process since vanished, or the path was too long.
-                         * Ah well, move onwards to the next one */
-                        continue;
-                }
+		if ((f=fopen(filename, "r")) == NULL) {
+			/* Open failed.. Process since vanished, or the path was too long.
+			 * Ah well, move onwards to the next one */
+			continue;
+		}
 
 		if((ptr=sg_f_read_line(f, "Uid:"))==NULL){
 			fclose(f);
@@ -231,21 +231,21 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		sscanf(ptr, "Uid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->uid), &(proc_state_ptr->euid));
 
 		if((ptr=sg_f_read_line(f, "Gid:"))==NULL){
-                        fclose(f);
-                        continue;
-                }
-                sscanf(ptr, "Gid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->gid), &(proc_state_ptr->egid));
+			fclose(f);
+			continue;
+		}
+		sscanf(ptr, "Gid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->gid), &(proc_state_ptr->egid));
 
 		fclose(f);
 
 		/* proctitle */	
 		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/cmdline", dir_entry->d_name);
 
-                if((fn=open(filename, O_RDONLY)) == -1){
-                        /* Open failed.. Process since vanished, or the path was too long.
-                         * Ah well, move onwards to the next one */
-                        continue;
-                }
+		if((fn=open(filename, O_RDONLY)) == -1){
+			/* Open failed.. Process since vanished, or the path was too long.
+			 * Ah well, move onwards to the next one */
+			continue;
+		}
 
 #define READ_BLOCK_SIZE 128
 		len = 0;
@@ -291,8 +291,8 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #endif
 
 		proc_state_size++;
-        }
-        closedir(proc_dir);
+	}
+	closedir(proc_dir);
 #endif
 
 #ifdef ALLBSD

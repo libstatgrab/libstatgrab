@@ -73,10 +73,10 @@ sg_host_info *sg_get_host_info(){
 	}
 	
 	general_stat.os_name = os.sysname;
-        general_stat.os_release = os.release;
-        general_stat.os_version = os.version;
-        general_stat.platform = os.machine;
-        general_stat.hostname = os.nodename;
+	general_stat.os_release = os.release;
+	general_stat.os_version = os.version;
+	general_stat.platform = os.machine;
+	general_stat.hostname = os.nodename;
 
 	/* get uptime */
 #ifdef SOLARIS
