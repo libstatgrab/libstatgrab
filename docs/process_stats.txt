@@ -1,9 +1,13 @@
-get_process_stats returns information on the number of processes on
-the host, and the number in different states. It takes no arguments.
+Process Statistics
+==================
 
-get_process_stats returns a static buffer process_stat_t
+$Id$
 
-process_stat_t *get_process_stats();
+Data Structure
+--------------
+
+The function returns a structure of type process_stat_t that looks
+like this:
 
 typedef struct{
         int total;
@@ -13,10 +17,23 @@ typedef struct{
         int zombie;
 }process_stat_t;
 
-total : stores the total number of processes on the machine
-running : the number of running processes
-sleeping : number of sleeping processes
-stopped : number of stopped processes 
-zombie : number of zombie processes
+total		is the total number of processes
+running		is the number of running processes
+sleeping	is the number of sleeping processes
+stopped		is the number of stopped processes
+zombie		is the number of zombie processes
 
-see examples/process_stats.c for a working implimentation.
+Functions
+---------
+
+process_stat_t *get_process_stats();
+
+get_process_stats returns a static buffer process_stat_t.
+
+It returns information on the number of processes on the system and
+the different states they're in.
+
+Examples
+--------
+
+See examples/process_stats.c for a working implementation.

@@ -1,7 +1,7 @@
 /* 
  * i-scream central monitoring system
- * http://www.i-scream.org.uk
- * Copyright (C) 2000-2002 i-scream
+ * http://www.i-scream.org
+ * Copyright (C) 2000-2003 i-scream
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

@@ -1,6 +1,8 @@
 Network Statistics
 ==================
 
+$Id$
+
 Data Structure
 --------------
 
@@ -63,4 +65,3 @@ Example
 -------
 
 A very basic example can be found in examples/network_traffic.c
-

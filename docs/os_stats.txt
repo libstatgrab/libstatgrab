@@ -1,8 +1,9 @@
-general_stat_t *get_general_stats();
+General Operating System Statistics
+===================================
 
-This call returns details omn  the OS, e.g. hostname and uptime.
+$Id$
 
-It returns a static buffer general_stat_t
+The structure returned is of type general_stat_t and looks like this:
 
 typedef struct{
         char *os_name;
@@ -13,9 +14,25 @@ typedef struct{
         time_t uptime;
 }general_stat_t;
 
-os_name is the operating system name, eg, SunOS, or Linux
-os_release is the operationg system release, eg 5.8 or 5.9 for solaris 8 and 9
-os_version is the info revision of that OS release. 
-platform is the hardware platform the OS runs on. E.g. Sun4U or i386
-hostname is the name of the machine that it think it is called (nodename)
-uptime is uptime of the machine in seconds
+os_name		is the operating system name.
+		(eg. SunOS or Linux)
+os_release	is the operating system release.
+		(eg. 5.8 or 5.9 for Solaris)
+os_version	is the version level of the OS.
+platform	is the hardware platform (architecture) the OS runs on.
+hostname	is the name of the machine
+uptime		is the uptime of the machine in seconds
+
+Functions
+---------
+
+general_stat_t *get_general_stats();
+
+This call returns details on the operating system.
+
+It returns a static buffer general_stat_t.
+
+Example
+-------
+
+An example can be found in examples/os_info.c

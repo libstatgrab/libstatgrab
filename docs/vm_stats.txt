@@ -1,5 +1,12 @@
-Memory stats are accessed through get_memory_stats() call. This 
-returns a pointer to a static mem_stat_t 
+VM Statistics
+=============
+
+$Id$
+
+Data Structures
+---------------
+
+These two structures can be returned by the VM system calls:
 
 typedef struct{
         long long total;
@@ -8,17 +15,13 @@ typedef struct{
         long long cache;
 }mem_stat_t;
 
-total contains the total memory in bytes. 
-free is the total free memory in bytes.
-used is the total used memory in bytes.
-cache is the cache used in bytes.
+total	contains the total memory in bytes.
+free	is the total free memory in bytes.
+used	is the total used memory in bytes.
+cache	is the cache used in bytes.
 
-cache is not available in all operating systems. Solaris being a key
-one that it isn't. free memory and cache memory can sometimes be 
-linked.
-
-Swap stats are accessed through get_swap_stats() call. This returns a
-pointer to a static swap_stat_t
+nb: Cache is not available on all operating systems (for example,
+    Solaris). Free memory and cache memory can sometimes be linked.
 
 typedef struct{
         long long total;
@@ -26,9 +29,35 @@ typedef struct{
         long long free;
 }swap_stat_t;
 
+total	contains the total swap space in bytes.
+used	is the used swap in bytes.
+free	is the free swap in bytes.
 
-Freebsd requires kmem privilages to be able to do this call. Making the 
-program setgid kmem should be sufficent. 
+Functions
+---------
 
-TODO
-Add a function to hold open the FD to kmem privilages could be dropped.
+mem_stat_t *get_memory_stats();
+
+swap_stat_t *get_swap_stats();
+
+Memory statistics are accessed through the first call. It returns
+a pointer to a static mem_stat_t.
+
+The second call returns swap statistics. It returns a pointer to
+a static swap_stat_t.
+
+On the FreeBSD operating system elevated privileges are required
+to access the swap statistics. Making the program setgid kmem should
+be sufficient. Programs running as root will not have this problem.
+
+Todo
+----
+
+Add a function to hold open the file descriptor to the kernel memory
+structures. Doing this would allow the elevated privileges to be
+dropped early on.
+
+Example
+-------
+
+An example can be found in examples/vm_stats.

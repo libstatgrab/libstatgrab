@@ -1,9 +1,12 @@
-Load stats a way of pulling out the load average of a system. On most systems, its
-just a wrapper to getloadavg.
+Load Averages
+=============
 
-The call returns a static buffer of load_stat_t load_stat
+$Id$
 
-load_stat_t is made up :
+Data Structure
+--------------
+
+The structure returned is of type load_stat_t and looks like this:
 
 typedef struct{
         double min1;
@@ -11,4 +14,21 @@ typedef struct{
         double min15;
 }load_stat_t;
 
-minX contains a double of the load average over the time X in minutes.
+min1	The load average over 1 minute.
+min5	The load average over 5 minutes.
+min15	The load average over 15 minutes.
+
+Functions
+---------
+
+load_stat_t *get_load_stats();
+
+This call returns a static buffer of load_stat_t.
+
+On most systems this function is just a wrapper to the getloadavg
+system call.
+
+Example
+-------
+
+An example can be found in examples/load_stats.c
