@@ -98,13 +98,24 @@ void init_disk_stat(int start, int end, disk_stat_t *disk_stats){
 	}
 }
 
+int is_valid_fs_type(const char *type) {
+	const char *types[] = VALID_FS_TYPES;
+	int i;
+
+	for (i = 0; i < (sizeof types / sizeof *types); i++) {
+		if (strcmp(types[i], type) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 disk_stat_t *get_disk_stats(int *entries){
 
 	static disk_stat_t *disk_stats;
 	static int watermark=-1;
 
-	char *fs_types[] = VALID_FS_TYPES;
-	int x, valid_type;
+	int valid_type;
 	int num_disks=0;
 #if defined(LINUX) || defined (SOLARIS) || defined(CYGWIN)
 	FILE *f;
@@ -139,13 +150,7 @@ disk_stat_t *get_disk_stats(int *entries){
 		return NULL;
 	}
 	for(;nummnt--; mp++){
-		valid_type=0;
-		for(x=0;x<((sizeof(fs_types))/(sizeof(char*)));x++){
-                        if(strcmp(mp->f_fstypename, fs_types[x]) ==0){
-                                valid_type=1;
-                                break;
-                        }
-                }
+		valid_type = is_valid_fs_type(mp->f_fstypename);
 #endif
 
 #if defined(LINUX) || defined(CYGWIN)
@@ -158,13 +163,7 @@ disk_stat_t *get_disk_stats(int *entries){
 			continue;
 		}	
 
-		valid_type=0;
-		for(x=0;x<((sizeof(fs_types))/(sizeof(char*)));x++){
-                        if(strcmp(mp->mnt_type, fs_types[x]) ==0){
-                                valid_type=1;
-                                break;
-                        }
-                }
+		valid_type = is_valid_fs_type(mp->mnt_type);
 #endif
 
 #ifdef SOLARIS
@@ -175,13 +174,7 @@ disk_stat_t *get_disk_stats(int *entries){
 		if ((statvfs(mp.mnt_mountp, &fs)) !=0){
 			continue;
 		}
-		valid_type=0;
-		for(x=0;x<((sizeof(fs_types))/(sizeof(char*)));x++){
-			if(strcmp(mp.mnt_fstype, fs_types[x]) ==0){
-				valid_type=1;
-				break;
-			}
-		}
+		valid_type = is_valid_fs_type(mp.mnt_fstype);
 #endif
 
 		if(valid_type){
