@@ -9,14 +9,15 @@ Supported Platforms
 libstatgrab has been tested to work on the following platforms:
 
 Cygwin ?.?
-DragonFly BSD 1.0
-FreeBSD 4
-FreeBSD 5
+DragonFly BSD 1.x
+FreeBSD 4.x
+FreeBSD 5.x
 Linux 2.2
 Linux 2.4
 Linux 2.6
-NetBSD 1.6
-OpenBSD 3.3
+NetBSD 1.x
+NetBSD 2.x
+OpenBSD 3.x
 Solaris 2.6
 Solaris 2.7
 Solaris 2.8 (sparc & x86)
