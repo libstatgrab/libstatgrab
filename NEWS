@@ -1,3 +1,8 @@
+libstatgrab NEWS
+http://www.i-scream.org/libstatgrab/
+
+$Id$
+
 libstatgrab 0.8.1 (21 January 2004)
 
  * The library part of libstatgrab is now released under the LGPL.

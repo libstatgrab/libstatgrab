@@ -1,5 +1,5 @@
 # Makefile for libstatgrab
-# http://www.i-scream.org/
+# http://www.i-scream.org/libstatgrab/
 # $Id$
 
 AUTOMAKE_OPTIONS = gnu

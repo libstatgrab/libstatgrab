@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/examples
-# http://www.i-scream.org/
+# http://www.i-scream.org/libstatgrab/
 # $Id$
 
 if EXAMPLES

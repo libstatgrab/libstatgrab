@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/src/libstatgrab
-# http://www.i-scream.org/
+# http://www.i-scream.org/libstatgrab/
 # $Id$
 
 include_HEADERS = statgrab.h
