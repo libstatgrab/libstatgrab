@@ -694,6 +694,9 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 	}
 
 	diskio_stats_ptr=get_diskio_stats(&disks);
+	if (diskio_stats_ptr == NULL) {
+		return NULL;
+	}
 	diskio_stats_diff_ptr=diskio_stats_diff;
 
 	for(x=0;x<sizeof_diskio_stats_diff;x++){

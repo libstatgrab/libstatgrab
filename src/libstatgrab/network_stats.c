@@ -284,6 +284,9 @@ network_stat_t *get_network_stats_diff(int *entries){
 		network_stats_diff_ptr++;
 	}
 	network_stats_ptr=get_network_stats(&ifaces);		
+	if (network_stats_ptr == NULL) {
+		return NULL;
+	}
 	network_stats_diff_ptr=network_stats_diff;
 
 	for(x=0;x<sizeof_net_stats_diff;x++){
