@@ -54,7 +54,8 @@
 #ifdef FREEBSD
 #include <sys/dkstat.h>
 #include <devstat.h>
-#define VALID_FS_TYPES {"ufs", "mfs"}
+#define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
+                        "ufs", "mfs"}
 #endif
 #ifdef NETBSD
 #include <sys/param.h>
