@@ -157,6 +157,7 @@ process_stat_t *get_process_stats(){
 	}
         
 	if (sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
+		free(kp_stats);
 		return NULL;
 	}
 
@@ -193,9 +194,9 @@ process_stat_t *get_process_stats(){
 			break;
                 }
 	}
-#endif
 
-free(kp_stats);
+	free(kp_stats);
+#endif
 
 #ifdef CYGWIN
 	return NULL;
