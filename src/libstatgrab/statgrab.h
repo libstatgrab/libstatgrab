@@ -21,6 +21,9 @@
  * $Id$
  */
 
+#ifndef STATGRAB_H
+#define STATGRAB_H
+
 #include <sys/types.h>
 
 /* FIXME typedefs for 32/64-bit types */
@@ -263,3 +266,4 @@ sg_process_count *sg_get_process_count();
 #include <statgrab_deprecated.h>
 #endif
 
+#endif
