@@ -279,6 +279,8 @@ void populate_fs() {
 				die("out of memory");
 
 			name = buf;
+			if (strlen(name) == 2 && name[1] == ':')
+				name[1] = '\0';
 			if (strncmp(name, "/dev/", 5) == 0)
 				name += 5;
 			while ((p = strchr(name, '/')) != NULL)
