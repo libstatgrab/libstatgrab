@@ -352,6 +352,22 @@ int get_stats(){
 		return 1;
 }
 
+void version_num(char *progname){
+	fprintf(stderr, "%s version %s\n", PACKAGE_VERSION);
+	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
+	exit(1);
+}
+
+void usage(char *progname){
+        fprintf(stderr, "Usage: %s [-d delay] [-v] [-h]\n\n", progname);
+        fprintf(stderr, "  -d    Sets the update time in seconds\n");
+	fprintf(stderr, "  -v 	 Prints version number\n");
+        fprintf(stderr, "  -h    Displays this help information.\n");
+        fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
+        exit(1);
+
+}
+
 int main(int argc, char **argv){
 
         extern char *optarg;
@@ -379,6 +395,15 @@ int main(int argc, char **argv){
 				}
 				delay--;
                                 break;
+			case 'v':
+				version_num(argv[0]);	
+				break;
+			case 'h':
+			default:
+				usage(argv[0]);
+				return 1;
+				break;
+				
                 }
         }
 
