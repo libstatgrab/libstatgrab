@@ -339,7 +339,7 @@ void network_iface_stat_init(int start, int end, network_iface_stat_t *net_stats
 	for(net_stats+=start; start<end; start++){
 		net_stats->interface_name=NULL;
 		net_stats->speed=0;
-		net_stats->dup=NO_DUPLEX;
+		net_stats->dup=UNKNOWN_DUPEX;
 		net_stats++;
 	}
 }
@@ -469,7 +469,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
 			network_iface_stat_ptr->dup = HALF_DUPLEX;
 		}else{
-			network_iface_stat_ptr->dup = NO_DUPLEX;
+			network_iface_stat_ptr->dup = UNKNOWN_DUPEX;
 		}
 		ifaces++;
 	}	
@@ -532,8 +532,8 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 	if(eth_tool_cmd_buf == NULL) return NULL;
 
 	/* Ignore first 2 lines.. Just headings */
-        fgets(line, sizeof(line), f);
-        fgets(line, sizeof(line), f);
+        if((fgets(line, sizeof(line), f)) == NULL) return NULL;
+        if((fgets(line, sizeof(line), f)) == NULL) return NULL;
 
         while((fgets(line, sizeof(line), f)) != NULL){
                 char *name, *ptr;
@@ -555,7 +555,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
                 ifr.ifr_data = (caddr_t) eth_tool_cmd_buf;
                 strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
-                ethcmd = (struct ethtool_cmd *)(&ifr)->ifr_data;
+                ethcmd = (struct ethtool_cmd *) ifr.ifr_data;
                 ethcmd->cmd = ETHTOOL_GSET;
 
                 err = ioctl(sock, SIOCETHTOOL, &ifr);
@@ -574,7 +574,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		network_iface_stat_ptr = network_iface_stats + ifaces;
 		network_iface_stat_ptr->interface_name = strdup(name);
 		network_iface_stat_ptr->speed = ethcmd->speed;
-		network_iface_stat_ptr->dup = NO_DUPLEX;
+		network_iface_stat_ptr->dup = UNKNOWN_DUPEX;
 		if(ethcmd->duplex == 0x00){
 			network_iface_stat_ptr->dup = FULL_DUPLEX;
 		}

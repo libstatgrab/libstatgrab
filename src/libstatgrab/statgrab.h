@@ -114,13 +114,13 @@ typedef struct{
 typedef enum{
 	FULL_DUPLEX,
 	HALF_DUPLEX,
-	NO_DUPLEX
-}duplex;
+	UNKNOWN_DUPLEX
+}statgrab_duplex;
 
 typedef struct{
 	char *interface_name;
 	int speed;	/* In megabits/sec */
-	duplex dup;	
+	statgrab_duplex dup;	
 }network_iface_stat_t;
 
 typedef struct{
