@@ -16,10 +16,14 @@ INCLUDES = -I$(top_srcdir) -I$(top_builddir) \
 LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la @LINKFLAGS@
 
 install-exec-local:
-if SETGIDBINS
 if STATGRAB
+if SETGIDBINS
 # Some operating systems need the binary to be setgid kmem
 	chgrp kmem @bindir@/statgrab
 	chmod g+s @bindir@/statgrab
+endif
+if SETUIDBINS
+# Some operating systems need the binary to be setuid root
+	chmod u+s @bindir@/statgrab
 endif
 endif

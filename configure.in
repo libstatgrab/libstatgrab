@@ -40,8 +40,9 @@ AC_CHECK_MEMBER(struct disk_sysctl.dk_rbytes,
                 [],
                 [#include <sys/disk.h>])
 
-# Default needing setgid to false
+# Default needing setgid/setuid to false
 AM_CONDITIONAL(SETGIDBINS, false)
+AM_CONDITIONAL(SETUIDBINS, false)
 
 # Set things up for different OS's
 # We define the name of the OS so the code can act accordingly
@@ -51,11 +52,13 @@ solaris2.[[6-7]])
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	AC_DEFINE(SOL7, , [Building on Solaris 2.7])
+	AM_CONDITIONAL(SETUIDBINS, true)
 	LINKFLAGS="-lkstat -ldevinfo"
 	;;
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
+	AM_CONDITIONAL(SETUIDBINS, true)
 	LINKFLAGS="-lkstat -ldevinfo"
 	;;
 freebsd4.*)
@@ -151,12 +154,21 @@ AC_ARG_ENABLE(manpages,
 )
 
 # Check if the user wants to turn off setgid binaries
-# (only really relevant on FreeBSD)
 AC_ARG_ENABLE(setgid-binaries,
 	[  --disable-setgid-binaries     disable binaries being setgid],
 	[
 		if test "x$enableval" = "xno" ; then
 			AM_CONDITIONAL(SETGIDBINS, false)
+		fi
+	]
+)
+
+# Check if the user wants to turn off setuid binaries
+AC_ARG_ENABLE(setuid-binaries,
+	[  --disable-setuid-binaries     disable binaries being setuid],
+	[
+		if test "x$enableval" = "xno" ; then
+			AM_CONDITIONAL(SETUIDBINS, false)
 		fi
 	]
 )
