@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="cpu_percent_usage">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>cpu_percent_usage</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>cpu_percent_usage</refname>
+    <refname>get_cpu_totals</refname>
+    <refname>get_cpu_diff</refname>
+    <refpurpose>get cpu usage</refpurpose>
+  </refnamediv>
+    
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>cpu_percent_t *<function>cpu_percent_usage</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>cpu_states_t *<function>get_cpu_totals</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>cpu_states_t *<function>get_cpu_diff</function></funcdef>
+        <void/>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+    
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <function>get_cpu_totals()</function> and
+      <function>get_cpu_diff()</function> both return static pointers
+      of type <structname>cpu_states_t</structname>.
+      <function>get_cpu_totals()</function> returns the total amount of
+      "ticks" the operating system has spent in each of the different
+      states. <function>get_cpu_diff()</function> returns the
+      difference in "ticks" for each of the states since last time
+      <function>get_cpu_diff()</function> or
+      <function>get_cpu_totals()</function> was called. If it has never
+      been called, it will return the result of
+      <function>get_cpu_totals()</function>.
+    </para>
+    <para>
+      The value stored (the "ticks") will vary between operating
+      systems.  For example Solaris has a total of 100 per second,
+      while Linux has substantially more.  Also, different operating
+      systems store different information - you won't find nice cpu on
+      Solaris for example.
+    </para>
+    <para>
+      Because of this,  you will ideally always want to work on a scale
+      against the total, or in percentages.
+    </para>
+    <para>
+      <function>cpu_percent_usage()</function> returns a pointer to a
+      static <structname>cpu_percent_t</structname>.  The function
+      calls <function>get_cpu_diff()</function> and changes the values
+      into percentages. If it has never been called before (and nor has
+      <function>get_cpu_totals()</function> or
+      <function>get_cpu_diff()</function>), the returned percentages
+      will be the systems total ever since its uptime. (Unless the
+      counters have cycled)
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>Return Values</title>
+
+    <para>
+      There are two structures returned by the CPU statistics
+      functions.
+    </para>
+
+    <programlisting>
+typedef struct{
+        long long user;
+        long long kernel;
+        long long idle;
+        long long iowait;
+        long long swap;
+        long long nice;
+        long long total;
+        time_t systime;
+}cpu_states_t;
+    </programlisting>
+
+    <programlisting>
+typedef struct{
+        float user;
+        float kernel;
+        float idle;
+        float iowait;
+        float swap;
+        float nice;
+        time_t time_taken;
+}cpu_percent_t;
+    </programlisting>
+
+    <variablelist>
+      <varlistentry>
+        <term>
+          <structfield>user</structfield>
+          <structfield>kernel</structfield>
+          <structfield>idle</structfield>
+          <structfield>iowait</structfield>
+          <structfield>swap</structfield>
+          <structfield>nice</structfield>
+        </term>
+        <listitem>
+          <para>
+            The different CPU states.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>systime</structfield>
+          <structfield>time_taken</structfield>
+        </term>
+        <listitem>
+          <para>
+            The time taken in seconds since the last call of the
+            function, or the system time.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+    <para>Nothing yet</para>
+  </refsect1>
+  
+  <refsect1>
+    <title>Website</title>
+    
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org">http://www.i-scream.org</ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
