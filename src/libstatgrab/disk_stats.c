@@ -413,6 +413,8 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	
 			num_diskio++;
 	
+			/* FIXME This should use a static cache, like the Linux
+			 * code below. */
 			if (diskio_stats_ptr->disk_name == NULL) {
 				dh = opendir("/dev/dsk");
 				if (dh == NULL) {
