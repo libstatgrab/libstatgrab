@@ -60,21 +60,32 @@ char *get_string_match(char *line, regmatch_t *match){
 	return match_string;
 }
 
+#ifndef HAVE_ATOLL
+static long long atoll(const char *s) {
+	long long value = 0;
+	int isneg = 0;
+
+	while (*s == ' ' || *s == '\t') {
+		s++;
+	}
+	if (*s == '-') {
+		isneg = 1;
+		s++;
+	}
+	while (*s >= '0' && *s <= '9') {
+		value = (10 * value) + (*s - '0');
+		s++;
+	}
+	return (isneg ? -value : value);
+}
+#endif
+
 long long get_ll_match(char *line, regmatch_t *match){
 	char *ptr;
 	long long num;
 
 	ptr=line+match->rm_so;
-#ifdef HAVE_ATOLL
 	num=atoll(ptr);
-#else
-	/* Don't have atoll, so use this bodge instead */
-	{
-		long numl;
-		numl=atol(ptr);
-		num=numl;
-	}
-#endif
 
 	return num;
 }
