@@ -12,12 +12,7 @@ typedef struct {
 	vector_destroy_function destroy_fn;
 } vector_header;
 
-int statgrab_vector_resize(void **vector, vector_header *h, int count);
-
-/* Declare a vector. Specify the init/destroy functions as NULL if you don't
- * need them. The block size is how many items to allocate at once. */
-#define VECTOR_DECLARE(name, item_type, block_size, init_fn, destroy_fn) \
-	item_type * name = NULL; \
+#define VECTOR_HEADER(name, item_type, block_size, init_fn, destroy_fn) \
 	vector_header name##_header = { \
 		sizeof(item_type), \
 		0, \
@@ -26,6 +21,19 @@ int statgrab_vector_resize(void **vector, vector_header *h, int count);
 		(vector_init_function) init_fn, \
 		(vector_destroy_function) destroy_fn \
 	}
+
+int statgrab_vector_resize(void **vector, vector_header *h, int count);
+
+/* Declare a vector. Specify the init/destroy functions as NULL if you don't
+ * need them. The block size is how many items to allocate at once. */
+#define VECTOR_DECLARE(name, item_type, block_size, init_fn, destroy_fn) \
+	item_type *name = NULL; \
+	VECTOR_HEADER(name, item_type, block_size, init_fn, destroy_fn)
+
+/* As VECTOR_DECLARE, but for a static vector. */
+#define VECTOR_DECLARE_STATIC(name, item_type, block_size, init_fn, destroy_fn) \
+	static item_type *name = NULL; \
+	static VECTOR_HEADER(name, item_type, block_size, init_fn, destroy_fn)
 
 /* Return the current size of a vector. */
 #define VECTOR_SIZE(name) \
@@ -40,5 +48,4 @@ int statgrab_vector_resize(void **vector, vector_header *h, int count);
 /* Free a vector, destroying its contents. */
 #define VECTOR_FREE(name) \
 	VECTOR_RESIZE(name, 0)
-
 
