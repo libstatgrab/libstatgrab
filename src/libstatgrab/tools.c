@@ -27,6 +27,10 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <regex.h>
+#ifdef FREEBSD
+#include <fcntl.h>
+#include <kvm.h>
+#endif
 
 #include "tools.h"
 
@@ -62,5 +66,18 @@ long long get_ll_match(char *line, regmatch_t *match){
 	num=atoll(ptr);
 
 	return num;
+}
+#endif
+
+#ifdef FREEBSD
+kvm_t *get_kvm() {
+	static kvm_t *kvmd = NULL;
+
+	if (kvmd != NULL) {
+		return kvmd;
+	}
+
+	kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
+	return kvmd;
 }
 #endif

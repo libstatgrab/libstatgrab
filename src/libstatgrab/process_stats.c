@@ -45,7 +45,6 @@
 #endif
 #ifdef FREEBSD
 #include <kvm.h>
-#include <fcntl.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
@@ -69,7 +68,7 @@ process_stat_t *get_process_stats(){
 #endif
 #ifdef FREEBSD
 	struct kinfo_proc *kp_stats;	
-	kvm_t *kvmd = NULL;
+	kvm_t *kvmd;
 	int procs;
 #endif
 
@@ -135,7 +134,7 @@ process_stat_t *get_process_stats(){
 	closedir(proc_dir);
 #endif
 #ifdef FREEBSD
-	if((kvmd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL)) == NULL){
+	if((kvmd = get_kvm()) == NULL){
 		return NULL;
 	}
 
@@ -159,8 +158,6 @@ process_stat_t *get_process_stats(){
 		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
 #endif
 	}
-
-	kvm_close(kvmd);
 #endif
 
 	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;

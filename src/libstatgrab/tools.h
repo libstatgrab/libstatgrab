@@ -20,6 +20,9 @@
 
 #include <stdio.h>
 #include <regex.h>
+#ifdef FREEBSD
+#include <kvm.h>
+#endif
 
 char *f_read_line(FILE *f, const char *string);
 
@@ -27,4 +30,8 @@ char *get_string_match(char *line, regmatch_t *match);
 
 #ifdef HAVE_ATOLL
 long long get_ll_match(char *line, regmatch_t *match);
+#endif
+
+#ifdef FREEBSD
+kvm_t *get_kvm(void);
 #endif
