@@ -35,8 +35,10 @@
 #include <fcntl.h>
 #include <kvm.h>
 #endif
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 #include <uvm/uvm_extern.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #endif
 
 #include "tools.h"
@@ -429,32 +431,29 @@ kvm_t *get_kvm() {
 }
 #endif
 
-#ifdef NETBSD
+#if defined(NETBSD) || defined(OPENBSD)
 struct uvmexp *get_uvmexp() {
-	static u_long addr = 0;
-	static struct uvmexp uvm;
-	kvm_t *kvmd = get_kvm();
+	int mib[2];
+	size_t size;
+	static struct uvmexp *uvm = NULL;
 
-	if (kvmd == NULL) {
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+
+	if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0) {
 		return NULL;
 	}
 
-	if (addr == 0) {
-		struct nlist symbols[] = {
-			{ "_uvmexp" },
-			{ NULL }
-		};
-
-		if (kvm_nlist(kvmd, symbols) != 0) {
-			return NULL;
-		}
-		addr = symbols[0].n_value;
-	}
-
-	if (kvm_read(kvmd, addr, &uvm, sizeof uvm) != sizeof uvm) {
+	uvm = realloc(uvm, size);
+	if (uvm == NULL) {
 		return NULL;
 	}
-	return &uvm;
+
+	if (sysctl(mib, 2, uvm, &size, NULL, 0) < 0) {
+		return NULL;
+	}
+
+	return uvm;
 }
 #endif
 
