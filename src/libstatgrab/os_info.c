@@ -22,23 +22,30 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
 #include <sys/utsname.h>
 #include "statgrab.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <time.h>
 #endif
+#ifdef LINUX
+#include <stdio.h>
+#endif
 
 general_stat_t *get_general_stats(){
 
 	static general_stat_t general_stat;	
+	static struct utsname os;
 
-	struct utsname os;
+#ifdef SOLARIS
 	time_t boottime,curtime;
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
 	kstat_named_t *kn;
+#endif
+#ifdef LINUX
+	FILE *f;
+#endif
 
 	if((uname(&os)) < 0){
 		return NULL;
@@ -51,6 +58,7 @@ general_stat_t *get_general_stats(){
         general_stat.hostname = os.nodename;
 
 	/* get uptime */
+#ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
 		return NULL;
 	}
@@ -69,6 +77,16 @@ general_stat_t *get_general_stats(){
 
 	time(&curtime);
 	general_stat.uptime = curtime - boottime;
+#endif
+#ifdef LINUX
+	if ((f=fopen("/proc/uptime", "r")) == NULL) {
+		return NULL;
+	}
+	if((fscanf(f,"%lu %*d",&general_stat.uptime)) != 1){
+		return NULL;
+	}
+	fclose(f);
+#endif
 
 	return &general_stat;
 	
