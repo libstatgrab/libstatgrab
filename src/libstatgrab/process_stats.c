@@ -39,7 +39,7 @@
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
 #ifdef LINUX
-#include <linux/limits.h>
+#include <limits.h>
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
