@@ -230,7 +230,7 @@ network_stat_t *get_network_stats(int *entries){
 	fgets(line, sizeof(line), f);
 
 
-	if((regcomp(&regex, "^[[:space:]]*([^:]+):[[:space:]]*([[:digit:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)", REG_EXTENDED))!=0){
+	if((regcomp(&regex, "^[[:space:]]*([^:]+):[[:space:]]*([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+([[:digit:]]+)[[:space:]]+[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+([[:digit:]]+)", REG_EXTENDED))!=0){
 		return NULL;
 	}
 
@@ -252,7 +252,12 @@ network_stat_t *get_network_stats(int *entries){
 
 		network_stat_ptr->interface_name=get_string_match(line, &line_match[1]);
 		network_stat_ptr->rx=get_ll_match(line, &line_match[2]);
-		network_stat_ptr->tx=get_ll_match(line, &line_match[3]);
+		network_stat_ptr->tx=get_ll_match(line, &line_match[5]);
+		network_stat_ptr->ipackets=get_ll_match(line, &line_match[3]);
+		network_stat_ptr->opackets=get_ll_match(line, &line_match[6]);
+		network_stat_ptr->ierrors=get_ll_match(line, &line_match[4]);
+		network_stat_ptr->oerrors=get_ll_match(line, &line_match[7]);
+		network_stat_ptr->collisions=get_ll_match(line, &line_match[8]);
 		network_stat_ptr->systime=time(NULL);
 
 		interfaces++;
