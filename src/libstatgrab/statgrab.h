@@ -136,3 +136,4 @@ process_stat_t *get_process_stats();
 network_stat_t *get_network_stats(int *entries);
 
 page_stat_t *get_page_stats();
+page_stat_t *get_page_stats_diff();

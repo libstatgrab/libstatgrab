@@ -30,8 +30,11 @@
 #include <string.h>
 #endif
 
+
+static page_stat_t page_stats;
+static int page_stats_uninit=1;
+
 page_stat_t *get_page_stats(){
-	static page_stat_t page_stats;
         kstat_ctl_t *kc;
         kstat_t *ksp;
         cpu_stat_t cs;
@@ -61,4 +64,37 @@ page_stat_t *get_page_stats(){
 	kstat_close(kc);
 
 	return &page_stats;
+}
+
+page_stat_t *get_page_stats_diff(){
+	page_stat_t *page_ptr;
+	static page_stat_t page_stats_diff;
+
+	if(page_stats_uninit){
+		page_ptr=get_page_stats();
+		if(page_ptr==NULL){
+			return NULL;
+		}
+		page_stats_uninit=0;
+		return page_ptr;
+	}
+
+	page_stats_diff.num_pagein=page_stats.num_pagein;
+	page_stats_diff.num_pageout=page_stats.num_pageout;
+	page_stats_diff.pages_pagein=page_stats.pages_pagein;
+	page_stats_diff.pages_pageout=page_stats.pages_pageout;
+	page_stats_diff.systime=page_stats.systime;
+
+	page_ptr=get_page_stats();
+	if(page_ptr==NULL){
+		return NULL;
+	}
+
+	page_stats_diff.num_pagein=page_stats.num_pagein-page_stats_diff.num_pagein;
+        page_stats_diff.num_pageout=page_stats.num_pageout-page_stats_diff.num_pageout;
+        page_stats_diff.pages_pagein=page_stats.pages_pagein-page_stats_diff.pages_pagein;
+        page_stats_diff.pages_pageout=page_stats.pages_pageout-page_stats_diff.pages_pageout;
+        page_stats_diff.systime=page_stats.systime-page_stats_diff.systime;
+	
+	return &page_stats_diff;
 }
