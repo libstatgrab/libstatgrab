@@ -1,17 +1,23 @@
+libstatgrab 0.3.3 (22 March 2003)
+
+ * Network statistics wraparound code was broken on interfaces that
+   transfered no data - typically second interfaces that weren't
+   connected.
+
 libstatgrab 0.3.2 (21 March 2003)
 
- * Network statistics wraparound fix
+ * Network statistics wraparound fix.
 
 libstatgrab 0.3.1 (12 March 2003)
 
- * Fixed network statistics on Solaris 7 or below
- * Disk IO statistics are correctly reported
+ * Fixed network statistics on Solaris 7 or below.
+ * Disk IO statistics are correctly reported.
 
 libstatgrab 0.3 (10 March 2003)
 
- * Support added for Linux with a 2.4 kernel
+ * Support added for Linux with a 2.4 kernel.
 
 libstatgrab 0.2 (3 March 2003)
 
- * Initial working release for Solaris (tested on 7, 8, and 9)
+ * Initial working release for Solaris (tested on 7, 8, and 9).
 
