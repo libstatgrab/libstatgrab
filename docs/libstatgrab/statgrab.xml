@@ -70,6 +70,11 @@
       </funcprototype>
 
       <funcprototype>
+        <funcdef>sg_fs_stats *<function>sg_get_fs_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
         <funcdef>sg_host_info *<function>sg_get_host_info</function></funcdef>
         <void/>
       </funcprototype>
