@@ -1,0 +1,14 @@
+Load stats a way of pulling out the load average of a system. On most systems, its
+just a wrapper to getloadavg.
+
+The call returns a static buffer of load_stat_t load_stat
+
+load_stat_t is made up :
+
+typedef struct{
+        double min1;
+        double min5;
+        double min15;
+}load_stat_t;
+
+minX contains a double of the load average over the time X in minutes.
