@@ -226,6 +226,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state_ptr->process_name = strdup(kp_stats[i].ki_comm);
 		/* Seems we don't have access to that bit of memory */
 		/*proc_state_ptr->proctitle = strdup(kp_stats[i].ki_args->ar_args);*/
+		proc_state_ptr->proctitle = NULL;
 
 		proc_state_ptr->pid = kp_stats[i].ki_pid;
 		proc_state_ptr->parent = kp_stats[i].ki_ppid;
@@ -239,9 +240,9 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state_ptr->proc_size = kp_stats[i].ki_size;
 		/* This is in pages */
 		proc_state_ptr->proc_resident = kp_stats[i].ki_rssize * getpagesize();
-		/* This seems to be in microseconds */
+		/* This is in microseconds */
 		proc_state_ptr->time_spent = kp_stats[i].ki_runtime / 1000000;
-		proc_state_ptr->cpu_percent = kp_stats[i].ki_pctcpu;
+		proc_state_ptr->cpu_percent = ((double) kp_stats[i].ki_pctcpu / FSCALE) * 100.0;
 		proc_state_ptr->nice = kp_stats[i].ki_nice;
 
 		switch (kp_stats[i].ki_stat) {
