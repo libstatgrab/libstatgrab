@@ -77,6 +77,11 @@ void network_stat_init(int start, int end, network_stat_t *net_stats){
 		net_stats->interface_name=NULL;
 		net_stats->tx=0;
 		net_stats->rx=0;
+		net_stats->ipackets=0;
+		net_stats->opackets=0;
+		net_stats->ierrors=0;
+		net_stats->oerrors=0;
+		net_stats->collisions=0;
 		net_stats++;
 	}
 }
@@ -311,6 +316,11 @@ network_stat_t *get_network_stats_diff(int *entries) {
 		dest->interface_name = strdup(src->interface_name);
 		dest->rx = src->rx;
 		dest->tx = src->tx;
+		dest->ipackets = src->ipackets;
+		dest->opackets = src->opackets;
+		dest->ierrors = src->ierrors;
+		dest->oerrors = src->oerrors;
+		dest->collisions = src->collisions;
 		dest->systime = src->systime;
 	}
 
@@ -341,6 +351,11 @@ network_stat_t *get_network_stats_diff(int *entries) {
 		   difference. */
 		dest->rx = transfer_diff(src->rx, dest->rx);
 		dest->tx = transfer_diff(src->tx, dest->tx);
+		dest->ipackets = transfer_diff(src->ipackets, dest->ipackets);
+		dest->opackets = transfer_diff(src->opackets, dest->opackets);
+		dest->ierrors = transfer_diff(src->ierrors, dest->ierrors);
+		dest->oerrors = transfer_diff(src->oerrors, dest->oerrors);
+		dest->collisions = transfer_diff(src->collisions, dest->collisions);
 		dest->systime = src->systime - dest->systime;
 	}
 
