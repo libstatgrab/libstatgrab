@@ -77,7 +77,7 @@ int get_proc_snapshot(proc_state_t **ps){
 	size_t size;
 	struct kinfo_proc *kp_stats;
 	int procs, i;
-	char *proctitle;
+	char *proctitle, *proctitletmp;
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 	kvm_t *kvmd;
 	char **args;
@@ -297,19 +297,20 @@ int get_proc_snapshot(proc_state_t **ps){
 			proc_state_ptr->proctitle = NULL;
 		}
 		else if(size > 0) {
-			proc_state_ptr->proctitle = malloc(size);
+			proc_state_ptr->proctitle = malloc(size+1);
 			if(proc_state_ptr->proctitle == NULL) {
 				return NULL;
 			}
 			p = proctitle;
 			proc_state_ptr->proctitle[0] = NULL;
 			do {
-				strncat(proc_state_ptr->proctitle, p, strlen(p));
-				strncat(proc_state_ptr->proctitle, " ", 1);
+				strlcat(proc_state_ptr->proctitle, p, size+1);
+				strlcat(proc_state_ptr->proctitle, " ", size+1);
 				p += strlen(p) + 1;
 			} while (p < proctitle + size);
 			free(proctitle);
-			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = NULL;
+				/* remove trailing space */
+			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = \0;
 		}
 		else {
 			free(proctitle);
@@ -326,18 +327,19 @@ int get_proc_snapshot(proc_state_t **ps){
 				}
 				while(*args != NULL) {
 					if(strlen(proctitle) + strlen(*args) >= alloc) {
-						alloc = (alloc + strlen(*args)) << 1;
-						proctitle = realloc(proctitle, alloc);
-						if(proctitle == NULL) {
+						alloc = (alloc + strlen(*args)) * 2;
+						proctitletmp = realloc(proctitle, alloc);
+						if(proctitletmp == NULL) {
 							return NULL;
 						}
+						proctitle = proctitletmp;
 					}
-					strncat(proctitle, *args, strlen(*args));
-					strncat(proctitle, " ", 1);
+					strlcat(proctitle, *args, alloc);
+					strlcat(proctitle, " ", alloc);
 					args++;
 				}
 				/* remove trailing space */
-				proctitle[strlen(proctitle)-1] = NULL;
+				proctitle[strlen(proctitle)-1] = \0;
 				proc_state_ptr->proctitle = proctitle;
 			}
 			else {
