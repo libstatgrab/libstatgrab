@@ -393,7 +393,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	
 			/* We can't seperate the reads from the writes, we'll
 			   just give the same to each. */
-			rbytes = wbytes = (di->psd_dkwds * 64);
+			rbytes = wbytes = di->psd_dkwds / 2;
 	
 			/* Skip unused disks. */
 			if (rbytes == 0 && wbytes == 0) {
