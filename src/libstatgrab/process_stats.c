@@ -34,7 +34,6 @@
 #include <string.h>
 #endif
 
-#include "tools.h"
 #ifdef SOLARIS
 #include <procfs.h>
 #include <limits.h>
@@ -57,153 +56,60 @@
 #endif
 #endif
 
-process_stat_t *get_process_stats(){
-
-	static process_stat_t process_stat;
-
-#if defined(SOLARIS) || defined(LINUX)
-	DIR *proc_dir; 
-	struct dirent *dir_entry;
-	char filename[MAX_FILE_LENGTH];
-	FILE *f;
-#endif
-#ifdef LINUX
-	char *line_ptr;
-#endif
-#ifdef SOLARIS
+int get_proc_snapshot(proc_state_t **ps){
+	proc_state_t *proc_state = NULL;
+	proc_state_t *proc_state_ptr;
+	int proc_state_size = 0;
+#if defined(SOLARIS) 	
+        DIR *proc_dir;
+        struct dirent *dir_entry;
+        char filename[MAX_FILE_LENGTH];
+        FILE *f;
 	psinfo_t process_info;
-#endif
-#ifdef ALLBSD
-	int mib[3];
-	size_t size;
-	struct kinfo_proc *kp_stats;	
-	int procs, i;
-#endif
 
-	process_stat.sleeping=0;
-        process_stat.running=0;
-        process_stat.zombie=0;
-        process_stat.stopped=0;
-        process_stat.total=0;
+        if((proc_dir=opendir(PROC_LOCATION))==NULL){
+                return NULL;
+        }
 
-#if defined(SOLARIS) || defined(LINUX)
-	if((proc_dir=opendir(PROC_LOCATION))==NULL){
-		return NULL;
-	}
+        while((dir_entry=readdir(proc_dir))!=NULL){
+                if(atoi(dir_entry->d_name) == 0) continue;
 
-	while((dir_entry=readdir(proc_dir))!=NULL){
-		if(atoi(dir_entry->d_name) == 0) continue;
+                snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
 
-#ifdef SOLARIS
-		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
-#endif
-#ifdef LINUX
-		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/status", dir_entry->d_name);
-#endif
-
-		if((f=fopen(filename, "r"))==NULL){
-			/* Open failed.. Process since vanished, or the path was too long. 
-			 * Ah well, move onwards to the next one */
-			continue;
-		}
-
-#ifdef SOLARIS
-		fread(&process_info, sizeof(psinfo_t), 1, f);
-		if(process_info.pr_lwp.pr_state==1) process_stat.sleeping++;
-		if(process_info.pr_lwp.pr_state==2) process_stat.running++;
-		if(process_info.pr_lwp.pr_state==3) process_stat.zombie++;
-		if(process_info.pr_lwp.pr_state==4) process_stat.stopped++;
-		if(process_info.pr_lwp.pr_state==6) process_stat.running++;
-#endif
-#ifdef LINUX
-		if((line_ptr=f_read_line(f, "State:"))==NULL){
-			fclose(f);
-			continue;
-		}
-		if((line_ptr=strchr(line_ptr, '\t'))==NULL){
-			fclose(f);
-			continue;
-		}
-		line_ptr++;
-		if(line_ptr=='\0'){
-			fclose(f);
-			continue;
-		}
-
-		if(*line_ptr=='S') process_stat.sleeping++;
-		if(*line_ptr=='R') process_stat.running++;
-		if(*line_ptr=='Z') process_stat.zombie++;
-		if(*line_ptr=='T') process_stat.stopped++;
-		if(*line_ptr=='D') process_stat.stopped++;
-#endif	
-
-		fclose(f);
-	}
-	closedir(proc_dir);
-#endif
-#ifdef ALLBSD
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_PROC;
-	mib[2] = KERN_PROC_ALL;
-
-	if (sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
-		return NULL;
-	}
-        
-	procs = size / sizeof(struct kinfo_proc);
-
-	kp_stats = malloc(size);
-	if (kp_stats == NULL) {
-		return NULL;
-	}
-        
-	if (sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
-		free(kp_stats);
-		return NULL;
-	}
-
-	for (i = 0; i < procs; i++) {
-#ifdef FREEBSD5
-		switch (kp_stats[i].ki_stat) {
-#else
-		switch (kp_stats[i].kp_proc.p_stat) {
-#endif
-		case SIDL:
-		case SRUN:
-#ifdef SONPROC
-		case SONPROC: /* NetBSD */
-#endif
-			process_stat.running++;
-			break;
-		case SSLEEP:
-#ifdef SWAIT
-		case SWAIT: /* FreeBSD 5 */
-#endif
-#ifdef SLOCK
-		case SLOCK: /* FreeBSD 5 */
-#endif
-			process_stat.sleeping++;
-			break;
-		case SSTOP:
-			process_stat.stopped++;
-			break;
-		case SZOMB:
-#ifdef SDEAD
-		case SDEAD: /* OpenBSD & NetBSD */
-#endif
-			process_stat.zombie++;
-			break;
+                if((f=fopen(filename, "r"))==NULL){
+                        /* Open failed.. Process since vanished, or the path was too long.
+                         * Ah well, move onwards to the next one */
+                        continue;
                 }
-	}
+                fread(&process_info, sizeof(psinfo_t), 1, f);
 
-	free(kp_stats);
+		proc_state = realloc(proc_state, (1+proc_state_size)*sizeof(proc_state_t));
+
+		proc_state_ptr = proc_state+proc_state_size;
+		
+		proc_state_ptr->pid = process_info.pr_pid;
+		proc_state_ptr->parent = process_info.pr_ppid;
+		proc_state_ptr->pgid = process_info.pr_pgid;
+		proc_state_ptr->uid = process_info.pr_uid;
+		proc_state_ptr->euid = process_info.pr_euid;
+		proc_state_ptr->gid = process_info.pr_gid;
+		proc_state_ptr->egid = process_info.pr_egid;
+		proc_state_ptr->proc_size = (process_info.pr_size) * 1024;
+		proc_state_ptr->proc_resident = (process_info.pr_rssize) * 1024;
+		proc_state_ptr->time_spent = process_info.pr_time.tv_sec;
+		proc_state_ptr->cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
+		proc_state_ptr->process_name = strdup(process_info.pr_fname);
+		proc_state_ptr->proctitle = strdup(process_info.pr_psargs);
+
+		proc_state_size++;
 #endif
 
-#ifdef CYGWIN
-	return NULL;
-#endif
 
-	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;
+                fclose(f);
+        }
+        closedir(proc_dir);
+	*ps = proc_state;
 
-	return &process_stat;
+	return proc_state_size;
 }
+

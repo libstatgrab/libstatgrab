@@ -135,6 +135,29 @@ typedef struct{
 	time_t systime;
 }page_stat_t;
 
+typedef struct{
+	char *process_name;
+	char *proctitle;
+
+	pid_t pid;
+	pid_t parent; /* Parent pid */
+	pid_t pgid;   /* process id of process group leader */
+
+	uid_t uid;
+	uid_t euid;
+	gid_t gid;
+	gid_t egid;
+
+	unsigned long long proc_size; /* in bytes */
+	unsigned long long proc_resident; /* in bytes */
+	time_t time_spent;
+	double cpu_percent;
+	int nice;
+	int state;
+}proc_state_t;
+
+int get_proc_snapshot(proc_state_t **proc_state);
+
 cpu_states_t *get_cpu_totals();
 cpu_states_t *get_cpu_diff();
 cpu_percent_t *cpu_percent_usage();
