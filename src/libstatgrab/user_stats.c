@@ -32,6 +32,9 @@
 #ifdef ALLBSD
 #include <sys/types.h>
 #endif
+#ifdef NETBSD
+#include <limits.h>
+#endif
 #include <utmp.h>
 #ifdef CYGWIN
 #include <sys/unistd.h>
