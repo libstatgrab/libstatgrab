@@ -66,6 +66,7 @@ display_mode_type display_mode = DISPLAY_LINUX;
 repeat_mode_type repeat_mode = REPEAT_NONE;
 int repeat_time = 1;
 int use_cpu_percent = 0;
+int use_diffs = 0;
 
 /* Exit with an error message. */
 void die(const char *s) {
@@ -144,33 +145,17 @@ int stats_compare(const void *a, const void *b) {
 	return strcmp(((stat *)a)->name, ((stat *)b)->name);
 }
 
-/* Clear and rebuild the stats array. */
-void get_stats(int use_diffs) {
-	cpu_states_t *cpu_s;
-	cpu_percent_t *cpu_p;
-	mem_stat_t *mem;
-	load_stat_t *load;
-	user_stat_t *user;
-	swap_stat_t *swap;
-	general_stat_t *gen;
-	disk_stat_t *disk;
-	diskio_stat_t *diskio;
-	process_stat_t *proc;
-	network_stat_t *net;
-	page_stat_t *page;
+void populate_const() {
 	static int zero = 0;
-	int n, i;
-
-	clear_stats();
 
 	/* Constants, for use with MRTG mode. */
 	add_stat(INT, &zero, "const", "0", NULL);
+}
 
-	/* FIXME when only fetching some stats, it'd be more efficient to only
-	   do the libstatgrab calls needed, rather than fetching everything. */
-
+void populate_cpu() {
 	if (use_cpu_percent) {
-		cpu_p = cpu_percent_usage();
+		cpu_percent_t *cpu_p = cpu_percent_usage();
+
 		if (cpu_p != NULL) {
 			add_stat(FLOAT, &cpu_p->user,
 			         "cpu", "user", NULL);
@@ -188,6 +173,8 @@ void get_stats(int use_diffs) {
 			         "cpu", "time_taken", NULL);
 		}
 	} else {
+		cpu_states_t *cpu_s;
+
 		cpu_s = use_diffs ? get_cpu_diff() : get_cpu_totals();
 		if (cpu_s != NULL) {
 			add_stat(LONG_LONG, &cpu_s->user,
@@ -208,36 +195,51 @@ void get_stats(int use_diffs) {
 			         "cpu", "systime", NULL);
 		}
 	}
+}
 
-	mem = get_memory_stats();
+void populate_mem() {
+	mem_stat_t *mem = get_memory_stats();
+
 	if (mem != NULL) {
 		add_stat(LONG_LONG, &mem->total, "mem", "total", NULL);
 		add_stat(LONG_LONG, &mem->free, "mem", "free", NULL);
 		add_stat(LONG_LONG, &mem->used, "mem", "used", NULL);
 		add_stat(LONG_LONG, &mem->cache, "mem", "cache", NULL);
 	}
+}
 
-	load = get_load_stats();
+void populate_load() {
+	load_stat_t *load = get_load_stats();
+
 	if (load != NULL) {
 		add_stat(DOUBLE, &load->min1, "load", "min1", NULL);
 		add_stat(DOUBLE, &load->min5, "load", "min5", NULL);
 		add_stat(DOUBLE, &load->min15, "load", "min15", NULL);
 	}
+}
 
-	user = get_user_stats();
+void populate_user() {
+	user_stat_t *user = get_user_stats();
+
 	if (user != NULL) {
 		add_stat(INT, &user->num_entries, "user", "num", NULL);
 		add_stat(STRING, &user->name_list, "user", "names", NULL);
 	}
+}
 
-	swap = get_swap_stats();
+void populate_swap() {
+	swap_stat_t *swap = get_swap_stats();
+
 	if (swap != NULL) {
 		add_stat(LONG_LONG, &swap->total, "swap", "total", NULL);
 		add_stat(LONG_LONG, &swap->used, "swap", "used", NULL);
 		add_stat(LONG_LONG, &swap->free, "swap", "free", NULL);
 	}
+}
 
-	gen = get_general_stats();
+void populate_general() {
+	general_stat_t *gen = get_general_stats();
+
 	if (gen != NULL) {
 		add_stat(STRING, &gen->os_name,
 		         "general", "os_name", NULL);
@@ -249,8 +251,12 @@ void get_stats(int use_diffs) {
 		add_stat(STRING, &gen->hostname, "general", "hostname", NULL);
 		add_stat(TIME_T, &gen->uptime, "general", "uptime", NULL);
 	}
+}
 
-	disk = get_disk_stats(&n);
+void populate_fs() {
+	int n, i;
+	disk_stat_t *disk = get_disk_stats(&n);
+
 	if (disk != NULL) {
 		for (i = 0; i < n; i++) {
 			/* FIXME it'd be nicer if libstatgrab did this */
@@ -281,6 +287,11 @@ void get_stats(int use_diffs) {
 			         "fs", name, "free_inodes", NULL);
 		}
 	}
+}
+
+void populate_disk() {
+	int n, i;
+	diskio_stat_t *diskio;
 
 	diskio = use_diffs ? get_diskio_stats_diff(&n) : get_diskio_stats(&n);
 	if (diskio != NULL) {
@@ -297,8 +308,11 @@ void get_stats(int use_diffs) {
 			         "disk", name, "systime", NULL);
 		}
 	}
+}
 
-	proc = get_process_stats();
+void populate_proc() {
+	process_stat_t *proc = get_process_stats();
+
 	if (proc != NULL) {
 		add_stat(INT, &proc->total, "proc", "total", NULL);
 		add_stat(INT, &proc->running, "proc", "running", NULL);
@@ -306,6 +320,11 @@ void get_stats(int use_diffs) {
 		add_stat(INT, &proc->stopped, "proc", "stopped", NULL);
 		add_stat(INT, &proc->zombie, "proc", "zombie", NULL);
 	}
+}
+
+void populate_net() {
+	int n, i;
+	network_stat_t *net;
 
 	net = use_diffs ? get_network_stats_diff(&n) : get_network_stats(&n);
 	if (net != NULL) {
@@ -322,12 +341,72 @@ void get_stats(int use_diffs) {
 			         "net", name, "systime", NULL);
 		}
 	}
+}
+
+void populate_page() {
+	page_stat_t *page;
 
 	page = use_diffs ? get_page_stats_diff() : get_page_stats();
 	if (page != NULL) {
 		add_stat(LONG_LONG, &page->pages_pagein, "page", "in", NULL);
 		add_stat(LONG_LONG, &page->pages_pageout, "page", "out", NULL);
 		add_stat(LONG_LONG, &page->systime, "page", "systime", NULL);
+	}
+}
+
+typedef struct {
+	const char *name;
+	void (*populate)();
+	int interesting;
+} toplevel;
+toplevel toplevels[] = {
+	{"const.", populate_const, 0},
+	{"cpu.", populate_cpu, 0},
+	{"mem.", populate_mem, 0},
+	{"load.", populate_load, 0},
+	{"user.", populate_user, 0},
+	{"swap.", populate_swap, 0},
+	{"general.", populate_general, 0},
+	{"fs.", populate_fs, 0},
+	{"disk.", populate_disk, 0},
+	{"proc.", populate_proc, 0},
+	{"net.", populate_net, 0},
+	{"page.", populate_page, 0},
+	{NULL, NULL, 0}
+};
+
+/* Set the "interesting" flag on the sections that we actually need to
+   fetch. */
+void select_interesting(int argc, char **argv) {
+	toplevel *t;
+
+	if (argc == 0) {
+		for (t = &toplevels[0]; t->name != NULL; t++)
+			t->interesting = 1;
+	} else {
+		int i;
+
+		for (i = 0; i < argc; i++) {
+			for (t = &toplevels[0]; t->name != NULL; t++) {
+				if (strncmp(argv[i], t->name,
+				            strlen(t->name)) == 0) {
+					t->interesting = 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
+/* Clear and rebuild the stats array. */
+void get_stats() {
+	toplevel *t;
+
+	clear_stats();
+
+	for (t = &toplevels[0]; t->name != NULL; t++) {
+		if (t->interesting)
+			t->populate();
 	}
 
 	qsort(stats, num_stats, sizeof *stats, stats_compare);
@@ -472,20 +551,27 @@ int main(int argc, char **argv) {
 	if (use_cpu_percent && repeat_mode == REPEAT_NONE)
 		die("CPU percentage usage display requires stat differences");
 
+	if (repeat_mode == REPEAT_NONE)
+		use_diffs = 0;
+	else
+		use_diffs = 1;
+
+	select_interesting(argc - optind, &argv[optind]);
+
 	switch (repeat_mode) {
 	case REPEAT_NONE:
-		get_stats(0);
+		get_stats();
 		print_stats(argc, argv);
 		break;
 	case REPEAT_ONCE:
-		get_stats(1);
+		get_stats();
 		sleep(repeat_time);
-		get_stats(1);
+		get_stats();
 		print_stats(argc, argv);
 		break;
 	case REPEAT_FOREVER:
 		while (1) {
-			get_stats(1);
+			get_stats();
 			print_stats(argc, argv);
 			printf("\n");
 			sleep(repeat_time);
