@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="statgrab">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>statgrab</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>statgrab</refname>
+    <refpurpose>get system statistics</refpurpose>
+  </refnamediv>
+    
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+
+      <funcprototype>
+        <funcdef>cpu_percent_t *<function>cpu_percent_usage</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>cpu_states_t *<function>get_cpu_totals</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>cpu_states_t *<function>get_cpu_diff</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>diskio_stat_t *<function>get_diskio_stats</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>diskio_stat_t *<function>get_diskio_stats_diff</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>general_stat_t *<function>get_general_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>load_stat_t *<function>get_load_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>mem_stat_t *<function>get_memory_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>swap_stat_t *<function>get_swap_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>network_stat_t *<function>get_network_stats</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>network_stat_t *<function>get_network_stats_diff</function></funcdef>
+        <paramdef>int *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>page_stat_t *<function>get_page_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>page_stat_t *<function>get_page_stats_diff</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>process_stat_t *<function>get_process_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>user_stat_t *<function>get_user_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+
+    </funcsynopsis>
+  </refsynopsisdiv>
+    
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The statgrab library provides a cross platform interface to getting
+      system statistics. Each of the function calls returns a structure
+      containing statistics. See the manual page for each individual
+      function for more details on usage.
+    </para>
+    <para>
+      The library was originally written to support the i-scream central
+      monitoring system, but has since become a standalone package. It
+      has been ported to work on Linux, FreeBSD, and Solaris.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>cpu_percent_usage</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_diskio_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_general_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_load_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_memory_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_network_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_page_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_process_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>get_user_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+  
+  <refsect1>
+    <title>Website</title>
+    
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org">http://www.i-scream.org</ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

@@ -149,7 +149,15 @@ typedef struct{
 
   <refsect1>
     <title>See Also</title>
-    <para>Nothing yet</para>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
   </refsect1>
   
   <refsect1>
