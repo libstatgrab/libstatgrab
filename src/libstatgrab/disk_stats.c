@@ -344,7 +344,10 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	}
 #ifdef FREEBSD5
 	if ((devstat_getdevs(NULL, &stats)) < 0) return NULL;
-	/* Not aware of a get all devices, so i said 999. If we ever                                                                           * find a machine with more than 999 disks, then i'll change                                                                           * this number :)                                                                                                                      */
+	/* Not aware of a get all devices, so i said 999. If we ever
+	 * find a machine with more than 999 disks, then i'll change
+	 * this number :)
+	 */
 	if (devstat_selectdevs(&dev_sel, &n_selected, &n_selections, &sel_gen, stats.dinfo->generation, stats.dinfo->devices, stats.dinfo->numdevs, NULL, 0, NULL, 0, DS_SELECT_ONLY, 999, 1) < 0) return NULL;
 #else
 	if ((getdevs(&stats)) < 0) return NULL;
