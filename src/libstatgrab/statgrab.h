@@ -21,13 +21,13 @@
 #include <sys/types.h>
 
 typedef struct{
-        uint_t user;
-        uint_t kernel;
-        uint_t idle;
-        uint_t iowait;
-        uint_t swap;
-        uint_t nice;
-        uint_t total;
+        long long user;
+        long long kernel;
+        long long idle;
+        long long iowait;
+        long long swap;
+        long long nice;
+        long long total;
         time_t systime;
 }cpu_states_t;
 

@@ -60,11 +60,11 @@ cpu_states_t *get_cpu_totals(){
                 if (kstat_read(kc, ksp, &cs) == -1) {
                         continue;
                 }
-		cpu_now.user+=cs.cpu_sysinfo.cpu[CPU_USER];
-		cpu_now.iowait+=cs.cpu_sysinfo.cpu[CPU_WAIT];
-		cpu_now.kernel+=cs.cpu_sysinfo.cpu[CPU_KERNEL];
-		cpu_now.idle+=cs.cpu_sysinfo.cpu[CPU_IDLE];
-		cpu_now.swap+=cs.cpu_sysinfo.cpu[CPU_STATES];
+		cpu_now.user+=(long long)cs.cpu_sysinfo.cpu[CPU_USER];
+		cpu_now.iowait+=(long long)cs.cpu_sysinfo.cpu[CPU_WAIT];
+		cpu_now.kernel+=(long long)cs.cpu_sysinfo.cpu[CPU_KERNEL];
+		cpu_now.idle+=(long long)cs.cpu_sysinfo.cpu[CPU_IDLE];
+		cpu_now.swap+=(long long)cs.cpu_sysinfo.cpu[CPU_STATES];
 	}
 
 	cpu_now.total=cpu_now.user+cpu_now.iowait+cpu_now.kernel+cpu_now.idle+cpu_now.swap;
