@@ -37,7 +37,19 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <ctype.h>
 #include "tools.h"
+/* Stuff which could be defined by defining KERNEL, but 
+ * that would be a bad idea, so we'll just declare it here
+ */
+typedef __uint8_t u8;
+typedef __uint16_t u16;
+typedef __uint32_t u32;
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
 #endif
 #ifdef ALLBSD
 #include <sys/types.h>
@@ -375,7 +387,14 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 	int s;
 	int x;
 #endif
-
+#ifdef LINUX
+        FILE *f;
+        /* Horrible big enough, but it should be easily big enough */
+        char line[8096];
+	void *eth_tool_cmd_buf;
+	int buf_size;
+	int sock;
+#endif
 	ifaces = 0;
 #ifdef ALLBSD
         if(getifaddrs(&net) != 0){
@@ -491,6 +510,77 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 	kstat_close(kc);
 	
 #endif	
+#ifdef LINUX
+
+	f = fopen("/proc/net/dev", "r");
+        if(f == NULL){
+                return NULL;
+        }
+
+	/* Setup stuff so we can do the ioctl to get the info */
+	if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+		return NULL;
+	}
+
+	buf_size = sizeof(struct ethtool_cmd);
+	eth_tool_cmd_buf = malloc(buf_size);
+	if(eth_tool_cmd_buf == NULL) return NULL;
+
+	/* Ignore first 2 lines.. Just headings */
+        fgets(line, sizeof(line), f);
+        fgets(line, sizeof(line), f);
+
+        while((fgets(line, sizeof(line), f)) != NULL){
+                char *name, *ptr;
+                struct ifreq ifr;
+                struct ethtool_cmd *ethcmd;
+                int err;
+
+		/* Get the interface name */
+                ptr = strchr(line, ':');
+                if (ptr == NULL) continue;
+                *ptr='\0';
+                name = line;
+                while(isspace(*(name))){
+                        name++;
+                }
+
+                memset(&ifr, 0, sizeof(ifr));
+                memset(eth_tool_cmd_buf, 0, buf_size);
+                ifr.ifr_data = (caddr_t) eth_tool_cmd_buf;
+                strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+
+                ethcmd = (struct ethtool_cmd *)(&ifr)->ifr_data;
+                ethcmd->cmd = ETHTOOL_GSET;
+
+                err = ioctl(sock, SIOCETHTOOL, &ifr);
+                if(err < 0){
+			/* This could fail if the interface doesn't support the command. Carry
+ 			 * on to the next :)
+			 */
+                        continue;
+                }
+
+		/* We have a good interface to add */
+		network_iface_stats=network_iface_stat_malloc((ifaces+1), &sizeof_network_iface_stats, network_iface_stats);
+		if(network_iface_stats==NULL){
+			return NULL;
+		}
+		network_iface_stat_ptr = network_iface_stats + ifaces;
+		network_iface_stat_ptr->interface_name = strdup(name);
+		network_iface_stat_ptr->speed = ethcmd->speed;
+		network_iface_stat_ptr->dup = NO_DUPLEX;
+		if(ethcmd->duplex == 0x00){
+			network_iface_stat_ptr->dup = FULL_DUPLEX;
+		}
+		if(ethcmd->duplex == 0x01){
+			network_iface_stat_ptr->dup = HALF_DUPLEX;
+		}
+		ifaces++;
+	}
+
+	free(eth_tool_cmd_buf);
+#endif
 	*entries = ifaces;
 	return network_iface_stats; 
 }
