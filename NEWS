@@ -1,3 +1,12 @@
+libstatgrab 0.6 (09 October 2003)
+
+ * saidar, a curses-based tool, has been added to give an overview of
+   the current system statistics.
+ * Added support for FreeBSD 5.1.
+ * Documentation is now available in manpages.
+ * Fixed major bug in the FreeBSD diskio stats.
+ * Added a .pc file for pkgconfig.
+
 libstatgrab 0.5.1 (09 September 2003)
 
  * Network stats wrap-around bug fixed on Linux and FreeBSD
