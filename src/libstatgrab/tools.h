@@ -30,10 +30,6 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-#ifndef HAVE_ATOLL
-static long long atoll(const char *s);
-#endif
-
 #ifndef HAVE_STRLCPY
 size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
