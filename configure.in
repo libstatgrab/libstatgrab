@@ -6,7 +6,7 @@ AC_INIT(libstatgrab, 0.1, dev@i-scream.org.uk)
 AM_INIT_AUTOMAKE(libstatgrab, 0.1)
 
 dnl The file we use to pass #define's to the source
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADER(config.h)
 
 dnl We need a CC, install, and libtool
 AC_PROG_CC
@@ -40,4 +40,4 @@ linux-gnu)
 esac
 
 dnl And finish by changing these files
-AC_OUTPUT([Makefile])
+AC_OUTPUT([Makefile src/Makefile])
