@@ -138,7 +138,7 @@ general_stat_t *get_general_stats();
 
 disk_stat_t *get_disk_stats(int *entries);
 diskio_stat_t *get_diskio_stats(int *entries);
-diskio_stat_t *get_diskio_stat_diff(int *entries);
+diskio_stat_t *get_diskio_stats_diff(int *entries);
 
 process_stat_t *get_process_stats();
 

@@ -242,7 +242,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	return diskio_stats;
 }
 
-diskio_stat_t *get_diskio_stat_diff(int *entries){
+diskio_stat_t *get_diskio_stats_diff(int *entries){
 	static diskio_stat_t *diskio_stats_diff=NULL;
 	static int sizeof_diskio_stats_diff=0;
 	diskio_stat_t *diskio_stats_diff_ptr, *diskio_stats_ptr;
