@@ -3,6 +3,17 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+libstatgrab 0.10.3 (23 August 2004)
+
+* Add -f flag to statgrab to display floating-point numbers multiplied
+  by an integer.
+* Add -K, -M and -G flags to statgrab to show byte counts in kibibytes,
+  mebibytes or gibibytes.
+* Make statgrab-make-mrtg-config use the new flags to scale extremely
+  large or small numbers so that mrtg can handle them.
+* Make statgrab-make-mrtg-config automatically detect network interface
+  speeds.
+
 libstatgrab 0.10.2 (27 July 2004)
 
  * Fix shared library version that when backwards in 0.10.1.
