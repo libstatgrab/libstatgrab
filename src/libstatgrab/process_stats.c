@@ -264,6 +264,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	if(kp_stats == NULL) {
 		return NULL;
 	}
+	memset(kp_stats, 0, size);
 
 	if(sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
 		free(kp_stats);
@@ -276,6 +277,15 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 	for (i = 0; i < procs; i++) {
 		const char *name;
+
+		if (kp_stats[i].ki_stat == 0) {
+			/* FreeBSD 5 deliberately overallocates the array that
+			 * the sysctl returns, so we'll get a few junk
+			 * processes on the end that we have to ignore. (Search
+			 * for "overestimate by 5 procs" in
+			 * src/sys/kern/kern_proc.c for more details.) */
+			continue;
+		}
 
 		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
 			return NULL;
