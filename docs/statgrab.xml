@@ -109,19 +109,20 @@
   <refsect1>
     <title>Description</title>
     <para>
-      The statgrab library provides a cross platform interface to getting
+      The statgrab library provides a cross-platform interface to getting
       system statistics. Each of the function calls returns a structure
       containing statistics. See the manual page for each individual
       function for more details on usage.
     </para>
     <para>
-      <function>statgrab_init(void)</function> should be the first
-      function you call before you start to use libstatgrab. This
-      function on *bsd systems opens up the kernel structures and
-      leaves them open for future use. Because of this, any special
-      privileges the program has (e.g. setgid kmem) can be dropped
-      after this call, and all the libstatgrab calls should continue to
-      work. It is therefore a good idea to call
+      <function>statgrab_init</function> must be the first
+      function you call before you start to use libstatgrab; it performs all
+      the one-time initialisation operations that need setuid/setgid
+      privileges (for instance, on *BSD it opens a descriptor to be able to
+      read kernel structures later on, and on Solaris it reads the device
+      mappings that are only accessible by root). Once this has run,
+      the other libstatgrab functions no longer need elevated privileges.
+      It is therefore a good idea to call
       <function>statgrab_drop_privileges</function>, which discards
       setuid and setgid privileges, immediately after you call
       <function>statgrab_init</function>, unless your application has
@@ -135,7 +136,7 @@
     <para>
       The library was originally written to support the i-scream central
       monitoring system, but has since become a standalone package. It
-      has been ported to work on Linux, FreeBSD, and Solaris.
+      has been ported to work on Linux, NetBSD, FreeBSD, Solaris and Cygwin.
     </para>
   </refsect1>
   
