@@ -234,6 +234,9 @@ int get_proc_snapshot(proc_state_t **ps){
 #ifdef FREEBSD5
 		proc_state_ptr->process_name =
 			strdup(kp_stats[i].ki_comm);
+#elif defined(DFBSD)
+		proc_state_ptr->process_name =
+			strdup(kp_stats[i].kp_thread.td_comm);
 #else
 		proc_state_ptr->process_name =
 			strdup(kp_stats[i].kp_proc.p_comm);
@@ -287,6 +290,11 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state_ptr->euid = kp_stats[i].ki_uid;
 		proc_state_ptr->gid = kp_stats[i].ki_rgid;
 		proc_state_ptr->egid = kp_stats[i].ki_svgid;
+#elif defined(DFBSD)
+		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_ucred.cr_ruid;
+		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_ucred.cr_svuid;
+		proc_state_ptr->gid = kp_stats[i].kp_eproc.e_ucred.cr_rgid;
+		proc_state_ptr->egid = kp_stats[i].kp_eproc.e_ucred.cr_svgid;
 #else
 		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_pcred.p_ruid;
 		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_pcred.p_svuid;
@@ -314,6 +322,11 @@ int get_proc_snapshot(proc_state_t **ps){
 #if defined(NETBSD) || defined(OPENBSD)
 		proc_state_ptr->time_spent =
 			kp_stats[i].kp_proc.p_rtime.tv_sec;
+#elif defined(DFBSD)
+		proc_state_ptr->time_spent = 
+			( kp_stats[i].kp_thread.td_uticks +
+			kp_stats[i].kp_thread.td_sticks +
+			kp_stats[i].kp_thread.td_iticks ) / 1000000;
 #else
 		proc_state_ptr->time_spent =
 			kp_stats[i].kp_proc.p_runtime / 1000000;
