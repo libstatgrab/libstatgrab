@@ -122,11 +122,11 @@ int main(int argc, char **argv){
 					printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Interface Rx", network_stats->rx / (1024.00*1024.00));
 					printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Interface Tx", network_stats->tx / (1024.00*1024.00));
 			}
-			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface packets in", network_stats->ipackets);
-			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface packets out", network_stats->opackets);
-			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface errors in", network_stats->ierrors);
-			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface errors out", network_stats->oerrors);
-			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface collisions", network_stats->collisions);
+			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface packets in", network_stats->ipackets);
+			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface packets out", network_stats->opackets);
+			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface errors in", network_stats->ierrors);
+			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface errors out", network_stats->oerrors);
+			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface collisions", network_stats->collisions);
 			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface systime", (long) network_stats->systime);
 
 			/* Add a blank line between interfaces */	
