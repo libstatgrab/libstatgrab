@@ -322,7 +322,9 @@ typedef struct {
 diskio_stat_t *get_diskio_stats(int *entries){
 
 	static int sizeof_diskio_stats=0;
+#ifndef LINUX
 	diskio_stat_t *diskio_stats_ptr;
+#endif
 
 #ifdef SOLARIS
         kstat_ctl_t *kc;
@@ -333,12 +335,12 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	FILE *f;
 	char *line_ptr;
 	int major, minor;
-	char dev_letter;
 	int has_pp_stats = 1;
 	static partition *parts = NULL;
 	static int alloc_parts = 0;
 	int i, n;
 	time_t now;
+	const char *format;
 #endif
 #ifdef FREEBSD
 	static struct statinfo stats;
@@ -511,9 +513,16 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	n = 0;
 
 	/* Read /proc/partitions to find what devices exist. Recent 2.4 kernels
-	   have statistics in here too, so we can use those directly. */
+	   have statistics in here too, so we can use those directly.
+	   2.6 kernels have /proc/diskstats instead with almost (but not quite)
+	   the same format. */
 
-	f = fopen("/proc/partitions", "r");
+	f = fopen("/proc/diskstats", "r");
+	format = " %d %d %19s %*d %*d %lld %*d %*d %*d %lld";
+	if (f == NULL) {
+		f = fopen("/proc/partitions", "r");
+		format = " %d %d %*d %19s %*d %*d %lld %*d %*d %*d %lld";
+	}
 	if (f == NULL) goto out;
 	now = time(NULL);
 
@@ -522,15 +531,9 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		char *s;
 		long long rsect, wsect;
 
-		int nr = sscanf(line_ptr,
-			" %d %d %*d %19s %*d %*d %lld %*d %*d %*d %lld",
+		int nr = sscanf(line_ptr, format,
 			&major, &minor, name, &rsect, &wsect);
 		if (nr < 3) continue;
-		if (nr < 5) {
-			has_pp_stats = 0;
-			rsect = 0;
-			wsect = 0;
-		}
 
 		/* Skip device names ending in numbers, since they're
 		   partitions. */
@@ -538,6 +541,12 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		while (*s != '\0') s++;
 		--s;
 		if (*s >= '0' && *s <= '9') continue;
+
+		if (nr < 5) {
+			has_pp_stats = 0;
+			rsect = 0;
+			wsect = 0;
+		}
 
 		diskio_stats = diskio_stat_malloc(n + 1, &sizeof_diskio_stats,
 			diskio_stats);
