@@ -1,29 +1,44 @@
-dnl configure.in for libstatgrab
-dnl $Id$
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+#
+# configure.in for libstatgrab
+# $Id$
+#
 
-dnl Change these to change the package name and version
+# Change these to change the package name and version
 AC_INIT(libstatgrab, 0.1, dev@i-scream.org.uk)
 AM_INIT_AUTOMAKE(libstatgrab, 0.1)
 
-dnl The file we use to pass #define's to the source
-AC_CONFIG_HEADER(config.h)
+# Revision number (automatically updated)
+AC_REVISION($Revision$)
 
-dnl We need a CC, install, and libtool
+# Might work with older autoconfs... but tested on 2.57
+AC_PREREQ(2.57)
+
+# The file we use to pass #define's to the source
+AM_CONFIG_HEADER([config.h])
+
+# Checks for programs
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
-dnl And we probably need the standard C bits
+# Checks for header files
 AC_HEADER_STDC
 
-dnl The program needs to know whether it can use getloadavg
-AC_CHECK_FUNCS(getloadavg)
+# Checks for typedefs, structures, and compiler characteristics
+AC_C_CONST
 
-dnl Set things up for different OS's
-dnl We define the name of the OS so the code can act accordingly
-dnl We also need to add the right LDFLAGS
+# Checks for library functions
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+
+# Set things up for different OS's
+# We define the name of the OS so the code can act accordingly
+# We also need to add the right LDFLAGS
 case $host_os in
 solaris2.*)
+	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	LDFLAGS="$LDFLAGS -lkstat"
 	;;
@@ -39,5 +54,7 @@ linux-gnu)
 	;;
 esac
 
-dnl And finish by changing these files
-AC_OUTPUT([Makefile src/Makefile])
+# And finish by changing these files
+AC_CONFIG_FILES([Makefile src/Makefile])
+
+AC_OUTPUT

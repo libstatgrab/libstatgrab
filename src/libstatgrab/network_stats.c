@@ -23,8 +23,8 @@
 #endif
 
 #include <stdio.h>
-#include "statgrab.h"
 #include <stdlib.h>
+#include "statgrab.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
@@ -186,6 +186,4 @@ network_stat_t *get_network_stats_diff(int *entries){
 
 	return network_stats_diff;
 }	
-
-
 

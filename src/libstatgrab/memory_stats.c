@@ -24,17 +24,9 @@
 
 #include <stdio.h>
 #include "statgrab.h"
-#ifdef LINUX
-#include <string.h>
-#endif
 #ifdef SOLARIS
 #include <unistd.h>
 #include <kstat.h>
-#endif
-#ifdef FREEBSD
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <unistd.h>
 #endif
 
 mem_stat_t *get_memory_stats(){

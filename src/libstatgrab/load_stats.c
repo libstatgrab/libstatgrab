@@ -22,9 +22,9 @@
 #include "config.h"
 #endif
 
-#include "statgrab.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "statgrab.h"
 #ifdef SOLARIS
 #include <sys/loadavg.h>
 #endif

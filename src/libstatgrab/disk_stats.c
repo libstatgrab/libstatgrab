@@ -22,20 +22,16 @@
 #include "config.h"
 #endif
 
-#include "statgrab.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "ukcprog.h"
 #include <string.h>
+#include "statgrab.h"
 
 #ifdef SOLARIS
 #include <sys/mnttab.h>
-#include <sys/types.h>
 #include <sys/statvfs.h>
 #include <kstat.h>
-
 #define VALID_FS_TYPES {"ufs", "tmpfs"}
-
 #endif
 
 #define START_VAL 1

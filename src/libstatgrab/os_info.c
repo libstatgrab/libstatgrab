@@ -22,9 +22,9 @@
 #include "config.h"
 #endif
 
-#include "statgrab.h"
-#include <sys/utsname.h>
 #include <stdio.h>
+#include <sys/utsname.h>
+#include "statgrab.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <time.h>

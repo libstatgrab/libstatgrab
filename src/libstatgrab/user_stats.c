@@ -21,14 +21,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "statgrab.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef FREEBSD
-#include <sys/types.h>
-#endif
 #include <utmp.h>
+#include "statgrab.h"
 
 #define START_VAL 5
 

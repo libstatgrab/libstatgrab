@@ -23,14 +23,13 @@
 #endif
 
 #include <stdio.h>
-#include "statgrab.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include "statgrab.h"
 
 #ifdef SOLARIS
 #include <procfs.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
 #define PROC_LOCATION "/proc"

@@ -25,17 +25,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <time.h>
 #include <string.h>
 #include "statgrab.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
-#endif
-#ifdef FREEBSD
-#include <sys/sysctl.h>
-#include <sys/dkstat.h>
 #endif
 
 static cpu_states_t cpu_now;
