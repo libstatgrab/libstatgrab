@@ -50,16 +50,18 @@
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
-#define VALID_FS_TYPES {"ufs", "mfs", "ffs"}
 #endif
 #ifdef FREEBSD
 #include <sys/dkstat.h>
 #include <devstat.h>
+#define VALID_FS_TYPES {"ufs", "mfs"}
 #endif
 #ifdef NETBSD
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/disk.h>
+#define VALID_FS_TYPES {"ffs", "mfs", "msdos", "lfs", "adosfs", "ext2fs", \
+                        "ntfs"}
 #endif
 
 #define START_VAL 1
