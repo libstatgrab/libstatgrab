@@ -103,7 +103,7 @@ int main(int argc, char **argv){
                                         printf("\033[%d;2H%-25s : %5lld", line_number++, "Network Interface Tx", (network_stats->tx / 1024));
                                         break;
 				case 'm':
-					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Network Interface Tx", network_stats->rx / (1024.00*1024.00));
+					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Network Interface Rx", network_stats->rx / (1024.00*1024.00));
 					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Network Interface Tx", network_stats->tx / (1024.00*1024.00));
 			}
 			printf("\033[%d;2H%-25s : %ld ", line_number++, "Network Interface systime", (long) network_stats->systime);
