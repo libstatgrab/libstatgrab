@@ -26,6 +26,7 @@
 
 #include <time.h>
 #include "statgrab.h"
+#include "tools.h"
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
@@ -56,8 +57,8 @@ static int cpu_now_uninit=1;
 sg_cpu_stats *sg_get_cpu_stats(){
 
 #ifdef SOLARIS
-        kstat_ctl_t *kc;
-        kstat_t *ksp;
+	kstat_ctl_t *kc;
+	kstat_t *ksp;
 	cpu_stat_t cs;
 #endif
 #if defined(LINUX) || defined(CYGWIN)
@@ -74,7 +75,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #endif
 	size_t size;
 #endif
-        
+
 	cpu_now.user=0;
 	/* Not stored in linux or freebsd */
 	cpu_now.iowait=0;
@@ -87,14 +88,15 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	cpu_now.nice=0;
 
 #ifdef SOLARIS
-        if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
-        for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
-                if ((strcmp(ksp->ks_module, "cpu_stat")) != 0) continue;
-                if (kstat_read(kc, ksp, &cs) == -1) {
-                        continue;
-                }
+	if ((kc = kstat_open()) == NULL) {
+		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
+		return NULL;
+	}
+	for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
+		if ((strcmp(ksp->ks_module, "cpu_stat")) != 0) continue;
+		if (kstat_read(kc, ksp, &cs) == -1) {
+			continue;
+		}
 		cpu_now.user+=(long long)cs.cpu_sysinfo.cpu[CPU_USER];
 		cpu_now.iowait+=(long long)cs.cpu_sysinfo.cpu[CPU_WAIT];
 		cpu_now.kernel+=(long long)cs.cpu_sysinfo.cpu[CPU_KERNEL];
@@ -104,10 +106,11 @@ sg_cpu_stats *sg_get_cpu_stats(){
 
 	cpu_now.total=cpu_now.user+cpu_now.iowait+cpu_now.kernel+cpu_now.idle+cpu_now.swap;
 	
-        kstat_close(kc);
+	kstat_close(kc);
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/stat", "r" ))==NULL) {
+		sg_set_error(SG_ERROR_OPEN, "/proc/stat");
 		return NULL;
 	}
 	/* The very first line should be cpu */
@@ -116,6 +119,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 		&cpu_now.nice, \
 		&cpu_now.kernel, \
 		&cpu_now.idle)) != 4){
+		sg_set_error(SG_ERROR_PARSE, "cpu");
 		fclose(f);
 		return NULL;
 	}
@@ -128,6 +132,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #if defined(FREEBSD) || defined(DFBSD)
 	size = sizeof cp_time;
 	if (sysctlbyname("kern.cp_time", &cp_time, &size, NULL, 0) < 0){
+		sg_set_error(SG_ERROR_SYSCTLBYNAME, "kern.cp_time");
 		return NULL;
   	}
 #else
@@ -139,6 +144,11 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #endif
 	size = sizeof cp_time;
 	if (sysctl(mib, 2, &cp_time, &size, NULL, 0) < 0) {
+#ifdef NETBSD
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_CP_TIME");
+#else
+		sg_set_error(SG_ERROR_SYSCTL, "CTL_KERN.KERN_CPTIME");
+#endif
 		return NULL;
 	}
 #endif
@@ -165,21 +175,21 @@ sg_cpu_stats *sg_get_cpu_stats_diff(){
 
 	if (cpu_now_uninit){
 		if((cpu_tmp=sg_get_cpu_stats())==NULL){
-		/* Should sg_get_cpu_stats fail */
+			/* Should sg_get_cpu_stats fail */
 			return NULL;
 		}
 		return cpu_tmp;
 	}
 
 
-        cpu_then.user=cpu_now.user;
-        cpu_then.kernel=cpu_now.kernel;
-        cpu_then.idle=cpu_now.idle;
-        cpu_then.iowait=cpu_now.iowait;
-        cpu_then.swap=cpu_now.swap;
-        cpu_then.nice=cpu_now.nice;
-        cpu_then.total=cpu_now.total;
-        cpu_then.systime=cpu_now.systime;
+	cpu_then.user=cpu_now.user;
+	cpu_then.kernel=cpu_now.kernel;
+	cpu_then.idle=cpu_now.idle;
+	cpu_then.iowait=cpu_now.iowait;
+	cpu_then.swap=cpu_now.swap;
+	cpu_then.nice=cpu_now.nice;
+	cpu_then.total=cpu_now.total;
+	cpu_then.systime=cpu_now.systime;
 
 	if((cpu_tmp=sg_get_cpu_stats())==NULL){
 		return NULL;

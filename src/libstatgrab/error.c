@@ -44,9 +44,18 @@ const char *sg_str_error(sg_error code) {
 	switch (code) {
 	case SG_ERROR_NONE:
 		return "no error";
-	case SG_ERROR_MALLOC_FAILED:
-		return "malloc failed - out of memory";
+	case SG_ERROR_MALLOC:
+		return "malloc failed";
+	case SG_ERROR_KSTAT_OPEN:
+		return "failed to open kstat";
+	case SG_ERROR_OPEN:
+		return "failed to open file";
+	case SG_ERROR_SYSCTLBYNAME:
+		return "sysctlbyname failed";
+	case SG_ERROR_PARSE:
+		return "failed to parse input";
+	default:
+		return "unknown error";
 	}
-	return "unknown error";
 }
 

@@ -34,7 +34,11 @@ int sg_drop_privileges(void);
 
 typedef enum {
 	SG_ERROR_NONE = 0,
-	SG_ERROR_MALLOC_FAILED
+	SG_ERROR_MALLOC,
+	SG_ERROR_KSTAT_OPEN,
+	SG_ERROR_OPEN,
+	SG_ERROR_SYSCTLBYNAME,
+	SG_ERROR_PARSE
 } sg_error;
 
 void sg_set_error(sg_error code, const char *arg);
@@ -53,26 +57,26 @@ typedef struct {
 sg_host_info *sg_get_host_info();
 
 typedef struct {
-        long long user;
-        long long kernel;
-        long long idle;
-        long long iowait;
-        long long swap;
-        long long nice;
-        long long total;
-        time_t systime;
+	long long user;
+	long long kernel;
+	long long idle;
+	long long iowait;
+	long long swap;
+	long long nice;
+	long long total;
+	time_t systime;
 } sg_cpu_stats;
 
 sg_cpu_stats *sg_get_cpu_stats();
 sg_cpu_stats *sg_get_cpu_stats_diff();
 
 typedef struct {
-        float user;
-        float kernel;
-        float idle;
-        float iowait;
-        float swap;
-        float nice;
+	float user;
+	float kernel;
+	float idle;
+	float iowait;
+	float swap;
+	float nice;
 	time_t time_taken;
 } sg_cpu_percents;
 
@@ -111,15 +115,15 @@ typedef struct {
 sg_swap_stats *sg_get_swap_stats();
 
 typedef struct {
-        char *device_name;
+	char *device_name;
 	char *fs_type;
-        char *mnt_point;
-        long long size;
-        long long used;
-        long long avail;
-        long long total_inodes;
+	char *mnt_point;
+	long long size;
+	long long used;
+	long long avail;
+	long long total_inodes;
 	long long used_inodes;
-        long long free_inodes;
+	long long free_inodes;
 } sg_fs_stats;
 
 sg_fs_stats *sg_get_fs_stats(int *entries);
