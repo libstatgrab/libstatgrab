@@ -111,18 +111,6 @@ typedef struct{
 	time_t systime;
 }network_stat_t;
 
-typedef enum{
-	FULL_DUPLEX,
-	HALF_DUPLEX,
-	NO_DUPLEX
-}duplex;
-
-typedef struct{
-	char *interface_name;
-	int speed;	/* In megabits/sec */
-	duplex dup;	
-}network_iface_stat_t;
-
 typedef struct{
 	long long pages_pagein;
 	long long pages_pageout;
@@ -151,8 +139,6 @@ process_stat_t *get_process_stats();
 
 network_stat_t *get_network_stats(int *entries);
 network_stat_t *get_network_stats_diff(int *entries);
-
-network_iface_stat_t *get_network_iface_stats(int *entries);
 
 page_stat_t *get_page_stats();
 page_stat_t *get_page_stats_diff();

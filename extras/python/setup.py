@@ -14,7 +14,7 @@ if libs[0] != 0:
 	exit("Failed to get libs: " + libs[1])
 
 setup(	name = "statgrab",
-	version = "0.8.1",
+	version = "0.8.2",
 	description = "Python bindings for libstatgrab",
 	author = "i-scream",
 	author_email = "dev@i-scream.org",
