@@ -464,7 +464,7 @@ process_stat_t *get_process_stats() {
 
 	ps_size = get_proc_snapshot(&ps);
 
-	if(ps_size == NULL) {
+	if(ps_size == 0) {
 		return NULL;
 	}
 
