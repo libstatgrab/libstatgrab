@@ -695,6 +695,15 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	close(sock);
 	fclose(f);
 #endif
+#ifdef CYGWIN
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
+	return NULL;
+#endif
+#ifdef HPUX
+	sg_set_error(SG_ERROR_UNSUPPORTED, "HP-UX");
+	return NULL;
+#endif
+
 	*entries = ifaces;
 	return network_iface_stats; 
 }
