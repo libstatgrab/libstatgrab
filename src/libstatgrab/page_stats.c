@@ -33,7 +33,10 @@
 #include <stdio.h>
 #include "tools.h"
 #endif
-
+#ifdef FREEBSD
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
 
 static page_stat_t page_stats;
 static int page_stats_uninit=1;
@@ -47,6 +50,9 @@ page_stat_t *get_page_stats(){
 #ifdef LINUX
 	FILE *f;
 	char *line_ptr;
+#endif
+#ifdef FREEBSD
+	size_t size;
 #endif
 
         page_stats.pages_pagein=0;
@@ -83,6 +89,21 @@ page_stat_t *get_page_stats(){
 	}
 	page_stats.systime=time(NULL);
 	fclose(f);
+
+#endif
+#ifdef FREEBSD
+        if (sysctlbyname("vm.stats.vm.v_swappgsin", NULL, &size, NULL, NULL) < 0){
+                return NULL;
+        }
+        if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats.pages_pagein, &size, NULL, NULL) < 0){
+                return NULL;
+        }
+        if (sysctlbyname("vm.stats.vm.v_swappgsout", NULL, &size, NULL, NULL) < 0){
+                return NULL;
+        }
+        if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats.pages_pageout, &size, NULL, NULL) < 0){
+                return NULL;
+        }
 
 #endif
 
