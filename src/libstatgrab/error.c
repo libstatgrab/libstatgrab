@@ -38,6 +38,7 @@ static char error_arg[ERROR_ARG_MAX];
 static int errno_value = 0;
 
 void sg_set_error(sg_error code, const char *arg) {
+	errno_value = 0;
 	error = code;
 	if (arg != NULL) {
 		sg_strlcpy(error_arg, arg, sizeof error_arg);
@@ -49,8 +50,8 @@ void sg_set_error(sg_error code, const char *arg) {
 }
 
 void sg_set_error_with_errno(sg_error code, const char *arg) {
-	errno_value = errno;
 	sg_set_error(code, arg);
+	errno_value = errno;
 }
 
 sg_error sg_get_error() {
