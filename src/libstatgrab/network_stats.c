@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "statgrab.h"
+#include "vector.h"
 #include <time.h>
 #ifdef SOLARIS
 #include <kstat.h>
@@ -69,54 +70,26 @@ typedef __uint64_t u64;
 #include <unistd.h>
 #endif
 
-static network_stat_t *network_stats=NULL;
-static int interfaces=0;
-
-void network_stat_init(int start, int end, network_stat_t *net_stats){
-
-	for(net_stats+=start; start<end; start++){
-		net_stats->interface_name=NULL;
-		net_stats->tx=0;
-		net_stats->rx=0;
-		net_stats->ipackets=0;
-		net_stats->opackets=0;
-		net_stats->ierrors=0;
-		net_stats->oerrors=0;
-		net_stats->collisions=0;
-		net_stats++;
-	}
+static void network_stat_init(network_stat_t *s) {
+	s->interface_name = NULL;
+	s->tx = 0;
+	s->rx = 0;
+	s->ipackets = 0;
+	s->opackets = 0;
+	s->ierrors = 0;
+	s->oerrors = 0;
+	s->collisions = 0;
 }
 
-network_stat_t *network_stat_malloc(int needed_entries, int *cur_entries, network_stat_t *net_stats){
-
-	if(net_stats==NULL){
-
-		if((net_stats=malloc(needed_entries * sizeof(network_stat_t)))==NULL){
-			return NULL;
-		}
-		network_stat_init(0, needed_entries, net_stats);
-		*cur_entries=needed_entries;
-
-		return net_stats;
-	}
-
-
-	if(*cur_entries<needed_entries){
-		net_stats=realloc(net_stats, (sizeof(network_stat_t)*needed_entries));
-		if(net_stats==NULL){
-			return NULL;
-		}
-		network_stat_init(*cur_entries, needed_entries, net_stats);
-		*cur_entries=needed_entries;
-	}
-
-	return net_stats;
+static void network_stat_destroy(network_stat_t *s) {
+	free(s->interface_name);
 }
 
+VECTOR_DECLARE_STATIC(network_stats, network_stat_t, 5,
+                      network_stat_init, network_stat_destroy);
 
 network_stat_t *get_network_stats(int *entries){
-
-	static int sizeof_network_stats=0;	
+	int interfaces;
 	network_stat_t *network_stat_ptr;
 
 #ifdef SOLARIS
@@ -146,8 +119,8 @@ network_stat_t *get_network_stats(int *entries){
 	
 	for(net_ptr=net;net_ptr!=NULL;net_ptr=net_ptr->ifa_next){
 		if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
-		network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
-		if(network_stats==NULL){
+
+		if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
 			return NULL;
 		}
 		network_stat_ptr=network_stats+interfaces;
@@ -206,8 +179,7 @@ network_stat_t *get_network_stats(int *entries){
 			}
 
 			/* Create new network_stats */
-			network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
-			if(network_stats==NULL){
+			if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
 				return NULL;
 			}
 			network_stat_ptr=network_stats+interfaces;
@@ -286,9 +258,9 @@ network_stat_t *get_network_stats(int *entries){
 		if((regexec(&regex, line, 9, line_match, 0))!=0){
 			continue;
 		}
-        	network_stats=network_stat_malloc((interfaces+1), &sizeof_network_stats, network_stats);
-       		if(network_stats==NULL){
-      			return NULL;
+
+		if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
+			return NULL;
 		}
 	        network_stat_ptr=network_stats+interfaces;
 
@@ -338,10 +310,10 @@ long long transfer_diff(long long new, long long old){
 }
 
 network_stat_t *get_network_stats_diff(int *entries) {
-	static network_stat_t *diff = NULL;
-	static int diff_count = 0;
+	VECTOR_DECLARE_STATIC(diff, network_stat_t, 1,
+	                      network_stat_init, network_stat_destroy);
 	network_stat_t *src = NULL, *dest;
-	int i, j, new_count;
+	int i, j, diff_count, new_count;
 
 	if (network_stats == NULL) {
 		/* No previous stats, so we can't calculate a difference. */
@@ -349,8 +321,8 @@ network_stat_t *get_network_stats_diff(int *entries) {
 	}
 
 	/* Resize the results array to match the previous stats. */
-	diff = network_stat_malloc(interfaces, &diff_count, diff);
-	if (diff == NULL) {
+	diff_count = VECTOR_SIZE(network_stats);
+	if (VECTOR_RESIZE(diff, diff_count) < 0) {
 		return NULL;
 	}
 
@@ -411,48 +383,23 @@ network_stat_t *get_network_stats_diff(int *entries) {
 	*entries = diff_count;
 	return diff;
 }
+
 /* NETWORK INTERFACE STATS */
 
-void network_iface_stat_init(int start, int end, network_iface_stat_t *net_stats){
-
-	for(net_stats+=start; start<end; start++){
-		net_stats->interface_name=NULL;
-		net_stats->speed=0;
-		net_stats->dup=UNKNOWN_DUPLEX;
-		net_stats++;
-	}
+static void network_iface_stat_init(network_iface_stat_t *s) {
+	s->interface_name = NULL;
+	s->speed = 0;
+	s->dup = UNKNOWN_DUPLEX;
 }
 
-network_iface_stat_t *network_iface_stat_malloc(int needed_entries, int *cur_entries, network_iface_stat_t *net_stats){
-
-	if(net_stats==NULL){
-
-		if((net_stats=malloc(needed_entries * sizeof(network_iface_stat_t)))==NULL){
-			return NULL;
-		}
-		network_iface_stat_init(0, needed_entries, net_stats);
-		*cur_entries=needed_entries;
-
-		return net_stats;
-	}
-
-
-	if(*cur_entries<needed_entries){
-		net_stats=realloc(net_stats, (sizeof(network_iface_stat_t)*needed_entries));
-		if(net_stats==NULL){
-			return NULL;
-		}
-		network_iface_stat_init(*cur_entries, needed_entries, net_stats);
-		*cur_entries=needed_entries;
-	}
-
-	return net_stats;
+static void network_iface_stat_destroy(network_iface_stat_t *s) {
+	free(s->interface_name);
 }
 
 network_iface_stat_t *get_network_iface_stats(int *entries){
-	static network_iface_stat_t *network_iface_stats;
+	VECTOR_DECLARE_STATIC(network_iface_stats, network_iface_stat_t, 5,
+	                      network_iface_stat_init, network_iface_stat_destroy);
 	network_iface_stat_t *network_iface_stat_ptr;
-	static int sizeof_network_iface_stats=0;	
 	int ifaces = 0;
 
 #ifdef SOLARIS
@@ -484,8 +431,8 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 
 	for(net_ptr=net; net_ptr!=NULL; net_ptr=net_ptr->ifa_next){
                 if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
-                network_iface_stats=network_iface_stat_malloc((ifaces+1), &sizeof_network_iface_stats, network_iface_stats);
-                if(network_iface_stats==NULL){
+
+		if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
                         return NULL;
                 }
                 network_iface_stat_ptr = network_iface_stats + ifaces;
@@ -597,8 +544,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 				continue;
 			}
 
-			network_iface_stats = network_iface_stat_malloc(ifaces + 1, &sizeof_network_iface_stats, network_iface_stats);
-			if (network_iface_stats == NULL) {
+			if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
 				return NULL;
 			}
 			network_iface_stat_ptr = network_iface_stats + ifaces;
@@ -675,8 +621,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}
 
 		/* We have a good interface to add */
-		network_iface_stats=network_iface_stat_malloc((ifaces+1), &sizeof_network_iface_stats, network_iface_stats);
-		if(network_iface_stats==NULL){
+		if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
 			return NULL;
 		}
 		network_iface_stat_ptr = network_iface_stats + ifaces;
