@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "statgrab.h"
-#include "time.h"
+#include <time.h>
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
