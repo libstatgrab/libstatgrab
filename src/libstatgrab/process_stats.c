@@ -70,21 +70,21 @@
 #include <unistd.h>
 #endif
 
-static void proc_state_init(proc_state_t *s) {
+static void proc_state_init(sg_process_stats *s) {
 	s->process_name = NULL;
 	s->proctitle = NULL;
 }
 
-static void proc_state_destroy(proc_state_t *s) {
+static void proc_state_destroy(sg_process_stats *s) {
 	free(s->process_name);
 	free(s->proctitle);
 }
 
-int get_proc_snapshot(proc_state_t **ps){
-	VECTOR_DECLARE_STATIC(proc_state, proc_state_t, 64,
+sg_process_stats *sg_get_process_stats(int *entries){
+	VECTOR_DECLARE_STATIC(proc_state, sg_process_stats, 64,
 	                      proc_state_init, proc_state_destroy);
 	int proc_state_size = 0;
-	proc_state_t *proc_state_ptr;
+	sg_process_stats *proc_state_ptr;
 #ifdef ALLBSD
 	int mib[4];
 	size_t size;
@@ -122,7 +122,7 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
         if((proc_dir=opendir(PROC_LOCATION))==NULL){
-                return -1;
+                return NULL;
         }
 
         while((dir_entry=readdir(proc_dir))!=NULL){
@@ -144,7 +144,7 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
 		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
-			return -1;
+			return NULL;
 		}
 		proc_state_ptr = proc_state+proc_state_size;
 
@@ -163,28 +163,28 @@ int get_proc_snapshot(proc_state_t **ps){
 		proc_state_ptr->process_name = strdup(process_info.pr_fname);
 		proc_state_ptr->proctitle = strdup(process_info.pr_psargs);
 
-                if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SLEEPING;
-                if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = RUNNING; 
-                if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = ZOMBIE; 
-                if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = STOPPED; 
-                if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = RUNNING; 
+                if(process_info.pr_lwp.pr_state==1) proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+                if(process_info.pr_lwp.pr_state==2) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
+                if(process_info.pr_lwp.pr_state==3) proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE; 
+                if(process_info.pr_lwp.pr_state==4) proc_state_ptr->state = SG_PROCESS_STATE_STOPPED; 
+                if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
 #endif
 #ifdef LINUX
 		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %*u %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
 		proc_state_ptr->proc_resident = proc_state_ptr->proc_resident * getpagesize();
-		if(s == 'S') proc_state_ptr->state = SLEEPING;
-		if(s == 'R') proc_state_ptr->state = RUNNING;
-		if(s == 'Z') proc_state_ptr->state = ZOMBIE;
-		if(s == 'T') proc_state_ptr->state = STOPPED;
-		if(s == 'D') proc_state_ptr->state = STOPPED;
+		if(s == 'S') proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+		if(s == 'R') proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+		if(s == 'Z') proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+		if(s == 'T') proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+		if(s == 'D') proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
 	
 		/* pa_name[0] should = '(' */
 		ptr = strchr(&ps_name[1], ')');	
 		if(ptr !=NULL) *ptr='\0';
 
-		if (update_string(&proc_state_ptr->process_name,
+		if (sg_update_string(&proc_state_ptr->process_name,
 		                  &ps_name[1]) == NULL) {
-			return -1;
+			return NULL;
 		}
 
 		/* Need to do cpu */
@@ -205,7 +205,7 @@ int get_proc_snapshot(proc_state_t **ps){
 		len = 0;
 		do {
 			if (VECTOR_RESIZE(psargs, len + READ_BLOCK_SIZE + 1) < 0) {
-				return -1;
+				return NULL;
 			}
 			rc = read(fn, psargs + len, READ_BLOCK_SIZE);
 			if (rc > 0) {
@@ -228,8 +228,8 @@ int get_proc_snapshot(proc_state_t **ps){
 		/* for safety's sake */
 		psargs[len] = '\0';
 
-		if (update_string(&proc_state_ptr->proctitle, psargs) == NULL) {
-			return -1;
+		if (sg_update_string(&proc_state_ptr->proctitle, psargs) == NULL) {
+			return NULL;
 		}
 #endif
 
@@ -244,30 +244,30 @@ int get_proc_snapshot(proc_state_t **ps){
 	mib[2] = KERN_PROC_ALL;
 
 	if(sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
-		return -1;
+		return NULL;
 	}
 
 	procs = size / sizeof(struct kinfo_proc);
 
 	kp_stats = malloc(size);
 	if(kp_stats == NULL) {
-		return -1;
+		return NULL;
 	}
 
 	if(sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
 		free(kp_stats);
-		return -1;
+		return NULL;
 	}
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-	kvmd = get_kvm2();
+	kvmd = sg_get_kvm2();
 #endif
 
 	for (i = 0; i < procs; i++) {
 		const char *name;
 
 		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
-			return -1;
+			return NULL;
 		}
 		proc_state_ptr = proc_state+proc_state_size;
 
@@ -278,8 +278,8 @@ int get_proc_snapshot(proc_state_t **ps){
 #else
 		name = kp_stats[i].kp_proc.p_comm;
 #endif
-		if (update_string(&proc_state_ptr->process_name, name) == NULL) {
-			return -1;
+		if (sg_update_string(&proc_state_ptr->process_name, name) == NULL) {
+			return NULL;
 		}
 
 #if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
@@ -287,19 +287,19 @@ int get_proc_snapshot(proc_state_t **ps){
 
 #ifdef FREEBSD5
 		if(sysctlbyname("kern.ps_arg_cache_limit", &buflen, &size, NULL, 0) < 0) {
-			return -1;
+			return NULL;
 		}
 #else
 		mib[1] = KERN_ARGMAX;
 
 		if(sysctl(mib, 2, &buflen, &size, NULL, 0) < 0) {
-			return -1;
+			return NULL;
 		}
 #endif
 
 		proctitle = malloc(buflen);
 		if(proctitle == NULL) {
-			return -1;
+			return NULL;
 		}
 
 		size = buflen;
@@ -321,13 +321,13 @@ int get_proc_snapshot(proc_state_t **ps){
 		else if(size > 0) {
 			proc_state_ptr->proctitle = malloc(size+1);
 			if(proc_state_ptr->proctitle == NULL) {
-				return -1;
+				return NULL;
 			}
 			p = proctitle;
 			proc_state_ptr->proctitle[0] = '\0';
 			do {
-				strlcat(proc_state_ptr->proctitle, p, size+1);
-				strlcat(proc_state_ptr->proctitle, " ", size+1);
+				sg_strlcat(proc_state_ptr->proctitle, p, size+1);
+				sg_strlcat(proc_state_ptr->proctitle, " ", size+1);
 				p += strlen(p) + 1;
 			} while (p < proctitle + size);
 			free(proctitle);
@@ -351,11 +351,11 @@ int get_proc_snapshot(proc_state_t **ps){
 				proctitle = malloc(argslen + 1);
 				proctitle[0] = '\0';
 				if(proctitle == NULL) {
-					return -1;
+					return NULL;
 				}
 				while(*args != NULL) {
-					strlcat(proctitle, *args, argslen + 1);
-					strlcat(proctitle, " ", argslen + 1);
+					sg_strlcat(proctitle, *args, argslen + 1);
+					sg_strlcat(proctitle, " ", argslen + 1);
 					args++;
 				}
 				/* remove trailing space */
@@ -442,7 +442,7 @@ int get_proc_snapshot(proc_state_t **ps){
 #ifdef SONPROC
 		case SONPROC: /* NetBSD */
 #endif
-			proc_state_ptr->state = RUNNING;
+			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
 			break;
 		case SSLEEP:
 #ifdef SWAIT
@@ -451,19 +451,19 @@ int get_proc_snapshot(proc_state_t **ps){
 #ifdef SLOCK
 		case SLOCK: /* FreeBSD 5 */
 #endif
-			proc_state_ptr->state = SLEEPING;
+			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
 			break;
 		case SSTOP:
-			proc_state_ptr->state = STOPPED;
+			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
 			break;
 		case SZOMB:
 #ifdef SDEAD
 		case SDEAD: /* OpenBSD & NetBSD */
 #endif
-			proc_state_ptr->state = ZOMBIE;
+			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
 			break;
 		default:
-			proc_state_ptr->state = UNKNOWN;
+			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
 			break;
 		}
 		proc_state_size++;
@@ -473,16 +473,16 @@ int get_proc_snapshot(proc_state_t **ps){
 #endif
 
 #ifdef CYGWIN
-	return -1;
+	return NULL;
 #endif
 
-	*ps = proc_state;
-	return proc_state_size;
+	*entries = proc_state_size;
+	return proc_state;
 }
 
-process_stat_t *get_process_stats() {
-	static process_stat_t process_stat;
-	proc_state_t *ps;
+sg_process_count *sg_get_process_count() {
+	static sg_process_count process_stat;
+	sg_process_stats *ps;
 	int ps_size, x;
 
 	process_stat.sleeping = 0;
@@ -491,28 +491,28 @@ process_stat_t *get_process_stats() {
 	process_stat.stopped = 0;
 	process_stat.total = 0;
 
-	ps_size = get_proc_snapshot(&ps);
-
-	if(ps_size < 0) {
+	ps = sg_get_process_stats(&ps_size);
+	if (ps == NULL) {
 		return NULL;
 	}
 
 	for(x = 0; x < ps_size; x++) {
 		switch (ps->state) {
-		case RUNNING:
+		case SG_PROCESS_STATE_RUNNING:
 			process_stat.running++;
 			break;
-		case SLEEPING:
+		case SG_PROCESS_STATE_SLEEPING:
 			process_stat.sleeping++;
 			break;
-		case STOPPED:
+		case SG_PROCESS_STATE_STOPPED:
 			process_stat.stopped++;
 			break;
-		case ZOMBIE:
+		case SG_PROCESS_STATE_ZOMBIE:
 			process_stat.zombie++;
 			break;
 		default:
-			/* currently no mapping for UNKNOWN in process_stat_t */
+			/* currently no mapping for SG_PROCESS_STATE_UNKNOWN in
+			 * sg_process_count */
 			break;
 		}
 		ps++;

@@ -23,7 +23,27 @@
 
 #include <sys/types.h>
 
-typedef struct{
+/* FIXME typedefs for 32/64-bit types */
+/* FIXME maybe tidy up field names? */
+/* FIXME tab/space damage */
+/* FIXME prefixes for util functions too */
+/* FIXME comments for less obvious fields */
+
+int sg_init(void);
+int sg_drop_privileges(void);
+
+typedef struct {
+	char *os_name;
+	char *os_release;
+	char *os_version;
+	char *platform;
+	char *hostname;
+	time_t uptime;
+} sg_host_info;
+
+sg_host_info *sg_get_host_info();
+
+typedef struct {
         long long user;
         long long kernel;
         long long idle;
@@ -32,9 +52,12 @@ typedef struct{
         long long nice;
         long long total;
         time_t systime;
-}cpu_states_t;
+} sg_cpu_stats;
 
-typedef struct{
+sg_cpu_stats *sg_get_cpu_stats();
+sg_cpu_stats *sg_get_cpu_stats_diff();
+
+typedef struct {
         float user;
         float kernel;
         float idle;
@@ -42,40 +65,41 @@ typedef struct{
         float swap;
         float nice;
 	time_t time_taken;
-}cpu_percent_t;
+} sg_cpu_percents;
 
-typedef struct{
+sg_cpu_percents *sg_get_cpu_percents();
+
+typedef struct {
 	long long total;
 	long long free;
 	long long used;
 	long long cache;
-}mem_stat_t;
+} sg_mem_stats;
 
-typedef struct{
+sg_mem_stats *sg_get_mem_stats();
+
+typedef struct {
 	double min1;
 	double min5;
 	double min15;
-}load_stat_t;
+} sg_load_stats;
 
-typedef struct{
+sg_load_stats *sg_get_load_stats();
+
+typedef struct {
 	char *name_list;
 	int num_entries;
-}user_stat_t;
+} sg_user_stats;
 
-typedef struct{
+sg_user_stats *sg_get_user_stats();
+
+typedef struct {
 	long long total;
 	long long used;
 	long long free;
-}swap_stat_t;
+} sg_swap_stats;
 
-typedef struct{
-	char *os_name;
-	char *os_release;
-	char *os_version;
-	char *platform;
-	char *hostname;
-	time_t uptime;
-}general_stat_t;
+sg_swap_stats *sg_get_swap_stats();
 
 typedef struct {
         char *device_name;
@@ -87,24 +111,21 @@ typedef struct {
         long long total_inodes;
 	long long used_inodes;
         long long free_inodes;
-}disk_stat_t;
+} sg_fs_stats;
 
-typedef struct{
+sg_fs_stats *sg_get_fs_stats(int *entries);
+
+typedef struct {
 	char *disk_name;
 	long long read_bytes;
 	long long write_bytes;
 	time_t systime;
-}diskio_stat_t;
+} sg_disk_io_stats;
 
-typedef struct{
-	int total;
-	int running;
-	int sleeping;
-	int stopped;
-	int zombie;
-}process_stat_t;
+sg_disk_io_stats *sg_get_disk_io_stats(int *entries);
+sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries);
 
-typedef struct{
+typedef struct {
 	char *interface_name;
 	long long tx;
 	long long rx;
@@ -114,36 +135,44 @@ typedef struct{
 	long long oerrors;
 	long long collisions;
 	time_t systime;
-}network_stat_t;
+} sg_network_io_stats;
 
-typedef enum{
-	FULL_DUPLEX,
-	HALF_DUPLEX,
-	UNKNOWN_DUPLEX
-}statgrab_duplex;
+sg_network_io_stats *sg_get_network_io_stats(int *entries);
+sg_network_io_stats *sg_get_network_io_stats_diff(int *entries);
 
-typedef struct{
+typedef enum {
+	SG_IFACE_DUPLEX_FULL,
+	SG_IFACE_DUPLEX_HALF,
+	SG_IFACE_DUPLEX_UNKNOWN
+} sg_iface_duplex;
+
+typedef struct {
 	char *interface_name;
 	int speed;	/* In megabits/sec */
-	statgrab_duplex dup;	
+	sg_iface_duplex dup;
 	int up;
-}network_iface_stat_t;
+} sg_network_iface_stats;
 
-typedef struct{
+sg_network_iface_stats *sg_get_network_iface_stats(int *entries);
+
+typedef struct {
 	long long pages_pagein;
 	long long pages_pageout;
 	time_t systime;
-}page_stat_t;
+} sg_page_stats;
 
-typedef enum{
-	RUNNING,
-	SLEEPING,
-	STOPPED,
-	ZOMBIE,
-	UNKNOWN
-}process_status;
+sg_page_stats *sg_get_page_stats();
+sg_page_stats *sg_get_page_stats_diff();
 
-typedef struct{
+typedef enum {
+	SG_PROCESS_STATE_RUNNING,
+	SG_PROCESS_STATE_SLEEPING,
+	SG_PROCESS_STATE_STOPPED,
+	SG_PROCESS_STATE_ZOMBIE,
+	SG_PROCESS_STATE_UNKNOWN
+} sg_process_state;
+
+typedef struct {
 	char *process_name;
 	char *proctitle;
 
@@ -161,39 +190,18 @@ typedef struct{
 	time_t time_spent; /* time running in seconds */
 	double cpu_percent;
 	int nice;
-	process_status state;
-}proc_state_t;
+	sg_process_state state;
+} sg_process_stats;
 
-int get_proc_snapshot(proc_state_t **proc_state);
+sg_process_stats *sg_get_process_stats(int *entries);
 
-cpu_states_t *get_cpu_totals();
-cpu_states_t *get_cpu_diff();
-cpu_percent_t *cpu_percent_usage();
+typedef struct {
+	int total;
+	int running;
+	int sleeping;
+	int stopped;
+	int zombie;
+} sg_process_count;
 
-mem_stat_t *get_memory_stats();
-
-load_stat_t *get_load_stats();
-
-user_stat_t *get_user_stats();
-
-swap_stat_t *get_swap_stats();
-
-general_stat_t *get_general_stats();
-
-disk_stat_t *get_disk_stats(int *entries);
-diskio_stat_t *get_diskio_stats(int *entries);
-diskio_stat_t *get_diskio_stats_diff(int *entries);
-
-process_stat_t *get_process_stats();
-
-network_stat_t *get_network_stats(int *entries);
-network_stat_t *get_network_stats_diff(int *entries);
-
-network_iface_stat_t *get_network_iface_stats(int *entries);
-
-page_stat_t *get_page_stats();
-page_stat_t *get_page_stats_diff();
-
-int statgrab_init(void);
-int statgrab_drop_privileges(void);
+sg_process_count *sg_get_process_count();
 

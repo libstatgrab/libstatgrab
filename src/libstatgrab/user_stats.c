@@ -44,10 +44,10 @@
 #include <sys/unistd.h>
 #endif
 
-user_stat_t *get_user_stats(){
+sg_user_stats *sg_get_user_stats(){
 	int num_users = 0, pos = 0, new_pos;
 	VECTOR_DECLARE_STATIC(name_list, char, 128, NULL, NULL);
-	static user_stat_t user_stats;
+	static sg_user_stats user_stats;
 #if defined(SOLARIS) || defined(LINUX) || defined(CYGWIN)
 	struct utmp *entry;
 #endif

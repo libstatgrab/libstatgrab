@@ -54,9 +54,9 @@
 #include <unistd.h>
 #endif
 
-swap_stat_t *get_swap_stats(){
+sg_swap_stats *sg_get_swap_stats(){
 
-	static swap_stat_t swap_stat;
+	static sg_swap_stats swap_stat;
 
 #ifdef SOLARIS
 	struct anoninfo ai;
@@ -98,7 +98,7 @@ swap_stat_t *get_swap_stats(){
 		return NULL;
 	}
 
-	while ((line_ptr = f_read_line(f, "")) != NULL) {
+	while ((line_ptr = sg_f_read_line(f, "")) != NULL) {
 		if (sscanf(line_ptr, "%*s %llu kB", &value) != 1) {
 			continue;
 		}
@@ -141,7 +141,7 @@ swap_stat_t *get_swap_stats(){
 		return NULL;
 	}
 #else
-	if((kvmd = get_kvm()) == NULL){
+	if((kvmd = sg_get_kvm()) == NULL){
 		return NULL;
 	}
 	if ((kvm_getswapinfo(kvmd, &swapinfo, 1,0)) == -1){
@@ -156,7 +156,7 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.free = swap_stat.total - swap_stat.used;
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
-	if ((uvm = get_uvmexp()) == NULL) {
+	if ((uvm = sg_get_uvmexp()) == NULL) {
 		return NULL;
 	}
 

@@ -29,7 +29,7 @@
 
 #include "vector.h"
 
-void *statgrab_vector_resize(void *vector, vector_header *h, int count) {
+void *sg_vector_resize(void *vector, vector_header *h, int count) {
 	int new_count, i;
 
 	/* Destroy any now-unused items.
@@ -55,7 +55,7 @@ void *statgrab_vector_resize(void *vector, vector_header *h, int count) {
 		new_vector = realloc(vector, new_count * h->item_size);
 		if (new_vector == NULL && new_count != 0) {
 			/* Out of memory -- free the contents of the vector. */
-			statgrab_vector_resize(vector, h, 0);
+			sg_vector_resize(vector, h, 0);
 			h->error = -1;
 			return vector;
 		}

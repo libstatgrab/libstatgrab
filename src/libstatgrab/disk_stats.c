@@ -76,19 +76,19 @@
                         "ntfs"}
 #endif
 
-static void disk_stat_init(disk_stat_t *d) {
+static void disk_stat_init(sg_fs_stats *d) {
 	d->device_name = NULL;
 	d->fs_type = NULL;
 	d->mnt_point = NULL;
 }
 
-static void disk_stat_destroy(disk_stat_t *d) {
+static void disk_stat_destroy(sg_fs_stats *d) {
 	free(d->device_name);
 	free(d->fs_type);
 	free(d->mnt_point);
 }
 
-int is_valid_fs_type(const char *type) {
+static int is_valid_fs_type(const char *type) {
 	const char *types[] = VALID_FS_TYPES;
 	int i;
 
@@ -100,8 +100,8 @@ int is_valid_fs_type(const char *type) {
 	return 0;
 }
 
-disk_stat_t *get_disk_stats(int *entries){
-	VECTOR_DECLARE_STATIC(disk_stats, disk_stat_t, 10,
+sg_fs_stats *sg_get_fs_stats(int *entries){
+	VECTOR_DECLARE_STATIC(disk_stats, sg_fs_stats, 10,
 	                      disk_stat_init, disk_stat_destroy);
 
 	int valid_type;
@@ -110,7 +110,7 @@ disk_stat_t *get_disk_stats(int *entries){
 	FILE *f;
 #endif
 
-	disk_stat_t *disk_ptr;
+	sg_fs_stats *disk_ptr;
 
 #ifdef SOLARIS
 	struct mnttab mp;
@@ -165,13 +165,13 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr=disk_stats+num_disks;
 
 #ifdef ALLBSD
-			if (update_string(&disk_ptr->device_name, mp->f_mntfromname) == NULL) {
+			if (sg_update_string(&disk_ptr->device_name, mp->f_mntfromname) == NULL) {
 				return NULL;
 			}
-			if (update_string(&disk_ptr->fs_type, mp->f_fstypename) == NULL) {
+			if (sg_update_string(&disk_ptr->fs_type, mp->f_fstypename) == NULL) {
 				return NULL;
 			}
-			if (update_string(&disk_ptr->mnt_point, mp->f_mntonname) == NULL) {
+			if (sg_update_string(&disk_ptr->mnt_point, mp->f_mntonname) == NULL) {
 				return NULL;
 			}
 
@@ -185,15 +185,15 @@ disk_stat_t *get_disk_stats(int *entries){
 			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
 #endif
 #if defined(LINUX) || defined(CYGWIN)
-			if (update_string(&disk_ptr->device_name, mp->mnt_fsname) == NULL) {
+			if (sg_update_string(&disk_ptr->device_name, mp->mnt_fsname) == NULL) {
 				return NULL;
 			}
 				
-			if (update_string(&disk_ptr->fs_type, mp->mnt_type) == NULL) {	
+			if (sg_update_string(&disk_ptr->fs_type, mp->mnt_type) == NULL) {	
 				return NULL;
 			}
 
-			if (update_string(&disk_ptr->mnt_point, mp->mnt_dir) == NULL) {
+			if (sg_update_string(&disk_ptr->mnt_point, mp->mnt_dir) == NULL) {
 				return NULL;
 			}
 			disk_ptr->size = (long long)fs.f_bsize * (long long)fs.f_blocks;
@@ -211,15 +211,15 @@ disk_stat_t *get_disk_stats(int *entries){
 			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
 			 * be upwards of a k each 
 			 */
-			if (update_string(&disk_ptr->device_name, mp.mnt_special) == NULL) {
+			if (sg_update_string(&disk_ptr->device_name, mp.mnt_special) == NULL) {
 				return NULL;
 			}
 
-			if (update_string(&disk_ptr->fs_type, mp.mnt_fstype) == NULL) {
+			if (sg_update_string(&disk_ptr->fs_type, mp.mnt_fstype) == NULL) {
                                 return NULL;
                         }
 	
-			if (update_string(&disk_ptr->mnt_point, mp.mnt_mountp) == NULL) {
+			if (sg_update_string(&disk_ptr->mnt_point, mp.mnt_mountp) == NULL) {
                                 return NULL;
                         }
 			
@@ -250,15 +250,15 @@ disk_stat_t *get_disk_stats(int *entries){
 
 }
 
-static void diskio_stat_init(diskio_stat_t *d) {
+static void diskio_stat_init(sg_disk_io_stats *d) {
 	d->disk_name = NULL;
 }
 
-static void diskio_stat_destroy(diskio_stat_t *d) {
+static void diskio_stat_destroy(sg_disk_io_stats *d) {
 	free(d->disk_name);
 }
 
-VECTOR_DECLARE_STATIC(diskio_stats, diskio_stat_t, 10,
+VECTOR_DECLARE_STATIC(diskio_stats, sg_disk_io_stats, 10,
                       diskio_stat_init, diskio_stat_destroy);
 
 #ifdef LINUX
@@ -268,10 +268,10 @@ typedef struct {
 } partition;
 #endif
 
-diskio_stat_t *get_diskio_stats(int *entries){
+sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	int num_diskio;
 #ifndef LINUX
-	diskio_stat_t *diskio_stats_ptr;
+	sg_disk_io_stats *diskio_stats_ptr;
 #endif
 
 #ifdef SOLARIS
@@ -412,7 +412,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 #else
 		name = dk_name[i];
 #endif
-		if (update_string(&diskio_stats_ptr->disk_name, name) == NULL) {
+		if (sg_update_string(&diskio_stats_ptr->disk_name, name) == NULL) {
 			return NULL;
 		}
 		diskio_stats_ptr->systime = time(NULL);
@@ -508,8 +508,8 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			
 			diskio_stats_ptr->read_bytes=kios.nread;
 			diskio_stats_ptr->write_bytes=kios.nwritten;
-			if (update_string(&diskio_stats_ptr->disk_name,
-			                  get_svr_from_bsd(ksp->ks_name)) == NULL) {
+			if (sg_update_string(&diskio_stats_ptr->disk_name,
+			                     sg_get_svr_from_bsd(ksp->ks_name)) == NULL) {
 				return NULL;
 			}
 			diskio_stats_ptr->systime=time(NULL);
@@ -539,7 +539,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 	if (f == NULL) goto out;
 	now = time(NULL);
 
-	while ((line_ptr = f_read_line(f, "")) != NULL) {
+	while ((line_ptr = sg_f_read_line(f, "")) != NULL) {
 		char name[100];
 		char *s;
 		long long rsect, wsect;
@@ -568,7 +568,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 			goto out;
 		}
 
-		if (update_string(&diskio_stats[n].disk_name, name) == NULL) {
+		if (sg_update_string(&diskio_stats[n].disk_name, name) == NULL) {
 			goto out;
 		}
 		diskio_stats[n].read_bytes = rsect * 512;
@@ -592,7 +592,7 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		if (f == NULL) goto out;
 		now = time(NULL);
 	
-		line_ptr = f_read_line(f, "disk_io:");
+		line_ptr = sg_f_read_line(f, "disk_io:");
 		if (line_ptr == NULL) goto out;
 	
 		while((line_ptr=strchr(line_ptr, ' '))!=NULL){
@@ -664,15 +664,15 @@ out:
 	return diskio_stats;
 }
 
-diskio_stat_t *get_diskio_stats_diff(int *entries){
-	VECTOR_DECLARE_STATIC(diff, diskio_stat_t, 1,
+sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries){
+	VECTOR_DECLARE_STATIC(diff, sg_disk_io_stats, 1,
 	                      diskio_stat_init, diskio_stat_destroy);
-	diskio_stat_t *src = NULL, *dest;
+	sg_disk_io_stats *src = NULL, *dest;
 	int i, j, diff_count, new_count;
 
 	if (diskio_stats == NULL) {
 		/* No previous stats, so we can't calculate a difference. */
-		return get_diskio_stats(entries);
+		return sg_get_disk_io_stats(entries);
 	}
 
 	/* Resize the results array to match the previous stats. */
@@ -686,7 +686,7 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 		src = &diskio_stats[i];
 		dest = &diff[i];
 
-		if (update_string(&dest->disk_name, src->disk_name) == NULL) {
+		if (sg_update_string(&dest->disk_name, src->disk_name) == NULL) {
 			return NULL;
 		}
 		dest->read_bytes = src->read_bytes;
@@ -695,7 +695,7 @@ diskio_stat_t *get_diskio_stats_diff(int *entries){
 	}
 
 	/* Get a new set of stats. */
-	if (get_diskio_stats(&new_count) == NULL) {
+	if (sg_get_disk_io_stats(&new_count) == NULL) {
 		return NULL;
 	}
 

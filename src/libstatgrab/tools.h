@@ -31,31 +31,25 @@
 #endif
 
 #ifdef SOLARIS
-const char *get_svr_from_bsd(const char *bsd);
+const char *sg_get_svr_from_bsd(const char *bsd);
 #endif
 
-#ifndef HAVE_STRLCPY
-size_t strlcat(char *dst, const char *src, size_t siz);
-#endif
+size_t sg_strlcat(char *dst, const char *src, size_t siz);
+size_t sg_strlcpy(char *dst, const char *src, size_t siz);
 
-#ifndef HAVE_STRLCPY
-size_t strlcpy(char *dst, const char *src, size_t siz);
-#endif
+char *sg_update_string(char **dest, const char *src);
 
-char *update_string(char **dest, const char *src);
+long long sg_get_ll_match(char *line, regmatch_t *match);
+char *sg_get_string_match(char *line, regmatch_t *match);
 
-long long get_ll_match(char *line, regmatch_t *match);
-
-char *f_read_line(FILE *f, const char *string);
-
-char *get_string_match(char *line, regmatch_t *match);
+char *sg_f_read_line(FILE *f, const char *string);
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-kvm_t *get_kvm(void);
-kvm_t *get_kvm2(void);
+kvm_t *sg_get_kvm(void);
+kvm_t *sg_get_kvm2(void);
 #endif
 
 #if defined(NETBSD) || defined(OPENBSD)
-struct uvmexp *get_uvmexp(void);
+struct uvmexp *sg_get_uvmexp(void);
 #endif
 

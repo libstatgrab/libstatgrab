@@ -74,7 +74,7 @@ static mapping_t *mapping = NULL;
 #endif
 
 #ifdef SOLARIS
-const char *get_svr_from_bsd(const char *bsd){
+const char *sg_get_svr_from_bsd(const char *bsd){
 #ifdef HAVE_LIBDEVINFO_H
 	mapping_t *map_ptr;
 	for(map_ptr = mapping; map_ptr != NULL; map_ptr = map_ptr->next)
@@ -85,7 +85,7 @@ const char *get_svr_from_bsd(const char *bsd){
 #endif
 
 #if defined(SOLARIS) && defined(HAVE_LIBDEVINFO_H)
-void add_mapping(char *bsd, char *svr){
+static void add_mapping(char *bsd, char *svr){
 	mapping_t *map_ptr;
 	mapping_t *map_end_ptr;
 
@@ -117,7 +117,8 @@ void add_mapping(char *bsd, char *svr){
 	return;
 }
 
-char *read_dir(char *disk_path){
+
+static char *read_dir(char *disk_path){
 	DIR *dirp;
 	struct dirent *dp;
 	struct stat stbuf;
@@ -159,8 +160,7 @@ char *read_dir(char *disk_path){
 }
 
 
-
-int get_alias(char *alias){
+static int get_alias(char *alias){
 	char file[MAXPATHLEN];
 	di_node_t root_node;
 	di_node_t node;
@@ -181,10 +181,10 @@ int get_alias(char *alias){
 			minor_name = di_minor_name(minor);
 			strcpy(tmpnode, alias);
 			sprintf(tmpnode, "%s%d", tmpnode, instance);
-			strlcpy(file, "/devices", sizeof file);
-			strlcat(file, phys_path, sizeof file);
-			strlcat(file, ":", sizeof file);
-			strlcat(file, minor_name, sizeof file);
+			sg_strlcpy(file, "/devices", sizeof file);
+			sg_strlcat(file, phys_path, sizeof file);
+			sg_strlcat(file, ":", sizeof file);
+			sg_strlcat(file, minor_name, sizeof file);
 			value = read_dir(file);
 			if (value != NULL){
 				add_mapping(tmpnode, value);
@@ -201,7 +201,7 @@ int get_alias(char *alias){
 
 
 #define BIG_ENOUGH 512
-int build_mapping(){
+static int build_mapping(){
 	char device_name[BIG_ENOUGH];
 	int x;
 	kstat_ctl_t *kc;
@@ -260,7 +260,7 @@ int build_mapping(){
 
 
 
-char *f_read_line(FILE *f, const char *string){
+char *sg_f_read_line(FILE *f, const char *string){
 	/* Max line length. 8k should be more than enough */
 	static char line[8192];
 
@@ -273,7 +273,7 @@ char *f_read_line(FILE *f, const char *string){
 	return NULL;
 }
 
-char *get_string_match(char *line, regmatch_t *match){
+char *sg_get_string_match(char *line, regmatch_t *match){
 	int len=match->rm_eo - match->rm_so;
 	char *match_string=malloc(len+1);
 
@@ -305,7 +305,6 @@ static long long atoll(const char *s) {
 }
 #endif
 
-#ifndef HAVE_STRLCPY
 /*      $OpenBSD: strlcpy.c,v 1.8 2003/06/17 21:56:24 millert Exp $     */
 
 /*
@@ -329,7 +328,7 @@ static long long atoll(const char *s) {
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t strlcpy(char *dst, const char *src, size_t siz){
+size_t sg_strlcpy(char *dst, const char *src, size_t siz){
         register char *d = dst;
         register const char *s = src;
         register size_t n = siz;
@@ -352,9 +351,7 @@ size_t strlcpy(char *dst, const char *src, size_t siz){
 
         return(s - src - 1);    /* count does not include NUL */
 }
-#endif
 
-#ifndef HAVE_STRLCAT
 /*      $OpenBSD: strlcat.c,v 1.11 2003/06/17 21:56:24 millert Exp $    */
 
 /*
@@ -380,7 +377,7 @@ size_t strlcpy(char *dst, const char *src, size_t siz){
  * Returns strlen(src) + MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
-size_t strlcat(char *dst, const char *src, size_t siz){
+size_t sg_strlcat(char *dst, const char *src, size_t siz){
         register char *d = dst;
         register const char *s = src;
         register size_t n = siz;
@@ -406,9 +403,7 @@ size_t strlcat(char *dst, const char *src, size_t siz){
         return(dlen + (s - src));       /* count does not include NUL */
 }
 
-#endif
-
-char *update_string(char **dest, const char *src) {
+char *sg_update_string(char **dest, const char *src) {
 	char *new;
 
 	new = realloc(*dest, strlen(src) + 1);
@@ -421,7 +416,7 @@ char *update_string(char **dest, const char *src) {
 	return new;
 }
 
-long long get_ll_match(char *line, regmatch_t *match){
+long long sg_get_ll_match(char *line, regmatch_t *match){
 	char *ptr;
 	long long num;
 
@@ -432,7 +427,7 @@ long long get_ll_match(char *line, regmatch_t *match){
 }
 
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-kvm_t *get_kvm() {
+kvm_t *sg_get_kvm() {
 	static kvm_t *kvmd = NULL;
 
 	if (kvmd != NULL) {
@@ -444,7 +439,7 @@ kvm_t *get_kvm() {
 }
 
 /* Can't think of a better name for this function */
-kvm_t *get_kvm2() {
+kvm_t *sg_get_kvm2() {
 	static kvm_t *kvmd2 = NULL;
 
 	if (kvmd2 != NULL) {
@@ -457,7 +452,7 @@ kvm_t *get_kvm2() {
 #endif
 
 #if defined(NETBSD) || defined(OPENBSD)
-struct uvmexp *get_uvmexp() {
+struct uvmexp *sg_get_uvmexp() {
 	int mib[2];
 	size_t size;
 	static struct uvmexp *uvm = NULL;
@@ -484,26 +479,21 @@ struct uvmexp *get_uvmexp() {
 }
 #endif
 
-int statgrab_init(){
+int sg_init(){
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-	{ 
-		kvm_t *kvmd = get_kvm(); 
-		if (kvmd == NULL) return 1;
+	if (sg_get_kvm() == NULL) {
+		return 1;
 	}
-	{ 
-		kvm_t *kvmd2 = get_kvm2();
-		if (kvmd2 == NULL) return 1;
+	if (sg_get_kvm2() == NULL) {
+		return 1;
 	}
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
-	{
-		/* This should always succeed, but it seems that on some
-		 * versions of NetBSD the first call to get_uvmexp will return
-		 * a non-filled-in structure; this is a workaround for that.
-		 */
-		struct uvmexp *uvm = get_uvmexp();
-		if (uvm == NULL) return 1;
-	}
+	/* This should always succeed, but it seems that on some
+	 * versions of NetBSD the first call to get_uvmexp will return
+	 * a non-filled-in structure; this is a workaround for that.
+	 */
+	if (sg_get_uvmexp() == NULL) return 1;
 #endif
 #ifdef SOLARIS
 	/* On solaris 7, this will fail if you are not root. But, everything
@@ -517,7 +507,7 @@ int statgrab_init(){
 	return 0;
 }
 
-int statgrab_drop_privileges() {
+int sg_drop_privileges() {
 	if (setegid(getgid()) != 0) return -1;
 	if (seteuid(getuid()) != 0) return -1;
 	return 0;

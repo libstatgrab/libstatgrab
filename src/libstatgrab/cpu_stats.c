@@ -50,10 +50,10 @@
 #include <sys/dkstat.h>
 #endif
 
-static cpu_states_t cpu_now;
+static sg_cpu_stats cpu_now;
 static int cpu_now_uninit=1;
 
-cpu_states_t *get_cpu_totals(){
+sg_cpu_stats *sg_get_cpu_stats(){
 
 #ifdef SOLARIS
         kstat_ctl_t *kc;
@@ -159,13 +159,13 @@ cpu_states_t *get_cpu_totals(){
 	return &cpu_now;
 }
 
-cpu_states_t *get_cpu_diff(){
-	static cpu_states_t cpu_diff;
-	cpu_states_t cpu_then, *cpu_tmp;
+sg_cpu_stats *sg_get_cpu_stats_diff(){
+	static sg_cpu_stats cpu_diff;
+	sg_cpu_stats cpu_then, *cpu_tmp;
 
 	if (cpu_now_uninit){
-		if((cpu_tmp=get_cpu_totals())==NULL){
-		/* Should get_cpu_totals fail */
+		if((cpu_tmp=sg_get_cpu_stats())==NULL){
+		/* Should sg_get_cpu_stats fail */
 			return NULL;
 		}
 		return cpu_tmp;
@@ -181,7 +181,7 @@ cpu_states_t *get_cpu_diff(){
         cpu_then.total=cpu_now.total;
         cpu_then.systime=cpu_now.systime;
 
-	if((cpu_tmp=get_cpu_totals())==NULL){
+	if((cpu_tmp=sg_get_cpu_stats())==NULL){
 		return NULL;
 	}
 
@@ -197,11 +197,11 @@ cpu_states_t *get_cpu_diff(){
 	return &cpu_diff;
 }
 
-cpu_percent_t *cpu_percent_usage(){
-	static cpu_percent_t cpu_usage;
-	cpu_states_t *cs_ptr;
+sg_cpu_percents *sg_get_cpu_percents(){
+	static sg_cpu_percents cpu_usage;
+	sg_cpu_stats *cs_ptr;
 
-	cs_ptr=get_cpu_diff();
+	cs_ptr=sg_get_cpu_stats_diff();
 	if(cs_ptr==NULL){
 		return NULL;
 	}

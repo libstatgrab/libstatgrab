@@ -46,9 +46,9 @@
 #include <uvm/uvm.h>
 #endif
 
-mem_stat_t *get_memory_stats(){
+sg_mem_stats *sg_get_mem_stats(){
 
-	static mem_stat_t mem_stat;
+	static sg_mem_stats mem_stat;
 
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
@@ -108,7 +108,7 @@ mem_stat_t *get_memory_stats(){
 		return NULL;
 	}
 
-	while ((line_ptr = f_read_line(f, "")) != NULL) {
+	while ((line_ptr = sg_f_read_line(f, "")) != NULL) {
 		if (sscanf(line_ptr, "%*s %llu kB", &value) != 1) {
 			continue;
 		}
@@ -171,7 +171,7 @@ mem_stat_t *get_memory_stats(){
 #endif
 
 #if defined(NETBSD) || defined(OPENBSD)
-	if ((uvm = get_uvmexp()) == NULL) {
+	if ((uvm = sg_get_uvmexp()) == NULL) {
 		return NULL;
 	}
 

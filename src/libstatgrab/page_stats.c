@@ -46,10 +46,10 @@
 #include <uvm/uvm.h>
 #endif
 
-static page_stat_t page_stats;
+static sg_page_stats page_stats;
 static int page_stats_uninit=1;
 
-page_stat_t *get_page_stats(){
+sg_page_stats *sg_get_page_stats(){
 #ifdef SOLARIS
         kstat_ctl_t *kc;
         kstat_t *ksp;
@@ -88,7 +88,7 @@ page_stat_t *get_page_stats(){
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/vmstat", "r")) != NULL) {
-		while ((line_ptr = f_read_line(f, "")) != NULL) {
+		while ((line_ptr = sg_f_read_line(f, "")) != NULL) {
 			long long value;
 
 			if (sscanf(line_ptr, "%*s %lld", &value) != 1) {
@@ -104,7 +104,7 @@ page_stat_t *get_page_stats(){
 
 		fclose(f);
 	} else if ((f = fopen("/proc/stat", "r")) != NULL) {
-		if ((line_ptr = f_read_line(f, "page")) == NULL) {
+		if ((line_ptr = sg_f_read_line(f, "page")) == NULL) {
 			fclose(f);
 			return NULL;
 		}
@@ -130,7 +130,7 @@ page_stat_t *get_page_stats(){
         }
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
-	if ((uvm = get_uvmexp()) == NULL) {
+	if ((uvm = sg_get_uvmexp()) == NULL) {
 		return NULL;
 	}
 
@@ -141,12 +141,12 @@ page_stat_t *get_page_stats(){
 	return &page_stats;
 }
 
-page_stat_t *get_page_stats_diff(){
-	page_stat_t *page_ptr;
-	static page_stat_t page_stats_diff;
+sg_page_stats *sg_get_page_stats_diff(){
+	sg_page_stats *page_ptr;
+	static sg_page_stats page_stats_diff;
 
 	if(page_stats_uninit){
-		page_ptr=get_page_stats();
+		page_ptr=sg_get_page_stats();
 		if(page_ptr==NULL){
 			return NULL;
 		}
@@ -158,7 +158,7 @@ page_stat_t *get_page_stats_diff(){
 	page_stats_diff.pages_pageout=page_stats.pages_pageout;
 	page_stats_diff.systime=page_stats.systime;
 
-	page_ptr=get_page_stats();
+	page_ptr=sg_get_page_stats();
 	if(page_ptr==NULL){
 		return NULL;
 	}

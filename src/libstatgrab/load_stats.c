@@ -36,9 +36,9 @@
 #endif
 #endif
 
-load_stat_t *get_load_stats(){
+sg_load_stats *sg_get_load_stats(){
 
-	static load_stat_t load_stat;
+	static sg_load_stats load_stat;
 
 	double loadav[3];
 

@@ -44,24 +44,24 @@
 #endif
 
 typedef struct{
-	cpu_percent_t *cpu_percents;
-	mem_stat_t *mem_stats;
-	swap_stat_t *swap_stats;
-	load_stat_t *load_stats;
-	process_stat_t *process_stats;
-	page_stat_t *page_stats;
+	sg_cpu_percents *cpu_percents;
+	sg_mem_stats *mem_stats;
+	sg_swap_stats *swap_stats;
+	sg_load_stats *load_stats;
+	sg_process_count *process_count;
+	sg_page_stats *page_stats;
 
-	network_stat_t *network_stats;
-	int network_entries;
+	sg_network_io_stats *network_io_stats;
+	int network_io_entries;
 
-	diskio_stat_t *diskio_stats;
-	int diskio_entries;
+	sg_disk_io_stats *disk_io_stats;
+	int disk_io_entries;
 
-	disk_stat_t *disk_stats;
-	int disk_entries;
+	sg_fs_stats *fs_stats;
+	int fs_entries;
 
-	general_stat_t *general_stats;
-	user_stat_t *user_stats;
+	sg_host_info *host_info;
+	sg_user_stats *user_stats;
 }stats_t;
 	
 stats_t stats;
@@ -182,7 +182,7 @@ void display_headings(){
 	printw("Write");	
 
 	line = 10;
-	if (stats.network_stats != NULL) {
+	if (stats.network_io_stats != NULL) {
 		/* Network IO */
 		move(line, 42);
 		printw("Network Interface");
@@ -190,7 +190,7 @@ void display_headings(){
 		printw("rx");
 		move(line, 77);
 		printw("tx");
-		line += 2 + stats.network_entries;
+		line += 2 + stats.network_io_entries;
 	}
 
 	move(line, 42);
@@ -210,16 +210,16 @@ void display_data(){
 	int counter, line;
 	long long r,w;
 	long long rt, wt;
-	diskio_stat_t *diskio_stat_ptr;
-	network_stat_t *network_stat_ptr;
-	disk_stat_t *disk_stat_ptr;
+	sg_disk_io_stats *disk_io_stat_ptr;
+	sg_network_io_stats *network_stat_ptr;
+	sg_fs_stats *disk_stat_ptr;
 	/* Size before it will start overwriting "uptime" */
 	char hostname[15];
 	char *ptr;
 
-	if (stats.general_stats != NULL) {
+	if (stats.host_info != NULL) {
 		move(0,12);
-		strncpy(hostname, stats.general_stats->hostname, (sizeof(hostname) - 1));
+		strncpy(hostname, stats.host_info->hostname, (sizeof(hostname) - 1));
 		/* strncpy does not NULL terminate.. If only strlcpy was on all platforms :) */
 		hostname[14] = '\0';
 		ptr=strchr(hostname, '.');
@@ -231,7 +231,7 @@ void display_data(){
 		}	
 		printw("%s", hostname);
 		move(0,36);
-		printw("%s", hr_uptime(stats.general_stats->uptime));
+		printw("%s", hr_uptime(stats.host_info->uptime));
 		epoc_time=time(NULL);
 		tm_time = localtime(&epoc_time);
 		strftime(cur_time, 20, "%Y-%m-%d %T", tm_time);
@@ -259,18 +259,18 @@ void display_data(){
 		printw("%6.2f%%", (stats.cpu_percents->user + stats.cpu_percents->nice));
 	}
 
-	if (stats.process_stats != NULL) {
+	if (stats.process_count != NULL) {
 		/* Process */
 		move(2, 54);
-		printw("%5d", stats.process_stats->running);
+		printw("%5d", stats.process_count->running);
 		move(2,74);
-		printw("%5d", stats.process_stats->zombie);
+		printw("%5d", stats.process_count->zombie);
 		move(3, 54);
-		printw("%5d", stats.process_stats->sleeping);
+		printw("%5d", stats.process_count->sleeping);
 		move(3, 74);
-		printw("%5d", stats.process_stats->total);
+		printw("%5d", stats.process_count->total);
 		move(4, 54);
-		printw("%5d", stats.process_stats->stopped);
+		printw("%5d", stats.process_count->stopped);
 	}
 	if (stats.user_stats != NULL) {
 		move(4,74);
@@ -321,23 +321,23 @@ void display_data(){
 	}
 
 	line = 11;
-	if (stats.diskio_stats != NULL) {	
+	if (stats.disk_io_stats != NULL) {	
 		/* Disk IO */
-		diskio_stat_ptr = stats.diskio_stats;
+		disk_io_stat_ptr = stats.disk_io_stats;
 		r=0;
 		w=0;
-		for(counter=0;counter<stats.diskio_entries;counter++){
+		for(counter=0;counter<stats.disk_io_entries;counter++){
 			move(line, 0);
-			printw("%s", diskio_stat_ptr->disk_name);
+			printw("%s", disk_io_stat_ptr->disk_name);
 			move(line, 12);
-			rt = (diskio_stat_ptr->systime)? (diskio_stat_ptr->read_bytes/diskio_stat_ptr->systime): diskio_stat_ptr->read_bytes;
+			rt = (disk_io_stat_ptr->systime)? (disk_io_stat_ptr->read_bytes/disk_io_stat_ptr->systime): disk_io_stat_ptr->read_bytes;
 			printw("%7s", size_conv(rt));
 			r+=rt;
 			move(line, 26);
-			wt = (diskio_stat_ptr->systime)? (diskio_stat_ptr->write_bytes/diskio_stat_ptr->systime): diskio_stat_ptr->write_bytes;
+			wt = (disk_io_stat_ptr->systime)? (disk_io_stat_ptr->write_bytes/disk_io_stat_ptr->systime): disk_io_stat_ptr->write_bytes;
 			printw("%7s", size_conv(wt));
 			w+=wt;
-			diskio_stat_ptr++;
+			disk_io_stat_ptr++;
 			line++;
 		}
 		line++;
@@ -350,10 +350,10 @@ void display_data(){
 	}
 
 	line = 11;
-	if (stats.network_stats != NULL) {	
+	if (stats.network_io_stats != NULL) {	
 		/* Network */
-		network_stat_ptr = stats.network_stats;
-		for(counter=0;counter<stats.network_entries;counter++){
+		network_stat_ptr = stats.network_io_stats;
+		for(counter=0;counter<stats.network_io_entries;counter++){
 	                move(line, 42);
 			printw("%s", network_stat_ptr->interface_name);
 			move(line, 62);
@@ -368,10 +368,10 @@ void display_data(){
 		line += 2;
 	}
 
-	if (stats.disk_stats != NULL) {	
+	if (stats.fs_stats != NULL) {	
 		/* Disk */
-		disk_stat_ptr = stats.disk_stats;
-		for(counter=0;counter<stats.disk_entries;counter++){
+		disk_stat_ptr = stats.fs_stats;
+		for(counter=0;counter<stats.fs_entries;counter++){
 			move(line, 42);
 			printw("%s", disk_stat_ptr->mnt_point);
 			move(line, 62);
@@ -394,17 +394,17 @@ void sig_winch_handler(int sig){
 }
 
 int get_stats(){
-	stats.cpu_percents = cpu_percent_usage();
-	stats.mem_stats = get_memory_stats();
-	stats.swap_stats = get_swap_stats();
-	stats.load_stats = get_load_stats();
-	stats.process_stats = get_process_stats();
-	stats.page_stats = get_page_stats_diff();
-	stats.network_stats = get_network_stats_diff(&(stats.network_entries));
-	stats.diskio_stats = get_diskio_stats_diff(&(stats.diskio_entries));
-	stats.disk_stats = get_disk_stats(&(stats.disk_entries));
-	stats.general_stats = get_general_stats();
-	stats.user_stats = get_user_stats();
+	stats.cpu_percents = sg_get_cpu_percents();
+	stats.mem_stats = sg_get_mem_stats();
+	stats.swap_stats = sg_get_swap_stats();
+	stats.load_stats = sg_get_load_stats();
+	stats.process_count = sg_get_process_count();
+	stats.page_stats = sg_get_page_stats_diff();
+	stats.network_io_stats = sg_get_network_io_stats_diff(&(stats.network_io_entries));
+	stats.disk_io_stats = sg_get_disk_io_stats_diff(&(stats.disk_io_entries));
+	stats.fs_stats = sg_get_fs_stats(&(stats.fs_entries));
+	stats.host_info = sg_get_host_info();
+	stats.user_stats = sg_get_user_stats();
 
 	return 1;
 }
@@ -437,8 +437,8 @@ int main(int argc, char **argv){
 
 	int delay=2;
 
-	statgrab_init();
-	if(statgrab_drop_privileges() != 0){
+	sg_init();
+	if(sg_drop_privileges() != 0){
 		fprintf(stderr, "Failed to drop setuid/setgid privileges\n");
 		return 1;
 	}

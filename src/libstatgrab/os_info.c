@@ -47,9 +47,9 @@
 #include <sys/time.h>
 #endif
 
-general_stat_t *get_general_stats(){
+sg_host_info *sg_get_host_info(){
 
-	static general_stat_t general_stat;	
+	static sg_host_info general_stat;	
 	static struct utsname os;
 
 #ifdef SOLARIS

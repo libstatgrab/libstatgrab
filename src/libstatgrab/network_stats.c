@@ -71,7 +71,7 @@ typedef __uint64_t u64;
 #include <unistd.h>
 #endif
 
-static void network_stat_init(network_stat_t *s) {
+static void network_stat_init(sg_network_io_stats *s) {
 	s->interface_name = NULL;
 	s->tx = 0;
 	s->rx = 0;
@@ -82,16 +82,16 @@ static void network_stat_init(network_stat_t *s) {
 	s->collisions = 0;
 }
 
-static void network_stat_destroy(network_stat_t *s) {
+static void network_stat_destroy(sg_network_io_stats *s) {
 	free(s->interface_name);
 }
 
-VECTOR_DECLARE_STATIC(network_stats, network_stat_t, 5,
+VECTOR_DECLARE_STATIC(network_stats, sg_network_io_stats, 5,
                       network_stat_init, network_stat_destroy);
 
-network_stat_t *get_network_stats(int *entries){
+sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	int interfaces;
-	network_stat_t *network_stat_ptr;
+	sg_network_io_stats *network_stat_ptr;
 
 #ifdef SOLARIS
         kstat_ctl_t *kc;
@@ -126,8 +126,8 @@ network_stat_t *get_network_stats(int *entries){
 		}
 		network_stat_ptr=network_stats+interfaces;
 		
-		if (update_string(&network_stat_ptr->interface_name,
-		                  net_ptr->ifa_name) == NULL) {
+		if (sg_update_string(&network_stat_ptr->interface_name,
+		                     net_ptr->ifa_name) == NULL) {
 			return NULL;
 		}
 		net_data=(struct if_data *)net_ptr->ifa_data;
@@ -226,8 +226,8 @@ network_stat_t *get_network_stats(int *entries){
 			network_stat_ptr->collisions=knp->value.ui32;
 
 			/* Read interface name */
-			if (update_string(&network_stat_ptr->interface_name,
-			                  ksp->ks_name) == NULL) {
+			if (sg_update_string(&network_stat_ptr->interface_name,
+			                     ksp->ks_name) == NULL) {
 				return NULL;
 			}
 
@@ -270,14 +270,14 @@ network_stat_t *get_network_stats(int *entries){
 			free(network_stat_ptr->interface_name);
 		}
 
-		network_stat_ptr->interface_name=get_string_match(line, &line_match[1]);
-		network_stat_ptr->rx=get_ll_match(line, &line_match[2]);
-		network_stat_ptr->tx=get_ll_match(line, &line_match[5]);
-		network_stat_ptr->ipackets=get_ll_match(line, &line_match[3]);
-		network_stat_ptr->opackets=get_ll_match(line, &line_match[6]);
-		network_stat_ptr->ierrors=get_ll_match(line, &line_match[4]);
-		network_stat_ptr->oerrors=get_ll_match(line, &line_match[7]);
-		network_stat_ptr->collisions=get_ll_match(line, &line_match[8]);
+		network_stat_ptr->interface_name=sg_get_string_match(line, &line_match[1]);
+		network_stat_ptr->rx=sg_get_ll_match(line, &line_match[2]);
+		network_stat_ptr->tx=sg_get_ll_match(line, &line_match[5]);
+		network_stat_ptr->ipackets=sg_get_ll_match(line, &line_match[3]);
+		network_stat_ptr->opackets=sg_get_ll_match(line, &line_match[6]);
+		network_stat_ptr->ierrors=sg_get_ll_match(line, &line_match[4]);
+		network_stat_ptr->oerrors=sg_get_ll_match(line, &line_match[7]);
+		network_stat_ptr->collisions=sg_get_ll_match(line, &line_match[8]);
 		network_stat_ptr->systime=time(NULL);
 
 		interfaces++;
@@ -296,7 +296,7 @@ network_stat_t *get_network_stats(int *entries){
 	return network_stats;	
 }
 
-long long transfer_diff(long long new, long long old){
+static long long transfer_diff(long long new, long long old){
 #if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD) || defined(OPENBSD)
 	/* 32-bit quantities, so we must explicitly deal with wraparound. */
 #define MAXVAL 0x100000000LL
@@ -311,15 +311,15 @@ long long transfer_diff(long long new, long long old){
 #endif
 }
 
-network_stat_t *get_network_stats_diff(int *entries) {
-	VECTOR_DECLARE_STATIC(diff, network_stat_t, 1,
+sg_network_io_stats *sg_get_network_io_stats_diff(int *entries) {
+	VECTOR_DECLARE_STATIC(diff, sg_network_io_stats, 1,
 	                      network_stat_init, network_stat_destroy);
-	network_stat_t *src = NULL, *dest;
+	sg_network_io_stats *src = NULL, *dest;
 	int i, j, diff_count, new_count;
 
 	if (network_stats == NULL) {
 		/* No previous stats, so we can't calculate a difference. */
-		return get_network_stats(entries);
+		return sg_get_network_io_stats(entries);
 	}
 
 	/* Resize the results array to match the previous stats. */
@@ -333,8 +333,8 @@ network_stat_t *get_network_stats_diff(int *entries) {
 		src = &network_stats[i];
 		dest = &diff[i];
 
-		if (update_string(&dest->interface_name,
-		                  src->interface_name) == NULL) {
+		if (sg_update_string(&dest->interface_name,
+		                     src->interface_name) == NULL) {
 			return NULL;
 		}
 		dest->rx = src->rx;
@@ -348,7 +348,7 @@ network_stat_t *get_network_stats_diff(int *entries) {
 	}
 
 	/* Get a new set of stats. */
-	if (get_network_stats(&new_count) == NULL) {
+	if (sg_get_network_io_stats(&new_count) == NULL) {
 		return NULL;
 	}
 
@@ -388,20 +388,20 @@ network_stat_t *get_network_stats_diff(int *entries) {
 
 /* NETWORK INTERFACE STATS */
 
-static void network_iface_stat_init(network_iface_stat_t *s) {
+static void network_iface_stat_init(sg_network_iface_stats *s) {
 	s->interface_name = NULL;
 	s->speed = 0;
-	s->dup = UNKNOWN_DUPLEX;
+	s->dup = SG_IFACE_DUPLEX_UNKNOWN;
 }
 
-static void network_iface_stat_destroy(network_iface_stat_t *s) {
+static void network_iface_stat_destroy(sg_network_iface_stats *s) {
 	free(s->interface_name);
 }
 
-network_iface_stat_t *get_network_iface_stats(int *entries){
-	VECTOR_DECLARE_STATIC(network_iface_stats, network_iface_stat_t, 5,
+sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
+	VECTOR_DECLARE_STATIC(network_iface_stats, sg_network_iface_stats, 5,
 	                      network_iface_stat_init, network_iface_stat_destroy);
-	network_iface_stat_t *network_iface_stat_ptr;
+	sg_network_iface_stats *network_iface_stat_ptr;
 	int ifaces = 0;
 
 #ifdef SOLARIS
@@ -451,17 +451,17 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			network_iface_stat_ptr->up = 0;
 		}
 
-		if (update_string(&network_iface_stat_ptr->interface_name,
-		                  net_ptr->ifa_name) == NULL) {
+		if (sg_update_string(&network_iface_stat_ptr->interface_name,
+		                     net_ptr->ifa_name) == NULL) {
 			return NULL;
 		}
 
 		network_iface_stat_ptr->speed = 0;
-		network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+		network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
 		ifaces++;
 
 		memset(&ifmed, 0, sizeof(struct ifmediareq));
-		strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
+		sg_strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
 		if(ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmed) == -1){
 			/* Not all interfaces support the media ioctls. */
 			continue;
@@ -514,11 +514,11 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}
 
 		if( (ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active ){
-			network_iface_stat_ptr->dup = FULL_DUPLEX;
+			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
 		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
-			network_iface_stat_ptr->dup = HALF_DUPLEX;
+			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
 		}else{
-			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
 		}
 
 	}	
@@ -553,8 +553,8 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 			network_iface_stat_ptr = network_iface_stats + ifaces;
 			ifaces++;
 
-			if (update_string(&network_iface_stat_ptr->interface_name,
-			                  ksp->ks_name) == NULL) {
+			if (sg_update_string(&network_iface_stat_ptr->interface_name,
+			                     ksp->ks_name) == NULL) {
 				return NULL;
 			}
 
@@ -570,14 +570,14 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 				network_iface_stat_ptr->speed = 0;
 			}
 
-			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
 			if ((knp = kstat_data_lookup(ksp, "link_duplex")) != NULL) {
 				switch (knp->value.ui32) {
 				case 1:
-					network_iface_stat_ptr->dup = HALF_DUPLEX;
+					network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
 					break;
 				case 2:
-					network_iface_stat_ptr->dup = FULL_DUPLEX;
+					network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
 					break;
 				}
 			}
@@ -630,8 +630,8 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 		}
 		network_iface_stat_ptr = network_iface_stats + ifaces;
 		
-		if (update_string(&network_iface_stat_ptr->interface_name,
-		                  name) == NULL) {
+		if (sg_update_string(&network_iface_stat_ptr->interface_name,
+		                     name) == NULL) {
 			return NULL;
 		}
 		if ((ifr.ifr_flags & IFF_UP) != 0) {
@@ -650,18 +650,18 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 
 			switch (ethcmd.duplex) {
 			case 0x00:
-				network_iface_stat_ptr->dup = FULL_DUPLEX;
+				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
 				break;
 			case 0x01:
-				network_iface_stat_ptr->dup = HALF_DUPLEX;
+				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
 				break;
 			default:
-				network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
 			}
 		} else {
 			/* Not all interfaces support the ethtool ioctl. */
 			network_iface_stat_ptr->speed = 0;
-			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
+			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
 		}
 
 		ifaces++;

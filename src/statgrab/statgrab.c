@@ -166,7 +166,7 @@ void populate_const() {
 
 void populate_cpu() {
 	if (use_cpu_percent) {
-		cpu_percent_t *cpu_p = cpu_percent_usage();
+		sg_cpu_percents *cpu_p = sg_get_cpu_percents();
 
 		if (cpu_p != NULL) {
 			add_stat(FLOAT, &cpu_p->user,
@@ -185,9 +185,10 @@ void populate_cpu() {
 			         "cpu", "time_taken", NULL);
 		}
 	} else {
-		cpu_states_t *cpu_s;
+		sg_cpu_stats *cpu_s;
 
-		cpu_s = use_diffs ? get_cpu_diff() : get_cpu_totals();
+		cpu_s = use_diffs ? sg_get_cpu_stats_diff()
+		                  : sg_get_cpu_stats();
 		if (cpu_s != NULL) {
 			add_stat(LONG_LONG, &cpu_s->user,
 			         "cpu", "user", NULL);
@@ -210,7 +211,7 @@ void populate_cpu() {
 }
 
 void populate_mem() {
-	mem_stat_t *mem = get_memory_stats();
+	sg_mem_stats *mem = sg_get_mem_stats();
 
 	if (mem != NULL) {
 		add_stat(LONG_LONG, &mem->total, "mem", "total", NULL);
@@ -221,7 +222,7 @@ void populate_mem() {
 }
 
 void populate_load() {
-	load_stat_t *load = get_load_stats();
+	sg_load_stats *load = sg_get_load_stats();
 
 	if (load != NULL) {
 		add_stat(DOUBLE, &load->min1, "load", "min1", NULL);
@@ -231,7 +232,7 @@ void populate_load() {
 }
 
 void populate_user() {
-	user_stat_t *user = get_user_stats();
+	sg_user_stats *user = sg_get_user_stats();
 
 	if (user != NULL) {
 		add_stat(INT, &user->num_entries, "user", "num", NULL);
@@ -240,7 +241,7 @@ void populate_user() {
 }
 
 void populate_swap() {
-	swap_stat_t *swap = get_swap_stats();
+	sg_swap_stats *swap = sg_get_swap_stats();
 
 	if (swap != NULL) {
 		add_stat(LONG_LONG, &swap->total, "swap", "total", NULL);
@@ -250,24 +251,25 @@ void populate_swap() {
 }
 
 void populate_general() {
-	general_stat_t *gen = get_general_stats();
+	/* FIXME this should be renamed to host. */
+	sg_host_info *host = sg_get_host_info();
 
-	if (gen != NULL) {
-		add_stat(STRING, &gen->os_name,
+	if (host != NULL) {
+		add_stat(STRING, &host->os_name,
 		         "general", "os_name", NULL);
-		add_stat(STRING, &gen->os_release,
+		add_stat(STRING, &host->os_release,
 		         "general", "os_release", NULL);
-		add_stat(STRING, &gen->os_version,
+		add_stat(STRING, &host->os_version,
 		         "general", "os_version", NULL);
-		add_stat(STRING, &gen->platform, "general", "platform", NULL);
-		add_stat(STRING, &gen->hostname, "general", "hostname", NULL);
-		add_stat(TIME_T, &gen->uptime, "general", "uptime", NULL);
+		add_stat(STRING, &host->platform, "general", "platform", NULL);
+		add_stat(STRING, &host->hostname, "general", "hostname", NULL);
+		add_stat(TIME_T, &host->uptime, "general", "uptime", NULL);
 	}
 }
 
 void populate_fs() {
 	int n, i;
-	disk_stat_t *disk = get_disk_stats(&n);
+	sg_fs_stats *disk = sg_get_fs_stats(&n);
 
 	if (disk != NULL) {
 		for (i = 0; i < n; i++) {
@@ -316,9 +318,10 @@ void populate_fs() {
 
 void populate_disk() {
 	int n, i;
-	diskio_stat_t *diskio;
+	sg_disk_io_stats *diskio;
 
-	diskio = use_diffs ? get_diskio_stats_diff(&n) : get_diskio_stats(&n);
+	diskio = use_diffs ? sg_get_disk_io_stats_diff(&n)
+	                   : sg_get_disk_io_stats(&n);
 	if (diskio != NULL) {
 		for (i = 0; i < n; i++) {
 			const char *name = diskio[i].disk_name;
@@ -336,7 +339,8 @@ void populate_disk() {
 }
 
 void populate_proc() {
-	process_stat_t *proc = get_process_stats();
+	/* FIXME expose individual process info too */
+	sg_process_count *proc = sg_get_process_count();
 
 	if (proc != NULL) {
 		add_stat(INT, &proc->total, "proc", "total", NULL);
@@ -349,36 +353,37 @@ void populate_proc() {
 
 void populate_net() {
 	int n, i;
-	network_stat_t *net;
-	network_iface_stat_t *iface;
+	sg_network_io_stats *io;
+	sg_network_iface_stats *iface;
 
-	net = use_diffs ? get_network_stats_diff(&n) : get_network_stats(&n);
-	if (net != NULL) {
+	io = use_diffs ? sg_get_network_io_stats_diff(&n)
+	               : sg_get_network_io_stats(&n);
+	if (io != NULL) {
 		for (i = 0; i < n; i++) {
-			const char *name = net[i].interface_name;
+			const char *name = io[i].interface_name;
 	
-			add_stat(STRING, &net[i].interface_name,
+			add_stat(STRING, &io[i].interface_name,
 			         "net", name, "interface_name", NULL);
-			add_stat(LONG_LONG, &net[i].tx,
+			add_stat(LONG_LONG, &io[i].tx,
 			         "net", name, "tx", NULL);
-			add_stat(LONG_LONG, &net[i].rx,
+			add_stat(LONG_LONG, &io[i].rx,
 			         "net", name, "rx", NULL);
-			add_stat(LONG_LONG, &net[i].ipackets,
+			add_stat(LONG_LONG, &io[i].ipackets,
 			         "net", name, "ipackets", NULL);
-			add_stat(LONG_LONG, &net[i].opackets,
+			add_stat(LONG_LONG, &io[i].opackets,
 			         "net", name, "opackets", NULL);
-			add_stat(LONG_LONG, &net[i].ierrors,
+			add_stat(LONG_LONG, &io[i].ierrors,
 			         "net", name, "ierrors", NULL);
-			add_stat(LONG_LONG, &net[i].oerrors,
+			add_stat(LONG_LONG, &io[i].oerrors,
 			         "net", name, "oerrors", NULL);
-			add_stat(LONG_LONG, &net[i].collisions,
+			add_stat(LONG_LONG, &io[i].collisions,
 			         "net", name, "collisions", NULL);
-			add_stat(TIME_T, &net[i].systime,
+			add_stat(TIME_T, &io[i].systime,
 			         "net", name, "systime", NULL);
 		}
 	}
 
-	iface = get_network_iface_stats(&n);
+	iface = sg_get_network_iface_stats(&n);
 	if (iface != NULL) {
 		for (i = 0; i < n; i++) {
 			const char *name = iface[i].interface_name;
@@ -394,9 +399,9 @@ void populate_net() {
 }
 
 void populate_page() {
-	page_stat_t *page;
+	sg_page_stats *page;
 
-	page = use_diffs ? get_page_stats_diff() : get_page_stats();
+	page = use_diffs ? sg_get_page_stats_diff() : sg_get_page_stats();
 	if (page != NULL) {
 		add_stat(LONG_LONG, &page->pages_pagein, "page", "in", NULL);
 		add_stat(LONG_LONG, &page->pages_pageout, "page", "out", NULL);
@@ -494,11 +499,11 @@ void print_stat_value(const stat *s) {
 		printf("%s", *(int *)v ? "true" : "false");
 		break;
 	case DUPLEX:
-		switch (*(statgrab_duplex *) v) {
-		case FULL_DUPLEX:
+		switch (*(sg_iface_duplex *) v) {
+		case SG_IFACE_DUPLEX_FULL:
 			printf("full");
 			break;
-		case HALF_DUPLEX:
+		case SG_IFACE_DUPLEX_HALF:
 			printf("half");
 			break;
 		default:
@@ -662,8 +667,8 @@ int main(int argc, char **argv) {
 
 	/* We don't care if statgrab_init fails, because we can just display
  	   the statistics that can be read as non-root. */
-	statgrab_init();
-	if (statgrab_drop_privileges() != 0)
+	sg_init();
+	if (sg_drop_privileges() != 0)
 		die("Failed to drop setuid/setgid privileges");
 
 	switch (repeat_mode) {
