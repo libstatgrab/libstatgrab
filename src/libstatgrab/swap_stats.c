@@ -22,21 +22,31 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
 #include "statgrab.h"
 #ifdef SOLARIS
 #include <sys/stat.h>
 #include <sys/swap.h>
 #include <unistd.h>
 #endif
+#ifdef LINUX
+#include <stdio.h>
+#include "tools.h"
+#endif
 
 swap_stat_t *get_swap_stats(){
 
 	static swap_stat_t swap_stat;
 
+#ifdef SOLARIS
 	struct anoninfo ai;
 	int pagesize;
+#endif
+#ifdef LINUX
+	FILE *f;
+	char *line_ptr;
+#endif
 
+#ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
 		return NULL;
 	}
@@ -46,6 +56,21 @@ swap_stat_t *get_swap_stats(){
 	swap_stat.total = (long long)ai.ani_max * (long long)pagesize;
 	swap_stat.used = (long long)ai.ani_resv * (long long)pagesize;
 	swap_stat.free = swap_stat.total - swap_stat.used;
+#endif
+#ifdef LINUX
+	if ((f=fopen("/proc/meminfo", "r" ))==NULL) {
+		return NULL;
+	}
+	if((line_ptr=f_read_line(f, "Swap:"))==NULL){
+		fclose(f);
+		return NULL;
+	}
+	if((sscanf(line_ptr, "Swap: %lld %lld %lld", &swap_stat.total, &swap_stat.used, &swap_stat.free))!=3){
+		fclose(f);
+		return NULL;
+	}
+	fclose(f);
+#endif
 
 	return &swap_stat;
 
