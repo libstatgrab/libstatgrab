@@ -10,6 +10,12 @@ libstatgrab is a library for accessing information from the system
 for statistical purposes. It could be used for software that monitors
 the system for alerting or graphing purposes.
 
+License
+-------
+
+The library part of libstatgrab is licensed under the GNU LGPL, but
+the tools and examples are licensed under the GNU GPL.
+
 Building and Installation
 -------------------------
 
