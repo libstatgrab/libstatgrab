@@ -254,70 +254,67 @@ long long transfer_diff(long long new, long long old){
 
 }
 
-network_stat_t *get_network_stats_diff(int *entries){
-	static network_stat_t *network_stats_diff=NULL;
-	static int sizeof_net_stats_diff=0;
-	network_stat_t *network_stats_ptr, *network_stats_diff_ptr;
-	int ifaces, x, y;
+network_stat_t *get_network_stats_diff(int *entries) {
+	static network_stat_t *diff = NULL;
+	static int diff_count = 0;
+	network_stat_t *src, *dest;
+	int i, j, new_count;
 
-	if(network_stats==NULL){
-		network_stats_ptr=get_network_stats(&ifaces);
-		*entries=ifaces;
-		return network_stats_ptr;
+	if (network_stats == NULL) {
+		/* No previous stats, so we can't calculate a difference. */
+		return get_network_stats(entries);
 	}
 
-	network_stats_diff=network_stat_malloc(interfaces, &sizeof_net_stats_diff, network_stats_diff);
-	if(network_stats_diff==NULL){
+	/* Resize the results array to match the previous stats. */
+	diff = network_stat_malloc(interfaces, &diff_count, diff);
+	if (diff == NULL) {
 		return NULL;
 	}
 
-	network_stats_ptr=network_stats;
-	network_stats_diff_ptr=network_stats_diff;
+	/* Copy the previous stats into the result. */
+	for (i = 0; i < diff_count; i++) {
+		src = &network_stats[i];
+		dest = &diff[i];
 
-	for(ifaces=0;ifaces<interfaces;ifaces++){
-		if(network_stats_diff_ptr->interface_name!=NULL){
-			free(network_stats_diff_ptr->interface_name);
+		if (dest->interface_name != NULL) {
+			free(dest->interface_name);
 		}
-		network_stats_diff_ptr->interface_name=strdup(network_stats_ptr->interface_name);
-		network_stats_diff_ptr->tx=network_stats_ptr->tx;
-		network_stats_diff_ptr->rx=network_stats_ptr->rx;
-		network_stats_diff_ptr->systime=network_stats->systime;
-
-		network_stats_ptr++;
-		network_stats_diff_ptr++;
+		dest->interface_name = strdup(src->interface_name);
+		dest->rx = src->rx;
+		dest->tx = src->tx;
+		dest->systime = src->systime;
 	}
-	network_stats_ptr=get_network_stats(&ifaces);		
-	if (network_stats_ptr == NULL) {
+
+	/* Get a new set of stats. */
+	if (get_network_stats(&new_count) == NULL) {
 		return NULL;
 	}
-	network_stats_diff_ptr=network_stats_diff;
 
-	for(x=0;x<sizeof_net_stats_diff;x++){
+	/* For each previous stat... */
+	for (i = 0; i < diff_count; i++) {
+		dest = &diff[i];
 
-		if((strcmp(network_stats_diff_ptr->interface_name, network_stats_ptr->interface_name))==0){
-			network_stats_diff_ptr->tx = transfer_diff(network_stats_ptr->tx, network_stats_diff_ptr->tx);
-			network_stats_diff_ptr->rx = transfer_diff(network_stats_ptr->rx, network_stats_diff_ptr->rx);
-			network_stats_diff_ptr->systime = network_stats_ptr->systime - network_stats_diff_ptr->systime;	
-		}else{
-			
-			network_stats_ptr=network_stats;
-			for(y=0;y<ifaces;y++){
-				if((strcmp(network_stats_diff_ptr->interface_name, network_stats_ptr->interface_name))==0){
-					network_stats_diff_ptr->tx = transfer_diff(network_stats_ptr->tx, network_stats_diff_ptr->tx);
-					network_stats_diff_ptr->rx = transfer_diff(network_stats_ptr->rx, network_stats_diff_ptr->rx);	
-					network_stats_diff_ptr->systime = network_stats_ptr->systime - network_stats_diff_ptr->systime;	
-					break;
-				}
-
-				network_stats_ptr++;
-			}	
+		/* ... find the corresponding new stat ... */
+		for (j = 0; j < new_count; j++) {
+			/* Try the new stat in the same position first,
+			   since that's most likely to be it. */
+			src = &network_stats[(i + j) % new_count];
+			if (strcmp(src->interface_name, dest->interface_name) == 0) {
+				break;
+			}
+		}
+		if (j == new_count) {
+			/* No match found. */
+			continue;
 		}
 
-		network_stats_ptr++;
-		network_stats_diff_ptr++;
+		/* ... and subtract the previous stat from it to get the
+		   difference. */
+		dest->rx = transfer_diff(src->rx, dest->rx);
+		dest->tx = transfer_diff(src->tx, dest->tx);
+		dest->systime = src->systime - dest->systime;
 	}
 
-	*entries=sizeof_net_stats_diff;
-	return network_stats_diff;
-}	
-
+	*entries = diff_count;
+	return diff;
+}

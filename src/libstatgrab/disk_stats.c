@@ -664,70 +664,67 @@ out:
 }
 
 diskio_stat_t *get_diskio_stats_diff(int *entries){
-	static diskio_stat_t *diskio_stats_diff=NULL;
-	static int sizeof_diskio_stats_diff=0;
-	diskio_stat_t *diskio_stats_diff_ptr, *diskio_stats_ptr;
-	int disks, x, y;
+	static diskio_stat_t *diff = NULL;
+	static int diff_count = 0;
+	diskio_stat_t *src, *dest;
+	int i, j, new_count;
 
-	if(diskio_stats==NULL){
-		diskio_stats_ptr=get_diskio_stats(&disks);
-		*entries=disks;
-		return diskio_stats_ptr;
+	if (diskio_stats == NULL) {
+		/* No previous stats, so we can't calculate a difference. */
+		return get_diskio_stats(entries);
 	}
 
-	diskio_stats_diff=diskio_stat_malloc(num_diskio, &sizeof_diskio_stats_diff, diskio_stats_diff);
-	if(diskio_stats_diff==NULL){
+	/* Resize the results array to match the previous stats. */
+	diff = diskio_stat_malloc(num_diskio, &diff_count, diff);
+	if (diff == NULL) {
 		return NULL;
 	}
 
-	diskio_stats_diff_ptr=diskio_stats_diff;
-	diskio_stats_ptr=diskio_stats;
+	/* Copy the previous stats into the result. */
+	for (i = 0; i < diff_count; i++) {
+		src = &diskio_stats[i];
+		dest = &diff[i];
 
-	for(disks=0;disks<num_diskio;disks++){
-		if(diskio_stats_diff_ptr->disk_name!=NULL){
-			free(diskio_stats_diff_ptr->disk_name);
+		if (dest->disk_name != NULL) {
+			free(dest->disk_name);
 		}
-		diskio_stats_diff_ptr->disk_name=strdup(diskio_stats_ptr->disk_name);
-		diskio_stats_diff_ptr->read_bytes=diskio_stats_ptr->read_bytes;
-		diskio_stats_diff_ptr->write_bytes=diskio_stats_ptr->write_bytes;
-		diskio_stats_diff_ptr->systime=diskio_stats_ptr->systime;
-
-		diskio_stats_diff_ptr++;
-		diskio_stats_ptr++;
+		dest->disk_name = strdup(src->disk_name);
+		dest->read_bytes = src->read_bytes;
+		dest->write_bytes = src->write_bytes;
+		dest->systime = src->systime;
 	}
 
-	diskio_stats_ptr=get_diskio_stats(&disks);
-	if (diskio_stats_ptr == NULL) {
+	/* Get a new set of stats. */
+	if (get_diskio_stats(&new_count) == NULL) {
 		return NULL;
 	}
-	diskio_stats_diff_ptr=diskio_stats_diff;
 
-	for(x=0;x<sizeof_diskio_stats_diff;x++){
+	/* For each previous stat... */
+	for (i = 0; i < diff_count; i++) {
+		dest = &diff[i];
 
-		if((strcmp(diskio_stats_diff_ptr->disk_name, diskio_stats_ptr->disk_name))==0){
-			diskio_stats_diff_ptr->read_bytes=diskio_stats_ptr->read_bytes-diskio_stats_diff_ptr->read_bytes;
-			diskio_stats_diff_ptr->write_bytes=diskio_stats_ptr->write_bytes-diskio_stats_diff_ptr->write_bytes;
-			diskio_stats_diff_ptr->systime=diskio_stats_ptr->systime-diskio_stats_diff_ptr->systime;
-		}else{
-			diskio_stats_ptr=diskio_stats;
-			for(y=0;y<disks;y++){
-				if((strcmp(diskio_stats_diff_ptr->disk_name, diskio_stats_ptr->disk_name))==0){
-					diskio_stats_diff_ptr->read_bytes=diskio_stats_ptr->read_bytes-diskio_stats_diff_ptr->read_bytes;
-					diskio_stats_diff_ptr->write_bytes=diskio_stats_ptr->write_bytes-diskio_stats_diff_ptr->write_bytes;
-					diskio_stats_diff_ptr->systime=diskio_stats_ptr->systime-diskio_stats_diff_ptr->systime;
-
-					break;
-				}
-				
-				diskio_stats_ptr++;
+		/* ... find the corresponding new stat ... */
+		for (j = 0; j < new_count; j++) {
+			/* Try the new stat in the same position first,
+			   since that's most likely to be it. */
+			src = &diskio_stats[(i + j) % new_count];
+			if (strcmp(src->disk_name, dest->disk_name) == 0) {
+				break;
 			}
 		}
+		if (j == new_count) {
+			/* No match found. */
+			continue;
+		}
 
-		diskio_stats_ptr++;
-		diskio_stats_diff_ptr++;	
-
+		/* ... and subtract the previous stat from it to get the
+		   difference. */
+		dest->read_bytes = src->read_bytes - dest->read_bytes;
+		dest->write_bytes = src->write_bytes - dest->write_bytes;
+		dest->systime = src->systime - dest->systime;
 	}
-	
-	*entries=sizeof_diskio_stats_diff;
-	return diskio_stats_diff;
+
+	*entries = diff_count;
+	return diff;
 }
+
