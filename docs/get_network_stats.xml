@@ -121,7 +121,8 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The time period over which tx and rx were transferred.
+            The time period over which <parameter>tx</parameter>
+	    and <parameter>rx</parameter> were transferred.
           </para>
         </listitem>
       </varlistentry>

@@ -123,8 +123,8 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The time period over which read_bytes and write_bytes
-            were transferred.
+            The time period over which <parameter>read_bytes</parameter>
+	    and <parameter>write_bytes</parameter> were transferred.
           </para>
         </listitem>
       </varlistentry>
