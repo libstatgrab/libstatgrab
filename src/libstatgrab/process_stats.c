@@ -144,26 +144,26 @@ process_stat_t *get_process_stats(){
 	while(procs--){
 #ifdef FREEBSD5
                	if (kp_stats[procs].ki_stat == SSLEEP) process_stat.sleeping++;
+		if (kp_stats[procs].ki_stat == SWAIT) process_stat.sleeping++;
+		if (kp_stats[procs].ki_stat == SLOCK) process_stat.sleeping++;
                	if (kp_stats[procs].ki_stat == SRUN) process_stat.running++;
                	if (kp_stats[procs].ki_stat == SIDL) process_stat.running++;
                	if (kp_stats[procs].ki_stat == SZOMB) process_stat.zombie++;
                	if (kp_stats[procs].ki_stat == SSTOP) process_stat.stopped++;
+		
 #else
 		if (kp_stats[procs].kp_proc.p_stat == SSLEEP) process_stat.sleeping++;	
 		if (kp_stats[procs].kp_proc.p_stat == SRUN) process_stat.running++;
 		if (kp_stats[procs].kp_proc.p_stat == SIDL) process_stat.running++;
 		if (kp_stats[procs].kp_proc.p_stat == SZOMB) process_stat.zombie++;
 		if (kp_stats[procs].kp_proc.p_stat == SSTOP) process_stat.stopped++;
-		process_stat.total++;
 #endif
 	}
 
 	kvm_close(kvmd);
 #endif
 
-#ifndef FREEBSD5
 	process_stat.total=process_stat.sleeping+process_stat.running+process_stat.zombie+process_stat.stopped;
-#endif
 
 	return &process_stat;
 }
