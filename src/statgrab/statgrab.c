@@ -475,7 +475,7 @@ void print_stat_value(const stat *s) {
 		printf("%d", *(int *)v);
 		break;
 	case DUPLEX:
-		switch (*(duplex *) v) {
+		switch (*(statgrab_duplex *) v) {
 		case FULL_DUPLEX:
 			printf("full");
 			break;
