@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 #include <regex.h>
-#ifdef ALLBSD
+#ifdef FREEBSD
 #include <kvm.h>
 #endif
 #ifdef NETBSD
