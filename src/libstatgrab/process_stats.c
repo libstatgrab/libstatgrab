@@ -60,7 +60,6 @@ process_stat_t *get_process_stats(){
 		if(atoi(dir_entry->d_name) == 0) continue;
 		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
 
-		printf("Filename : %s\n", filename);
 		if((f=fopen(filename, "r"))==NULL){
 			/* Open failed.. Process since vanished, or the path was too long. 
 			 * Ah well, move onwards to the next one */
