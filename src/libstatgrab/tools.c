@@ -42,7 +42,9 @@
 #include "tools.h"
 
 #ifdef SOLARIS
+#ifdef HAVE_LIBDEVINFO_H
 #include <libdevinfo.h>
+#endif
 #include <kstat.h>
 #include <unistd.h>
 #include <ctype.h>
