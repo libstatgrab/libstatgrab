@@ -1,3 +1,12 @@
+libstatgrab 0.6.1 (18 October 2003)
+
+ * Support for FreeBSD 5.1/sparc64.
+ * Bugs fixed in FreeBSD memory statistics.
+ * saidar displays disk percentages more "correctly".
+ * Bug fixed displaying hostname in saidar.
+ * statgrab now handles unusual /dev layouts more gracefully.
+ * Minor packaging changes.
+
 libstatgrab 0.6 (09 October 2003)
 
  * saidar, a curses-based tool, has been added to give an overview of
