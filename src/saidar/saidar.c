@@ -386,7 +386,7 @@ void display_data(){
 	refresh();
 }
 
-void sig_winch_handler(){
+void sig_winch_handler(int dummy){
 	clear();
 	display_headings();
 	display_data();
