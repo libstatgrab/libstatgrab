@@ -100,15 +100,15 @@ cdef extern from "statgrab.h":
         long long rx
         time_t systime
 
-    ctypedef enum duplex:
+    ctypedef enum statgrab_duplex:
         FULL_DUPLEX
         HALF_DUPLEX
-        NO_DUPLEX
+        UNKNOWN_DUPLEX
 
     ctypedef struct network_iface_stat_t:
         char *interface_name
         int speed
-        duplex dup
+        statgrab_duplex dup
 
     ctypedef struct page_stat_t:
         long long pages_pagein
@@ -134,6 +134,11 @@ cdef extern from "statgrab.h":
     cdef extern page_stat_t *get_page_stats_diff()
     cdef extern int statgrab_init()
     cdef extern int statgrab_drop_privileges()
+
+
+py_FULL_DUPLEX = FULL_DUPLEX
+py_HALF_DUPLEX = HALF_DUPLEX
+py_UNKNOWN_DUPLEX = UNKNOWN_DUPLEX
 
 
 class Result:
