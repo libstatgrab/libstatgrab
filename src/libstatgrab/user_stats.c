@@ -25,8 +25,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <utmp.h>
 #include "statgrab.h"
+#ifdef FREEBSD
+#include <sys/types.h>
+#endif
+#include <utmp.h>
 
 #define START_VAL (5*(1+MAX_LOGIN_NAME_SIZE))
 
@@ -36,7 +39,13 @@ user_stat_t *get_user_stats(){
 	static user_stat_t user_stats;
 	static int size_of_namelist=-1;
 	char *tmp;
+#if defined(SOLARIS) || defined(LINUX)	
 	struct utmp *entry;
+#endif
+#ifdef FREEBSD
+	struct utmp entry;
+        FILE *f;
+#endif
 
 	/* First case call */
 	if (size_of_namelist==-1){
@@ -49,6 +58,8 @@ user_stat_t *get_user_stats(){
 
 	/* Essentially blank the list, or give it a inital starting string */
 	strcpy(user_stats.name_list, "");
+
+#if defined(SOLARIS) || defined(LINUX)	
 	setutent();
 	while((entry=getutent()) != NULL) {
 		if(entry->ut_type==USER_PROCESS) {
@@ -68,7 +79,30 @@ user_stat_t *get_user_stats(){
 		}
 	}
 	endutent();
+#endif
+#ifdef FREEBSD
+	if ((f=fopen(_PATH_UTMP, "r")) == NULL){
+		return NULL;
+	}
+	while((fread(&entry, sizeof(entry),1,f)) != 0){
+		if (entry.ut_name[0] == '\0') continue;
+		if((strlen(user_stats.name_list)+MAX_LOGIN_NAME_SIZE+2) > size_of_namelist){
+			tmp=user_stats.name_list;
+			user_stats.name_list=realloc(user_stats.name_list, 1+(size_of_namelist*2));
+			if(user_stats.name_list==NULL){
+				user_stats.name_list=tmp;
+				return NULL;
+			}
+			size_of_namelist=1+(size_of_namelist*2);
+			
+		}
+		strncat(user_stats.name_list, entry.ut_name, MAX_LOGIN_NAME_SIZE);
+		strcat(user_stats.name_list, " ");
+		num_users++;
+	}
+	fclose(f);
 
+#endif	
 	/* We want to remove the last " " */
 	if(num_users!=0){
 		tmp=strrchr(user_stats.name_list, ' ');

@@ -57,7 +57,7 @@ typedef struct{
 #ifdef SOLARIS
 #define MAX_LOGIN_NAME_SIZE 8
 #endif
-#ifdef LINUX
+#if defined(LINUX) || defined(FREEBSD)
 #define MAX_LOGIN_NAME_SIZE UT_NAMESIZE
 #endif
 
