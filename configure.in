@@ -42,16 +42,16 @@ solaris2.[[6-7]])
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	AC_DEFINE(SOL7, , [Building on Solaris 2.7])
-	LDFLAGS="$LDFLAGS -lkstat"
+	LINKFLAGS="-lkstat"
 	;;
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
-	LDFLAGS="$LDFLAGS -lkstat"
+	LINKFLAGS="-lkstat"
 	;;
 freebsd4.*)
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD 4.x])
-	LDFLAGS="$LDFLAGS -lkvm -ldevstat"
+	LINKFLAGS="-lkvm -ldevstat"
 	;;
 linux-gnu)
 	AC_DEFINE(LINUX, , [Building on GNU/Linux])
@@ -60,6 +60,8 @@ linux-gnu)
 	AC_MSG_ERROR([Cannot build on unknown OS: $host_os])
 	;;
 esac
+
+AC_SUBST(LINKFLAGS)
 
 # And finish by changing these files
 AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index])

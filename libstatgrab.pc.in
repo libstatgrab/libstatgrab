@@ -6,5 +6,5 @@ includedir=@includedir@
 Name: libstatgrab
 Description: Provides a useful interface to system statistics
 Version: @VERSION@
-Libs: -L${libdir} -lstatgrab
+Libs: -L${libdir} -lstatgrab @LINKFLAGS@
 Cflags: -I${includedir}
