@@ -135,6 +135,13 @@ typedef struct{
 	time_t systime;
 }page_stat_t;
 
+typedef enum{
+	RUNNING,
+	SLEEPING,
+	STOPPED,
+	ZOMBIE
+}process_status;
+
 typedef struct{
 	char *process_name;
 	char *proctitle;
@@ -153,7 +160,7 @@ typedef struct{
 	time_t time_spent;
 	double cpu_percent;
 	int nice;
-	int state;
+	process_status state;
 }proc_state_t;
 
 int get_proc_snapshot(proc_state_t **proc_state);
