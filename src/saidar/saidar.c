@@ -377,7 +377,7 @@ void display_data(){
 			move(line, 62);
 			printw("%7s", size_conv(disk_stat_ptr->avail));
 			move(line, 73);
-			printw("%5.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
+			printw("%6.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
 			disk_stat_ptr++;
 			line++;
 		}
