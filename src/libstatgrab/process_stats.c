@@ -121,11 +121,22 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	char ps_name[4096];
 	char *ptr;
 	VECTOR_DECLARE_STATIC(psargs, char, 128, NULL, NULL);
-	unsigned long stime, utime;
+	unsigned long stime, utime, starttime;
 	int x;
 	int fn;
 	int len;
 	int rc;
+	time_t uptime;
+#endif
+
+#ifdef LINUX
+	if ((f=fopen("/proc/uptime", "r")) == NULL) {
+		return NULL;
+	}
+	if((fscanf(f,"%lu %*d",&uptime)) != 1){
+		return NULL;
+	}
+	fclose(f);
 #endif
 
         if((proc_dir=opendir(PROC_LOCATION))==NULL){
@@ -177,8 +188,9 @@ sg_process_stats *sg_get_process_stats(int *entries){
                 if(process_info.pr_lwp.pr_state==6) proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
 #endif
 #ifdef LINUX
-		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %*u %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
-		proc_state_ptr->proc_resident = proc_state_ptr->proc_resident * getpagesize();
+		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %lu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &starttime, &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
+		/* +3 becuase man page says "Resident  Set Size: number of pages the process has in real memory, minus 3 for administrative purposes." */
+		proc_state_ptr->proc_resident = (proc_state_ptr->proc_resident + 3) * getpagesize();
 		if(s == 'S') proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
 		if(s == 'R') proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
 		if(s == 'Z') proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
@@ -194,8 +206,9 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			return NULL;
 		}
 
-		/* Need to do cpu */
-		
+		/* cpu */
+		proc_state_ptr->cpu_percent = (100.0 * (utime + stime)) / ((uptime * 100.0) - starttime);
+		printf("%s  ut: %lu st: %lu up: %lu start: %lu\n", proc_state_ptr->process_name, utime, stime, uptime , starttime);
 
                 fclose(f);
 
