@@ -4,7 +4,7 @@
 
 DOCS = network.txt diskio.txt load_average.txt process_stats.txt os_stats.txt vm_stats.txt user_list.txt cpu.txt page_stat.txt
 
-docdir = $(datadir)/libstatgrab/doc
+docdir = $(datadir)/doc/libstatgrab
 
 doc_DATA = $(DOCS)
 EXTRA_DIST = $(DOCS)

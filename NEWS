@@ -1,3 +1,9 @@
+libstatgrab 0.5 (25 August 2003)
+
+ * Fixed a bug with process stats on FreeBSD.
+ * Added documentation in 'docs' directory.
+ * Added examples in 'examples' directory.
+
 libstatgrab 0.4 (09 April 2003)
 
  * Support added for FreeBSD 4.x (not tested on 5.x).
