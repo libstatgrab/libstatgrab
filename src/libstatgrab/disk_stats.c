@@ -520,7 +520,6 @@ diskio_stat_t *get_diskio_stats(int *entries){
 		num_diskio++;
 	}
 	free(dev_sel);
-	free(stats.dinfo);
 
 #endif
 #ifdef SOLARIS
