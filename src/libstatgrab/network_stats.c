@@ -32,6 +32,12 @@
 #ifdef SOLARIS
 #include <kstat.h>
 #include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <sys/sockio.h>
 #endif
 #ifdef LINUX
 #include <stdio.h>
@@ -174,7 +180,10 @@ network_stat_t *get_network_stats(int *entries){
 #endif
 
 			if((knp=kstat_data_lookup(ksp, RLOOKUP))==NULL){
-				/* Not a network interface, so skip to the next entry */
+				/* This is a network interface, but it doesn't
+				 * have the rbytes/obytes values; for instance,
+				 * the loopback devices have this behaviour
+				 * (although they do track packets in/out). */
 				continue;
 			}
 
@@ -186,7 +195,6 @@ network_stat_t *get_network_stats(int *entries){
 			network_stat_ptr->rx=knp->VALTYPE;
 
 			if((knp=kstat_data_lookup(ksp, WLOOKUP))==NULL){
-				/* Not a network interface, so skip to the next entry */
 				continue;
 			}
 			network_stat_ptr->tx=knp->VALTYPE;
@@ -382,6 +390,7 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
         kstat_ctl_t *kc;
         kstat_t *ksp;
 	kstat_named_t *knp;
+	int sock;
 #endif
 #ifdef ALLBSD
         struct ifaddrs *net, *net_ptr;
@@ -496,52 +505,65 @@ network_iface_stat_t *get_network_iface_stats(int *entries){
 #endif
 
 #ifdef SOLARIS
-        if ((kc = kstat_open()) == NULL) {
-                return NULL;
-        }
+	if ((kc = kstat_open()) == NULL) {
+		return NULL;
+	}
 
-    	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-        	if (!strcmp(ksp->ks_class, "net")) {
-                	kstat_read(kc, ksp, NULL);
-			if((knp=kstat_data_lookup(ksp, "ifspeed"))==NULL){
-				/* Not a network interface, so skip to the next entry */
+	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0) {
+		return NULL;
+	}
+
+	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+		if (!strcmp(ksp->ks_class, "net")) {
+			struct ifreq ifr;
+
+			kstat_read(kc, ksp, NULL);
+
+			strncpy(ifr.ifr_name, ksp->ks_name, sizeof ifr.ifr_name);
+			if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0) {
+				/* Not a network interface. */
 				continue;
 			}
-			network_iface_stats=network_iface_stat_malloc((ifaces+1), &sizeof_network_iface_stats, network_iface_stats);
-			if(network_iface_stats==NULL){
+
+			network_iface_stats = network_iface_stat_malloc(ifaces + 1, &sizeof_network_iface_stats, network_iface_stats);
+			if (network_iface_stats == NULL) {
 				return NULL;
 			}
 			network_iface_stat_ptr = network_iface_stats + ifaces;
-			network_iface_stat_ptr->speed = knp->value.ui64 / (1000*1000);
+			ifaces++;
 
-                        if((knp=kstat_data_lookup(ksp, "link_up"))==NULL){
-                                /* Not a network interface, so skip to the next entry */
-                                continue;
-                        }
-			/* Solaris has 1 for up, and 0 for not. As we do too */
-                        network_iface_stat_ptr->up = knp->value.ui32;
+			if (network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
+			network_iface_stat_ptr->interface_name = strdup(ksp->ks_name);
+			if (network_iface_stat_ptr->interface_name == NULL) return NULL;
 
-			if((knp=kstat_data_lookup(ksp, "link_duplex"))==NULL){
-				/* Not a network interface, so skip to the next entry */
-				continue;
+			if ((ifr.ifr_flags & IFF_UP) != 0) {
+				network_iface_stat_ptr->up = 1;
+			} else {
+				network_iface_stat_ptr->up = 1;
+			}
+
+			if ((knp = kstat_data_lookup(ksp, "ifspeed")) != NULL) {
+				network_iface_stat_ptr->speed = knp->value.ui64 / (1000 * 1000);
+			} else {
+				network_iface_stat_ptr->speed = 0;
 			}
 
 			network_iface_stat_ptr->dup = UNKNOWN_DUPLEX;
-			if(knp->value.ui32 == 2){
-				network_iface_stat_ptr->dup = FULL_DUPLEX;
+			if ((knp = kstat_data_lookup(ksp, "link_duplex")) != NULL) {
+				switch (knp->value.ui32) {
+				case 1:
+					network_iface_stat_ptr->dup = HALF_DUPLEX;
+					break;
+				case 2:
+					network_iface_stat_ptr->dup = FULL_DUPLEX;
+					break;
+				}
 			}
-			if(knp->value.ui32 == 1){
-				network_iface_stat_ptr->dup = HALF_DUPLEX;
-			}
-
-			if(network_iface_stat_ptr->interface_name != NULL) free(network_iface_stat_ptr->interface_name);
-			network_iface_stat_ptr->interface_name = strdup(ksp->ks_name);
-			if(network_iface_stat_ptr->interface_name == NULL) return NULL;
-			ifaces++;
 		}
 	}
+
+	close(sock);
 	kstat_close(kc);
-	
 #endif	
 #ifdef LINUX
 	f = fopen("/proc/net/dev", "r");
