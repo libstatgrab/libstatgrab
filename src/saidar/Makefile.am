@@ -13,3 +13,12 @@ INCLUDES = @SAIDARCPPFLAGS@ -I$(top_srcdir) -I$(top_builddir) \
            -I$(top_srcdir)/src/libstatgrab -I$(top_builddir)/src/libstatgrab
 
 LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la @SAIDARLIBS@ @LINKFLAGS@
+
+if SETGIDBINS
+# Some operating systems need the binary to be setgid kmem
+install-exec-local:
+	chgrp kmem @bindir@/saidar
+	chmod g+s @bindir@/saidar
+else
+install-exec-local:
+endif

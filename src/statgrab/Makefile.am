@@ -14,3 +14,12 @@ INCLUDES = -I$(top_srcdir) -I$(top_builddir) \
            -I$(top_srcdir)/src/libstatgrab -I$(top_builddir)/src/libstatgrab
 
 LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la @LINKFLAGS@
+
+if SETGIDBINS
+# Some operating systems need the binary to be setgid kmem
+install-exec-local:
+	chgrp kmem @bindir@/statgrab
+	chmod g+s @bindir@/statgrab
+else
+install-exec-local:
+endif
