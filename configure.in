@@ -6,8 +6,8 @@
 #
 
 # Change these to change the package name and version
-AC_INIT(libstatgrab, 0.3, dev@i-scream.org.uk)
-AM_INIT_AUTOMAKE(libstatgrab, 0.3)
+AC_INIT(libstatgrab, 0.4, dev@i-scream.org.uk)
+AM_INIT_AUTOMAKE(libstatgrab, 0.4)
 
 # Revision number (automatically updated)
 AC_REVISION($Revision$)
