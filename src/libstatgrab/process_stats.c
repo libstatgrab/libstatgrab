@@ -76,6 +76,7 @@
 #include <sys/param.h>
 #include <sys/pstat.h>
 #include <unistd.h>
+#define PROCESS_BATCH 30
 #endif
 
 static void proc_state_init(sg_process_stats *s) {
@@ -94,9 +95,10 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	int proc_state_size = 0;
 	sg_process_stats *proc_state_ptr;
 #ifdef HPUX
-	struct pst_status pstat_procinfo;
+	struct pst_status pstat_procinfo[PROCESS_BATCH];
 	long procidx = 0;
-	long long pagesize = 0;
+	long long pagesize;
+	int num, i;
 #endif
 #ifdef ALLBSD
 	int mib[4];
@@ -678,68 +680,68 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #endif
 
 #ifdef HPUX
-	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
+	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
 		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 		return NULL;
 	}
 
-	for (procidx = 0; procidx < 65536; procidx++) {
-		if (pstat_getproc(&pstat_procinfo, sizeof(pstat_procinfo), 1, procidx) == -1) {
-			break;
-		}
-		if (pstat_procinfo.pst_idx != procidx) {
-			continue;
-		}
+	do {
+		num = pstat_getproc(pstat_procinfo, sizeof pstat_procinfo[0],
+		                    PROCESS_BATCH, procidx);
 
-		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
-			return NULL;
+		for (i = 0; i < num; i++) {
+			struct pst_status *pi = &pstat_procinfo[i];
+
+			if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
+				return NULL;
+			}
+			proc_state_ptr = proc_state+proc_state_size;
+	
+			proc_state_ptr->pid = pi->pst_pid;
+			proc_state_ptr->parent = pi->pst_ppid;
+			proc_state_ptr->pgid = pi->pst_pgrp;
+			proc_state_ptr->uid = pi->pst_uid;
+			proc_state_ptr->euid = pi->pst_euid;
+			proc_state_ptr->gid = pi->pst_gid;
+			proc_state_ptr->egid = pi->pst_egid;
+			proc_state_ptr->proc_size = (pi->pst_dsize + pi->pst_tsize + pi->pst_ssize) * pagesize;
+			proc_state_ptr->proc_resident = pi->pst_rssize * pagesize;
+			proc_state_ptr->time_spent = pi->pst_time;
+			proc_state_ptr->cpu_percent = (pi->pst_pctcpu * 100.0) / 0x8000;
+			proc_state_ptr->nice = pi->pst_nice;
+	
+			if (sg_update_string(&proc_state_ptr->process_name,
+					     pi->pst_ucomm) < 0) {
+				return NULL;
+			}
+			if (sg_update_string(&proc_state_ptr->proctitle,
+					     pi->pst_cmd) < 0) {
+				return NULL;
+			}
+	
+			switch (pi->pst_stat) {
+			case PS_SLEEP:
+				proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+				break;
+			case PS_RUN:
+				proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+				break;
+			case PS_STOP:
+				proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+				break;
+			case PS_ZOMBIE:
+				proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+				break;
+			case PS_IDLE:
+			case PS_OTHER:
+				proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+				break;
+			}
+	
+			proc_state_size++;
 		}
-		proc_state_ptr = proc_state+proc_state_size;
-
-		proc_state_ptr->pid = pstat_procinfo.pst_pid;
-		proc_state_ptr->parent = pstat_procinfo.pst_ppid;
-		proc_state_ptr->pgid = pstat_procinfo.pst_pgrp;
-		proc_state_ptr->uid = pstat_procinfo.pst_uid;
-		proc_state_ptr->euid = pstat_procinfo.pst_euid;
-		proc_state_ptr->gid = pstat_procinfo.pst_gid;
-		proc_state_ptr->egid = pstat_procinfo.pst_egid;
-		proc_state_ptr->proc_size = (pstat_procinfo.pst_dsize + pstat_procinfo.pst_tsize + pstat_procinfo.pst_ssize) * pagesize;
-		proc_state_ptr->proc_resident = pstat_procinfo.pst_rssize * pagesize;
-		proc_state_ptr->time_spent = pstat_procinfo.pst_time;
-		proc_state_ptr->cpu_percent = (pstat_procinfo.pst_pctcpu * 100.0) / 0x8000;
-		proc_state_ptr->nice = pstat_procinfo.pst_nice;
-
-		if (sg_update_string(&proc_state_ptr->process_name,
-				     pstat_procinfo.pst_ucomm) < 0) {
-			return NULL;
-		}
-		if (sg_update_string(&proc_state_ptr->proctitle,
-				     pstat_procinfo.pst_cmd) < 0) {
-			return NULL;
-		}
-
-		switch (pstat_procinfo.pst_stat) {
-		case PS_SLEEP:
-			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
-			break;
-		case PS_RUN:
-			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
-			break;
-		case PS_STOP:
-			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
-			break;
-		case PS_ZOMBIE:
-			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
-			break;
-		case PS_IDLE:
-		case PS_OTHER:
-			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
-			break;
-		}
-
-		proc_state_size++;
-	}
-
+		procidx = pstat_procinfo[n - 1].pst_idx + 1;
+	} while (num > 0);
 #endif
 
 #ifdef CYGWIN
