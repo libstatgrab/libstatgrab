@@ -42,6 +42,7 @@
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
+#include <sys/time.h>
 #include <uvm/uvm.h>
 #endif
 
