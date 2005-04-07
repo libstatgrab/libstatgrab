@@ -5,6 +5,19 @@
 #include <pwd.h>
 #include "statgrab.h"
 
+char usage(char *progname){
+	fprintf(stderr," Usage: %s [-efAnh] [-u user] [-o sort]\n\n", progname);
+	fprintf(stderr, "\t-h\tDisplays this help\n");
+	fprintf(stderr, "\t-e\tAll processes\n");
+	fprintf(stderr, "\t-f\tFull listing\n");
+	fprintf(stderr, "\t-a\tAll processes (same as -e)\n");
+	fprintf(stderr, "\t-n\tDont look up usernames\n");
+	fprintf(stderr, "\t-u\tLook for just this user\n");
+	fprintf(stderr, "\t-o\tSorting method. Valid are cpu, mem, pid, uid, gid and size\n");
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
 char *size_conv(long long number){
         char type[] = {'B', 'K', 'M', 'G', 'T'};
         int x=0;
@@ -66,7 +79,8 @@ int main(int argc, char **argv){
 	int full=0;
 	int detailed=0;
 	int nolookup=0;
-	char *user = NULL;
+	struct passwd *pwd_ent;
+	uid_t uid = -1;
  
 	int (*sortby_ptr)(const void *va, const void *vb);
 
@@ -78,7 +92,7 @@ int main(int argc, char **argv){
 	/* Default behaviour - sort by pid */
 	sortby_ptr = sg_process_compare_pid;
 
-	while ((c = getopt(argc, argv, "neAfu:o:")) != -1){
+	while ((c = getopt(argc, argv, "hneAfU:u:o:")) != -1){
 		switch (c){
 			case 'e':
 			case 'A':
@@ -90,9 +104,14 @@ int main(int argc, char **argv){
 			case 'n':
 				nolookup=1;
 				break;
+			case 'U':
 			case 'u':
-				user = strdup(optarg);
-				if (user == NULL) exit(1);
+				pwd_ent = getpwnam(optarg);
+				if (pwd_ent == NULL){
+					fprintf(stderr, "Error: user %s does not exist\n", optarg);
+					exit(1);
+				}
+				uid = pwd_ent->pw_uid;
 				break;
 			case 'o':
 				if(!strncasecmp(optarg, "cpu", 3)){
@@ -123,9 +142,11 @@ int main(int argc, char **argv){
 					sortby_ptr = sg_process_compare_gid;
 					break;
 				}
+			case 'h':
 			default:
-				sortby_ptr = sg_process_compare_cpu;
+				usage(argv[0]);
 				break;
+				exit(1);
 		}
 	}
 
@@ -133,10 +154,13 @@ int main(int argc, char **argv){
 	sg_proc = sg_get_process_stats(&entries);
 	qsort(sg_proc, entries, sizeof *sg_proc, sortby_ptr);
 
+	/* Print the headers out on stderr, so should someone want to use this in a script, they wont need to
+	 * strip out the first line.
+	 */
 	if (full){ 
-		printf("%9s %6s %6s %6s %7s %7s %4s %s\n", "User", "pid", "parent", "state", "size", "res", "CPU", "Process");
+		fprintf(stderr, "%9s %6s %6s %6s %7s %7s %4s %s\n", "User", "pid", "parent", "state", "size", "res", "CPU", "Process");
 	}else{
-		printf("%6s %7s %4s %s\n", "pid", "size", "CPU", "Process");
+		fprintf(stderr, "%6s %7s %4s %s\n", "pid", "size", "CPU", "Process");
 	}
 
 	for(x=0; x<entries; x++){
@@ -147,10 +171,12 @@ int main(int argc, char **argv){
 			proc_out = sg_proc->process_name;
 		}
 
-		if(full){
-			printf("%9s %6d %6d %6s %7s %7s %2.2f %s\n", username(sg_proc->uid), (int)sg_proc->pid, (int)sg_proc->parent, proc_state(sg_proc->state), size_conv(sg_proc->proc_size), size_conv(sg_proc->proc_resident), sg_proc->cpu_percent, proc_out);
-		}else{
-			printf("%6d %7s %2.2f %s\n", (int)sg_proc->pid, size_conv(sg_proc->proc_size), sg_proc->cpu_percent, proc_out);
+		if((uid == -1) || (uid == sg_proc->uid)){
+			if(full){
+				printf("%9s %6d %6d %6s %7s %7s %2.2f %s\n", username(sg_proc->uid), (int)sg_proc->pid, (int)sg_proc->parent, proc_state(sg_proc->state), size_conv(sg_proc->proc_size), size_conv(sg_proc->proc_resident), sg_proc->cpu_percent, proc_out);
+			}else{
+				printf("%6d %7s %2.2f %s\n", (int)sg_proc->pid, size_conv(sg_proc->proc_size), sg_proc->cpu_percent, proc_out);
+			}
 		}
 
 		sg_proc++;
