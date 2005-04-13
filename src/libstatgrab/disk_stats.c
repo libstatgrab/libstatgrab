@@ -338,6 +338,8 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	int i, n;
 	time_t now;
 	const char *format;
+	static regex_t not_part_re, part_re;
+	static int re_compiled = 0;
 #endif
 #if defined(FREEBSD) || defined(DFBSD)
 	static struct statinfo stats;
@@ -699,9 +701,20 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	if (f == NULL) goto out;
 	now = time(NULL);
 
+	if (!re_compiled) {
+		if (regcomp(&part_re, "^(.*/)?[^/]*[0-9]$", REG_EXTENDED | REG_NOSUB) != 0) {
+			sg_set_error(SG_ERROR_PARSE, NULL);
+			goto out;
+		}
+		if (regcomp(&not_part_re, "^(.*/)?[^/0-9]+[0-9]+d[0-9]+$", REG_EXTENDED | REG_NOSUB) != 0) {
+			sg_set_error(SG_ERROR_PARSE, NULL);
+			goto out;
+		}
+		re_compiled = 1;
+	}
+
 	while ((line_ptr = sg_f_read_line(f, "")) != NULL) {
 		char name[100];
-		char *s;
 		long long rsect, wsect;
 
 		int nr = sscanf(line_ptr, format,
@@ -709,11 +722,14 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 		if (nr < 3) continue;
 
 		/* Skip device names ending in numbers, since they're
-		   partitions. */
-		s = name;
-		while (*s != '\0') s++;
-		--s;
-		if (*s >= '0' && *s <= '9') continue;
+		   partitions, unless they match the c0d0 pattern that some
+		   RAID devices use. */
+		/* FIXME: For 2.6+, we should probably be using sysfs to detect
+		   this... */
+		if ((regexec(&part_re, name, 0, NULL, 0) == 0)
+		    && (regexec(&not_part_re, name, 0, NULL, 0) != 0)) {
+			continue;
+		}
 
 		if (nr < 5) {
 			has_pp_stats = 0;
