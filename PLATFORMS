@@ -19,10 +19,11 @@ Linux 2.6
 NetBSD 1.x
 NetBSD 2.x
 OpenBSD 3.x
-Solaris 2.6
-Solaris 2.7
-Solaris 2.8 (sparc & x86)
-Solaris 2.9 (sparc & x86)
+Solaris 6
+Solaris 7
+Solaris 8 (sparc & x86)
+Solaris 9 (sparc & x86)
+Solaris 10 (sparc)
 
 Platform Specific Notes
 =======================
