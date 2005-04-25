@@ -2,4 +2,4 @@
 # http://www.i-scream.org/libstatgrab/
 # $Id$
 
-SUBDIRS = libstatgrab statgrab saidar sgps
+SUBDIRS = libstatgrab statgrab saidar

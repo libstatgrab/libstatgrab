@@ -172,17 +172,6 @@ AC_ARG_ENABLE(saidar,
 	]
 )
 
-# Check if user wants to disable sgps
-AM_CONDITIONAL(SGPS, true)
-AC_ARG_ENABLE(sgps,
-        [  --disable-sgps          disable building of sgps],
-        [
-                if test "x$enableval" = "xno" ; then
-                        AM_CONDITIONAL(SGPS, false)
-                fi
-        ]
-)
-
 # Check if the user would prefer not to build examples
 AM_CONDITIONAL(EXAMPLES, true)
 AC_ARG_ENABLE(examples,
@@ -250,6 +239,6 @@ AC_SUBST(BIN_GROUP)
 AC_SUBST(BIN_PERM)
 
 # And finish by changing these files
-AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index src/saidar/Makefile src/sgps/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index src/saidar/Makefile])
 
 AC_OUTPUT
