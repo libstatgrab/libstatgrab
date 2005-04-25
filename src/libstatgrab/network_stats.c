@@ -52,10 +52,18 @@
 /* Stuff which could be defined by defining KERNEL, but 
  * that would be a bad idea, so we'll just declare it here
  */
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+typedef __uint8_t __u8;
+typedef __uint16_t __u16;
+typedef __uint32_t __u32;
+typedef __uint64_t __u64;
+#else
 typedef __uint8_t u8;
 typedef __uint16_t u16;
 typedef __uint32_t u32;
 typedef __uint64_t u64;
+#endif
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 #include <unistd.h>
