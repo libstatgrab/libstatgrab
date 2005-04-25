@@ -639,7 +639,7 @@ void usage() {
 	       "  -t DELAY   When repeating, wait DELAY seconds between updates (default 1)\n"
 	       "  -p         Display CPU usage differences as percentages rather than\n"
 	       "             absolute values\n"
-	       "  -f SCALE   Display floating-point values as integers scaled by FACTOR\n"
+	       "  -f FACTOR  Display floating-point values as integers scaled by FACTOR\n"
 	       "  -K         Display byte counts in kibibytes\n"
 	       "  -M         Display byte counts in mebibytes\n"
 	       "  -G         Display byte counts in gibibytes\n"
