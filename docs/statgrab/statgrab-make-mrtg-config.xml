@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="statgrab-make-mrtg-config">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>statgrab-make-mrtg-config</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>statgrab-make-mrtg-config</refname>
+    <refpurpose>generates MRTG configuration</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>statgrab-make-mrtg-config</command>
+      <arg rep='repeat' choice='opt'>OPTION</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <command>statgrab-make-mrtg-config</command> generates MRTG
+      configuration from statgrab output and writes it to stdout.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+    <para>
+      The following options are supported.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><option>--no-header</option></term>
+        <listitem>
+          <para>
+            Don't print MRTG global options; useful if you
+            want to include the output of this script in
+            another MRTG config file
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--workdir</option> <replaceable>PATH</replaceable></term>
+        <listitem>
+          <para>
+            Use PATH for MRTG's WorkDir option
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--statgrab</option> <replaceable>PATH</replaceable></term>
+        <listitem>
+          <para>
+            Specify location of statgrab binary
+            (default "statgrab")
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--help</option></term>
+        <listitem>
+          <para>
+            Display help and exit
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>1</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>statgrab-make-mrtg-index</refentrytitle>
+          <manvolnum>1</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Authors</title>
+    <para>
+      This man page was derived from the man page written by Bartosz
+      Fenski for the Debian GNU/Linux distribution.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

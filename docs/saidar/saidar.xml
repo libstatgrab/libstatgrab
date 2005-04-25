@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="saidar">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>saidar</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>saidar</refname>
+    <refpurpose>a curses-based tool for viewing system statistics</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>saidar</command>
+      <arg choice='opt'>-d <replaceable>delay</replaceable></arg>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'>-h</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <command>saidar</command> is a curses-based tool for viewing the
+      system statistics available through libstatgrab.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+    <para>
+      The following options are supported.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><option>-d</option> <replaceable>DELAY</replaceable></term>
+        <listitem>
+          <para>
+            Wait DELAY seconds between updates (default 3)
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-v</option></term>
+        <listitem>
+          <para>
+            Prints the version number
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-h</option></term>
+        <listitem>
+          <para>
+            Display help and exits
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>1</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Authors</title>
+    <para>
+      This man page was derived from the man page written by Bartosz
+      Fenski for the Debian GNU/Linux distribution.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

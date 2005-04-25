@@ -239,6 +239,6 @@ AC_SUBST(BIN_GROUP)
 AC_SUBST(BIN_PERM)
 
 # And finish by changing these files
-AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index src/saidar/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/libstatgrab/Makefile src/statgrab/Makefile docs/Makefile docs/libstatgrab/Makefile docs/statgrab/Makefile docs/saidar/Makefile examples/Makefile libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index src/saidar/Makefile])
 
 AC_OUTPUT
