@@ -34,7 +34,9 @@
     <title>Description</title>
     <para>
       <command>saidar</command> is a curses-based tool for viewing the
-      system statistics available through libstatgrab.
+      system statistics available through libstatgrab. Statistics include
+      CPU, processes, load, memory, swap, network I/O, disk I/O, and file
+      system information.
     </para>
   </refsect1>
 
