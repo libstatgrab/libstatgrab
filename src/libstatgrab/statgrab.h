@@ -153,6 +153,13 @@ typedef struct {
 	long long total_inodes;
 	long long used_inodes;
 	long long free_inodes;
+	long long avail_inodes;
+	long long io_size;
+	long long block_size;
+	long long total_blocks;
+	long long free_blocks;
+	long long used_blocks;
+	long long avail_blocks;
 } sg_fs_stats;
 
 sg_fs_stats *sg_get_fs_stats(int *entries);

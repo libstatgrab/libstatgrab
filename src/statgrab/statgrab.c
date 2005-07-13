@@ -313,6 +313,20 @@ void populate_fs() {
 				 "fs", name, "used_inodes", NULL);
 			add_stat(LONG_LONG, &disk[i].free_inodes,
 				 "fs", name, "free_inodes", NULL);
+			add_stat(LONG_LONG, &disk[i].avail_inodes,
+				 "fs", name, "avail_inodes", NULL);
+			add_stat(LONG_LONG, &disk[i].io_size,
+				 "fs", name, "io_size", NULL);
+			add_stat(LONG_LONG, &disk[i].block_size,
+				 "fs", name, "block_size", NULL);
+			add_stat(LONG_LONG, &disk[i].total_blocks,
+				 "fs", name, "total_blocks", NULL);
+			add_stat(LONG_LONG, &disk[i].free_blocks,
+				 "fs", name, "free_blocks", NULL);
+			add_stat(LONG_LONG, &disk[i].avail_blocks,
+				 "fs", name, "avail_blocks", NULL);
+			add_stat(LONG_LONG, &disk[i].used_blocks,
+				 "fs", name, "used_blocks", NULL);
 
 			free(buf);
 		}

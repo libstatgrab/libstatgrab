@@ -43,6 +43,7 @@
 #if defined(LINUX) || defined(CYGWIN)
 #include <mntent.h>
 #include <sys/vfs.h>
+#include <sys/statvfs.h>
 #endif
 
 #ifdef LINUX
@@ -90,6 +91,46 @@
 #define DISK_BATCH 30
 #endif
 
+#ifdef ALLBSD
+#define SG_MP_FSTYPENAME(mp) (mp)->f_fstypename
+#define SG_MP_DEVNAME(mp)    (mp)->f_mntfromname
+#define SG_MP_MOUNTP(mp)     (mp)->f_mntonname
+#define SG_FS_FRSIZE(fs)     (long long) (*(fs))->f_bsize
+#define SG_FS_BSIZE(fs)      (long long) (*(fs))->f_iosize
+#define SG_FS_BLOCKS(fs)     (long long) (*(fs))->f_blocks
+#define SG_FS_BFREE(fs)      (long long) (*(fs))->f_bfree
+#define SG_FS_BAVAIL(fs)     (long long) (*(fs))->f_bavail
+#define SG_FS_FILES(fs)      (long long) (*(fs))->f_files
+#define SG_FS_FFREE(fs)      (long long) (*(fs))->f_ffree
+#define SG_FS_FAVAIL(fs)     -1LL
+#endif
+#if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
+#define SG_MP_FSTYPENAME(mp) (mp)->mnt_type
+#define SG_MP_DEVNAME(mp)    (mp)->mnt_fsname
+#define SG_MP_MOUNTP(mp)     (mp)->mnt_dir
+#define SG_FS_FRSIZE(fs)     (long long) (fs).f_frsize
+#define SG_FS_BSIZE(fs)      (long long) (fs).f_bsize
+#define SG_FS_BLOCKS(fs)     (long long) (fs).f_blocks
+#define SG_FS_BFREE(fs)      (long long) (fs).f_bfree
+#define SG_FS_BAVAIL(fs)     (long long) (fs).f_bavail
+#define SG_FS_FILES(fs)      (long long) (fs).f_files
+#define SG_FS_FFREE(fs)      (long long) (fs).f_ffree
+#define SG_FS_FAVAIL(fs)     (long long) (fs).f_favail
+#endif
+#ifdef SOLARIS
+#define SG_MP_FSTYPENAME(mp) (mp).mnt_fstype
+#define SG_MP_DEVNAME(mp)    (mp).mnt_special
+#define SG_MP_MOUNTP(mp)     (mp).mnt_mountp
+#define SG_FS_FRSIZE(fs)     (long long) (fs).f_frsize
+#define SG_FS_BSIZE(fs)      (long long) (fs).f_bsize
+#define SG_FS_BLOCKS(fs)     (long long) (fs).f_blocks
+#define SG_FS_BFREE(fs)      (long long) (fs).f_bfree
+#define SG_FS_BAVAIL(fs)     (long long) (fs).f_bavail
+#define SG_FS_FILES(fs)      (long long) (fs).f_files
+#define SG_FS_FFREE(fs)      (long long) (fs).f_ffree
+#define SG_FS_FAVAIL(fs)     (long long) (fs).f_favail
+#endif
+
 static void disk_stat_init(sg_fs_stats *d) {
 	d->device_name = NULL;
 	d->fs_type = NULL;
@@ -118,7 +159,6 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 	VECTOR_DECLARE_STATIC(disk_stats, sg_fs_stats, 10,
 			      disk_stat_init, disk_stat_destroy);
 
-	int valid_type;
 	int num_disks=0;
 #if defined(LINUX) || defined (SOLARIS) || defined(CYGWIN) || defined(HPUX)
 	FILE *f;
@@ -132,14 +172,14 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 #endif
 #if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
 	struct mntent *mp;
-	struct statfs fs;
+	struct statvfs fs;
 #endif
 #ifdef ALLBSD
 	int nummnt;
 #ifdef HAVE_STATVFS
-	struct statvfs *mp;
+	struct statvfs *mp, **fs;
 #else
-	struct statfs *mp;
+	struct statfs *mp, **fs;
 #endif
 #endif
 
@@ -149,8 +189,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 		sg_set_error_with_errno(SG_ERROR_GETMNTINFO, NULL);
 		return NULL;
 	}
-	for(;nummnt--; mp++){
-		valid_type = is_valid_fs_type(mp->f_fstypename);
+	for(fs = &mp; nummnt--; (*fs)++){
 #endif
 
 #if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
@@ -164,11 +203,10 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 	}
 
 	while((mp=getmntent(f))){
-		if((statfs(mp->mnt_dir, &fs)) !=0){
+		if((statvfs(mp->mnt_dir, &fs)) !=0){
 			continue;
 		}	
 
-		valid_type = is_valid_fs_type(mp->mnt_type);
 #endif
 
 #ifdef SOLARIS
@@ -180,82 +218,45 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 		if ((statvfs(mp.mnt_mountp, &fs)) !=0){
 			continue;
 		}
-		valid_type = is_valid_fs_type(mp.mnt_fstype);
 #endif
 
-		if(valid_type){
+		if(is_valid_fs_type(SG_MP_FSTYPENAME(mp))){
 			if (VECTOR_RESIZE(disk_stats, num_disks + 1) < 0) {
 				return NULL;
 			}
 			disk_ptr=disk_stats+num_disks;
 
-#ifdef ALLBSD
-			if (sg_update_string(&disk_ptr->device_name, mp->f_mntfromname) < 0) {
-				return NULL;
-			}
-			if (sg_update_string(&disk_ptr->fs_type, mp->f_fstypename) < 0) {
-				return NULL;
-			}
-			if (sg_update_string(&disk_ptr->mnt_point, mp->f_mntonname) < 0) {
-				return NULL;
-			}
-
-			disk_ptr->size = (long long)mp->f_bsize * (long long) mp->f_blocks;
-			disk_ptr->avail = (long long)mp->f_bsize * (long long) mp->f_bavail;
-			disk_ptr->used = (disk_ptr->size) - ((long long)mp->f_bsize * (long long)mp->f_bfree);
-
-			disk_ptr->total_inodes=(long long)mp->f_files;
-			disk_ptr->free_inodes=(long long)mp->f_ffree;
-			/* Freebsd doesn't have a "available" inodes */
-			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
-#endif
-#if defined(LINUX) || defined(CYGWIN) || defined(HPUX)
-			if (sg_update_string(&disk_ptr->device_name, mp->mnt_fsname) < 0) {
-				return NULL;
-			}
-				
-			if (sg_update_string(&disk_ptr->fs_type, mp->mnt_type) < 0) {	
-				return NULL;
-			}
-
-			if (sg_update_string(&disk_ptr->mnt_point, mp->mnt_dir) < 0) {
-				return NULL;
-			}
-			disk_ptr->size = (long long)fs.f_bsize * (long long)fs.f_blocks;
-			disk_ptr->avail = (long long)fs.f_bsize * (long long)fs.f_bavail;
-			disk_ptr->used = (disk_ptr->size) - ((long long)fs.f_bsize * (long long)fs.f_bfree);
-
-			disk_ptr->total_inodes=(long long)fs.f_files;
-			disk_ptr->free_inodes=(long long)fs.f_ffree;
-			/* Linux doesn't have a "available" inodes */
-			disk_ptr->used_inodes=disk_ptr->total_inodes-disk_ptr->free_inodes;
-#endif
-
-#ifdef SOLARIS
 			/* Maybe make this char[bigenough] and do strncpy's and put a null in the end? 
 			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
 			 * be upwards of a k each 
 			 */
-			if (sg_update_string(&disk_ptr->device_name, mp.mnt_special) < 0) {
+			if (sg_update_string(&disk_ptr->device_name, SG_MP_DEVNAME(mp)) < 0) {
+				return NULL;
+			}
+			if (sg_update_string(&disk_ptr->fs_type, SG_MP_FSTYPENAME(mp)) < 0) {
+				return NULL;
+			}
+			if (sg_update_string(&disk_ptr->mnt_point, SG_MP_MOUNTP(mp)) < 0) {
 				return NULL;
 			}
 
-			if (sg_update_string(&disk_ptr->fs_type, mp.mnt_fstype) < 0) {
-				return NULL;
-			}
-	
-			if (sg_update_string(&disk_ptr->mnt_point, mp.mnt_mountp) < 0) {
-				return NULL;
-			}
-			
-			disk_ptr->size = (long long)fs.f_frsize * (long long)fs.f_blocks;
-			disk_ptr->avail = (long long)fs.f_frsize * (long long)fs.f_bavail;
-			disk_ptr->used = (disk_ptr->size) - ((long long)fs.f_frsize * (long long)fs.f_bfree);
-		
-			disk_ptr->total_inodes=(long long)fs.f_files;
-			disk_ptr->used_inodes=disk_ptr->total_inodes - (long long)fs.f_ffree;
-			disk_ptr->free_inodes=(long long)fs.f_favail;
-#endif
+			disk_ptr->size  = SG_FS_FRSIZE(fs) * SG_FS_BLOCKS(fs);
+			disk_ptr->avail = SG_FS_FRSIZE(fs) * SG_FS_BAVAIL(fs);
+			disk_ptr->used  = (disk_ptr->size) - (SG_FS_FRSIZE(fs) * SG_FS_BFREE(fs));
+
+			disk_ptr->total_inodes = SG_FS_FILES(fs);
+			disk_ptr->free_inodes  = SG_FS_FFREE(fs);
+			/* Linux, FreeBSD don't have a "available" inodes */
+			disk_ptr->used_inodes  = disk_ptr->total_inodes - disk_ptr->free_inodes;
+			disk_ptr->avail_inodes = SG_FS_FAVAIL(fs);
+
+			disk_ptr->io_size      = SG_FS_BSIZE(fs);
+			disk_ptr->block_size   = SG_FS_FRSIZE(fs);
+			disk_ptr->total_blocks = SG_FS_BLOCKS(fs);
+			disk_ptr->free_blocks  = SG_FS_BFREE(fs);
+			disk_ptr->avail_blocks = SG_FS_BAVAIL(fs);
+			disk_ptr->used_blocks  = disk_ptr->total_blocks - disk_ptr->free_blocks;
+
 			num_disks++;
 		}
 	}
