@@ -412,7 +412,7 @@ void populate_net() {
 				 "net", name, "speed", NULL);
 			add_stat(BOOL, &iface[i].up,
 				 "net", name, "up", NULL);
-			add_stat(DUPLEX, &iface[i].dup,
+			add_stat(DUPLEX, &iface[i].duplex,
 				 "net", name, "duplex", NULL);
 		}
 	}

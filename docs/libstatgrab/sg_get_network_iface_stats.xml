@@ -76,7 +76,7 @@ typedef enum{
 typedef struct{
         char *interface_name;
         int speed;
-        sg_iface_duplex dup;
+        sg_iface_duplex duplex;
         int up;
 }sg_network_iface_stats;
     </programlisting>
@@ -105,7 +105,7 @@ typedef struct{
       </varlistentry>
       <varlistentry>
         <term>
-          <structfield>dup</structfield>
+          <structfield>duplex</structfield>
         </term>
         <listitem>
           <para>

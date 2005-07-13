@@ -198,7 +198,10 @@ typedef enum {
 typedef struct {
 	char *interface_name;
 	int speed;	/* In megabits/sec */
+	sg_iface_duplex duplex;
+#ifdef SG_ENABLE_DEPRECATED
 	sg_iface_duplex dup;
+#endif
 	int up;
 } sg_network_iface_stats;
 

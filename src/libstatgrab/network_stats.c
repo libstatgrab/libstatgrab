@@ -414,7 +414,7 @@ int sg_network_io_compare_name(const void *va, const void *vb) {
 static void network_iface_stat_init(sg_network_iface_stats *s) {
 	s->interface_name = NULL;
 	s->speed = 0;
-	s->dup = SG_IFACE_DUPLEX_UNKNOWN;
+	s->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 }
 
 static void network_iface_stat_destroy(sg_network_iface_stats *s) {
@@ -481,7 +481,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		}
 
 		network_iface_stat_ptr->speed = 0;
-		network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
+		network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		ifaces++;
 
 		memset(&ifmed, 0, sizeof(struct ifmediareq));
@@ -538,11 +538,11 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		}
 
 		if( (ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active ){
-			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
+			network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_FULL;
 		}else if( (ifmed.ifm_active | IFM_HDX) == ifmed.ifm_active ){
-			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
+			network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_HALF;
 		}else{
-			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
+			network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		}
 
 	}	
@@ -596,14 +596,14 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 				network_iface_stat_ptr->speed = 0;
 			}
 
-			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
+			network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 			if ((knp = kstat_data_lookup(ksp, "link_duplex")) != NULL) {
 				switch (knp->value.ui32) {
 				case 1:
-					network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
+					network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_HALF;
 					break;
 				case 2:
-					network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
+					network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_FULL;
 					break;
 				}
 			}
@@ -684,18 +684,18 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 			switch (ethcmd.duplex) {
 			case DUPLEX_FULL:
-				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_FULL;
+				network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_FULL;
 				break;
 			case DUPLEX_HALF:
-				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_HALF;
+				network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_HALF;
 				break;
 			default:
-				network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
+				network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 			}
 		} else {
 			/* Not all interfaces support the ethtool ioctl. */
 			network_iface_stat_ptr->speed = 0;
-			network_iface_stat_ptr->dup = SG_IFACE_DUPLEX_UNKNOWN;
+			network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		}
 
 		ifaces++;
@@ -710,6 +710,10 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #ifdef HPUX
 	sg_set_error(SG_ERROR_UNSUPPORTED, "HP-UX");
 	return NULL;
+#endif
+
+#ifdef SG_ENABLE_DEPRECATED
+	network_iface_stat_ptr->dup = network_iface_stat_ptr->duplex;
 #endif
 
 	*entries = ifaces;
