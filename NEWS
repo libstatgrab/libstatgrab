@@ -3,6 +3,24 @@ http://www.i-scream.org/libstatgrab/
 
 $Id$
 
+PLANS: We're now working towards a 1.0 release which is where we plan
+       to stabalise the API. We'll be doing test releases before hand,
+       but as always we'll like to hear about any bugs found in the
+       current release.
+
+libstatgrab 0.12 (?? July 2005)
+ * More details added to filesystem statistics.
+     (Patches provided by Roman Neuhauser)
+ * Rework Linux partition detection.
+ * Fix compile error in network stats on Linux 2.6.
+    (Patches provided by Scott Lampert)
+ * Change name of duplex value in network interface stats.
+    NOTE: this minor change breaks the API.
+ * Manual pages for saidar, statgrab and the other tools.
+ * Fix minor typo in statgrab usage output.
+ * Support for Solaris 10.
+ * Support for FreeBSD 7.
+
 libstatgrab 0.11.1 (03 March 2005)
  * Add NFS to list of supported filesystems.
  * Fix reporting of network interface duplex settings on Linux.
