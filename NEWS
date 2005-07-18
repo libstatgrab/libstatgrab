@@ -4,7 +4,7 @@ http://www.i-scream.org/libstatgrab/
 $Id$
 
 PLANS: We're now working towards a 1.0 release which is where we plan
-       to stabalise the API. We'll be doing test releases before hand,
+       to stabilise the API. We'll be doing test releases before hand,
        but as always we'll like to hear about any bugs found in the
        current release.
 
