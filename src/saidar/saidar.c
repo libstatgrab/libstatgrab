@@ -335,8 +335,11 @@ void display_data(){
 		r=0;
 		w=0;
 		for(counter=0;counter<stats.disk_io_entries;counter++){
+			char name[12];
+			strncpy(name, disk_io_stat_ptr->disk_name, sizeof(name));
+			name[sizeof(name)-1] = '\0'; /* strncpy doesn't terminate longer strings */
 			move(line, 0);
-			printw("%s", disk_io_stat_ptr->disk_name);
+			printw("%s", name);
 			move(line, 12);
 			rt = (disk_io_stat_ptr->systime)? (disk_io_stat_ptr->read_bytes/disk_io_stat_ptr->systime): disk_io_stat_ptr->read_bytes;
 			printw("%7s", size_conv(rt));
@@ -362,8 +365,11 @@ void display_data(){
 		/* Network */
 		network_stat_ptr = stats.network_io_stats;
 		for(counter=0;counter<stats.network_io_entries;counter++){
+			char name[20];
+			strncpy(name, network_stat_ptr->interface_name, sizeof(name));
+			name[sizeof(name)-1] = '\0'; /* strncpy doesn't terminate longer strings */
 			move(line, 42);
-			printw("%s", network_stat_ptr->interface_name);
+			printw("%s", name);
 			move(line, 62);
 			rt = (network_stat_ptr->systime)? (network_stat_ptr->rx / network_stat_ptr->systime): network_stat_ptr->rx;
 			printw("%7s", size_conv(rt));
@@ -380,8 +386,11 @@ void display_data(){
 		/* Disk */
 		disk_stat_ptr = stats.fs_stats;
 		for(counter=0;counter<stats.fs_entries;counter++){
+			char name[20];
+			strncpy(name, disk_stat_ptr->mnt_point, sizeof(name));
+			name[sizeof(name)-1] = '\0'; /* strncpy doesn't terminate longer strings */
 			move(line, 42);
-			printw("%s", disk_stat_ptr->mnt_point);
+			printw("%s", name);
 			move(line, 62);
 			printw("%7s", size_conv(disk_stat_ptr->avail));
 			move(line, 73);
