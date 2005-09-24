@@ -40,6 +40,9 @@ int main(int argc, char **argv){
 				break;
 		}
 	}
+#ifdef WIN32
+	delay = delay * 1000;
+#endif
 
 	/* Initialise statgrab */
 	sg_init();
@@ -51,12 +54,14 @@ int main(int argc, char **argv){
 	}
 
 	/* Throw away the first reading as thats averaged over the machines uptime */
+	sg_snapshot();
 	cpu_percent = sg_get_cpu_percents();
 
 	/* Clear the screen ready for display the cpu usage */
 	printf("\033[2J");
 
 	while( (cpu_percent = sg_get_cpu_percents()) != NULL){
+		sg_snapshot();
 		printf("\033[2;2H%-12s : %6.2f", "User CPU", cpu_percent->user);
 		printf("\033[3;2H%-12s : %6.2f", "Kernel CPU", cpu_percent->kernel);
 		printf("\033[4;2H%-12s : %6.2f", "IOWait CPU", cpu_percent->iowait);
@@ -66,6 +71,7 @@ int main(int argc, char **argv){
 		fflush(stdout);
 		sleep(delay);
 	}
+	sg_shutdown();
 
 	exit(0);
 }

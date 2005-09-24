@@ -78,6 +78,10 @@
 #include <unistd.h>
 #define PROCESS_BATCH 30
 #endif
+#ifdef WIN32
+#include <windows.h>
+#include <psapi.h>
+#endif
 
 static void proc_state_init(sg_process_stats *s) {
 	s->process_name = NULL;
@@ -755,6 +759,14 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
 	return NULL;
 #endif
+#ifdef WIN32
+	/* FIXME The data needed for this is probably do able with the 
+	 * "performance registry". Although using this appears to be a black
+	 * art and closely guarded secret.
+	 * This is not directly used in ihost, so not considered a priority */
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Win32");
+	return NULL;
+#endif
 
 	*entries = proc_state_size;
 	return proc_state;
@@ -762,8 +774,13 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 sg_process_count *sg_get_process_count() {
 	static sg_process_count process_stat;
+#ifndef WIN32
 	sg_process_stats *ps;
 	int ps_size, x;
+#else
+	DWORD aProcesses[1024];
+	DWORD cbNeeded;
+#endif
 
 	process_stat.sleeping = 0;
 	process_stat.running = 0;
@@ -771,6 +788,7 @@ sg_process_count *sg_get_process_count() {
 	process_stat.stopped = 0;
 	process_stat.total = 0;
 
+#ifndef WIN32
 	ps = sg_get_process_stats(&ps_size);
 	if (ps == NULL) {
 		return NULL;
@@ -799,6 +817,11 @@ sg_process_count *sg_get_process_count() {
 	}
 
 	process_stat.total = ps_size;
+#else
+	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+		return NULL;
+	process_stat.total = cbNeeded / sizeof(DWORD);
+#endif
 
 	return &process_stat;
 }

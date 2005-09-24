@@ -70,6 +70,11 @@ typedef __uint64_t u64;
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
+#ifdef WIN32
+#include <windows.h>
+#include <Iphlpapi.h>
+#include "win32.h"
+#endif
 
 static void network_stat_init(sg_network_io_stats *s) {
 	s->interface_name = NULL;
@@ -88,6 +93,38 @@ static void network_stat_destroy(sg_network_io_stats *s) {
 
 VECTOR_DECLARE_STATIC(network_stats, sg_network_io_stats, 5,
 		      network_stat_init, network_stat_destroy);
+
+#ifdef WIN32
+static PMIB_IFTABLE win32_get_devices()
+{
+	PMIB_IFTABLE if_table;
+	PMIB_IFTABLE tmp;
+	unsigned long dwSize = 0;
+
+	// Allocate memory for pointers
+	if_table = sg_malloc(sizeof(MIB_IFTABLE));
+	if(if_table == NULL) {
+		return NULL;
+	}
+
+	// Get necessary size for the buffer
+	if(GetIfTable(if_table, &dwSize, 0) == ERROR_INSUFFICIENT_BUFFER) {
+		tmp = sg_realloc(if_table, dwSize);
+		if(tmp == NULL) {
+			free(if_table);
+			return NULL;
+		}
+		if_table = tmp;
+	}
+
+	// Get the data
+	if(GetIfTable(if_table, &dwSize, 0) != NO_ERROR) {
+		free(if_table);
+		return NULL;
+	}
+	return if_table;
+}
+#endif /* WIN32 */
 
 sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	int interfaces;
@@ -109,6 +146,15 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 #ifdef ALLBSD
 	struct ifaddrs *net, *net_ptr;
 	struct if_data *net_data;
+#endif
+#ifdef WIN32
+	PMIB_IFTABLE if_table;
+	MIB_IFROW if_row;
+	int i, no, j;
+
+	/* used for duplicate interface names. 5 for space, hash, up to two
+	 * numbers and terminating slash */
+	char buf[5];
 #endif
 
 #ifdef ALLBSD
@@ -154,7 +200,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	interfaces=0;
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-		if (!strcmp(ksp->ks_class, "net")) {
+		if (strcmp(ksp->ks_class, "net") == 0) {
 			kstat_read(kc, ksp, NULL);
 
 #ifdef SOL7
@@ -300,13 +346,75 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	return NULL;
 #endif
 
+#ifdef WIN32
+	interfaces = 0;
+
+	if((if_table = win32_get_devices()) == NULL) {
+		sg_set_error(SG_ERROR_DEVICES, "network");
+		return NULL;
+	}
+
+	if(VECTOR_RESIZE(network_stats, if_table->dwNumEntries) < 0) {
+		free(if_table);
+		return NULL;
+	}
+
+	for (i=0; i<if_table->dwNumEntries; i++) {
+		network_stat_ptr=network_stats+i;
+		if_row = if_table->table[i];
+
+		if(sg_update_string(&network_stat_ptr->interface_name,
+					if_row.bDescr) < 0) {
+			free(if_table);
+			return NULL;
+		}
+		network_stat_ptr->tx = if_row.dwOutOctets;
+		network_stat_ptr->rx = if_row.dwInOctets;
+		network_stat_ptr->ipackets = if_row.dwInUcastPkts + if_row.dwInNUcastPkts;
+		network_stat_ptr->opackets = if_row.dwOutUcastPkts + if_row.dwOutNUcastPkts;
+		network_stat_ptr->ierrors = if_row.dwInErrors;
+		network_stat_ptr->oerrors = if_row.dwOutErrors;
+		network_stat_ptr->collisions = 0; /* can't do that */
+		network_stat_ptr->systime = time(NULL);
+
+		interfaces++;
+	}
+	free(if_table);
+
+	/* Please say there's a nicer way to do this...  If windows has two (or
+	 * more) identical network cards, GetIfTable returns them with the same
+	 * name, not like in Device Manager where the other has a #2 etc after
+	 * it. So, add the #number here. Should we be doing this? Or should the
+	 * end programs be dealing with duplicate names? Currently breaks
+	 * watch.pl in rrdgraphing. But Unix does not have the issue of
+	 * duplicate net device names.
+	 */
+	for (i=0; i<interfaces; i++) {
+		no = 2;
+		for(j=i+1; j<interfaces; j++) {
+			network_stat_ptr=network_stats+j;
+			if(strcmp(network_stats[i].interface_name, 
+					network_stat_ptr->interface_name) == 0) {
+				if(snprintf(buf, sizeof(buf), " #%d", no) < 0) {
+					break;
+				}
+				if(sg_concat_string(&network_stat_ptr->interface_name, buf) != 0) {
+					return NULL;
+				}
+
+				no++;
+			}
+		}
+	}
+#endif
+
 	*entries=interfaces;
 
 	return network_stats;	
 }
 
 static long long transfer_diff(long long new, long long old){
-#if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD) || defined(OPENBSD)
+#if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD) || defined(OPENBSD) || defined(WIN32)
 	/* 32-bit quantities, so we must explicitly deal with wraparound. */
 #define MAXVAL 0x100000000LL
 	if (new >= old) {
@@ -439,6 +547,12 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	char line[8096];
 	int sock;
 #endif
+#ifdef WIN32
+	PMIB_IFTABLE if_table;
+	MIB_IFROW if_row;
+	int i,j,no;
+	char buf[5];
+#endif
 
 #ifdef ALLBSD
 	if(getifaddrs(&net) != 0){
@@ -555,7 +669,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	}
 
 	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-		if (!strcmp(ksp->ks_class, "net")) {
+		if (strcmp(ksp->ks_class, "net") == 0) {
 			struct ifreq ifr;
 
 			kstat_read(kc, ksp, NULL);
@@ -605,7 +719,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 	close(sock);
 	kstat_close(kc);
-#endif	
+#endif
 #ifdef LINUX
 	f = fopen("/proc/net/dev", "r");
 	if(f == NULL){
@@ -703,6 +817,62 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #ifdef HPUX
 	sg_set_error(SG_ERROR_UNSUPPORTED, "HP-UX");
 	return NULL;
+#endif
+#ifdef WIN32
+	ifaces = 0;
+
+	if((if_table = win32_get_devices()) == NULL) {
+		sg_set_error(SG_ERROR_DEVICES, "network interfaces");
+		return NULL;
+	}
+
+	if(VECTOR_RESIZE(network_iface_stats, if_table->dwNumEntries) < 0) {
+		free(if_table);
+		return NULL;
+	}
+
+	for(i=0; i<if_table->dwNumEntries; i++) {
+		network_iface_stat_ptr=network_iface_stats+i;
+		if_row = if_table->table[i];
+
+		if(sg_update_string(&network_iface_stat_ptr->interface_name,
+					if_row.bDescr) < 0) {
+			free(if_table);
+			return NULL;
+		}
+		network_iface_stat_ptr->speed = if_row.dwSpeed /1000000;
+
+		if((if_row.dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED ||
+				if_row.dwOperStatus == 
+					MIB_IF_OPER_STATUS_OPERATIONAL) &&
+				if_row.dwAdminStatus == 1) {
+			network_iface_stat_ptr->up = 1;
+		} else {
+			network_iface_stat_ptr->up = 0;
+		}
+
+		ifaces++;
+	}
+	free(if_table);
+
+	/* again with the renumbering */
+	for (i=0; i<ifaces; i++) {
+		no = 2;
+		for(j=i+1; j<ifaces; j++) {
+			network_iface_stat_ptr=network_iface_stats+j;
+			if(strcmp(network_iface_stats[i].interface_name, 
+					network_iface_stat_ptr->interface_name) == 0) {
+				if(snprintf(buf, sizeof(buf), " #%d", no) < 0) {
+					break;
+				}
+				if(sg_concat_string(&network_iface_stat_ptr->interface_name, buf) != 0) {
+					return NULL;
+				}
+
+				no++;
+			}
+		}
+	}
 #endif
 
 #ifdef SG_ENABLE_DEPRECATED

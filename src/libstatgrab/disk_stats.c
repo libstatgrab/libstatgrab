@@ -91,6 +91,12 @@
 #define DISK_BATCH 30
 #endif
 
+#ifdef WIN32
+#include "win32.h"
+/*#define VALID_FS_TYPES {"NTFS", "FAT", "FAT32"} unused*/
+#define BUFSIZE 512
+#endif
+
 #ifdef ALLBSD
 #define SG_MP_FSTYPENAME(mp) (mp)->f_fstypename
 #define SG_MP_DEVNAME(mp)    (mp)->f_mntfromname
@@ -143,6 +149,7 @@ static void disk_stat_destroy(sg_fs_stats *d) {
 	free(d->mnt_point);
 }
 
+#ifndef WIN32 /* not used by WIN32, so stop compiler throwing warnings */
 static int is_valid_fs_type(const char *type) {
 	const char *types[] = VALID_FS_TYPES;
 	int i;
@@ -154,6 +161,7 @@ static int is_valid_fs_type(const char *type) {
 	}
 	return 0;
 }
+#endif
 
 sg_fs_stats *sg_get_fs_stats(int *entries){
 	VECTOR_DECLARE_STATIC(disk_stats, sg_fs_stats, 10,
@@ -181,6 +189,14 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 #else
 	struct statfs *mp, **fs;
 #endif
+#endif
+#ifdef WIN32
+	char lp_buf[MAX_PATH];
+	char volume_name_buf[BUFSIZE];
+	char filesys_name_buf[BUFSIZE];
+	char drive[4] = " :\\";
+	char *p;
+	lp_buf[0]='\0';
 #endif
 
 #ifdef ALLBSD
@@ -220,12 +236,28 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 		}
 #endif
 
+#ifdef WIN32
+	if (!(GetLogicalDriveStrings(BUFSIZE-1, lp_buf))) {
+		sg_set_error(SG_ERROR_GETMNTINFO, "GetLogicalDriveStrings");
+		return NULL;
+	}
+	p = lp_buf;
+	do {
+		// Copy drive letter to template string
+		*drive = *p;
+		// Only interested in harddrives.
+		int drive_type = GetDriveType(drive);
+
+		if(drive_type == DRIVE_FIXED) {
+#else
 		if(is_valid_fs_type(SG_MP_FSTYPENAME(mp))){
+#endif
 			if (VECTOR_RESIZE(disk_stats, num_disks + 1) < 0) {
 				return NULL;
 			}
 			disk_ptr=disk_stats+num_disks;
 
+#ifndef WIN32
 			/* Maybe make this char[bigenough] and do strncpy's and put a null in the end? 
 			 * Downside is its a bit hungry for a lot of mounts, as MNT_MAX_SIZE would prob 
 			 * be upwards of a k each 
@@ -243,7 +275,7 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			disk_ptr->size  = SG_FS_FRSIZE(fs) * SG_FS_BLOCKS(fs);
 			disk_ptr->avail = SG_FS_FRSIZE(fs) * SG_FS_BAVAIL(fs);
 			disk_ptr->used  = (disk_ptr->size) - (SG_FS_FRSIZE(fs) * SG_FS_BFREE(fs));
-
+		
 			disk_ptr->total_inodes = SG_FS_FILES(fs);
 			disk_ptr->free_inodes  = SG_FS_FFREE(fs);
 			/* Linux, FreeBSD don't have a "available" inodes */
@@ -256,10 +288,56 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 			disk_ptr->free_blocks  = SG_FS_BFREE(fs);
 			disk_ptr->avail_blocks = SG_FS_BAVAIL(fs);
 			disk_ptr->used_blocks  = disk_ptr->total_blocks - disk_ptr->free_blocks;
+#else
+			if(!GetVolumeInformation(drive, volume_name_buf, BUFSIZE,
+						NULL, NULL, NULL, 
+						filesys_name_buf, BUFSIZE)) {
+				sg_set_error_with_errno(SG_ERROR_DISKINFO, 
+					"GetVolumeInformation");
+				return NULL;
+			}
 
+			if (sg_update_string(&disk_ptr->device_name, 
+						volume_name_buf) < 0) {
+				return NULL;
+			}
+			if (sg_update_string(&disk_ptr->fs_type, 
+						filesys_name_buf) < 0) {
+				return NULL;
+			}
+			if (sg_update_string(&disk_ptr->mnt_point,
+						drive) < 0) {
+				return NULL;
+			}
+			if (!GetDiskFreeSpaceEx(drive, NULL,
+					(PULARGE_INTEGER)&disk_ptr->size,
+					(PULARGE_INTEGER)&disk_ptr->avail)) {
+				sg_set_error_with_errno(SG_ERROR_DISKINFO,
+					"GetDiskFreeSpaceEx");
+				return NULL;
+			}
+			disk_ptr->used = disk_ptr->size - disk_ptr->avail;
+			disk_ptr->total_inodes = 0;
+			disk_ptr->free_inodes  = 0;
+			disk_ptr->used_inodes  = 0;
+			disk_ptr->avail_inodes = 0;
+
+			/* I dunno what to do with these... so have nothing */
+			disk_ptr->io_size = 0;
+			disk_ptr->block_size = 0;
+			disk_ptr->total_blocks = 0;
+			disk_ptr->free_blocks = 0;
+			disk_ptr->avail_blocks = 0;
+			disk_ptr->used_blocks = 0;
+#endif
 			num_disks++;
 		}
+#ifdef WIN32
+		while(*p++);
+	} while(*p);
+#else
 	}
+#endif
 
 	*entries=num_disks;	
 
@@ -370,6 +448,11 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	int num_disks, i;
 	int mib[MIBSIZE];
 	size_t size;
+#endif
+#ifdef WIN32
+	char *name;
+	long long rbytes;
+	long long wbytes;
 #endif
 
 	num_diskio=0;
@@ -768,15 +851,15 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 		f = fopen("/proc/stat", "r");
 		if (f == NULL) goto out;
 		now = time(NULL);
-	
+
 		line_ptr = sg_f_read_line(f, "disk_io:");
 		if (line_ptr == NULL) goto out;
-	
+
 		while((line_ptr=strchr(line_ptr, ' '))!=NULL){
 			long long rsect, wsect;
 
 			if (*++line_ptr == '\0') break;
-	
+
 			if((sscanf(line_ptr,
 				"(%d,%d):(%*d, %*d, %lld, %*d, %lld)",
 				&major, &minor, &rsect, &wsect)) != 4) {
@@ -837,12 +920,36 @@ out:
 	return NULL;
 #endif
 
+#ifdef WIN32
+	sg_set_error(SG_ERROR_NONE, NULL);
+
+	while((name = get_diskio(num_diskio, &rbytes, &wbytes)) != NULL) {
+		if (VECTOR_RESIZE(diskio_stats, num_diskio+1)) {
+			return NULL;
+		}
+
+		diskio_stats_ptr = diskio_stats + num_diskio;
+
+		if (sg_update_string(&diskio_stats_ptr->disk_name, name) < 0) {
+			return NULL;
+		}
+		sg_update_string(&name, NULL);
+		diskio_stats_ptr->read_bytes = rbytes;
+		diskio_stats_ptr->write_bytes = wbytes;
+
+		diskio_stats_ptr->systime = 0;
+
+		num_diskio++;
+	}
+#endif
+
 	*entries=num_diskio;
 
 	return diskio_stats;
 }
 
 sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries){
+#ifndef WIN32
 	VECTOR_DECLARE_STATIC(diff, sg_disk_io_stats, 1,
 			      diskio_stat_init, diskio_stat_destroy);
 	sg_disk_io_stats *src = NULL, *dest;
@@ -904,6 +1011,9 @@ sg_disk_io_stats *sg_get_disk_io_stats_diff(int *entries){
 
 	*entries = diff_count;
 	return diff;
+#else /* WIN32 */
+	return sg_get_disk_io_stats(entries);
+#endif
 }
 
 int sg_disk_io_compare_name(const void *va, const void *vb) {

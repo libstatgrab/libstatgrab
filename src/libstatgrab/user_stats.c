@@ -39,12 +39,18 @@
 #ifdef OPENBSD
 #include <sys/param.h>
 #endif
+#ifndef WIN32
 #include <utmp.h>
+#endif
 #ifdef CYGWIN
 #include <sys/unistd.h>
 #endif
 #ifdef HPUX
 #include <utmp.h>
+#endif
+#ifdef WIN32
+#include <windows.h>
+#include <lm.h>
 #endif
 
 sg_user_stats *sg_get_user_stats(){
@@ -73,6 +79,57 @@ sg_user_stats *sg_get_user_stats(){
 		num_users++;
 	}
 	fclose(f);
+#elif defined (WIN32)
+	LPWKSTA_USER_INFO_0 buf = NULL;
+	LPWKSTA_USER_INFO_0 tmp_buf;
+	unsigned long entries_read = 0;
+	unsigned long entries_tot = 0;
+	unsigned long resumehandle = 0;
+	NET_API_STATUS nStatus;
+	int i;
+	char name[256];
+
+	do {
+		nStatus = NetWkstaUserEnum(NULL, 0, (LPBYTE*)&buf,
+				MAX_PREFERRED_LENGTH, &entries_read,
+				&entries_tot, &resumehandle);
+		if((nStatus == NERR_Success) || (nStatus == ERROR_MORE_DATA)) {
+			if((tmp_buf = buf) == NULL) {
+				continue;
+			}
+			for (i=0; i<entries_read; i++) {
+				//assert(tmp_buf != NULL);
+				if (tmp_buf == NULL) {
+					sg_set_error(SG_ERROR_PERMISSION, "User list");
+					break;
+				}
+				/* It's in unicode. We are not. Convert */
+				WideCharToMultiByte(CP_ACP, 0, tmp_buf->wkui0_username, -1, name, sizeof(name), NULL, NULL);
+
+				new_pos = pos + strlen(name) + 1;
+				if(VECTOR_RESIZE(name_list, new_pos) < 0) {
+					NetApiBufferFree(buf);
+					return NULL;
+				}
+				strcpy(name_list + pos, name);
+				name_list[new_pos - 1] = ' ';
+				pos = new_pos;
+
+				tmp_buf++;
+				num_users++;
+			}
+		} else {
+			sg_set_error(SG_ERROR_PERMISSION, "User enum");
+			return NULL;
+		}
+		if (buf != NULL) {
+			NetApiBufferFree(buf);
+			buf=NULL;
+		}
+	} while (nStatus == ERROR_MORE_DATA);
+	if (buf != NULL) {
+		NetApiBufferFree(buf);
+	}
 #else
 	/* This works on everything else. */
 	struct utmp *entry;

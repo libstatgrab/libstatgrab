@@ -50,6 +50,10 @@
 #include <sys/pstat.h>
 #include <unistd.h>
 #endif
+#ifdef WIN32
+#include <windows.h>
+#include "win32.h"
+#endif
 
 sg_mem_stats *sg_get_mem_stats(){
 
@@ -83,6 +87,9 @@ sg_mem_stats *sg_get_mem_stats(){
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
+#endif
+#ifdef WIN32
+	MEMORYSTATUSEX memstats;
 #endif
 
 #ifdef HPUX
@@ -227,5 +234,18 @@ sg_mem_stats *sg_get_mem_stats(){
 	mem_stat.used = mem_stat.total - mem_stat.free;
 #endif
 
+#ifdef WIN32
+	memstats.dwLength = sizeof(memstats);
+	if (!GlobalMemoryStatusEx(&memstats)) {
+		sg_set_error_with_errno(SG_ERROR_MEMSTATUS, NULL);
+		return NULL;
+	}
+	mem_stat.free = memstats.ullAvailPhys;
+	mem_stat.total = memstats.ullTotalPhys;
+	mem_stat.used = mem_stat.total - mem_stat.free;
+	if(read_counter_large(SG_WIN32_MEM_CACHE, &mem_stat.cache)) {
+		mem_stat.cache = 0;
+	}
+#endif
 	return &mem_stat;
 }

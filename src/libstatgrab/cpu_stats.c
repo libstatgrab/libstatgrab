@@ -55,6 +55,10 @@
 #include <sys/pstat.h>
 #include <sys/dk.h>
 #endif
+#ifdef WIN32
+#include <pdh.h>
+#include "win32.h"
+#endif
 
 static sg_cpu_stats cpu_now;
 static int cpu_now_uninit=1;
@@ -90,10 +94,10 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	cpu_now.iowait=0;
 	cpu_now.kernel=0;
 	cpu_now.idle=0;
-	/* Not stored in linux, freebsd, or hpux */
+	/* Not stored in linux, freebsd, hpux or windows */
 	cpu_now.swap=0;
 	cpu_now.total=0;
-	/* Not stored in solaris */
+	/* Not stored in solaris or windows */
 	cpu_now.nice=0;
 
 #ifdef HPUX
@@ -186,6 +190,10 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
 
 #endif
+#ifdef WIN32
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Win32");
+	return NULL;
+#endif
 
 	cpu_now.systime=time(NULL);
 	cpu_now_uninit=0;
@@ -234,6 +242,7 @@ sg_cpu_stats *sg_get_cpu_stats_diff(){
 
 sg_cpu_percents *sg_get_cpu_percents(){
 	static sg_cpu_percents cpu_usage;
+#ifndef WIN32
 	sg_cpu_stats *cs_ptr;
 
 	cs_ptr=sg_get_cpu_stats_diff();
@@ -248,8 +257,33 @@ sg_cpu_percents *sg_get_cpu_percents(){
 	cpu_usage.swap = ((float)cs_ptr->swap / (float)cs_ptr->total)*100;
 	cpu_usage.nice = ((float)cs_ptr->nice / (float)cs_ptr->total)*100;
 	cpu_usage.time_taken = cs_ptr->systime;
+#else
+	double result;
+
+	if(read_counter_double(SG_WIN32_PROC_USER, &result)) {
+		sg_set_error(SG_ERROR_PDHREAD, PDH_USER);
+		return NULL;
+	}
+	cpu_usage.user = (float)result;
+	if(read_counter_double(SG_WIN32_PROC_PRIV, &result)) {
+		sg_set_error(SG_ERROR_PDHREAD, PDH_PRIV);
+		return NULL;
+	}
+	cpu_usage.kernel = (float)result;
+	if(read_counter_double(SG_WIN32_PROC_IDLE, &result)) {
+		sg_set_error(SG_ERROR_PDHREAD, PDH_IDLE);
+		return NULL;
+	}
+	/* win2000 does not have an idle counter, but does have %activity
+	 * so convert it to idle */
+	cpu_usage.idle = 100 - (float)result;
+	if(read_counter_double(SG_WIN32_PROC_INT, &result)) {
+		sg_set_error(SG_ERROR_PDHREAD, PDH_INTER);
+		return NULL;
+	}
+	cpu_usage.iowait = (float)result;
+#endif
 
 	return &cpu_usage;
-
 }
 

@@ -61,6 +61,9 @@ AC_CHECK_HEADERS([libdevinfo.h])
 AM_CONDITIONAL(SETGIDBINS, false)
 AM_CONDITIONAL(SETUIDBINS, false)
 
+# Default MINGW setting
+AM_CONDITIONAL(MINGW, false)
+
 # Set things up for different OS's
 # We define the name of the OS so the code can act accordingly
 # We also need to add the right LDFLAGS
@@ -126,6 +129,12 @@ linux-gnu)
 	;;
 cygwin)
 	AC_DEFINE(CYGWIN, , [Building on Cygwin])
+	;;
+mingw32)
+	AC_DEFINE(MINGW, , [Building on MinGW])
+	AC_DEFINE(WINVER, 0x0500, [Building for Windows 2000])
+	AM_CONDITIONAL(MINGW, true)
+	LINKFLAGS="-lpdh -lIphlpapi -lpsapi -lnetapi32"
 	;;
 *)
 	AC_MSG_ERROR([Cannot build on unknown OS: $host_os])

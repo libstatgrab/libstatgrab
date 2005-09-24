@@ -31,17 +31,22 @@
 /* FIXME comments for less obvious fields */
 
 int sg_init(void);
+int sg_snapshot();
+int sg_shutdown();
 int sg_drop_privileges(void);
 
 typedef enum {
 	SG_ERROR_NONE = 0,
 	SG_ERROR_ASPRINTF,
+	SG_ERROR_DEVICES,
 	SG_ERROR_DEVSTAT_GETDEVS,
 	SG_ERROR_DEVSTAT_SELECTDEVS,
+	SG_ERROR_DISKINFO,
 	SG_ERROR_ENOENT,
 	SG_ERROR_GETIFADDRS,
 	SG_ERROR_GETMNTINFO,
 	SG_ERROR_GETPAGESIZE,
+	SG_ERROR_HOST,
 	SG_ERROR_KSTAT_DATA_LOOKUP,
 	SG_ERROR_KSTAT_LOOKUP,
 	SG_ERROR_KSTAT_OPEN,
@@ -49,9 +54,16 @@ typedef enum {
 	SG_ERROR_KVM_GETSWAPINFO,
 	SG_ERROR_KVM_OPENFILES,
 	SG_ERROR_MALLOC,
+	SG_ERROR_MEMSTATUS,
 	SG_ERROR_OPEN,
 	SG_ERROR_OPENDIR,
 	SG_ERROR_PARSE,
+	SG_ERROR_PDHADD,
+	SG_ERROR_PDHCOLLECT,
+	SG_ERROR_PDHOPEN,
+	SG_ERROR_PDHREAD,
+	SG_ERROR_PERMISSION,
+	SG_ERROR_PSTAT,
 	SG_ERROR_SETEGID,
 	SG_ERROR_SETEUID,
 	SG_ERROR_SETMNTENT,
@@ -63,8 +75,7 @@ typedef enum {
 	SG_ERROR_SYSCTLNAMETOMIB,
 	SG_ERROR_UNAME,
 	SG_ERROR_UNSUPPORTED,
-	SG_ERROR_XSW_VER_MISMATCH,
-	SG_ERROR_PSTAT
+	SG_ERROR_XSW_VER_MISMATCH
 } sg_error;
 
 void sg_set_error(sg_error code, const char *arg);
@@ -241,10 +252,18 @@ typedef struct {
 	pid_t parent; /* Parent pid */
 	pid_t pgid;   /* process id of process group leader */
 
+/* Windows does not have uid_t or gid_t types */
+#ifndef WIN32
 	uid_t uid;
 	uid_t euid;
 	gid_t gid;
 	gid_t egid;
+#else
+	int uid;
+	int euid;
+	int gid;
+	int egid;
+#endif
 
 	unsigned long long proc_size; /* in bytes */
 	unsigned long long proc_resident; /* in bytes */

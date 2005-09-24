@@ -59,6 +59,9 @@
 #include <unistd.h>
 #define SWAP_BATCH 5
 #endif
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 sg_swap_stats *sg_get_swap_stats(){
 
@@ -91,6 +94,9 @@ sg_swap_stats *sg_get_swap_stats(){
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
+#endif
+#ifdef WIN32
+	MEMORYSTATUSEX memstats;
 #endif
 
 #ifdef HPUX
@@ -219,6 +225,20 @@ sg_swap_stats *sg_get_swap_stats(){
 	swap_stat.total = (long long)uvm->pagesize * (long long)uvm->swpages;
 	swap_stat.used = (long long)uvm->pagesize * (long long)uvm->swpginuse;
 	swap_stat.free = swap_stat.total - swap_stat.used;
+#endif
+#ifdef WIN32
+	memstats.dwLength = sizeof(memstats);
+	if (!GlobalMemoryStatusEx(&memstats)) {
+		sg_set_error_with_errno(SG_ERROR_MEMSTATUS,
+			"GloblaMemoryStatusEx");
+		return NULL;
+	}
+	/* the PageFile stats include Phys memory "minus an overhead".
+	 * Due to this unknown "overhead" there's no way to extract just page
+	 * file use from these numbers */
+	swap_stat.total = memstats.ullTotalPageFile;
+	swap_stat.free = memstats.ullAvailPageFile;
+	swap_stat.used = swap_stat.total - swap_stat.free;
 #endif
 
 	return &swap_stat;

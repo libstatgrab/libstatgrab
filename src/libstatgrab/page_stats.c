@@ -45,9 +45,14 @@
 #include <sys/param.h>
 #include <uvm/uvm.h>
 #endif
+#ifdef WIN32
+#include "win32.h"
+#endif
 
 static sg_page_stats page_stats;
+#ifndef WIN32
 static int page_stats_uninit=1;
+#endif
 
 sg_page_stats *sg_get_page_stats(){
 #ifdef SOLARIS
@@ -145,13 +150,18 @@ sg_page_stats *sg_get_page_stats(){
 	page_stats.pages_pagein = uvm->pgswapin;
 	page_stats.pages_pageout = uvm->pgswapout;
 #endif
+#ifdef WIN32
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Win32");
+	return NULL;
+#endif
 
 	return &page_stats;
 }
 
 sg_page_stats *sg_get_page_stats_diff(){
-	sg_page_stats *page_ptr;
 	static sg_page_stats page_stats_diff;
+#ifndef WIN32
+	sg_page_stats *page_ptr;
 
 	if(page_stats_uninit){
 		page_ptr=sg_get_page_stats();
@@ -174,6 +184,18 @@ sg_page_stats *sg_get_page_stats_diff(){
 	page_stats_diff.pages_pagein=page_stats.pages_pagein-page_stats_diff.pages_pagein;
 	page_stats_diff.pages_pageout=page_stats.pages_pageout-page_stats_diff.pages_pageout;
 	page_stats_diff.systime=page_stats.systime-page_stats_diff.systime;
-	
+
+#else /* WIN32 */
+	if(read_counter_large(SG_WIN32_PAGEIN, &page_stats_diff.pages_pagein)) {
+		sg_set_error(SG_ERROR_PDHREAD, PDH_PAGEIN);
+		return NULL;
+	}
+	if(read_counter_large(SG_WIN32_PAGEOUT, &page_stats_diff.pages_pageout)) {
+		sg_set_error(SG_ERROR_PDHREAD, PDH_PAGEIN);
+		return NULL;
+	}
+	page_stats_diff.systime = 0;
+#endif /* WIN32 */
+
 	return &page_stats_diff;
 }

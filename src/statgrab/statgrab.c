@@ -511,14 +511,22 @@ void print_stat_value(const stat *s) {
 
 	switch (s->type) {
 	case LONG_LONG:
+#ifdef WIN32 /* Windows printf does not understand %lld, so use %I64d instead */
+		printf("%I64d", *(long long *)v);
+#else
 		printf("%lld", *(long long *)v);
+#endif
 		break;
 	case BYTES:
 		llv = *(long long *)v;
 		if (bytes_scale_factor != 0) {
 			llv /= bytes_scale_factor;
 		}
+#ifdef WIN32
+		printf("%I64d", llv);
+#else
 		printf("%lld", llv);
+#endif
 		break;
 	case TIME_T:
 		/* FIXME option for formatted time? */
@@ -734,6 +742,7 @@ int main(int argc, char **argv) {
 	/* We don't care if sg_init fails, because we can just display
  	   the statistics that can be read as non-root. */
 	sg_init();
+	sg_snapshot();
 	if (sg_drop_privileges() != 0)
 		die("Failed to drop setuid/setgid privileges");
 
@@ -745,6 +754,7 @@ int main(int argc, char **argv) {
 	case REPEAT_ONCE:
 		get_stats();
 		sleep(repeat_time);
+		sg_snapshot();
 		get_stats();
 		print_stats(argc, argv);
 		break;
@@ -754,6 +764,7 @@ int main(int argc, char **argv) {
 			print_stats(argc, argv);
 			printf("\n");
 			sleep(repeat_time);
+			sg_snapshot();
 		}
 	}
 
@@ -761,6 +772,8 @@ int main(int argc, char **argv) {
 		printf("\n");
 		printf("statgrab\n");
 	}
+
+	sg_shutdown();
 
 	return 0;
 }

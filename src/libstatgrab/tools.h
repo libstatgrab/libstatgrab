@@ -44,6 +44,7 @@ size_t sg_strlcat(char *dst, const char *src, size_t siz);
 size_t sg_strlcpy(char *dst, const char *src, size_t siz);
 
 int sg_update_string(char **dest, const char *src);
+int sg_concat_string(char **dest, const char *src);
 
 #if defined(LINUX) || defined(CYGWIN)
 long long sg_get_ll_match(char *line, regmatch_t *match);

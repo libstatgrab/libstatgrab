@@ -84,6 +84,8 @@ const char *sg_str_error(sg_error code) {
 		return "getmntinfo failed";
 	case SG_ERROR_GETPAGESIZE:
 		return "getpagesize failed";
+	case SG_ERROR_HOST:
+		return "gather host information faile";
 	case SG_ERROR_KSTAT_DATA_LOOKUP:
 		return "kstat_data_lookup failed";
 	case SG_ERROR_KSTAT_LOOKUP:
@@ -130,6 +132,22 @@ const char *sg_str_error(sg_error code) {
 		return "XSW version mismatch";
 	case SG_ERROR_PSTAT:
 		return "pstat failed";
+	case SG_ERROR_PDHOPEN:
+		return "PDH open failed";
+	case SG_ERROR_PDHCOLLECT:
+		return "PDH snapshot failed";
+	case SG_ERROR_PDHADD:
+		return "PDH add counter failed";
+	case SG_ERROR_PDHREAD:
+		return "PDH read counter failed";
+	case SG_ERROR_DEVICES:
+		return "failed to get device list";
+	case SG_ERROR_PERMISSION:
+		return "access violation";
+	case SG_ERROR_DISKINFO:
+		return "disk function failed";
+	case SG_ERROR_MEMSTATUS:
+		return "memory status failed";
 	}
 	return "unknown error";
 }

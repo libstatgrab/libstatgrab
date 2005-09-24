@@ -64,6 +64,9 @@
 #include <sys/fcntl.h>
 #include <dirent.h>
 #endif
+#ifdef WIN32
+#include "win32.h"
+#endif
 
 #if defined(SOLARIS) && defined(HAVE_LIBDEVINFO_H)
 struct map{
@@ -444,6 +447,21 @@ int sg_update_string(char **dest, const char *src) {
 	return 0;
 }
 
+/* join two strings together */
+int sg_concat_string(char **dest, const char *src) {
+	char *new;
+	int len = strlen(*dest) + strlen(src) + 1;
+
+	new = sg_realloc(*dest, len);
+	if (new == NULL) {
+		return -1;
+	}
+
+	*dest = new;
+	strcat(*dest, src);
+	return 0;
+}
+
 #if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
 kvm_t *sg_get_kvm() {
 	static kvm_t *kvmd = NULL;
@@ -531,10 +549,29 @@ int sg_init(){
 	build_mapping();
 #endif
 #endif
+#ifdef WIN32
+	return sg_win32_start_capture();
+#endif
 	return 0;
 }
 
+int sg_shutdown() {
+#ifdef WIN32
+	sg_win32_end_capture();
+#endif
+	return 0;
+}
+
+int sg_snapshot() {
+#ifdef WIN32
+	return sg_win32_snapshot();
+#else
+	return 0;
+#endif
+}
+
 int sg_drop_privileges() {
+#ifndef WIN32
 #ifdef HAVE_SETEGID
 	if (setegid(getgid()) != 0) {
 #elif defined(HAVE_SETRESGID)
@@ -555,6 +592,7 @@ int sg_drop_privileges() {
 		sg_set_error_with_errno(SG_ERROR_SETEUID, NULL);
 		return -1;
 	}
+#endif /* WIN32 */
 	return 0;
 }
 

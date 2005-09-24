@@ -42,6 +42,7 @@
 
 sg_load_stats *sg_get_load_stats(){
 
+#if !defined(CYGWIN) && !defined(WIN32)
 	static sg_load_stats load_stat;
 
 #ifdef HPUX
@@ -49,9 +50,13 @@ sg_load_stats *sg_get_load_stats(){
 #else
 	double loadav[3];
 #endif
+#endif /* not CYGWIN or WIN32 */
 
 #ifdef CYGWIN
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
+	return NULL;
+#elif defined(WIN32)
+	sg_set_error(SG_ERROR_UNSUPPORTED, "Win32");
 	return NULL;
 #else
 
