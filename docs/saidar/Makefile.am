@@ -3,7 +3,9 @@
 # $Id$
 
 if MANPAGES
+if SAIDAR
 man_MANS = saidar.1
+endif
 endif
 
 EXTRA_DIST = $(man_MANS)

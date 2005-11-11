@@ -3,8 +3,10 @@
 # $Id$
 
 if MANPAGES
+if STATGRAB
 man_MANS = statgrab.1 statgrab-make-mrtg-config.1 \
 	   statgrab-make-mrtg-index.1
+endif
 endif
 
 EXTRA_DIST = $(man_MANS)
