@@ -694,7 +694,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			if ((ifr.ifr_flags & IFF_UP) != 0) {
 				network_iface_stat_ptr->up = 1;
 			} else {
-				network_iface_stat_ptr->up = 1;
+				network_iface_stat_ptr->up = 0;
 			}
 
 			if ((knp = kstat_data_lookup(ksp, "ifspeed")) != NULL) {
