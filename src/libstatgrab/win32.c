@@ -40,9 +40,9 @@ int read_counter_double(pdh_enum counter, double *result)
 {
 	PDH_STATUS pdh_status;
 	PDH_FMT_COUNTERVALUE *item_buf;
-	HCOUNTER *phcounter = current_han[counter];
+	HCOUNTER hcounter = current_han[counter];
 
-	if(phcounter == NULL)
+	if(hcounter == NULL)
 		return -1;
 
 	item_buf = sg_malloc(sizeof(PDH_FMT_COUNTERVALUE));
@@ -50,7 +50,7 @@ int read_counter_double(pdh_enum counter, double *result)
 		return -1;
 	}
 
-	pdh_status = PdhGetFormattedCounterValue(phcounter, PDH_FMT_DOUBLE, NULL,
+	pdh_status = PdhGetFormattedCounterValue(hcounter, PDH_FMT_DOUBLE, NULL,
 			item_buf);
 	if(pdh_status != ERROR_SUCCESS) {
 		free(item_buf);
@@ -61,12 +61,12 @@ int read_counter_double(pdh_enum counter, double *result)
 	return 0;
 }
 
-static int read_counter_large_int(HCOUNTER phcounter, long long *result)
+static int read_counter_large_int(HCOUNTER hcounter, long long *result)
 {
 	PDH_STATUS pdh_status;
 	PDH_FMT_COUNTERVALUE *item_buf;
 
-	if(phcounter == NULL)
+	if(hcounter == NULL)
 		return -1;
 
 	item_buf = sg_malloc(sizeof(PDH_FMT_COUNTERVALUE));
@@ -74,7 +74,7 @@ static int read_counter_large_int(HCOUNTER phcounter, long long *result)
 		return -1;
 	}
 
-	pdh_status = PdhGetFormattedCounterValue(phcounter, PDH_FMT_LARGE, NULL,
+	pdh_status = PdhGetFormattedCounterValue(hcounter, PDH_FMT_LARGE, NULL,
 			item_buf);
 	if(pdh_status != ERROR_SUCCESS) {
 		free(item_buf);
