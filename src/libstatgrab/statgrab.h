@@ -24,6 +24,10 @@
 #ifndef STATGRAB_H
 #define STATGRAB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/types.h>
 
 /* FIXME typedefs for 32/64-bit types */
@@ -296,6 +300,10 @@ sg_process_count *sg_get_process_count();
 
 #ifdef SG_ENABLE_DEPRECATED
 #include <statgrab_deprecated.h>
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
