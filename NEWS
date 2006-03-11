@@ -8,6 +8,14 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.13? (?? March 2006)
+ * Fix build problems with recent linux kernels.
+ * Make saidar truncate disk/inteface/mount names to fit in display.
+ * Add WIN32 support using MINGW (not widely tested).
+ * Fix network interface up/down status on Solaris.
+ * Add extern "C" to header file to make linking with C++ code easier.
+ * A few build fixes.
+
 libstatgrab 0.12 (31 July 2005)
  * More details added to filesystem statistics.
      (Patches provided by Roman Neuhauser)
