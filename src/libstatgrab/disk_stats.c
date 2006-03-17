@@ -37,7 +37,7 @@
 #include <sys/mnttab.h>
 #include <sys/statvfs.h>
 #include <kstat.h>
-#define VALID_FS_TYPES {"ufs", "tmpfs", "vxfs"}
+#define VALID_FS_TYPES {"ufs", "tmpfs", "vxfs", "nfs"}
 #endif
 
 #if defined(LINUX) || defined(CYGWIN)
@@ -87,7 +87,7 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <time.h>
-#define VALID_FS_TYPES {"vxfs", "hfs"}
+#define VALID_FS_TYPES {"vxfs", "hfs", "nfs"}
 #define DISK_BATCH 30
 #endif
 
