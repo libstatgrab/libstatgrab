@@ -121,17 +121,18 @@ void add_stat(stat_type type, void *stat, ...) {
 			break;
 		partlen = strlen(part);
 		memcpy(p, part, partlen);
-		p += partlen;
+
+		/* Replace spaces and dots with underscores. */
+		while (partlen-- > 0) {
+			if (*p == ' ' || *p == '.')
+				*p = '_';
+			p++;
+		}
+
 		*p++ = '.';
 	}
 	va_end(ap);
 	*--p = '\0';
-
-	/* Replace spaces with underscores. */
-	for (p = name; *p != '\0'; p++) {
-		if (*p == ' ')
-			*p = '_';
-	}
 
 	/* Stretch the stats array if necessary. */
 	if (num_stats >= alloc_stats) {
