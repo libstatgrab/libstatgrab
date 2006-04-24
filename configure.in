@@ -105,7 +105,7 @@ netbsdelf1*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(NETBSD, , [Building on NetBSD])
 	;;
-netbsdelf2*)
+netbsdelf[[2-3]]*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(NETBSD, , [Building on NetBSD])
 	AC_DEFINE(NETBSD2, , [Building on NetBSD 2.x])
