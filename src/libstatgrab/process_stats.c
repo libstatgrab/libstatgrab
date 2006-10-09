@@ -143,6 +143,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	int len;
 	int rc;
 	time_t uptime;
+	long tickspersec;
 #endif
 
 #ifdef LINUX
@@ -255,6 +256,13 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 		/* cpu */
 		proc_state_ptr->cpu_percent = (100.0 * (utime + stime)) / ((uptime * 100.0) - starttime);
+		tickspersec = sysconf (_SC_CLK_TCK);
+		if (tickspersec < 0) {
+			proc_state_ptr->time_spent = 0;
+		}
+		else {
+			proc_state_ptr->time_spent = (utime + stime) / tickspersec;
+		}
 
 		fclose(f);
 
