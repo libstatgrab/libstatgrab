@@ -125,10 +125,10 @@ sg_cpu_stats *sg_get_cpu_stats(){
 			continue;
 		}
 		cpu_now.user+=(long long)cs.cpu_sysinfo.cpu[CPU_USER];
-		cpu_now.iowait+=(long long)cs.cpu_sysinfo.cpu[CPU_WAIT];
 		cpu_now.kernel+=(long long)cs.cpu_sysinfo.cpu[CPU_KERNEL];
 		cpu_now.idle+=(long long)cs.cpu_sysinfo.cpu[CPU_IDLE];
-		cpu_now.swap+=(long long)cs.cpu_sysinfo.cpu[CPU_STATES];
+		cpu_now.iowait+=(long long)cs.cpu_sysinfo.wait[W_IO]+(long long)cs.cpu_sysinfo.wait[W_PIO];
+		cpu_now.swap+=(long long)cs.cpu_sysinfo.wait[W_SWAP];
 	}
 
 	cpu_now.total=cpu_now.user+cpu_now.iowait+cpu_now.kernel+cpu_now.idle+cpu_now.swap;
