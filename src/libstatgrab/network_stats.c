@@ -698,7 +698,19 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			}
 
 			if ((ifr.ifr_flags & IFF_UP) != 0) {
-				network_iface_stat_ptr->up = 1;
+				if ((knp = kstat_data_lookup(ksp, "link_up")) != NULL) {
+					/* take in to account if link
+					 * is up as well as interface */
+					if (knp->value.ui32 != 0u) {
+						network_iface_stat_ptr->up = 1;
+					} else {
+						network_iface_stat_ptr->up = 0;
+					}
+				}
+				else {
+					/* maintain compatibility */
+					network_iface_stat_ptr->up = 1;
+				}
 			} else {
 				network_iface_stat_ptr->up = 0;
 			}
