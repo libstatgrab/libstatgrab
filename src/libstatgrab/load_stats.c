@@ -73,13 +73,17 @@ sg_load_stats *sg_get_load_stats(){
 
 	if((ksp=kstat_lookup(kc, "unix", 0, "system_misc")) == NULL){
 		sg_set_error(SG_ERROR_KSTAT_LOOKUP, "unix,0,system_misc");
+		kstat_close(kc);
 		return NULL;
 	}
 
 	if (kstat_read(kc, ksp, 0) == -1) {
 		sg_set_error(SG_ERROR_KSTAT_READ, NULL);
+		kstat_close(kc);
 		return NULL;
 	}
+
+	kstat_close(kc);
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_1min")) == NULL){
 		sg_set_error(SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_1min");

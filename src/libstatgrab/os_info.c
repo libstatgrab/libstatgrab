@@ -324,14 +324,17 @@ sg_host_info *sg_get_host_info()
 	}
 	if((ksp=kstat_lookup(kc, "unix", -1, "system_misc"))==NULL){
 		sg_set_error(SG_ERROR_KSTAT_LOOKUP, "unix,-1,system_misc");
+		kstat_close(kc);
 		return NULL;
 	}
 	if (kstat_read(kc, ksp, 0) == -1) {
 		sg_set_error(SG_ERROR_KSTAT_READ, NULL);
+		kstat_close(kc);
 		return NULL;
 	}
 	if((kn=kstat_data_lookup(ksp, "boot_time")) == NULL){
 		sg_set_error(SG_ERROR_KSTAT_DATA_LOOKUP, "boot_time");
+		kstat_close(kc);
 		return NULL;
 	}
 	boottime=(kn->value.ui32);

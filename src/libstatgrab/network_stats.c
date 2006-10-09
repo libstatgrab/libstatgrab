@@ -230,6 +230,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 			/* Create new network_stats */
 			if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
+				kstat_close(kc);
 				return NULL;
 			}
 			network_stat_ptr=network_stats+interfaces;
@@ -276,6 +277,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 			/* Read interface name */
 			if (sg_update_string(&network_stat_ptr->interface_name,
 					     ksp->ks_name) < 0) {
+				kstat_close(kc);
 				return NULL;
 			}
 
@@ -665,6 +667,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0) {
 		sg_set_error_with_errno(SG_ERROR_SOCKET, NULL);
+		kstat_close(kc);
 		return NULL;
 	}
 
@@ -681,6 +684,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			}
 
 			if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
+				kstat_close(kc);
 				return NULL;
 			}
 			network_iface_stat_ptr = network_iface_stats + ifaces;
@@ -688,6 +692,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 
 			if (sg_update_string(&network_iface_stat_ptr->interface_name,
 					     ksp->ks_name) < 0) {
+				kstat_close(kc);
 				return NULL;
 			}
 

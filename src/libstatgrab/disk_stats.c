@@ -756,6 +756,7 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 			diskio_stats_ptr->write_bytes=kios.nwritten;
 			if (sg_update_string(&diskio_stats_ptr->disk_name,
 					     sg_get_svr_from_bsd(ksp->ks_name)) < 0) {
+				kstat_close(kc);
 				return NULL;
 			}
 			diskio_stats_ptr->systime=time(NULL);

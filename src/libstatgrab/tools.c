@@ -249,6 +249,7 @@ static int build_mapping(){
 				if (x>=BIG_ENOUGH){
 					/* We've got bigger than we thought was massive */
 					/* If we hit this.. Make big enough bigger */
+					kstat_close(kc);
 					return -1;
 				}
 				if( !strncmp(driver_list[x], device_name, BIG_ENOUGH)){
@@ -259,6 +260,7 @@ static int build_mapping(){
 
 			if(!found){
 				if((get_alias(device_name)) != 0){
+					kstat_close(kc);
 					return -1;
 				}
 				strncpy(driver_list[x], device_name, BIG_ENOUGH);
@@ -266,6 +268,8 @@ static int build_mapping(){
 			}
 		}
 	}
+
+	kstat_close(kc);
 
 	return 0;
 }
