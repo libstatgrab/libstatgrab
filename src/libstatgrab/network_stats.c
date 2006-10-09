@@ -235,6 +235,13 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 			}
 			network_stat_ptr=network_stats+interfaces;
 
+			/* Read interface name */
+			if (sg_update_string(&network_stat_ptr->interface_name,
+					     ksp->ks_name) < 0) {
+				kstat_close(kc);
+				return NULL;
+			}
+
 			/* Finish reading rx */
 			network_stat_ptr->rx=knp->VALTYPE;
 
@@ -274,12 +281,6 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 			}
 			network_stat_ptr->collisions=knp->value.ui32;
 
-			/* Read interface name */
-			if (sg_update_string(&network_stat_ptr->interface_name,
-					     ksp->ks_name) < 0) {
-				kstat_close(kc);
-				return NULL;
-			}
 
 			/* Store systime */
 			network_stat_ptr->systime=time(NULL);
