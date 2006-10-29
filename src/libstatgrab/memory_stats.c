@@ -40,10 +40,16 @@
 #include <sys/sysctl.h>
 #include <unistd.h>
 #endif
-#if defined(NETBSD) || defined(OPENBSD)
+#if defined(NETBSD)
 #include <sys/param.h>
 #include <sys/time.h>
 #include <uvm/uvm.h>
+#endif
+#if defined(OPENBSD)
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/unistd.h>
 #endif
 #ifdef HPUX
 #include <sys/param.h>
@@ -85,8 +91,14 @@ sg_mem_stats *sg_get_mem_stats(){
 	u_int inactive_count;
 	int pagesize;
 #endif
-#if defined(NETBSD) || defined(OPENBSD)
+#if defined(NETBSD)
 	struct uvmexp *uvm;
+#endif
+#if defined(OPENBSD)
+	int mib[2];
+	struct vmtotal vmtotal;
+	size_t size;
+	static int pagesize, pageshift;
 #endif
 #ifdef WIN32
 	MEMORYSTATUSEX memstats;
@@ -218,20 +230,44 @@ sg_mem_stats *sg_get_mem_stats(){
 	mem_stat.used=physmem-mem_stat.free;
 #endif
 
-#if defined(NETBSD) || defined(OPENBSD)
+#if defined(NETBSD)
 	if ((uvm = sg_get_uvmexp()) == NULL) {
 		return NULL;
 	}
 
 	mem_stat.total = uvm->pagesize * uvm->npages;
-#ifdef NETBSD
 	mem_stat.cache = uvm->pagesize * (uvm->filepages + uvm->execpages);
-#else
-	/* Can't find cache memory on OpenBSD */
-	mem_stat.cache = 0;
-#endif
 	mem_stat.free = uvm->pagesize * (uvm->free + uvm->inactive);
 	mem_stat.used = mem_stat.total - mem_stat.free;
+#endif
+
+#if defined(OPENBSD)
+	/* get the page size with "getpagesize" and calculate pageshift
+	 * from it
+	 */
+	pagesize = getpagesize();
+	pageshift = 0;
+	while (pagesize > 1) {
+		pageshift++;
+		pagesize >>= 1;
+	}
+
+	/* we only need the amount of log(2)1024 for our conversion */
+	pageshift -= 10;	/* Log base 2 of 1024 is 10 (2^10 == 1024) */
+#define pagetok(size) ((size) << pageshift)
+	mib[0] = CTL_VM;
+	mib[1] = VM_METER;
+	size = sizeof(vmtotal);
+	if (sysctl(mib, 2, &vmtotal, &size, NUSG_ERROR_SYSCTL, 0) < 0) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTL,
+		                        "CTL_VM.VM_METER");
+		return NULL;
+	}
+	/* convert memory stats to Kbytes */
+	mem_stat.used = pagetok(vmtotal.t_rm);		/* total real mem in use */
+	mem_stat.cache = 0;				/* ? */
+	mem_stat.free = pagetok(vmtotal.t_free);	/* free memory pages */
+	mem_stat.total = (mem_stat.used + mem_stat.free);
 #endif
 
 #ifdef WIN32
