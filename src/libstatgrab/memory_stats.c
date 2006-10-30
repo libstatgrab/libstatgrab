@@ -258,7 +258,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	mib[0] = CTL_VM;
 	mib[1] = VM_METER;
 	size = sizeof(vmtotal);
-	if (sysctl(mib, 2, &vmtotal, &size, NUSG_ERROR_SYSCTL, 0) < 0) {
+	if (sysctl(mib, 2, &vmtotal, &size, NULL, 0) < 0) {
 		sg_set_error_with_errno(SG_ERROR_SYSCTL,
 		                        "CTL_VM.VM_METER");
 		return NULL;
