@@ -36,12 +36,29 @@
 #include <sys/times.h>
 #include <limits.h>
 #include <time.h>
+#include <math.h>
 
 #ifdef HAVE_NCURSES_H
 #include <ncurses.h>
 #else
 #include <curses.h>
 #endif
+
+#define THRESHOLD_LOAD 1.0
+
+#define THRESHOLD_WARN_ZMB 0
+
+#define THRESHOLD_WARN_CPU 60.0
+#define THRESHOLD_ALERT_CPU 90.0
+
+#define THRESHOLD_WARN_SWAP 75.0
+#define THRESHOLD_ALERT_SWAP 90.0
+
+#define THRESHOLD_WARN_MEM 75.0
+#define THRESHOLD_ALERT_MEM 90.0
+
+#define THRESHOLD_WARN_DISK 75.0
+#define THRESHOLD_ALERT_DISK 90.0
 
 typedef struct{
 	sg_cpu_percents *cpu_percents;
@@ -211,7 +228,7 @@ void display_headings(){
 	refresh();
 }
 
-void display_data(){
+void display_data(int colors){
 	char cur_time[20];
 	struct tm *tm_time;
 	time_t epoc_time;
@@ -237,6 +254,9 @@ void display_data(){
 		if (ptr != NULL){
 			*ptr = '\0';
 		}
+		if (colors) {
+			attron(COLOR_PAIR(1));
+		}
 		printw("%s", hostname);
 		move(0,36);
 		printw("%s", hr_uptime(stats.host_info->uptime));
@@ -245,16 +265,40 @@ void display_data(){
 		strftime(cur_time, 20, "%Y-%m-%d %T", tm_time);
 		move(0,61);
 		printw("%s", cur_time);
+		if (colors) {
+			attroff(COLOR_PAIR(1));
+		}
 	}
 
 	if (stats.load_stats != NULL) {
 		/* Load */
+		if (colors) {
+			attron(COLOR_PAIR(6));
+		}
 		move(2,12);
+		if (colors && fabs(stats.load_stats->min1 - stats.load_stats->min5) > THRESHOLD_LOAD) {
+			attron(A_BOLD);
+		}
 		printw("%6.2f", stats.load_stats->min1);
+		if (colors) {
+			attroff(A_BOLD);
+		}
 		move(3,12);
+		if (colors && fabs(stats.load_stats->min5 - stats.load_stats->min15) > THRESHOLD_LOAD) {
+			attron(A_BOLD);
+		}
 		printw("%6.2f", stats.load_stats->min5);
+		if (colors) {
+			attroff(A_BOLD);
+		}
 		move(4,12);
+		if (colors && fabs(stats.load_stats->min1 - stats.load_stats->min15) > THRESHOLD_LOAD) {
+			attron(A_BOLD);
+		}
 		printw("%6.2f", stats.load_stats->min15);
+		if (colors) {
+			attroff(A_BOLD);
+		}
 	}
 
 	if (stats.cpu_percents != NULL) {
@@ -264,7 +308,18 @@ void display_data(){
 		move(3,33);
 		printw("%6.2f%%", (stats.cpu_percents->kernel + stats.cpu_percents->iowait + stats.cpu_percents->swap));
 		move(4,33);
+		if (colors && stats.cpu_percents->user + stats.cpu_percents->nice > THRESHOLD_ALERT_CPU) {
+			attron(A_STANDOUT);
+		}
+		else if (colors && stats.cpu_percents->user + stats.cpu_percents->nice > THRESHOLD_WARN_CPU) {
+			attron(A_BOLD);
+		}
 		printw("%6.2f%%", (stats.cpu_percents->user + stats.cpu_percents->nice));
+		if(colors) {
+			attroff(A_BOLD);
+			attroff(A_STANDOUT);
+			attron(COLOR_PAIR(6));
+		}
 	}
 
 	if (stats.process_count != NULL) {
@@ -272,7 +327,14 @@ void display_data(){
 		move(2, 54);
 		printw("%5d", stats.process_count->running);
 		move(2,74);
+		if (colors && stats.process_count->zombie > THRESHOLD_WARN_ZMB) {
+			attron(A_STANDOUT);
+		}
 		printw("%5d", stats.process_count->zombie);
+		if(colors) {
+			attroff(A_STANDOUT);
+			attron(COLOR_PAIR(6));
+		}
 		move(3, 54);
 		printw("%5d", stats.process_count->sleeping);
 		move(3, 74);
@@ -285,6 +347,10 @@ void display_data(){
 		printw("%5d", stats.user_stats->num_entries);
 	}
 
+	if(colors) {
+		attroff(COLOR_PAIR(6));
+		attron(COLOR_PAIR(5));
+	}
 	if (stats.mem_stats != NULL) {
 		/* Mem */
 		move(6, 12);
@@ -307,12 +373,36 @@ void display_data(){
 
 	/* VM */
 	if (stats.mem_stats != NULL && stats.mem_stats->total != 0) {
+		float f = 100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total;
+		if (colors && f > THRESHOLD_ALERT_MEM) {
+			attron(A_STANDOUT);
+		}
+		else if (colors && f > THRESHOLD_WARN_MEM) {
+			attron(A_BOLD);
+		}
 		move(6, 54);
-		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total));
+		printw("%5.2f%%", f);
+		if (colors) {
+			attroff(A_STANDOUT);
+			attroff(A_BOLD);
+			attron(COLOR_PAIR(5));
+		}
 	}
 	if (stats.swap_stats != NULL && stats.swap_stats->total != 0) {
+		float f = 100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total;
+		if (colors && f > THRESHOLD_ALERT_SWAP) {
+			attron(A_STANDOUT);
+		}
+		else if (colors && f > THRESHOLD_WARN_SWAP) {
+			attron(A_BOLD);
+		}
 		move(7, 54);
-		printw("%5.2f%%", (100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total));
+		printw("%5.2f%%", f);
+		if (colors) {
+			attroff(A_STANDOUT);
+			attroff(A_BOLD);
+			attron(COLOR_PAIR(5));
+		}
 	}
 	if (stats.mem_stats != NULL && stats.swap_stats != NULL &&
 	    stats.mem_stats->total != 0 && stats.swap_stats->total != 0) {
@@ -326,6 +416,9 @@ void display_data(){
 		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
 		move(7, 74);
 		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
+	}
+	if (colors) {
+		attroff(COLOR_PAIR(5));
 	}
 
 	line = 11;
@@ -342,6 +435,9 @@ void display_data(){
 			printw("%s", name);
 			move(line, 12);
 			rt = (disk_io_stat_ptr->systime)? (disk_io_stat_ptr->read_bytes/disk_io_stat_ptr->systime): disk_io_stat_ptr->read_bytes;
+			if(colors) {
+				attron(COLOR_PAIR(4));
+			}
 			printw("%7s", size_conv(rt));
 			r+=rt;
 			move(line, 26);
@@ -350,14 +446,23 @@ void display_data(){
 			w+=wt;
 			disk_io_stat_ptr++;
 			line++;
+			if(colors) {
+				attroff(COLOR_PAIR(4));
+			}
 		}
 		line++;
 		move(line, 0);
 		printw("Total");
 		move(line, 12);
+		if(colors) {
+			attron(COLOR_PAIR(4));
+		}
 		printw("%7s", size_conv(r));
 		move(line, 26);
 		printw("%7s", size_conv(w));
+		if(colors) {
+			attroff(COLOR_PAIR(4));
+		}
 	}
 
 	line = 11;
@@ -372,12 +477,18 @@ void display_data(){
 			printw("%s", name);
 			move(line, 62);
 			rt = (network_stat_ptr->systime)? (network_stat_ptr->rx / network_stat_ptr->systime): network_stat_ptr->rx;
+			if(colors) {
+				attron(COLOR_PAIR(4));
+			}
 			printw("%7s", size_conv(rt));
 			move(line, 72);
 			wt = (network_stat_ptr->systime)? (network_stat_ptr->tx / network_stat_ptr->systime): network_stat_ptr->tx;
 			printw("%7s", size_conv(wt));
 			network_stat_ptr++;
 			line++;
+			if(colors) {
+				attroff(COLOR_PAIR(4));
+			}
 		}
 		line += 2;
 	}
@@ -392,11 +503,24 @@ void display_data(){
 			move(line, 42);
 			printw("%s", name);
 			move(line, 62);
+			if(colors) {
+				attron(COLOR_PAIR(2));
+			}
 			printw("%7s", size_conv(disk_stat_ptr->avail));
 			move(line, 73);
+			if(colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_ALERT_DISK) {
+				attron(A_STANDOUT);
+			} else if (colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_WARN_DISK) {
+				attron(A_BOLD);
+			}
 			printw("%6.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
 			disk_stat_ptr++;
 			line++;
+			if(colors) {
+				attroff(COLOR_PAIR(2));
+				attroff(A_STANDOUT);
+				attroff(A_BOLD);
+			}
 		}
 	}
 
@@ -406,7 +530,7 @@ void display_data(){
 void sig_winch_handler(int dummy){
 	clear();
 	display_headings();
-	display_data();
+	display_data(0);
 	signal(SIGWINCH, sig_winch_handler);
 }
 
@@ -433,8 +557,9 @@ void version_num(char *progname){
 }
 
 void usage(char *progname){
-	fprintf(stderr, "Usage: %s [-d delay] [-v] [-h]\n\n", progname);
+	fprintf(stderr, "Usage: %s [-d delay] [-c] [-v] [-h]\n\n", progname);
 	fprintf(stderr, "  -d    Sets the update time in seconds\n");
+	fprintf(stderr, "  -c    Enables coloured output\n");
 	fprintf(stderr, "  -v    Prints version number\n");
 	fprintf(stderr, "  -h    Displays this help information.\n");
 	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -442,9 +567,9 @@ void usage(char *progname){
 }
 
 int main(int argc, char **argv){
-
 	extern char *optarg;
 	int c;
+	int colouron = 0;
 
 	time_t last_update = 0;
 
@@ -460,7 +585,7 @@ int main(int argc, char **argv){
 		return 1;
 	}
 
-	while ((c = getopt(argc, argv, "vhd:")) != -1){
+	while ((c = getopt(argc, argv, "d:cvh")) != -1){
 		switch (c){
 			case 'd':
 				delay = atoi(optarg);
@@ -468,6 +593,9 @@ int main(int argc, char **argv){
 					fprintf(stderr, "Time must be 1 second or greater\n");
 					exit(1);
 				}
+				break;
+			case 'c':
+				colouron = 1;
 				break;
 			case 'v':
 				version_num(argv[0]);
@@ -482,6 +610,22 @@ int main(int argc, char **argv){
 
 	signal(SIGWINCH, sig_winch_handler);
 	initscr();
+	/* turn on colour */
+	if (colouron) {
+		if (has_colors()) {
+			start_color();
+			use_default_colors();
+			init_pair(1,COLOR_RED,-1);
+			init_pair(2,COLOR_GREEN,-1);
+			init_pair(3,COLOR_YELLOW,-1);
+			init_pair(4,COLOR_BLUE,-1);
+			init_pair(5,COLOR_MAGENTA,-1);
+			init_pair(6,COLOR_CYAN,-1);
+		} else {
+			fprintf(stderr, "Colour support disabled: your terminal does not support colour.");
+			colouron = 0;
+		}
+	}
 	nonl();
 	cbreak();
 	noecho();
@@ -514,7 +658,7 @@ int main(int argc, char **argv){
 		}
 		last_update = now;
 
-		display_data();
+		display_data(colouron);
 	}
 
 	endwin();
