@@ -63,7 +63,7 @@ typedef struct{
 	sg_host_info *host_info;
 	sg_user_stats *user_stats;
 }stats_t;
-	
+
 stats_t stats;
 
 char *size_conv(long long number){
@@ -88,14 +88,14 @@ char *size_conv(long long number){
 
 	snprintf(string, 10, "%lld%c", number, type[x]);
 	return string;
-	
+
 }
 
 char *hr_uptime(time_t time){
 	int day = 0, hour = 0, min = 0;
 	static char uptime_str[25];
 	int sec = (int) time;
-	
+
 	day = sec / (24*60*60);
 	sec = sec % (24*60*60);
 	hour = sec / (60*60);
@@ -187,7 +187,7 @@ void display_headings(){
 	move(10,15);
 	printw("Read");
 	move(10,28);
-	printw("Write");	
+	printw("Write");
 
 	line = 10;
 	if (stats.network_io_stats != NULL) {
@@ -236,7 +236,7 @@ void display_data(){
 		 */
 		if (ptr != NULL){
 			*ptr = '\0';
-		}	
+		}
 		printw("%s", hostname);
 		move(0,36);
 		printw("%s", hr_uptime(stats.host_info->uptime));
@@ -288,14 +288,14 @@ void display_data(){
 	if (stats.mem_stats != NULL) {
 		/* Mem */
 		move(6, 12);
-		printw("%7s", size_conv(stats.mem_stats->total));	
+		printw("%7s", size_conv(stats.mem_stats->total));
 		move(7, 12);
-		printw("%7s", size_conv(stats.mem_stats->used));	
+		printw("%7s", size_conv(stats.mem_stats->used));
 		move(8, 12);
 		printw("%7s", size_conv(stats.mem_stats->free));
 	}
-	
-	if (stats.swap_stats != NULL) {	
+
+	if (stats.swap_stats != NULL) {
 		/* Swap */
 		move(6, 32);
 		printw("%8s", size_conv(stats.swap_stats->total));
@@ -306,21 +306,21 @@ void display_data(){
 	}
 
 	/* VM */
-	if (stats.mem_stats != NULL && stats.mem_stats->total != 0) {	
+	if (stats.mem_stats != NULL && stats.mem_stats->total != 0) {
 		move(6, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total));
 	}
-	if (stats.swap_stats != NULL && stats.swap_stats->total != 0) {	
+	if (stats.swap_stats != NULL && stats.swap_stats->total != 0) {
 		move(7, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total));
 	}
 	if (stats.mem_stats != NULL && stats.swap_stats != NULL &&
-	    stats.mem_stats->total != 0 && stats.swap_stats->total != 0) {	
+	    stats.mem_stats->total != 0 && stats.swap_stats->total != 0) {
 		move(8, 54);
 		printw("%5.2f%%", (100.00 * (float)(stats.mem_stats->used+stats.swap_stats->used)/(stats.mem_stats->total+stats.swap_stats->total)));
 	}
 
-	if (stats.page_stats != NULL) {	
+	if (stats.page_stats != NULL) {
 		/* Paging */
 		move(6, 74);
 		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
@@ -329,7 +329,7 @@ void display_data(){
 	}
 
 	line = 11;
-	if (stats.disk_io_stats != NULL) {	
+	if (stats.disk_io_stats != NULL) {
 		/* Disk IO */
 		disk_io_stat_ptr = stats.disk_io_stats;
 		r=0;
@@ -361,7 +361,7 @@ void display_data(){
 	}
 
 	line = 11;
-	if (stats.network_io_stats != NULL) {	
+	if (stats.network_io_stats != NULL) {
 		/* Network */
 		network_stat_ptr = stats.network_io_stats;
 		for(counter=0;counter<stats.network_io_entries;counter++){
@@ -374,7 +374,7 @@ void display_data(){
 			rt = (network_stat_ptr->systime)? (network_stat_ptr->rx / network_stat_ptr->systime): network_stat_ptr->rx;
 			printw("%7s", size_conv(rt));
 			move(line, 72);
-			wt = (network_stat_ptr->systime)? (network_stat_ptr->tx / network_stat_ptr->systime): network_stat_ptr->tx; 
+			wt = (network_stat_ptr->systime)? (network_stat_ptr->tx / network_stat_ptr->systime): network_stat_ptr->tx;
 			printw("%7s", size_conv(wt));
 			network_stat_ptr++;
 			line++;
@@ -382,7 +382,7 @@ void display_data(){
 		line += 2;
 	}
 
-	if (stats.fs_stats != NULL) {	
+	if (stats.fs_stats != NULL) {
 		/* Disk */
 		disk_stat_ptr = stats.fs_stats;
 		for(counter=0;counter<stats.fs_entries;counter++){
@@ -459,7 +459,7 @@ int main(int argc, char **argv){
 		fprintf(stderr, "Failed to drop setuid/setgid privileges\n");
 		return 1;
 	}
-		
+
 	while ((c = getopt(argc, argv, "vhd:")) != -1){
 		switch (c){
 			case 'd':
@@ -470,7 +470,7 @@ int main(int argc, char **argv){
 				}
 				break;
 			case 'v':
-				version_num(argv[0]);	
+				version_num(argv[0]);
 				break;
 			case 'h':
 			default:
@@ -515,8 +515,8 @@ int main(int argc, char **argv){
 		last_update = now;
 
 		display_data();
-	}	
+	}
 
 	endwin();
 	return 0;
-}	
+}
