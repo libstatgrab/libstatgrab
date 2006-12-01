@@ -40,6 +40,7 @@
 
 #ifdef HAVE_NCURSES_H
 #include <ncurses.h>
+#define COLOR_SUPPORT
 #else
 #include <curses.h>
 #endif
@@ -562,9 +563,15 @@ void version_num(char *progname){
 }
 
 void usage(char *progname){
+#ifdef COLOR_SUPPORT
 	fprintf(stderr, "Usage: %s [-d delay] [-c] [-v] [-h]\n\n", progname);
+#else
+	fprintf(stderr, "Usage: %s [-d delay] [-v] [-h]\n\n", progname);
+#endif
 	fprintf(stderr, "  -d    Sets the update time in seconds\n");
+#ifdef COLOR_SUPPORT
 	fprintf(stderr, "  -c    Enables coloured output\n");
+#endif
 	fprintf(stderr, "  -v    Prints version number\n");
 	fprintf(stderr, "  -h    Displays this help information.\n");
 	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
@@ -590,7 +597,11 @@ int main(int argc, char **argv){
 		return 1;
 	}
 
+#ifdef COLOR_SUPPORT
 	while ((c = getopt(argc, argv, "d:cvh")) != -1){
+#else
+	while ((c = getopt(argc, argv, "d:vh")) != -1){
+#endif
 		switch (c){
 			case 'd':
 				delay = atoi(optarg);
@@ -599,9 +610,11 @@ int main(int argc, char **argv){
 					exit(1);
 				}
 				break;
+#ifdef COLOR_SUPPORT
 			case 'c':
 				colouron = 1;
 				break;
+#endif
 			case 'v':
 				version_num(argv[0]);
 				break;
@@ -615,6 +628,7 @@ int main(int argc, char **argv){
 
 	signal(SIGWINCH, sig_winch_handler);
 	initscr();
+#ifdef COLOR_SUPPORT
 	/* turn on colour */
 	if (colouron) {
 		if (has_colors()) {
@@ -631,6 +645,7 @@ int main(int argc, char **argv){
 			colouron = 0;
 		}
 	}
+#endif
 	nonl();
 	cbreak();
 	noecho();
