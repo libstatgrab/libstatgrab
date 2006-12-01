@@ -8,6 +8,21 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.14 (?? December 2006)
+ * Fix memory stats on OpenBSD.
+ * Add colour support to saidar.
+     (Thanks to Angelina Carlton)
+ * Fix CPU stats on Solaris - swap and iowait were incorrectly reported.
+ * Fix kstat related memory leaks on Solaris.
+     (Thanks to Javier Donaire)
+ * Fix network stats on some unusual Solaris setups.
+ * Fix process time_spent on Linux.
+     (Thanks to Fred Barnes)
+ * Make interface up status check the link status as well.
+     (Thanks to Michelangelo Vassallo)
+ * Fix build on NetBSD 3.
+     (Thanks to Wijnand Wiersma)
+
 libstatgrab 0.13 (19 March 2006)
  * Fix build problems with recent linux kernels.
  * Make saidar truncate disk/inteface/mount names to fit in display.
@@ -23,9 +38,9 @@ libstatgrab 0.12 (31 July 2005)
      (Patches provided by Roman Neuhauser)
  * Rework Linux partition detection.
  * Fix compile error in network stats on Linux 2.6.
-    (Patches provided by Scott Lampert)
+     (Patches provided by Scott Lampert)
  * Change name of duplex value in network interface stats.
-    NOTE: this minor change breaks the API.
+     NOTE: this minor change breaks the API.
  * Manual pages for saidar, statgrab and the other tools.
  * Fix minor typo in statgrab usage output.
  * Support for Solaris 10.
