@@ -310,6 +310,7 @@ void display_data(int colors){
 		move(4,33);
 		if (colors && stats.cpu_percents->user + stats.cpu_percents->nice > THRESHOLD_ALERT_CPU) {
 			attron(A_STANDOUT);
+			attron(A_BOLD);
 		}
 		else if (colors && stats.cpu_percents->user + stats.cpu_percents->nice > THRESHOLD_WARN_CPU) {
 			attron(A_BOLD);
@@ -329,11 +330,12 @@ void display_data(int colors){
 		move(2,74);
 		if (colors && stats.process_count->zombie > THRESHOLD_WARN_ZMB) {
 			attron(A_STANDOUT);
+			attron(A_BOLD);
 		}
 		printw("%5d", stats.process_count->zombie);
 		if(colors) {
 			attroff(A_STANDOUT);
-			attron(COLOR_PAIR(6));
+			attroff(A_BOLD);
 		}
 		move(3, 54);
 		printw("%5d", stats.process_count->sleeping);
@@ -376,6 +378,7 @@ void display_data(int colors){
 		float f = 100.00 * (float)(stats.mem_stats->used)/stats.mem_stats->total;
 		if (colors && f > THRESHOLD_ALERT_MEM) {
 			attron(A_STANDOUT);
+			attron(A_BOLD);
 		}
 		else if (colors && f > THRESHOLD_WARN_MEM) {
 			attron(A_BOLD);
@@ -392,6 +395,7 @@ void display_data(int colors){
 		float f = 100.00 * (float)(stats.swap_stats->used)/stats.swap_stats->total;
 		if (colors && f > THRESHOLD_ALERT_SWAP) {
 			attron(A_STANDOUT);
+			attron(A_BOLD);
 		}
 		else if (colors && f > THRESHOLD_WARN_SWAP) {
 			attron(A_BOLD);
@@ -510,6 +514,7 @@ void display_data(int colors){
 			move(line, 73);
 			if(colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_ALERT_DISK) {
 				attron(A_STANDOUT);
+				attron(A_BOLD);
 			} else if (colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_WARN_DISK) {
 				attron(A_BOLD);
 			}
