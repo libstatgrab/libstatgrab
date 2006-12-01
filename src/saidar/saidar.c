@@ -39,11 +39,9 @@
 #include <math.h>
 
 #ifdef HAVE_NCURSES_H
-#include <ncurses.h>
 #define COLOR_SUPPORT
-#else
-#include <curses.h>
 #endif
+#include CURSES_HEADER_FILE
 
 #define THRESHOLD_LOAD 1.0
 

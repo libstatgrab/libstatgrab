@@ -22,6 +22,7 @@ libstatgrab 0.14 (?? December 2006)
      (Thanks to Michelangelo Vassallo)
  * Fix build on NetBSD 3.
      (Thanks to Wijnand Wiersma)
+ * Rework curses detection code in the configure script.
 
 libstatgrab 0.13 (19 March 2006)
  * Fix build problems with recent linux kernels.
