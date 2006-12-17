@@ -645,6 +645,7 @@ int main(int argc, char **argv){
 	}
 #endif
 	nonl();
+	curs_set(0);
 	cbreak();
 	noecho();
 	timeout(delay * 1000);
