@@ -59,6 +59,8 @@
 #define THRESHOLD_WARN_DISK 75.0
 #define THRESHOLD_ALERT_DISK 90.0
 
+int sig_winch_flag = 0;
+
 typedef struct{
 	sg_cpu_percents *cpu_percents;
 	sg_mem_stats *mem_stats;
@@ -532,9 +534,7 @@ void display_data(int colors){
 }
 
 void sig_winch_handler(int dummy){
-	clear();
-	display_headings();
-	display_data(0);
+	sig_winch_flag = 1;
 	signal(SIGWINCH, sig_winch_handler);
 }
 
@@ -676,6 +676,12 @@ int main(int argc, char **argv){
 			get_stats();
 		}
 		last_update = now;
+
+		if(sig_winch_flag) {
+			clear();
+			display_headings();
+			sig_winch_flag = 0;
+		}
 
 		display_data(colouron);
 	}
