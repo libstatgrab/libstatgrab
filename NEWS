@@ -8,7 +8,7 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
-libstatgrab 0.14 (?? December 2006)
+libstatgrab 0.14 (08 January 2007)
  * Fix memory stats on OpenBSD.
  * Add colour support to saidar.
      (Thanks to Angelina Carlton)
@@ -23,6 +23,7 @@ libstatgrab 0.14 (?? December 2006)
  * Fix build on NetBSD 3.
      (Thanks to Wijnand Wiersma)
  * Rework curses detection code in the configure script.
+ * Fix bug that caused saidar to crash when the window was rapidly resized.
 
 libstatgrab 0.13 (19 March 2006)
  * Fix build problems with recent linux kernels.
