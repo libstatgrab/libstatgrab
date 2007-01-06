@@ -10,8 +10,6 @@ AC_DEFUN([MP_WITH_CURSES],
 
    mp_save_LIBS="$LIBS"
    mp_save_CPPFLAGS="$CPPFLAGS"
-   LIBS="$LIBS $SAIDARLIBS"
-   CPPFLAGS="$CPPFLAGS $SAIDARCPPFLAGS"
    CURSES_LIB=""
 
    if test "$with_ncurses" != no
@@ -48,7 +46,7 @@ AC_DEFUN([MP_WITH_CURSES],
    if test ! "$CURSES_LIB"
    then
      AC_CACHE_CHECK([for working curses], mp_cv_curses,
-       [LIBS="$LIBS $SAIDARLIBS -lcurses"
+       [LIBS="$mp_save_LIBS $SAIDARLIBS -lcurses"
         CPPFLAGS="$mp_save_CPPFLAGS $SAIDARCPPFLAGS"
         AC_TRY_LINK(
           [#include <curses.h>],
