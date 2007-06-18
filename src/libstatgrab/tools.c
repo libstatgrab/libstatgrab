@@ -179,7 +179,7 @@ static int get_alias(char *alias){
 	di_node_t root_node;
 	di_node_t node;
 	di_minor_t minor = DI_MINOR_NIL;
-	char tmpnode[MAXPATHLEN];
+	char tmpnode[MAXPATHLEN + 1];
 	char *phys_path;
 	char *minor_name;
 	char *value;
@@ -193,7 +193,7 @@ static int get_alias(char *alias){
 			instance = di_instance(node);
 			phys_path = di_devfs_path(node);
 			minor_name = di_minor_name(minor);
-			strcpy(tmpnode, alias);
+			sg_strlcpy(tmpnode, alias, MAXPATHLEN);
 			sprintf(tmpnode, "%s%d", tmpnode, instance);
 			sg_strlcpy(file, "/devices", sizeof file);
 			sg_strlcat(file, phys_path, sizeof file);
@@ -333,7 +333,7 @@ long long sg_get_ll_match(char *line, regmatch_t *match){
 }
 #endif
 
-/*      $OpenBSD: strlcpy.c,v 1.8 2003/06/17 21:56:24 millert Exp $     */
+/*	$OpenBSD: strlcpy.c,v 1.11 2006/05/05 15:27:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -357,16 +357,16 @@ long long sg_get_ll_match(char *line, regmatch_t *match){
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
 size_t sg_strlcpy(char *dst, const char *src, size_t siz){
-	register char *d = dst;
-	register const char *s = src;
-	register size_t n = siz;
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
 
 	/* Copy as many bytes as will fit */
-	if (n != 0 && --n != 0) {
-		do {
-			if ((*d++ = *s++) == 0)
+	if (n != 0) {
+		while (--n != 0) {
+			if ((*d++ = *s++) == '\0')
 				break;
-		} while (--n != 0);
+		}
 	}
 
 	/* Not enough room in dst, add NUL and traverse rest of src */
@@ -380,7 +380,7 @@ size_t sg_strlcpy(char *dst, const char *src, size_t siz){
 	return(s - src - 1);    /* count does not include NUL */
 }
 
-/*      $OpenBSD: strlcat.c,v 1.11 2003/06/17 21:56:24 millert Exp $    */
+/*	$OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -406,9 +406,9 @@ size_t sg_strlcpy(char *dst, const char *src, size_t siz){
  * If retval >= siz, truncation occurred.
  */
 size_t sg_strlcat(char *dst, const char *src, size_t siz){
-	register char *d = dst;
-	register const char *s = src;
-	register size_t n = siz;
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
 	size_t dlen;
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
@@ -446,7 +446,7 @@ int sg_update_string(char **dest, const char *src) {
 		return -1;
 	}
 
-	strcpy(new, src);
+	sg_strlcpy(new, src, strlen(src) + 1);
 	*dest = new;
 	return 0;
 }
@@ -462,7 +462,7 @@ int sg_concat_string(char **dest, const char *src) {
 	}
 
 	*dest = new;
-	strcat(*dest, src);
+	sg_strlcat(*dest, src, len);
 	return 0;
 }
 
