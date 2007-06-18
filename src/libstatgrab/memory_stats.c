@@ -98,7 +98,7 @@ sg_mem_stats *sg_get_mem_stats(){
 	int mib[2];
 	struct vmtotal vmtotal;
 	size_t size;
-	static int pagesize, pageshift;
+	int pagesize, page_multiplier;
 #endif
 #ifdef WIN32
 	MEMORYSTATUSEX memstats;
@@ -242,31 +242,50 @@ sg_mem_stats *sg_get_mem_stats(){
 #endif
 
 #if defined(OPENBSD)
-	/* get the page size with "getpagesize" and calculate pageshift
-	 * from it
+	/* The code in this section is based on the code in the OpenBSD
+	 * top utility, located at src/usr.bin/top/machine.c in the
+	 * OpenBSD source tree.
+	 *
+	 * For fun, and like OpenBSD top, we will do the multiplication
+	 * converting the memory stats in pages to bytes in base 2.
 	 */
-	pagesize = getpagesize();
-	pageshift = 0;
+
+	/* All memory stats in OpenBSD are returned as the number of pages.
+	 * To convert this into the number of bytes we need to know the
+	 * page size on this system.
+	 */
+	pagesize = sysconf(_SC_PAGESIZE);
+
+	/* The pagesize gives us the base 10 multiplier, so we need to work
+	 * out what the base 2 multiplier is. This means dividing
+	 * pagesize by 2 until we reach unity, and counting the number of
+	 * divisions required.
+	 */
+	page_multiplier = 0;
+
 	while (pagesize > 1) {
-		pageshift++;
+		page_multiplier++;
 		pagesize >>= 1;
 	}
 
-	/* we only need the amount of log(2)1024 for our conversion */
-	pageshift -= 10;	/* Log base 2 of 1024 is 10 (2^10 == 1024) */
-#define pagetok(size) ((size) << pageshift)
+	/* We can now ret the the raw VM stats (in pages) using the
+	 * sysctl interface.
+	 */
 	mib[0] = CTL_VM;
 	mib[1] = VM_METER;
 	size = sizeof(vmtotal);
+
 	if (sysctl(mib, 2, &vmtotal, &size, NULL, 0) < 0) {
-		sg_set_error_with_errno(SG_ERROR_SYSCTL,
-		                        "CTL_VM.VM_METER");
+		bzero(&vmtotal, sizeof(vmtotal));
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_VM.VM_METER");
 		return NULL;
 	}
-	/* convert memory stats to Kbytes */
-	mem_stat.used = pagetok(vmtotal.t_rm);		/* total real mem in use */
-	mem_stat.cache = 0;				/* ? */
-	mem_stat.free = pagetok(vmtotal.t_free);	/* free memory pages */
+
+	/* Convert the raw stats to bytes, and return these to the caller
+	 */
+	mem_stat.used = (vmtotal.t_rm << page_multiplier);   /* total real mem in use */
+	mem_stat.cache = 0;                                  /* no cache stats */
+	mem_stat.free = (vmtotal.t_free << page_multiplier); /* free memory pages */
 	mem_stat.total = (mem_stat.used + mem_stat.free);
 #endif
 
