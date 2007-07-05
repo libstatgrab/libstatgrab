@@ -187,7 +187,7 @@ sg_swap_stats *sg_get_swap_stats(){
 	for (n = 0; ; ++n) {
 		mib[mibsize] = n;
 		size = sizeof xsw;
-		if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, NULL) < 0) {
+		if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, 0) < 0) {
 			break;
 		}
 		if (xsw.xsw_version != XSWDEV_VERSION) {
