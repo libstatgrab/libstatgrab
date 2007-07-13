@@ -8,6 +8,14 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.15 (14 July 2007)
+ * Fix breakages in memory stats on OpenBSD that were introduced in
+   the last release.
+     (Thanks to David Love)
+ * Update internal string functions and some related cleanups.
+     (Thanks to David Love)
+ * Fix compile warning on FreeBSD.
+
 libstatgrab 0.14 (08 January 2007)
  * Fix memory stats on OpenBSD.
  * Add colour support to saidar.
