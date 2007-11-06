@@ -122,7 +122,7 @@ dragonfly*)
 	BIN_PERM="2755"
 	LINKFLAGS="-lkvm -ldevstat"
 	;;
-linux-gnu)
+linux-gnu*)
 	AC_DEFINE(LINUX, , [Building on GNU/Linux])
 	AM_CONDITIONAL(SETUIDBINS, true)
 	BIN_OWNER="root"
