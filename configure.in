@@ -78,11 +78,13 @@ solaris2.[[6-7]])
 	BIN_PERM="4755"
 	LINKFLAGS="-lkstat -lsocket -lnsl"
 	AC_CHECK_LIB(devinfo, di_init, [LINKFLAGS="$LINKFLAGS -ldevinfo"])
+	AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 	;;
 solaris2.*)
 	AC_CHECK_HEADERS([kstat.h],,[AC_MSG_ERROR([need kstat.h])])
 	AC_DEFINE(SOLARIS, , [Building on Solaris 2.x])
 	LINKFLAGS="-lkstat -ldevinfo -lsocket -lnsl"
+	AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 	;;
 hpux11.11*)
 	AC_DEFINE(HPUX, , [Building on HP-UX 11.11])
