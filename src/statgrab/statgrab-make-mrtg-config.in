@@ -184,7 +184,9 @@ sub main () {
 
 	if (exists $toplevel{"swap"}) {
 		my $swapsize = $stats{"swap.total"};
-		entry("Swap usage", "swap.used", undef, $swapsize, "Swap usage", "KiB", "used", undef, 1, $KIBIBYTES);
+		if ($swapsize ne "0") {
+			entry("Swap usage", "swap.used", undef, $swapsize, "Swap usage", "KiB", "used", undef, 1, $KIBIBYTES);
+		}
 	}
 
 	if (exists $toplevel{"user"}) {
