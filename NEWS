@@ -8,6 +8,14 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.16 (13 March 2008)
+ * Fix saidar build on Solaris with Sun's compiler.
+ * Add support for FreeBSD 8.0.
+ * Fix build on "armel" Debian port.
+     (Thanks to Riku Voipio and Martin Guy)
+ * Fix statgrab-make-mrtg-config on machines with no swap.
+     (Thanks to Tom Carlson)
+
 libstatgrab 0.15 (14 July 2007)
  * Fix breakages in memory stats on OpenBSD that were introduced in
    the last release.
