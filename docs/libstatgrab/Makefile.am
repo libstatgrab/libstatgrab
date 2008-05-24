@@ -16,6 +16,5 @@ endif
 
 EXTRA_DIST = $(man_MANS)
 
-%.3: %.xml
+.xml.3:
 	docbook2man -N --symlinks $<
-
