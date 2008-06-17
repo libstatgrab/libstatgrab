@@ -76,6 +76,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #endif
 #if defined(LINUX) || defined(CYGWIN)
 	FILE *f;
+	int proc_stat_cpu;
 #endif
 #ifdef ALLBSD
 #if defined(NETBSD) || defined(OPENBSD)
@@ -140,18 +141,26 @@ sg_cpu_stats *sg_get_cpu_stats(){
 		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/stat");
 		return NULL;
 	}
+
 	/* The very first line should be cpu */
-	if((fscanf(f, "cpu %lld %lld %lld %lld", \
+	proc_stat_cpu = fscanf(f, "cpu %lld %lld %lld %lld %lld", \
 		&cpu_now.user, \
 		&cpu_now.nice, \
 		&cpu_now.kernel, \
-		&cpu_now.idle)) != 4){
+		&cpu_now.idle, \
+		&cpu_now.iowait);
+
+	fclose(f);
+
+	if (proc_stat_cpu < 4 || proc_stat_cpu > 5) {
 		sg_set_error(SG_ERROR_PARSE, "cpu");
-		fclose(f);
 		return NULL;
 	}
 
-	fclose(f);
+	/* older linux doesn't give iowait */
+	if (proc_stat_cpu == 4) {
+		cpu_now.iowait = 0;
+	}
 
 	cpu_now.total=cpu_now.user+cpu_now.nice+cpu_now.kernel+cpu_now.idle;
 #endif
