@@ -67,7 +67,7 @@
 #include <sys/dkstat.h>
 #include <devstat.h>
 #define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
-			"ufs", "mfs", "nfs"}
+			"ufs", "mfs", "nfs", "zfs"}
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
