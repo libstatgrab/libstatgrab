@@ -66,8 +66,12 @@
 #if defined(FREEBSD) || defined(DFBSD)
 #include <sys/dkstat.h>
 #include <devstat.h>
-#define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
-			"ufs", "mfs", "nfs", "zfs"}
+#include <sys/param.h>
+#include <sys/mount.h>
+#include <sys/sysctl.h>
+/*#define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
+			"ufs", "mfs", "nfs", "zfs", "tmpfs", "reiserfs", \
+			"xfs"}*/
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
@@ -151,14 +155,37 @@ static void disk_stat_destroy(sg_fs_stats *d) {
 
 #ifndef WIN32 /* not used by WIN32, so stop compiler throwing warnings */
 static int is_valid_fs_type(const char *type) {
-	const char *types[] = VALID_FS_TYPES;
 	int i;
+
+#if defined(FREEBSD) || defined(DFBSD)
+	struct xvfsconf *xvfsp;
+	size_t buflen;
+	int cnt, nbvfs = 0;
+
+	if (sysctlbyname("vfs.conflist", NULL, &buflen, NULL, 0) < 0) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "vfs.conflist");
+		return 0;
+	}
+	xvfsp = alloca(buflen);
+	if (sysctlbyname("vfs.conflist", xvfsp, &buflen, NULL, 0) < 0) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "vfs.conflist");
+		return 0;
+	}
+	cnt = buflen / sizeof(struct xvfsconf);
+	for (i = 0; i < cnt; i++) {
+		if (strcmp(xvfsp[i].vfc_name, type) == 0) {
+			return 1;
+		}
+	}
+#else
+	const char *types[] = VALID_FS_TYPES;
 
 	for (i = 0; i < (int) (sizeof types / sizeof *types); i++) {
 		if (strcmp(types[i], type) == 0) {
 			return 1;
 		}
 	}
+#endif
 	return 0;
 }
 #endif
