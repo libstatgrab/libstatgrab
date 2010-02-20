@@ -102,10 +102,10 @@ freebsd4.*)
 	BIN_PERM="2755"
 	LINKFLAGS="-lkvm -ldevstat"
 	;;
-freebsd[[5-8]].*)
+freebsd[[5-9]].*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
 	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 8.x])
+	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 9.x])
 	LINKFLAGS="-ldevstat"
 	;;
 netbsdelf1*)
