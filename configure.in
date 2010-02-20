@@ -51,6 +51,12 @@ AC_CHECK_MEMBER(struct statvfs.f_fstypename,
                 [],
                 [#include <sys/statvfs.h>])
 
+# FreeBSD 9 (and others) uses utmpx rather than utmp
+AC_CHECK_MEMBER(struct utmpx.ut_type,
+                [AC_DEFINE(HAVE_UTMPX, , [utmpx])],
+                [],
+                [#include <utmpx.h>])
+
 # Check for sys/loadavg.h
 AC_CHECK_HEADERS([sys/loadavg.h])
 

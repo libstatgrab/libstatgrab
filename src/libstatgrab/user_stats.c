@@ -40,7 +40,11 @@
 #include <sys/param.h>
 #endif
 #ifndef WIN32
+#ifdef HAVE_UTMPX
+#include <utmpx.h>
+#else
 #include <utmp.h>
+#endif
 #endif
 #ifdef CYGWIN
 #include <sys/unistd.h>
@@ -57,7 +61,7 @@ sg_user_stats *sg_get_user_stats(){
 	int num_users = 0, pos = 0, new_pos;
 	VECTOR_DECLARE_STATIC(name_list, char, 128, NULL, NULL);
 	static sg_user_stats user_stats;
-#ifdef ALLBSD
+#if defined(ALLBSD) && !defined(HAVE_UTMPX)
 	struct utmp entry;
 	FILE *f;
 
@@ -132,10 +136,15 @@ sg_user_stats *sg_get_user_stats(){
 	}
 #else
 	/* This works on everything else. */
+#ifdef HAVE_UTMPX
+	struct utmpx *entry;
+	setutxent();
+	while((entry=getutxent()) != NULL) {
+#else
 	struct utmp *entry;
-
 	setutent();
 	while((entry=getutent()) != NULL) {
+#endif
 		if (entry->ut_type != USER_PROCESS) continue;
 
 		new_pos = pos + strlen(entry->ut_user) + 1;
@@ -148,7 +157,11 @@ sg_user_stats *sg_get_user_stats(){
 		pos = new_pos;
 		num_users++;
 	}
+#ifdef HAVE_UTMPX
+	endutxent();
+#else
 	endutent();
+#endif
 #endif
 
 	/* Remove the extra space at the end, and append a \0. */
