@@ -86,9 +86,9 @@ sg_mem_stats *sg_get_mem_stats(){
 	int mib[2];
 	u_long physmem;
 	size_t size;
-	u_int free_count;
-	u_int cache_count;
-	u_int inactive_count;
+	u_long free_count;
+	u_long cache_count;
+	u_long inactive_count;
 	int pagesize;
 #endif
 #if defined(NETBSD)
