@@ -12,8 +12,12 @@ libstatgrab 0.17 (21 February 2010)
  * Provide iowait cpu information on Linux version 2.5.41 or later.
  * Display data for ZFS on Solaris.
  * Dynamically get list of valid filesystems on FreeBSD.
+     (Thanks to Baptiste Daroussin)
  * Support FreeBSD 9.
  * Use utmpx when available (required for FreeBSD 9).
+     (Thanks to Ed Schouten)
+ * Support larger amounts of memory on FreeBSD.
+     (Thanks to Tom Bird)
 
 libstatgrab 0.16 (13 March 2008)
  * Fix saidar build on Solaris with Sun's compiler.
