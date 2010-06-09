@@ -135,6 +135,12 @@ linux-gnu*)
 	BIN_OWNER="root"
 	BIN_PERM="4755"
 	;;
+kfreebsd*-gnu*)
+	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
+	AC_DEFINE(FREEBSD, , [Building on FreeBSD])
+	AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 9.x])
+	LINKFLAGS="-ldevstat"
+	;;
 cygwin)
 	AC_DEFINE(CYGWIN, , [Building on Cygwin])
 	;;
