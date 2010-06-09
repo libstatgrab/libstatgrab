@@ -607,8 +607,8 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			continue;
 		}
 
-		/* Only intrested in the first 4 bits)  - Assuming only ETHER devices */
-		x = ifmed.ifm_active & 0x0f;	
+		/* Assuming only ETHER devices */
+		x = IFM_SUBTYPE(ifmed.ifm_active);
 		switch(x){
 			/* 10 Mbit connections. Speedy :) */
 			case(IFM_10_T):
@@ -618,7 +618,7 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 			case(IFM_10_FL):
 				network_iface_stat_ptr->speed = 10;
 				break;
-			/* 100 Mbit conneections */
+			/* 100 Mbit connections */
 			case(IFM_100_TX):
 			case(IFM_100_FX):
 			case(IFM_100_T4):
