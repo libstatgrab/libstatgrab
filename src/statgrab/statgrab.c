@@ -60,9 +60,13 @@ typedef struct {
 	char *name;
 	stat_type type;
 	void *stat;
-} stat;
+} stat_item;
+/* AIX:
+statgrab.c:63: error: 'stat' redeclared as different kind of symbol
+/usr/include/sys/stat.h:320: error: previous declaration of 'stat' was here
+ */
 
-stat *stats = NULL;
+stat_item *stat_items = NULL;
 int num_stats = 0;
 int alloc_stats = 0;
 #define INCREMENT_STATS 64
@@ -86,7 +90,7 @@ void clear_stats() {
 	int i;
 
 	for (i = 0; i < num_stats; i++)
-		free(stats[i].name);
+		free(stat_items[i].name);
 	num_stats = 0;
 }
 
@@ -137,26 +141,26 @@ void add_stat(stat_type type, void *stat, ...) {
 	/* Stretch the stats array if necessary. */
 	if (num_stats >= alloc_stats) {
 		alloc_stats += INCREMENT_STATS;
-		stats = realloc(stats, alloc_stats * sizeof *stats);
-		if (stats == NULL)
+		stat_items = realloc(stat_items, alloc_stats * sizeof *stat_items);
+		if (stat_items == NULL)
 			die("out of memory");
 	}
 
-	stats[num_stats].name = name;
-	stats[num_stats].type = type;
-	stats[num_stats].stat = stat;
+	stat_items[num_stats].name = name;
+	stat_items[num_stats].type = type;
+	stat_items[num_stats].stat = stat;
 	++num_stats;
 }
 
 /* Compare two stats by name for qsort and bsearch. */
 int stats_compare(const void *a, const void *b) {
-	return strcmp(((stat *)a)->name, ((stat *)b)->name);
+	return strcmp(((stat_item *)a)->name, ((stat_item *)b)->name);
 }
 
 /* Compare up to the length of the key for bsearch. */
 int stats_compare_prefix(const void *key, const void *item) {
-	const char *kn = ((stat *)key)->name;
-	const char *in = ((stat *)item)->name;
+	const char *kn = ((stat_item *)key)->name;
+	const char *in = ((stat_item *)item)->name;
 
 	return strncmp(kn, in, strlen(kn));
 }
@@ -488,7 +492,7 @@ void select_interesting(int argc, char **argv) {
 	}
 }
 
-/* Clear and rebuild the stats array. */
+/* Clear and rebuild the stat_items array. */
 void get_stats() {
 	toplevel *t;
 
@@ -499,12 +503,12 @@ void get_stats() {
 			t->populate();
 	}
 
-	if (stats != NULL)
-		qsort(stats, num_stats, sizeof *stats, stats_compare);
+	if (stat_items != NULL)
+		qsort(stat_items, num_stats, sizeof *stat_items, stats_compare);
 }
 
-/* Print the value of a stat. */
-void print_stat_value(const stat *s) {
+/* Print the value of a stat_item. */
+void print_stat_value(const stat_item *s) {
 	void *v = s->stat;
 	double fv;
 	long lv;
@@ -574,7 +578,7 @@ void print_stat_value(const stat *s) {
 }
 
 /* Print the name and value of a stat. */
-void print_stat(const stat *s) {
+void print_stat(const stat_item *s) {
 	switch (display_mode) {
 	case DISPLAY_LINUX:
 		printf("%s = ", s->name);
@@ -597,13 +601,13 @@ void print_stats(int argc, char **argv) {
 	if (argc == optind) {
 		/* Print all stats. */
 		for (i = 0; i < num_stats; i++)
-			print_stat(&stats[i]);
+			print_stat(&stat_items[i]);
 	} else {
 		/* Print selected stats. */
 		for (i = optind; i < argc; i++) {
 			char *name = argv[i];
-			stat key;
-			const stat *s, *end;
+			stat_item key;
+			const stat_item *s, *end;
 			int (*compare)(const void *, const void *);
 
 			key.name = name;
@@ -612,12 +616,12 @@ void print_stats(int argc, char **argv) {
 			else
 				compare = stats_compare;
 
-			if (stats == NULL) {
+			if (stat_items == NULL) {
 				s = NULL;
 			} else {
-				s = (const stat *)bsearch(&key, stats,
+				s = (const stat_item *)bsearch(&key, stat_items,
 							  num_stats,
-							  sizeof *stats,
+							  sizeof *stat_items,
 							  compare);
 			}
 
@@ -627,12 +631,12 @@ void print_stats(int argc, char **argv) {
 			}
 
 			/* Find the range of stats the user wanted. */
-			for (; s >= stats; s--) {
+			for (; s >= stat_items; s--) {
 				if (compare(&key, s) != 0)
 					break;
 			}
 			s++;
-			for (end = s; end < &stats[num_stats]; end++) {
+			for (end = s; end < &stat_items[num_stats]; end++) {
 				if (compare(&key, end) != 0)
 					break;
 			}

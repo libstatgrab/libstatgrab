@@ -56,6 +56,10 @@
 #include <sys/pstat.h>
 #include <unistd.h>
 #endif
+#ifdef AIX
+#include <unistd.h>
+#include <libperfstat.h>
+#endif
 #ifdef WIN32
 #include <windows.h>
 #include "win32.h"
@@ -100,6 +104,10 @@ sg_mem_stats *sg_get_mem_stats(){
 	size_t size;
 	int pagesize, page_multiplier;
 #endif
+#ifdef AIX
+	perfstat_memory_total_t mem;
+	long long pagesize;
+#endif
 #ifdef WIN32
 	MEMORYSTATUSEX memstats;
 #endif
@@ -123,6 +131,23 @@ sg_mem_stats *sg_get_mem_stats(){
 	mem_stat.total = ((long long) pstat_static->physical_memory) * pagesize;
 	mem_stat.free = ((long long) pstat_dynamic.psd_free) * pagesize;
 	mem_stat.used = mem_stat.total - mem_stat.free;
+#endif
+#ifdef AIX
+	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+		return NULL;
+	}
+
+	/* return code is number of structures returned */
+	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
+		return NULL;
+	}
+
+	mem_stat.total = ((long long) mem.real_total) * pagesize;
+	mem_stat.free  = ((long long) mem.real_free)  * pagesize;
+	mem_stat.used  = ((long long) mem.real_inuse) * pagesize;
+	mem_stat.cache = ((long long) mem.numperm)    * pagesize;
 #endif
 #ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){

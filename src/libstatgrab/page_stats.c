@@ -45,6 +45,12 @@
 #include <sys/param.h>
 #include <uvm/uvm.h>
 #endif
+#ifdef AIX
+#include <libperfstat.h>
+#endif
+#ifdef HPUX
+#include <sys/pstat.h>
+#endif
 #ifdef WIN32
 #include "win32.h"
 #endif
@@ -69,6 +75,12 @@ sg_page_stats *sg_get_page_stats(){
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
+#endif
+#ifdef AIX
+       perfstat_memory_total_t mem;
+#endif
+#ifdef HPUX
+       struct pst_vminfo vminfo;
 #endif
 
 	page_stats.systime = time(NULL);
@@ -149,6 +161,25 @@ sg_page_stats *sg_get_page_stats(){
 
 	page_stats.pages_pagein = uvm->pgswapin;
 	page_stats.pages_pageout = uvm->pgswapout;
+#endif
+#ifdef AIX
+	/* return code is number of structures returned */
+	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
+		return NULL;
+	}
+
+	page_stats.pages_pagein  = mem.pgins;
+	page_stats.pages_pageout = mem.pgouts;
+#endif
+#ifdef HPUX
+	if( pstat_getvminfo( &vminfo, sizeof(vminfo), 1, 0 ) == -1 ) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "pstat_getswap");
+		return NULL;
+	};
+
+	page_stats.pages_pagein  = vminfo.psv_spgin;
+	page_stats.pages_pageout = vminfo.psv_spgout;
 #endif
 #ifdef WIN32
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Win32");

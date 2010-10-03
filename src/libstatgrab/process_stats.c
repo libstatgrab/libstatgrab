@@ -28,7 +28,7 @@
 #include "statgrab.h"
 #include "tools.h"
 #include "vector.h"
-#if defined(SOLARIS) || defined(LINUX)
+#if defined(SOLARIS) || defined(LINUX) || defined(AIX)
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -82,6 +82,15 @@
 #include <windows.h>
 #include <psapi.h>
 #endif
+#ifdef AIX
+#include <unistd.h>
+#include <errno.h>
+#include <time.h>
+#include <procinfo.h>
+#include <sys/time.h>
+extern int getprocs64(struct procentry64 *, int, struct fdsinfo64 *, int, pid_t *, int);
+extern int getargs(struct procentry64 *, int, char *, int);
+#endif
 
 static void proc_state_init(sg_process_stats *s) {
 	s->process_name = NULL;
@@ -103,6 +112,21 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	long procidx = 0;
 	long long pagesize;
 	int num, i;
+#endif
+#ifdef AIX
+	struct procentry64 *procs = NULL;
+	long long pagesize;
+	int fetched = 0;
+	pid_t index = 0;
+	unsigned proc_idx;
+	time_t utime, stime;
+	int ncpus;
+	struct timeval now_tval;
+	double now_time;
+	char cmndline[ARG_MAX];
+	char comm[ARG_MAX];
+	struct procentry64 curproc_for_getargs;
+#define PROCS_TO_FETCH  1000
 #endif
 #ifdef ALLBSD
 	int mib[4];
@@ -762,6 +786,144 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		procidx = pstat_procinfo[num - 1].pst_idx + 1;
 	}
 #endif
+
+#ifdef AIX
+#define	TVALU_TO_SEC(x)	((x).tv_sec + ((double)((x).tv_usec) / 1000000.0))
+#define	TVALN_TO_SEC(x)	((x).tv_sec + ((double)((x).tv_usec) / 1000000000.0))
+	ncpus = sysconf(_SC_NPROCESSORS_ONLN);
+	if( -1 == ncpus ) {
+		ncpus = 1; /* sysconf error - assume 1 */
+	}
+
+	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+		return NULL;
+	}
+
+	proc_idx = 0;
+	procs = /* (struct procentry64 *) */ malloc(sizeof(*procs) * PROCS_TO_FETCH);
+	if(NULL == procs) {
+		sg_set_error_with_errno(SG_ERROR_MALLOC, "sg_get_process_stats");
+		return 0;
+	}
+
+	gettimeofday(&now_tval, 0);
+	now_time = TVALU_TO_SEC(now_tval);
+
+	/* keep on grabbing chunks of processes until getprocs returns a smaller
+	   block than we asked for */
+	do {
+		int i;
+		fetched = getprocs64(procs, sizeof(*procs), NULL, 0, &index, PROCS_TO_FETCH);
+		if (VECTOR_RESIZE(proc_state, proc_state_size + fetched) < 0) {
+			sg_set_error_with_errno(SG_ERROR_MALLOC, "sg_get_process_stats");
+			free(procs);
+			return NULL;
+		}
+		for( i = 0; i < fetched; ++i ) {
+			struct procentry64 *pi = procs+i;
+			int zombie = 0;
+
+			proc_state_ptr = proc_state + proc_idx;
+
+			zombie = 0;
+
+			/* set a descriptive name for the process state */
+			switch( pi->pi_state ) {
+			case SSLEEP:
+				proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+				break;
+			case SRUN:
+				proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+				break;
+			case SZOMB:
+				proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+				zombie = 1;
+				break;
+			case SSTOP:
+				proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+				break;
+			case SACTIVE:
+				proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+				break;
+			case SIDL:
+			default:
+				proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+				break;
+			}
+
+			if( zombie ) {
+				utime = pi->pi_utime;
+				stime = pi->pi_stime;
+			} else {
+				utime = TVALN_TO_SEC(pi->pi_ru.ru_utime) + TVALN_TO_SEC(pi->pi_cru.ru_utime);
+				stime = TVALN_TO_SEC(pi->pi_ru.ru_stime) + TVALN_TO_SEC(pi->pi_cru.ru_stime);
+			}
+
+			proc_state_ptr->pid = pi->pi_pid;
+			proc_state_ptr->parent = pi->pi_ppid;
+			proc_state_ptr->pgid = pi->pi_pgrp;
+			proc_state_ptr->uid = pi->pi_cred.crx_ruid;
+			proc_state_ptr->euid = pi->pi_cred.crx_uid;
+			proc_state_ptr->gid = pi->pi_cred.crx_rgid;
+			proc_state_ptr->egid = pi->pi_cred.crx_gid;
+			proc_state_ptr->proc_size = pi->pi_size;
+			proc_state_ptr->proc_resident = pi->pi_drss + pi->pi_trss; /* XXX might be wrong, see P::PT */
+			proc_state_ptr->time_spent = utime + stime;
+			proc_state_ptr->cpu_percent = (((double)(utime + stime) * 100) / ( now_time - pi->pi_start )) / ncpus;
+			proc_state_ptr->nice = pi->pi_nice;
+
+			/* determine comm & cmndline */
+			if( (pi->pi_flags & SKPROC) == SKPROC ) {
+				if( pi->pi_pid == 0 ) {
+					snprintf(comm, ARG_MAX, "kproc (swapper)");
+					snprintf(cmndline, ARG_MAX, "kproc (swapper)");
+				} else {
+					snprintf(comm, ARG_MAX, "kproc (%s)", pi->pi_comm);
+					snprintf(cmndline, ARG_MAX, "kproc (%s)", pi->pi_comm);
+				}
+			} else {
+				snprintf(comm, ARG_MAX, "%s", pi->pi_comm);
+				curproc_for_getargs.pi_pid = pi->pi_pid;
+				if( getargs(&curproc_for_getargs, sizeof(curproc_for_getargs), cmndline, ARG_MAX) < 0 ) {
+					snprintf(cmndline, ARG_MAX, "%s", pi->pi_comm);
+				} else {
+					int done = 0;
+					/* replace NUL characters in command line with spaces */
+					char *c = cmndline;
+					while( ! done ) {
+						if( *c == '\0' ) {
+							if( *(c+1) == '\0' ) {
+								done = 1;
+							} else {
+								*c++ = ' ';
+							}
+						} else {
+							++c;
+						}
+					}
+				}
+			}
+
+
+			if (sg_update_string(&proc_state_ptr->process_name, comm) < 0) {
+				free(procs);
+				return NULL;
+			}
+			if (sg_update_string(&proc_state_ptr->proctitle, cmndline) < 0) {
+				free(procs);
+				return NULL;
+			}
+
+			proc_idx++;
+		}
+	} while( fetched >= PROCS_TO_FETCH );
+
+	proc_state_size = proc_idx;
+
+	free(procs);
+#endif
+
 
 #ifdef CYGWIN
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");

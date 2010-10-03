@@ -59,6 +59,10 @@
 #include <unistd.h>
 #define SWAP_BATCH 5
 #endif
+#ifdef AIX
+#include <unistd.h>
+#include <libperfstat.h>
+#endif
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -94,6 +98,10 @@ sg_swap_stats *sg_get_swap_stats(){
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 	struct uvmexp *uvm;
+#endif
+#ifdef AIX
+	perfstat_memory_total_t mem;
+	long long pagesize;
 #endif
 #ifdef WIN32
 	MEMORYSTATUSEX memstats;
@@ -135,6 +143,22 @@ sg_swap_stats *sg_get_swap_stats(){
 		}
 		swapidx = pstat_swapinfo[num - 1].pss_idx + 1;
 	}
+#endif
+#ifdef AIX
+	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+		return NULL;
+	}
+
+	/* return code is number of structures returned */
+	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
+		return NULL;
+	}
+
+	swap_stat.total = ((long long)mem.pgsp_total) * pagesize;
+	swap_stat.free  = ((long long)mem.pgsp_free)  * pagesize;
+	swap_stat.used  = swap_stat.total - swap_stat.free;
 #endif
 #ifdef SOLARIS
 	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){

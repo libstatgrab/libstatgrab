@@ -79,7 +79,9 @@ typedef enum {
 	SG_ERROR_SYSCTLNAMETOMIB,
 	SG_ERROR_UNAME,
 	SG_ERROR_UNSUPPORTED,
-	SG_ERROR_XSW_VER_MISMATCH
+	SG_ERROR_XSW_VER_MISMATCH,
+	SG_ERROR_GETMSG,
+	SG_ERROR_PUTMSG
 } sg_error;
 
 void sg_set_error(sg_error code, const char *arg);
@@ -240,6 +242,7 @@ typedef struct {
 sg_page_stats *sg_get_page_stats();
 sg_page_stats *sg_get_page_stats_diff();
 
+/* Recommend to add SG_PROCESS_STATE_IDLE */
 typedef enum {
 	SG_PROCESS_STATE_RUNNING,
 	SG_PROCESS_STATE_SLEEPING,

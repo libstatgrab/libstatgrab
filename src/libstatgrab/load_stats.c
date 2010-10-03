@@ -39,6 +39,11 @@
 #include <sys/param.h>
 #include <sys/pstat.h>
 #endif
+#ifdef AIX
+#include <strings.h>
+#include <sys/proc.h>
+#include <libperfstat.h>
+#endif
 
 sg_load_stats *sg_get_load_stats(){
 
@@ -47,6 +52,9 @@ sg_load_stats *sg_get_load_stats(){
 
 #ifdef HPUX
 	struct pst_dynamic pstat_dynamic;
+#elif defined(AIX)
+	perfstat_cpu_total_t all_cpu_info;
+	int rc;
 #else
 	double loadav[3];
 #endif
@@ -111,6 +119,17 @@ sg_load_stats *sg_get_load_stats(){
 	load_stat.min1=pstat_dynamic.psd_avg_1_min;
 	load_stat.min5=pstat_dynamic.psd_avg_5_min;
 	load_stat.min15=pstat_dynamic.psd_avg_15_min;
+#elif defined(AIX)
+	rc = perfstat_cpu_total( NULL, &all_cpu_info, sizeof(all_cpu_info), 1);
+	if( -1 == rc ) {
+		bzero(&load_stat, sizeof(load_stat));
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "perfstat_cpu_total");
+		return NULL;
+	} else {
+		load_stat.min1  = (double) all_cpu_info.loadavg[0] / (double)(1 << SBITS);
+		load_stat.min5  = (double) all_cpu_info.loadavg[1] / (double)(1 << SBITS);
+		load_stat.min15 = (double) all_cpu_info.loadavg[2] / (double)(1 << SBITS);
+	}
 #else
 	getloadavg(loadav,3);
 

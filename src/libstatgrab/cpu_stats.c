@@ -55,6 +55,11 @@
 #include <sys/pstat.h>
 #include <sys/dk.h>
 #endif
+#ifdef AIX
+#include <strings.h>
+#include <sys/proc.h>
+#include <libperfstat.h>
+#endif
 #ifdef WIN32
 #include <pdh.h>
 #include "win32.h"
@@ -68,6 +73,10 @@ sg_cpu_stats *sg_get_cpu_stats(){
 #ifdef HPUX
 	struct pst_dynamic pstat_dynamic;
 	int i;
+#endif
+#ifdef AIX
+	perfstat_cpu_total_t all_cpu_info;
+	int rc;
 #endif
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
@@ -95,7 +104,7 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	cpu_now.iowait=0;
 	cpu_now.kernel=0;
 	cpu_now.idle=0;
-	/* Not stored in linux, freebsd, hpux or windows */
+	/* Not stored in linux, freebsd, hpux, aix or windows */
 	cpu_now.swap=0;
 	cpu_now.total=0;
 	/* Not stored in solaris or windows */
@@ -114,6 +123,19 @@ sg_cpu_stats *sg_get_cpu_stats(){
 	for (i = 0; i < PST_MAX_CPUSTATES; i++) {
 		cpu_now.total += pstat_dynamic.psd_cpu_time[i];
 	}
+#endif
+#ifdef AIX
+	rc = perfstat_cpu_total( NULL, &all_cpu_info, sizeof(all_cpu_info), 1);
+	if( -1 == rc ) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "perfstat_cpu_total");
+		return NULL;
+	}
+
+	cpu_now.user   = all_cpu_info.user;
+	cpu_now.iowait = all_cpu_info.wait;
+	cpu_now.kernel = all_cpu_info.sys;
+	cpu_now.idle   = all_cpu_info.idle;
+	cpu_now.total  = all_cpu_info.user + all_cpu_info.wait + all_cpu_info.sys + all_cpu_info.idle;
 #endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {

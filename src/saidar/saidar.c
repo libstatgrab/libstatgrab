@@ -29,7 +29,6 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/termios.h>
 #include <signal.h>
 #include <errno.h>
 #include <statgrab.h>
@@ -37,6 +36,11 @@
 #include <limits.h>
 #include <time.h>
 #include <math.h>
+#ifdef AIX
+#include <termios.h>
+#else
+#include <sys/termios.h>
+#endif
 
 #ifdef HAVE_NCURSES_H
 #define COLOR_SUPPORT

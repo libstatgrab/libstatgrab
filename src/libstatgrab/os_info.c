@@ -53,6 +53,10 @@
 #include <sys/pstat.h>
 #include <time.h>
 #endif
+#ifdef AIX
+#include <utmp.h>
+#include <libperfstat.h>
+#endif
 #ifdef WIN32
 #include <windows.h>
 #include "win32.h"
@@ -196,6 +200,10 @@ sg_host_info *sg_get_host_info()
 	SYSTEM_INFO sysinfo;
 	char *tmp_name;
 	char tmp[10];
+#endif
+#ifdef AIX
+	static perfstat_cpu_total_t cpu_total;
+	struct utmp *ut;
 #endif
 
 #ifndef WIN32 /* Trust windows to be different */
@@ -373,6 +381,21 @@ sg_host_info *sg_get_host_info()
 		return NULL;
 	}
 	general_stat.uptime = (time_t) result;
+#endif
+#ifdef AIX
+	if(perfstat_cpu_total(NULL, &cpu_total, sizeof(cpu_total), 1) != 1) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTL, "perfstat_cpu_total");
+		return NULL;
+	}
+	general_stat.platform = cpu_total.description;
+
+	while( ut = getutent() ) {
+		if( ut->ut_type == BOOT_TIME ) {
+			general_stat.uptime = time(NULL) - ut->ut_time;
+			break;
+		}
+	}
+
 #endif
 
 	return &general_stat;

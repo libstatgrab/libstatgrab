@@ -48,10 +48,11 @@
 
 #ifdef LINUX
 #define VALID_FS_TYPES {"adfs", "affs", "befs", "bfs", "efs", "ext2", \
-			"ext3", "vxfs", "hfs", "hfsplus", "hpfs", "jffs", \
-			"jffs2", "minix", "msdos", "ntfs", "qnx4", "ramfs", \
-			"rootfs", "reiserfs", "sysv", "v7", "udf", "ufs", \
-			"umsdos", "vfat", "xfs", "jfs", "nfs"}
+			"ext3", "ext4", "vxfs", "hfs", "hfsplus", "hpfs", \
+			"jffs", "jffs2", "minix", "msdos", "ntfs", "qnx4", \
+			"ramfs", "rootfs", "reiserfs", "sysv", "v7", "udf", \
+			"ufs", "umsdos", "vfat", "xfs", "jfs", "nfs", \
+			"ocfs", "cifs"}
 #endif
 
 #ifdef CYGWIN
@@ -72,6 +73,8 @@
 /*#define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
 			"ufs", "mfs", "nfs", "zfs", "tmpfs", "reiserfs", \
 			"xfs"}*/
+static char **VALID_FS_TYPES;
+static size_t n_valid_fs_types;
 #endif
 #if defined(NETBSD) || defined(OPENBSD)
 #include <sys/param.h>
@@ -93,6 +96,60 @@
 #include <time.h>
 #define VALID_FS_TYPES {"vxfs", "hfs", "nfs"}
 #define DISK_BATCH 30
+#endif
+
+#ifdef AIX
+#include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <fstab.h>
+#include <sys/statfs.h>
+#include <sys/mntctl.h>
+#include <sys/vmount.h>
+#include <libperfstat.h>
+#define KNOWN_VALID_FS_TYPES {		\
+	"jfs2",		/*  0 */	\
+	"namefs",	/*  1 */	\
+	"nfs",		/*  2 */	\
+	"jfs",		/*  3 */	\
+	NULL,		/*  4 */	\
+	"cdrom",	/*  5 */	\
+	"procfs",	/*  6 */	\
+	NULL,		/*  7 */	\
+	NULL,		/*  8 */	\
+	NULL,		/*  9 */	\
+	NULL,		/* 10 */	\
+	NULL,		/* 11 */	\
+	NULL,		/* 12 */	\
+	NULL,		/* 13 */	\
+	NULL,		/* 14 */	\
+	NULL,		/* 15 */	\
+	"sfs",		/* 16 */	\
+	"cachefs",	/* 17 */	\
+	"nfs3",		/* 18 */	\
+	"autofs",	/* 19 */	\
+	NULL,		/* 20 */	\
+	NULL,		/* 21 */	\
+	NULL,		/* 22 */	\
+	NULL,		/* 23 */	\
+	NULL,		/* 24 */	\
+	NULL,		/* 25 */	\
+	NULL,		/* 26 */	\
+	NULL,		/* 27 */	\
+	NULL,		/* 28 */	\
+	NULL,		/* 29 */	\
+	NULL,		/* 30 */	\
+	NULL,		/* 31 */	\
+	"vxfs",		/* 32 */	\
+	"vxodm",	/* 33 */	\
+	"udf",		/* 34 */	\
+	"nfs4",		/* 35 */	\
+	"rfs4",		/* 36 */	\
+	"cifs"		/* 37 */	\
+}
+static char *VALID_FS_TYPES[MNT_AIXLAST + 1] = KNOWN_VALID_FS_TYPES;
+extern int mntctl(int, int, void *);
 #endif
 
 #ifdef WIN32
@@ -140,6 +197,19 @@
 #define SG_FS_FFREE(fs)      (long long) (fs).f_ffree
 #define SG_FS_FAVAIL(fs)     (long long) (fs).f_favail
 #endif
+#ifdef AIX
+#define SG_MP_FSTYPENAME(mp) VALID_FS_TYPES[(mp)->vmt_gfstype]
+#define SG_MP_DEVNAME(mp)    vmt2dataptr((mp),0)
+#define SG_MP_MOUNTP(mp)     vmt2dataptr((mp),1)
+#define SG_FS_FRSIZE(fs)     (fs).f_fsize
+#define SG_FS_BSIZE(fs)      (fs).f_blocks
+#define SG_FS_BLOCKS(fs)     (fs).f_blocks
+#define SG_FS_BFREE(fs)      (fs).f_bfree
+#define SG_FS_BAVAIL(fs)     (fs).f_bavail
+#define SG_FS_FILES(fs)      (fs).f_files
+#define SG_FS_FFREE(fs)      (fs).f_ffree
+#define SG_FS_FAVAIL(fs)     ((fs).f_files - (fs).f_ffree)
+#endif
 
 static void disk_stat_init(sg_fs_stats *d) {
 	d->device_name = NULL;
@@ -153,14 +223,13 @@ static void disk_stat_destroy(sg_fs_stats *d) {
 	free(d->mnt_point);
 }
 
-#ifndef WIN32 /* not used by WIN32, so stop compiler throwing warnings */
-static int is_valid_fs_type(const char *type) {
-	int i;
+static int valid_fs_types_initialized = 0;
 
+static int init_valid_fs_types() {
 #if defined(FREEBSD) || defined(DFBSD)
 	struct xvfsconf *xvfsp;
 	size_t buflen;
-	int cnt, nbvfs = 0;
+	int nbvfs = 0;
 
 	if (sysctlbyname("vfs.conflist", NULL, &buflen, NULL, 0) < 0) {
 		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "vfs.conflist");
@@ -171,21 +240,65 @@ static int is_valid_fs_type(const char *type) {
 		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "vfs.conflist");
 		return 0;
 	}
-	cnt = buflen / sizeof(struct xvfsconf);
-	for (i = 0; i < cnt; i++) {
-		if (strcmp(xvfsp[i].vfc_name, type) == 0) {
-			return 1;
-		}
+	n_valid_fs_types = buflen / sizeof(struct xvfsconf);
+	VALID_FS_TYPES = malloc( n_valid_fs_types * sizeof(char **) );
+	if( 0 == VALID_FS_TYPES ) {
+		sg_set_error_with_errno(SG_ERROR_MALLOC, "init_valid_fs_types");
+		return 0;
 	}
-#else
-	const char *types[] = VALID_FS_TYPES;
+	for (i = 0; i < n_valid_fs_types; i++) {
+		VALID_FS_TYPES[i] = strdup(xvfsp[i].vfc_name);
+	}
+#elif defined(AIX)
+	FILE *fh;
 
-	for (i = 0; i < (int) (sizeof types / sizeof *types); i++) {
+	fh = fopen("/etc/vfs", "r");
+	if( 0 != fh ) {
+		char line[4096];
+
+		while( fgets( line, 4096, fh ) ) {
+			char fstype[16], mnt_helper[PATH_MAX], filesys_helper[PATH_MAX], remote[16];
+			int  fstype_id;
+			if( line[0] < 'a' || line[0] > 'z' ) {
+				continue; /* not a valid fstype */
+			}
+			sscanf(line, "%s %d %s %s %s", fstype, &fstype_id, mnt_helper, filesys_helper, remote);
+			if( VALID_FS_TYPES[fstype_id] != NULL ) {
+				continue; /* we already know you ... */
+			}
+			VALID_FS_TYPES[fstype_id] = strdup(fstype);
+		}
+
+		fclose(fh);
+	}
+	return 1;
+#else
+	return 1;
+#endif
+}
+
+#ifndef WIN32 /* not used by WIN32, so stop compiler throwing warnings */
+static int is_valid_fs_type(const char *type) {
+	size_t i;
+#if defined(AIX)
+	char **types = VALID_FS_TYPES;
+	size_t n_valid_fs_types = sizeof VALID_FS_TYPES / sizeof *VALID_FS_TYPES;
+#elif !defined(FREEBSD) && !defined(DFBSD)
+	const char *types[] = VALID_FS_TYPES;
+	size_t n_valid_fs_types = sizeof types / sizeof *types;
+#else
+	char **types = VALID_FS_TYPES;
+#endif
+
+	for (i = 0; i < n_valid_fs_types; i++) {
+		if( types[i] == NULL) {
+			continue;
+		}
 		if (strcmp(types[i], type) == 0) {
 			return 1;
 		}
 	}
-#endif
+
 	return 0;
 }
 #endif
@@ -225,6 +338,17 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 	char *p;
 	lp_buf[0]='\0';
 #endif
+#ifdef AIX
+	struct vmount *buf, *mp;
+	int rc, i;
+	size_t bufsize = 4096;
+	struct statfs64 fs;
+#endif
+
+	if( !valid_fs_types_initialized ) {
+		init_valid_fs_types();
+		valid_fs_types_initialized = 1;
+	}
 
 #ifdef ALLBSD
 	nummnt=getmntinfo(&mp, MNT_WAIT);
@@ -261,6 +385,47 @@ sg_fs_stats *sg_get_fs_stats(int *entries){
 		if ((statvfs(mp.mnt_mountp, &fs)) !=0){
 			continue;
 		}
+#endif
+
+#ifdef AIX
+	buf = malloc( bufsize );
+	if( 0 == buf ) {
+		sg_set_error_with_errno(SG_ERROR_MALLOC, "mntctl");
+		return NULL;
+	}
+
+	rc = mntctl( MCTL_QUERY, bufsize, buf );
+	if( 0 == rc )
+	{
+		bufsize = buf->vmt_revision;
+		void *newbuf = realloc( buf, bufsize );
+		if( 0 == newbuf ) {
+			sg_set_error_with_errno(SG_ERROR_MALLOC, "mntctl");
+			free(buf);
+			return NULL;
+		}
+		buf = newbuf;
+
+		rc = mntctl( MCTL_QUERY, bufsize, buf );
+	}
+
+	if( -1 == rc ) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "mntctl");
+		return NULL;
+	}
+
+	for( i = 0, mp = buf;
+	     i < rc;
+	     ++i, mp = (struct vmount *)(((char *)mp) + mp->vmt_length ) )
+	{
+		int fd;
+		if((fd = open(vmt2dataptr((mp),1), O_RDONLY)) == -1) {
+			continue;
+		}
+		if(fstatfs64(fd, &fs) == -1) {
+			continue;
+		}
+
 #endif
 
 #ifdef WIN32
@@ -476,6 +641,11 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 	int mib[MIBSIZE];
 	size_t size;
 #endif
+#ifdef AIX
+	int ret, disks;
+	perfstat_disk_t *dskperf;
+	perfstat_id_t name;
+#endif
 #ifdef WIN32
 	char *name;
 	long long rbytes;
@@ -483,6 +653,56 @@ sg_disk_io_stats *sg_get_disk_io_stats(int *entries){
 #endif
 
 	num_diskio=0;
+
+#ifdef AIX
+	/* check how many perfstat_disk_t structures are available */
+	disks = perfstat_disk(NULL, NULL, sizeof(perfstat_disk_t), 0);
+	if(disks==-1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "perfstat_disk(NULL)");
+		return NULL;
+	}
+
+	dskperf = malloc( sizeof(perfstat_disk_t) * disks);
+	if( 0 == dskperf ) {
+		sg_set_error_with_errno(SG_ERROR_MALLOC, "sg_get_disk_io_stats");
+		return NULL;
+	}
+
+	name.name[0]=0;
+	ret = perfstat_disk(&name, dskperf, sizeof(perfstat_disk_t), disks);
+	if(ret == -1) {
+		sg_set_error_with_errno(SG_ERROR_PSTAT, "perfstat_disk");
+		return NULL;
+	}
+
+	for (num_diskio = 0; num_diskio < ret; num_diskio++) {
+
+		if (VECTOR_RESIZE(diskio_stats, num_diskio + 1) < 0) {
+			return NULL;
+		}
+
+		diskio_stats_ptr = diskio_stats + num_diskio;
+
+		diskio_stats_ptr->read_bytes = dskperf[num_diskio].bsize * dskperf[num_diskio].rblks;
+		diskio_stats_ptr->write_bytes = dskperf[num_diskio].bsize * dskperf[num_diskio].wblks;
+		diskio_stats_ptr->systime = dskperf[num_diskio].time;
+
+		if (diskio_stats_ptr->disk_name == NULL) {
+			int i;
+			for(i = 0; i < IDENTIFIER_LENGTH; ++i) {
+				char *s = dskperf[num_diskio].name + i;
+				if( !(isalpha(*s) || isdigit(*s) ||
+				      *s == '-' || *s == '_' || *s == ' ') ) {
+					*s = 0;
+					break;
+				}
+			}
+			if (sg_update_string(&diskio_stats_ptr->disk_name, dskperf[num_diskio].name) < 0) {
+				return NULL;
+			}
+		}
+	}
+#endif
 
 #ifdef HPUX
 	while (1) {

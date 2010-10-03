@@ -148,6 +148,10 @@ const char *sg_str_error(sg_error code) {
 		return "disk function failed";
 	case SG_ERROR_MEMSTATUS:
 		return "memory status failed";
+	case SG_ERROR_GETMSG:
+		return "getmsg failed";
+	case SG_ERROR_PUTMSG:
+		return "putmsg failed";
 	}
 	return "unknown error";
 }

@@ -70,6 +70,32 @@ typedef __uint64_t u64;
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
+#ifdef AIX
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <errno.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <libperfstat.h>
+#endif
+#ifdef HPUX
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <errno.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <sys/un.h>
+#include <sys/stropts.h>
+#include <sys/dlpi.h>
+#include <sys/dlpi_ext.h>
+#include <sys/mib.h>
+#define HP_UX11 /* Currently no HP-UX below 11 is supported, fix here if this changes */
+#endif
 #ifdef WIN32
 #include <windows.h>
 #include <Iphlpapi.h>
@@ -128,7 +154,28 @@ static PMIB_IFTABLE win32_get_devices()
 
 sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	int interfaces;
+#ifndef AIX
 	sg_network_io_stats *network_stat_ptr;
+#endif
+#ifdef HPUX
+/* 
+ * talk to Data Link Provider Interface aka /dev/dlpi
+ * see: http://docs.hp.com/hpux/onlinedocs/B2355-90139/B2355-90139.html
+ */
+#define BUF_SIZE 40960
+
+	u_long *ctrl_area = malloc(BUF_SIZE);
+	u_long *data_area = malloc(BUF_SIZE);
+	u_long *ppa_area = malloc(BUF_SIZE);
+	struct strbuf ctrl_buf = {BUF_SIZE, 0, (char*) ctrl_area};
+	struct strbuf data_buf = {BUF_SIZE, 0, (char*) data_area};
+
+	dl_hp_ppa_info_t *ppa_info;
+	dl_hp_ppa_req_t *ppa_req;
+	dl_hp_ppa_ack_t *ppa_ack;
+	char name_buf[24];
+	int fd = -1, ppa_count, count, flags;
+#endif
 
 #ifdef SOLARIS
 	kstat_ctl_t *kc;
@@ -156,9 +203,154 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	 * numbers and terminating slash */
 	char buf[5];
 #endif
+#ifdef AIX
+	int i;
+	perfstat_netinterface_t *statp;
+	perfstat_id_t first;
+#endif
+
+#ifdef HPUX
+	interfaces=0;
+
+	if ((fd = open("/dev/dlpi", O_RDWR)) < 0) {
+		sg_set_error_with_errno(SG_ERROR_OPEN, "/dev/dlpi");
+		return NULL;
+	}
+
+	ppa_req = (dl_hp_ppa_req_t *) ctrl_area;
+	ppa_ack = (dl_hp_ppa_ack_t *) ctrl_area;
+
+	ppa_req->dl_primitive = DL_HP_PPA_REQ;
+
+	ctrl_buf.len = sizeof(dl_hp_ppa_req_t);
+	if(putmsg(fd, &ctrl_buf, 0, 0) < 0) {
+		sg_set_error_with_errno(SG_ERROR_PUTMSG, "DL_HP_PPA_REQ");
+		return NULL;
+	}
+
+	flags = 0;
+	ctrl_area[0] = 0;
+
+	if (getmsg(fd, &ctrl_buf, &data_buf, &flags) < 0) {
+		sg_set_error_with_errno(SG_ERROR_GETMSG, "DL_HP_PPA_REQ");
+		return NULL;
+	}
+
+	if (ppa_ack->dl_length == 0) {
+		sg_set_error_with_errno(SG_ERROR_PARSE, "DL_HP_PPA_REQ");
+		return NULL;
+	}
+
+	// save all the PPA information
+	memcpy ((u_char*) ppa_area, (u_char*) ctrl_area + ppa_ack->dl_offset, ppa_ack->dl_length);
+	ppa_count = ppa_ack->dl_count;
+
+	for (count = 0, ppa_info = (dl_hp_ppa_info_t*) ppa_area;
+	     count < ppa_count;
+	     count++) {
+		dl_get_statistics_req_t *get_statistics_req = (dl_get_statistics_req_t*) ctrl_area;
+		dl_get_statistics_ack_t *get_statistics_ack = (dl_get_statistics_ack_t*) ctrl_area;
+
+		dl_attach_req_t *attach_req;
+		dl_detach_req_t *detach_req;
+		mib_ifEntry *mib_ptr;
+#ifdef HP_UX11
+		mib_Dot3StatsEntry *mib_Dot3_ptr;
+#endif
+
+		attach_req = (dl_attach_req_t*) ctrl_area;
+		attach_req->dl_primitive = DL_ATTACH_REQ;
+		attach_req->dl_ppa = ppa_info[count].dl_ppa;
+		ctrl_buf.len = sizeof(dl_attach_req_t);
+		if (putmsg(fd, &ctrl_buf, 0, 0) < 0) {
+			sg_set_error_with_errno(SG_ERROR_PUTMSG, "DL_ATTACH_REQ");
+			return NULL;
+		}
+
+		ctrl_area[0] = 0;
+		if (getmsg(fd, &ctrl_buf, &data_buf, &flags) < 0) {
+			sg_set_error_with_errno(SG_ERROR_GETMSG, "DL_ATTACH_REQ");
+			return NULL;
+		}
+
+		get_statistics_req->dl_primitive = DL_GET_STATISTICS_REQ;
+		ctrl_buf.len = sizeof(dl_get_statistics_req_t);
+
+		if (putmsg(fd, &ctrl_buf, NULL, 0) < 0) {
+			sg_set_error_with_errno(SG_ERROR_PUTMSG, "DL_GET_STATISTICS_REQ");
+			return NULL;
+		}
+
+		flags = 0;
+		ctrl_area[0] = 0;
+
+		if (getmsg(fd, &ctrl_buf, NULL, &flags) < 0) {
+			sg_set_error_with_errno(SG_ERROR_GETMSG, "DL_GET_STATISTICS_REQ");
+			return NULL;
+		}
+		if (get_statistics_ack->dl_primitive != DL_GET_STATISTICS_ACK) {
+			sg_set_error_with_errno(SG_ERROR_PARSE, "DL_GET_STATISTICS_ACK");
+			return NULL;
+		}
+
+		mib_ptr = (mib_ifEntry*) ((u_char*) ctrl_area + get_statistics_ack->dl_stat_offset);
+
+		if (0 == (mib_ptr->ifOper & 1)) {
+			continue;
+		}
+
+		if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
+			return NULL;
+		}
+		network_stat_ptr=network_stats+interfaces;
+
+		snprintf( name_buf, sizeof(name_buf), "lan%d", ppa_info[count].dl_ppa );
+
+		if (sg_update_string(&network_stat_ptr->interface_name, name_buf ) < 0 ) {
+			return NULL;
+		}
+		network_stat_ptr->rx = mib_ptr->ifInOctets;
+		network_stat_ptr->tx = mib_ptr->ifOutOctets;
+		network_stat_ptr->ipackets = mib_ptr->ifInUcastPkts + mib_ptr->ifInNUcastPkts;
+		network_stat_ptr->opackets = mib_ptr->ifOutUcastPkts + mib_ptr->ifOutNUcastPkts;
+		network_stat_ptr->ierrors = mib_ptr->ifInErrors;
+		network_stat_ptr->oerrors = mib_ptr->ifOutErrors;
+#ifdef HP_UX11
+		mib_Dot3_ptr = (mib_Dot3StatsEntry *) (void *) ((int) mib_ptr + sizeof (mib_ifEntry));
+		network_stat_ptr->collisions = mib_Dot3_ptr->dot3StatsSingleCollisionFrames
+		                             + mib_Dot3_ptr->dot3StatsMultipleCollisionFrames;
+#else
+		network_stat_ptr->collisions = 0; /* currently unknown */
+#endif
+		network_stat_ptr->systime = time(NULL);
+		interfaces++;
+
+		detach_req = (dl_detach_req_t*) ctrl_area;
+		detach_req->dl_primitive = DL_DETACH_REQ;
+		ctrl_buf.len = sizeof(dl_detach_req_t);
+		if (putmsg(fd, &ctrl_buf, 0, 0) < 0) {
+			sg_set_error_with_errno(SG_ERROR_PUTMSG, "DL_DETACH_REQ");
+			return NULL;
+		}
+
+		ctrl_area[0] = 0;
+		flags = 0;
+		if (getmsg(fd, &ctrl_buf, &data_buf, &flags) < 0) {
+			sg_set_error_with_errno(SG_ERROR_GETMSG, "DL_DETACH_REQ");
+			return NULL;
+		}
+	}
+
+	close(fd);
+
+	free(ctrl_area);
+	free(data_area);
+	free(ppa_area);
+
+#endif
 
 #ifdef ALLBSD
-	if(getifaddrs(&net) != 0){
+	if (getifaddrs(&net) != 0){
 		sg_set_error_with_errno(SG_ERROR_GETIFADDRS, NULL);
 		return NULL;
 	}
@@ -166,7 +358,7 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	interfaces=0;
 	
 	for(net_ptr=net;net_ptr!=NULL;net_ptr=net_ptr->ifa_next){
-		if(net_ptr->ifa_addr->sa_family != AF_LINK) continue;
+		if (net_ptr->ifa_addr->sa_family != AF_LINK) continue;
 
 		if (VECTOR_RESIZE(network_stats, interfaces + 1) < 0) {
 			return NULL;
@@ -190,7 +382,49 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 	}
 	freeifaddrs(net);	
 #endif
+#ifdef AIX
+	/* check how many perfstat_netinterface_t structures are available */
+	interfaces = perfstat_netinterface(NULL, NULL, sizeof(perfstat_netinterface_t), 0);
 
+	/* allocate enough memory for all the structures */
+	statp = calloc(interfaces, sizeof(perfstat_netinterface_t));
+
+	/* set name to first interface */
+	strcpy(first.name, FIRST_NETINTERFACE);
+
+	/* ask to get all the structures available in one call */
+	/* return code is number of structures returned */
+	interfaces = perfstat_netinterface(&first, statp, sizeof(perfstat_netinterface_t), interfaces);
+	if (-1 == interfaces) {
+		sg_set_error(SG_ERROR_SYSCTLBYNAME, "perfstat_netinterface");
+		free(statp);
+		return NULL;
+	}
+
+	if (VECTOR_RESIZE(network_stats, interfaces) < 0) {
+		sg_set_error(SG_ERROR_MALLOC, NULL);
+		free(statp);
+		return NULL;
+	}
+
+	/* print statistics for each of the interfaces */
+	for (i = 0; i < interfaces; i++) {
+		if (sg_update_string(&network_stats[i].interface_name, statp[i].name) < 0) {
+			free(statp);
+			return NULL;
+		}
+		network_stats[i].tx = statp[i].obytes;
+		network_stats[i].rx = statp[i].ibytes;
+		network_stats[i].opackets = statp[i].opackets;
+		network_stats[i].ipackets = statp[i].ipackets;
+		network_stats[i].oerrors = statp[i].oerrors;
+		network_stats[i].ierrors = statp[i].ierrors;
+		network_stats[i].collisions = statp[i].collisions;
+		network_stats[i].systime = time(NULL);
+	}
+
+	free(statp);
+#endif
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
 		sg_set_error(SG_ERROR_KSTAT_OPEN, NULL);
@@ -342,10 +576,6 @@ sg_network_io_stats *sg_get_network_io_stats(int *entries){
 
 #ifdef CYGWIN
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
-	return NULL;
-#endif
-#ifdef HPUX
-	sg_set_error(SG_ERROR_UNSUPPORTED, "HP-UX");
 	return NULL;
 #endif
 
@@ -538,8 +768,8 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	int sock;
 #endif
 #ifdef ALLBSD
-	struct ifaddrs *net, *net_ptr;
 	struct ifmediareq ifmed;
+	struct ifaddrs *net, *net_ptr;
 	struct ifreq ifr;
 	int sock;
 	int x;
@@ -555,6 +785,17 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 	MIB_IFROW if_row;
 	int i,j,no;
 	char buf[5];
+#endif
+#ifdef AIX
+	int fd, n;
+	size_t pagesize;
+	struct ifreq *ifr, *lifr, iff;
+	struct ifconf ifc;
+#endif
+#ifdef HPUX
+	int fd;
+	struct ifreq *ifr, *lifr, iff;
+	struct ifconf ifc;
 #endif
 
 #ifdef ALLBSD
@@ -654,10 +895,186 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 		}else{
 			network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		}
-
 	}	
 	freeifaddrs(net);
 	close(sock);
+#endif
+
+#ifdef AIX
+/*
+ * Fix up variable length of struct ifr
+ */
+#ifndef _SIZEOF_ADDR_IFREQ
+#define _SIZEOF_ADDR_IFREQ(ifr) \
+	(((ifr).ifr_addr.sa_len > sizeof(struct sockaddr)) \
+	? sizeof(struct ifreq) - sizeof(struct sockaddr) + (ifr).ifr_addr.sa_len \
+	: sizeof(struct ifreq))
+#endif
+
+	if ((pagesize = sysconf(_SC_PAGESIZE)) == ((size_t)-1)) {
+		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+		return NULL;
+	}
+
+	if ((fd = socket (PF_INET, SOCK_DGRAM, 0)) == -1) {
+		return NULL;
+	}
+
+	n = 2;
+	ifr = (struct ifreq *)malloc( n*pagesize );
+	if( NULL == ifr ) {
+		sg_set_error_with_errno(SG_ERROR_MALLOC, NULL);
+		close (fd);
+		return NULL;
+	}
+	bzero(&ifc, sizeof(ifc));
+	ifc.ifc_req = ifr;
+	ifc.ifc_len = n * pagesize;
+	while( ( ioctl( fd, SIOCGIFCONF, &ifc ) == -1 ) ||
+	       ( ((size_t)ifc.ifc_len) >= ( (n-1) * pagesize)) )
+	{
+		n *= 2;
+		ifr = (struct ifreq *)realloc( ifr, n*pagesize );
+		if( NULL == ifr ) {
+			free( ifc.ifc_req );
+			close (fd);
+			sg_set_error_with_errno(SG_ERROR_MALLOC, NULL);
+			return NULL;
+		}
+		ifc.ifc_req = ifr;
+		ifc.ifc_len = n * pagesize;
+	}
+
+	lifr = (struct ifreq *)&ifc.ifc_buf[ifc.ifc_len];
+	for ( ifr = ifc.ifc_req;
+	      ifr < lifr;
+	      ifr = (struct ifreq *)&(((char *)ifr)[_SIZEOF_ADDR_IFREQ(*ifr)]) )
+	{
+		struct sockaddr *sa = &ifr->ifr_addr;
+
+		if(sa->sa_family != AF_LINK)
+			continue;
+
+		if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
+			free( ifc.ifc_req );
+			close (fd);
+			return NULL;
+		}
+		network_iface_stat_ptr = network_iface_stats + ifaces;
+
+		memset(&iff, 0, sizeof(iff));
+		strncpy(iff.ifr_name, ifr->ifr_name, sizeof(iff.ifr_name));
+
+		if (ioctl(fd, SIOCGIFFLAGS, &iff) < 0) {
+			continue;
+		}
+
+		if ((iff.ifr_flags & IFF_UP) != 0) {
+			network_iface_stat_ptr->up = 1;
+		} else {
+			network_iface_stat_ptr->up = 0;
+		}
+		if (sg_update_string(&network_iface_stat_ptr->interface_name,
+				     ifr->ifr_name) < 0) {
+			close (fd);
+			free( ifc.ifc_req );
+			return NULL;
+		}
+
+		network_iface_stat_ptr->speed = 0;
+		network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
+		ifaces++;
+	}
+
+	close (fd);
+	free( ifc.ifc_req );
+#endif
+
+#ifdef HPUX
+/*
+ * Fix up variable length of struct ifr
+ */
+#ifndef _SA_LEN
+#define _SA_LEN(sa) \
+   ((sa).sa_family == AF_UNIX ? sizeof(struct sockaddr_un) : \
+   (sa).sa_family == AF_INET6 ? sizeof(struct sockaddr_in6) : \
+   sizeof(struct sockaddr))
+#endif
+
+#ifndef _SIZEOF_ADDR_IFREQ
+#define _SIZEOF_ADDR_IFREQ(ifr) \
+	((_SA_LEN((ifr).ifr_addr) > sizeof(struct sockaddr)) \
+	? sizeof(struct ifreq) - sizeof(struct sockaddr) + _SA_LEN((ifr).ifr_addr) \
+	: sizeof(struct ifreq))
+#endif
+	if ((fd = socket (PF_INET, SOCK_DGRAM, 0)) == -1) {
+		return NULL;
+	}
+
+	bzero(&ifc, sizeof(ifc));
+	if (ioctl (fd, SIOCGIFNUM, &ifc) != -1) {
+		ifr = calloc(sizeof (*ifr), ifc.ifc_len);
+		if( NULL == ifr ) {
+			close (fd);
+			sg_set_error_with_errno(SG_ERROR_MALLOC, NULL);
+			return NULL;
+		}
+		ifc.ifc_req = ifr;
+		ifc.ifc_len *= sizeof (*ifr);
+		if (ioctl (fd, SIOCGIFCONF, &ifc) == -1) {
+			free (ifr);
+			close (fd);
+			sg_set_error_with_errno(SG_ERROR_GETIFADDRS, NULL);
+			return NULL;
+		}
+	} else {
+		close (fd);
+		sg_set_error_with_errno(SG_ERROR_GETIFADDRS, NULL);
+		return NULL;
+	}
+
+	lifr = (struct ifreq *)&ifc.ifc_buf[ifc.ifc_len];
+	for ( ifr = ifc.ifc_req;
+	      ifr < lifr;
+	      ifr = (struct ifreq *)(((char *)ifr) + _SIZEOF_ADDR_IFREQ(*ifr)) )
+	{
+		if (VECTOR_RESIZE(network_iface_stats, ifaces + 1) < 0) {
+			free( ifc.ifc_req );
+			close (fd);
+			return NULL;
+		}
+		network_iface_stat_ptr = network_iface_stats + ifaces;
+
+		bzero(&iff, sizeof(iff));
+		strncpy(iff.ifr_name, ifr->ifr_name, sizeof(iff.ifr_name));
+
+		if (ioctl(fd, SIOCGIFFLAGS, &iff) < 0) {
+			continue;
+		}
+
+		if ((iff.ifr_flags & IFF_UP) != 0) {
+			network_iface_stat_ptr->up = 1;
+		} else {
+			network_iface_stat_ptr->up = 0;
+		}
+		if (sg_update_string(&network_iface_stat_ptr->interface_name,
+				     ifr->ifr_name) < 0) {
+			close (fd);
+			free( ifc.ifc_req );
+			return NULL;
+		}
+
+		/**
+		 * for physical devices we now could ask /dev/dlpi for speed and type,
+		 * but for monitoring we don't care
+		 */
+		network_iface_stat_ptr->speed = 0;
+		network_iface_stat_ptr->duplex = SG_IFACE_DUPLEX_UNKNOWN;
+		ifaces++;
+	}
+
+	close (fd);
+	free( ifc.ifc_req );
 #endif
 
 #ifdef SOLARIS
@@ -830,10 +1247,6 @@ sg_network_iface_stats *sg_get_network_iface_stats(int *entries){
 #endif
 #ifdef CYGWIN
 	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
-	return NULL;
-#endif
-#ifdef HPUX
-	sg_set_error(SG_ERROR_UNSUPPORTED, "HP-UX");
 	return NULL;
 #endif
 #ifdef WIN32

@@ -23,6 +23,12 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+dnl Check for extra flags to enable some kind of behavior
+AC_CHECK_DECL([_AIX],[ac_cv_need_minus_d_linux_source_compat="yes"])
+
+AS_IF([test "x$ac_cv_need_minus_d_linux_source_compat" = "xyes"],
+      [CPPFLAGS="$CPPFLAGS -D_LINUX_SOURCE_COMPAT"])
+
 # Checks for header files
 AC_HEADER_STDC
 
@@ -91,8 +97,12 @@ solaris2.*)
 	LINKFLAGS="-lkstat -ldevinfo -lsocket -lnsl"
 	AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 	;;
-hpux11.11*)
-	AC_DEFINE(HPUX, , [Building on HP-UX 11.11])
+hpux11.11*|hpux11.[[23]]*)
+	AC_DEFINE(HPUX, , [Building on HP-UX 11.11+])
+	;;
+aix[[5-9]]*)
+	AC_DEFINE(AIX, , [Building on AIX 5.x - 9.x])
+	AC_CHECK_LIB(perfstat, perfstat_cpu_total, [LINKFLAGS="$LINKFLAGS -ldevinfo"])
 	;;
 freebsd4.*)
 	AC_DEFINE(ALLBSD, , [Building on a BSD-derived system])
