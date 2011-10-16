@@ -93,7 +93,7 @@
     <para>
       The load average figures are displayed in bold when they're
       notably (greater that 1) different to each other. This purely
-      shows that a change in the load is occuring.
+      shows that a change in the load is occurring.
     </para>
     <para>
       When CPU usage goes over 60% it will be displayed in bold.
