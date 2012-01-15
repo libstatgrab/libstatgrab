@@ -18,7 +18,11 @@
 
   <refnamediv>
     <refname>sg_get_network_io_stats</refname>
+    <refname>sg_get_network_io_stats_r</refname>
     <refname>sg_get_network_io_stats_diff</refname>
+    <refname>sg_get_network_io_stats_diff_between</refname>
+    <refname>sg_free_network_io_stats</refname>
+    <refname>sg_network_io_compare_name</refname>
     <refpurpose>get network statistics</refpurpose>
   </refnamediv>
 
@@ -27,11 +31,31 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_diff</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_diff_between</function></funcdef>
+        <paramdef>const sg_network_io_stats *<parameter>cur</parameter></paramdef>
+        <paramdef>const sg_network_io_stats *<parameter>last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_network_io_stats</function></funcdef>
+        <paramdef>sg_network_iface_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>sg_network_io_compare_name</function></funcdef>
+        <paramdef>const void *<parameter>va</parameter></paramdef>
+        <paramdef>const void *<parameter>vb</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -39,35 +63,94 @@
   <refsect1>
     <title>Description</title>
     <para>
-      Both calls take a pointer to an int,
-      <parameter>entries</parameter>, which is filled with the number
-      of network interfaces the machine has. This is needed to know how
-      many <structname>sg_network_io_stats</structname> structures have been
-      returned. A pointer is returned to the first
-      <structname>sg_network_io_stats</structname>.
+      The <function>sg_get_network_io_stats</function> functions provide
+      network interface i/o statistics on a per interface basis. All get-
+      and diff-functions take an optional <parameter>entries</parameter>
+      parameter, which points (when given) to a size_t to take the amount
+      of resulted vector entries.
+    </para>
+    <para>
+      The <function>sg_get_network_io_stats</function>() and
+      <function>sg_get_network_io_stats_r</function>() functions deliver the
+      i/o-statistics since the interface has been attached to the system.
+      The <function>sg_get_network_io_stats_diff</function>() and
+      <function>sg_get_network_io_stats_diff_between</function>() deliver the
+      difference between two calls of
+      <function>sg_get_network_io_stats</function>() or
+      <function>sg_get_network_io_stats_r</function>(), respectively.
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_network_io_stats</entry>
+        <entry>sg_network_io_stats *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_network_io_stats_r</entry>
+        <entry>sg_network_io_stats *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_network_io_stats_diff</entry>
+        <entry>sg_network_io_stats *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_network_io_stats_diff_between</entry>
+        <entry>sg_network_io_stats *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      <structname>sg_network_io_stats</structname> vectors got from
+      <function>sg_get_network_io_stats_r</function>() or
+      <function>sg_get_network_io_stats_diff_between</function>() must be
+      freed using <function>sg_free_network_io_stats</function>() when
+      not needed anymore. The caller is responsible to do it.
+    </para>
+    <para>
+      Additionally a support function for <function>qsort</function>(3)
+      are available: <function>sg_network_io_compare_name</function>().
+      <example>
+        <title>Example</title>
+        <programlisting>
+size_t entries;
+sg_network_io_stats *network_stats = NULL;
+while( NULL != ( network_stats = sg_get_network_io_stats_diff(&amp;entries) ) ) {
+    /* sort interface by name */
+    qsort( network_stats, entries, sizeof(network_stats[0]), &amp;sg_network_io_compare_name );
+    show_network_io_stats( network_stats );
+}
+        </programlisting>
+      </example>
     </para>
     <para>
       <function>sg_get_network_io_stats</function> returns the network
       traffic stored in the kernel which holds the amount of data
-      transferred since bootup. On some platforms, such as Solaris 7,
+      transferred since device attach. On some platforms, such as Solaris 7,
       this value is stored in a 32bit int, so wraps around when it
       reaches 4GB. Other platforms, such as Solaris 8, hold the value
       in a 64bit int, which wraps somewhere near 17 million terabytes.
-    </para>
-    <para>
-      <function>sg_get_network_io_stats</function> also returns the number
-      of packets sent and received, and the number of errors that
-      have occured. It also makes the number of collisions available.
-    </para>
-    <para>
-      <function>sg_get_network_io_stats_diff</function> is the same as
-      <function>sg_get_network_io_stats</function> except it will return the
-      difference since the last call. So, for instance a call to
-      <function>sg_get_network_io_stats_diff</function> is made, and called
-      again 5 seconds later. Over that time, 20 bytes of traffic was
-      transmitted and 10 bytes received. Tx will store 20, rx will
-      store 10 and systime will store 5. This function copes with wrap
-      arounds by the O/S so should be seemless to use.
+      The <function>sg_get_network_io_stats_diff</function>() function and
+      the <function>sg_get_network_io_stats_diff_between</function>()
+      function care about these overflows and try to detect overflows
+      when the diff is calculated.
     </para>
   </refsect1>
 
@@ -80,17 +163,17 @@
     </para>
 
     <programlisting>
-typedef struct{
+typedef struct {
         char *interface_name;
-        long long tx;
-        long long rx;
-        long long ipackets;
-        long long opackets;
-        long long ierrors;
-        long long oerrors;
-        long long collisions;
+        unsigned long long tx;
+        unsigned long long rx;
+        unsigned long long ipackets;
+        unsigned long long opackets;
+        unsigned long long ierrors;
+        unsigned long long oerrors;
+        unsigned long long collisions;
         time_t systime;
-}sg_network_io_stats;
+} sg_network_io_stats;
     </programlisting>
 
     <variablelist>
@@ -101,7 +184,7 @@ typedef struct{
         <listitem>
           <para>
             The name known to the operating system.
-            (eg. on linux it might be eth0)
+            (eg. on linux it might be eth0, on AIX en0 and on FreeBSD fxp0)
           </para>
         </listitem>
       </varlistentry>
@@ -181,7 +264,8 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The time period over which <parameter>tx</parameter>
+            the timestamp when the above stats where collected in seconds
+            since epoch or the time period over which <parameter>tx</parameter>
             and <parameter>rx</parameter> were transferred.
           </para>
         </listitem>
@@ -192,10 +276,14 @@ typedef struct{
   <refsect1>
     <title>Bugs</title>
     <para>
-      On the very first call
+      <function>sg_get_network_io_stats_diff</function> and
+      <function>sg_get_network_io_stats_diff_between</function> compare two
+      lists of network interface related i/o statistics. Each entry occuring
+      only in the second list is passed through to the resulting list as if
+      it would have been compared to an entry with all statistic values
+      set to 0. This implies, on the very first call
       <function>sg_get_network_io_stats_diff</function> will return the same
-      as <function>sg_get_network_io_stats</function>. After the first call
-      it will always return the difference.
+      as <function>sg_get_network_io_stats</function>.
     </para>
     <para>
       On operating system that hold only 32bits of data there is a

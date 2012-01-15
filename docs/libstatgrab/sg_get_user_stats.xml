@@ -18,6 +18,8 @@
 
   <refnamediv>
     <refname>sg_get_user_stats</refname>
+    <refname>sg_get_user_stats_r</refname>
+    <refname>sg_free_user_stats</refname>
     <refpurpose>get the current logged in users</refpurpose>
   </refnamediv>
 
@@ -26,7 +28,15 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_user_stats *<function>sg_get_user_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_user_stats *<function>sg_get_user_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_user_stats</function></funcdef>
+        <paramdef>sg_user_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -34,8 +44,46 @@
   <refsect1>
     <title>Description</title>
     <para>
-      This call returns a pointer to a static buffer of
-      <structname>sg_user_stats</structname>.
+      The user statistics module delivers some information about logged on
+      users. Each logon is treated separately. Both statistic get functions,
+      <function>sg_get_user_stats</function>() and
+      <function>sg_get_user_stats_r</function>(), return a vector of
+      <structname>sg_user_stats</structname> with
+      <parameter>entries</parameter> elements.
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_user_stats</entry>
+        <entry><structname>sg_user_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_user_stats_r</entry>
+        <entry><structname>sg_user_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_user_stats</structname> vector got from
+      <function>sg_get_user_stats_r</function>() must be freed using
+      <function>sg_free_user_stats</function>() when not needed anymore. The
+      caller is responsible to do it.
     </para>
   </refsect1>
 
@@ -48,27 +96,87 @@
     </para>
 
     <programlisting>
-typedef struct{
-        char *name_list;
-        int num_entries;
-}sg_user_stats;
+typedef struct {
+        char *login_name;
+        char *record_id;
+        size_t record_id_size;
+        char *device;
+        char *hostname;
+        pid_t pid;
+        time_t login_time;
+        time_t systime;
+} sg_user_stats;
     </programlisting>
 
     <variablelist>
       <varlistentry>
-        <term><structfield>name_list</structfield></term>
+        <term><structfield>login_name</structfield></term>
         <listitem>
           <para>
-            A pointer to a space seperated list of the currently
-            logged in users.
+            The username which was used to log in
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><structfield>num_entries</structfield></term>
+        <term><structfield>record_id</structfield></term>
         <listitem>
           <para>
-            The number of users currently logged in.
+            record identifier of host database containing login information
+            (not necessarily 0-terminated)
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>record_id_size</structfield></term>
+        <listitem>
+          <para>
+            size of the record identifier
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>device</structfield></term>
+        <listitem>
+          <para>
+            device name (eg. "pts/0") of the tty assigned to the login
+            session
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>hostname</structfield></term>
+        <listitem>
+          <para>
+            (remote) hostname from where the user is logged on, eg.
+            "infoterm7.some.kind.of.domain.local", "localhost",
+            "10.42.17.4" or ":0.0" (in case it's a local logon
+            via new xterm)
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>pid</structfield></term>
+        <listitem>
+          <para>
+            process identifier of the process which made the entry to
+            the logged on users database
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>login_time</structfield></term>
+        <listitem>
+          <para>
+            timestamp (time in seconds since epoch) when the user logged on
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            the timestamp when the above stats where collected in seconds
+            since epoch
           </para>
         </listitem>
       </varlistentry>

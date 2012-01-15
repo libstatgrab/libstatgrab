@@ -6,24 +6,36 @@ $Id$
 Supported Platforms
 ===================
 
-libstatgrab has been tested to work on the following platforms:
+libstatgrab-0.18 has been tested to work on the following platforms:
 
-Cygwin ?.?
-DragonFly BSD 1.x
-FreeBSD 4.x
-FreeBSD 5.x
+# Cygwin ?.?
+# DragonFly BSD 1.x
+# FreeBSD 4.x
+# FreeBSD 5.x
+FreeBSD 7-STABLE
+FreeBSD 8-STABLE
+FreeBSD 9-CURRENT
 HP-UX 11.11 (parisc)
-Linux 2.2
-Linux 2.4
-Linux 2.6
-NetBSD 1.x
-NetBSD 2.x
-OpenBSD 3.x
-Solaris 6
-Solaris 7
+HP-UX 11.23 (parisc)
+HP-UX 11.23 (ia64)
+HP-UX 11.31 (ia64)
+# Linux 2.2
+# Linux 2.4
+Linux 2.6 (Ubuntu 10.04, SLES 9-11)
+# NetBSD 1.x
+# NetBSD 2.x
+NetBSD 5.1
+NetBSD 5-CURRENT
+# OpenBSD 3.x
+OpenBSD 4.9-RELASE
+# Solaris 6
+# Solaris 7
 Solaris 8 (sparc & x86)
 Solaris 9 (sparc & x86)
-Solaris 10 (sparc)
+Solaris 10 (sparc & x86)
+AIX 5.2
+AIX 5.3
+AIX 6.1
 
 Platform Specific Notes
 =======================
@@ -69,4 +81,14 @@ return NULL to indicate failure.
 If you have installed libncurses-devel but the configure script can't
 find ncurses.h, you've most likely hit a bug in the cygwin package. To
 fix this run: /etc/postinstall/libncurses-devel.sh.done
+
+HP-UX
+-----
+
+To get large file support (eg. to grab statistics for huge file systems),
+set the C Compiler flags to enable _LARGEFILE64_SOURCE (eg.
+CFLAGS="-D_LARGEFILE64_SOURCE ..." ./configure ...)
+
+AIX
+---
 

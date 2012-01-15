@@ -18,7 +18,12 @@
 
   <refnamediv>
     <refname>sg_get_disk_io_stats</refname>
+    <refname>sg_get_disk_io_stats_r</refname>
     <refname>sg_get_disk_io_stats_diff</refname>
+    <refname>sg_get_disk_io_stats_diff_between</refname>
+    <refname>sg_free_disk_io_stats</refname>
+    <refname>sg_disk_io_compare_name</refname>
+    <refname>sg_disk_io_compare_traffic</refname>
     <refpurpose>get disk io statistics</refpurpose>
   </refnamediv>
 
@@ -27,11 +32,36 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_diff</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_diff_between</function></funcdef>
+        <paramdef>const sg_disk_io_stats *<parameter>cur</parameter></paramdef>
+        <paramdef>const sg_disk_io_stats *<parameter>last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_disk_io_stats</function></funcdef>
+        <paramdef>sg_disk_io_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>sg_disk_io_compare_name</function></funcdef>
+        <paramdef>const void *<parameter>va</parameter></paramdef>
+        <paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>int <function>sg_disk_io_compare_traffic</function></funcdef>
+        <paramdef>const void *<parameter>va</parameter></paramdef>
+        <paramdef>const void *<parameter>vb</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -39,32 +69,93 @@
   <refsect1>
     <title>Description</title>
     <para>
-      Both calls take a pointer to an int,
-      <parameter>entries</parameter>, which is filled with the number
-      of disks the machine has. This is needed to know how many
-      <structname>sg_disk_io_stats</structname> structures have been
-      returned. A pointer is returned to the first
-      <structname>sg_disk_io_stats</structname>.
+      The <function>sg_get_disk_io_stats</function> functions provide disk
+      i/o statistics on a per disk basis. All get- and diff-functions take
+      an optional <parameter>entries</parameter> parameter, which points
+      (when given) to a size_t to take the amount of resulted vector
+      entries.
     </para>
     <para>
-      <function>sg_get_disk_io_stats</function> returns the disk IO stored
-      in the kernel which holds the amount of data transferred since
-      bootup. On some platforms, such as Solaris 7, this value is
-      stored in a 32bit int, so wraps around when it reaches 4GB. Other
-      platforms, such as Solaris 8, hold the value in a 64bit int,
-      which wraps somewhere near 17 million terabytes.
+      The <function>sg_get_disk_io_stats</function>() and
+      <function>sg_get_disk_io_stats_r</function>() functions deliver the
+      i/o-statistics since the disk has been attached to the system.
+      The <function>sg_get_disk_io_stats_diff</function>() and
+      <function>sg_get_disk_io_stats_diff_between</function>() deliver the
+      difference between two calls of
+      <function>sg_get_disk_io_stats</function>() or
+      <function>sg_get_disk_io_stats_r</function>(), respectively.
     </para>
     <para>
-      <function>sg_get_disk_io_stats_diff</function> is the same as
-      <function>sg_get_disk_io_stats</function> except it will return the
-      difference since the last call. So, for instance a call to
-      <function>sg_get_disk_io_stats_diff</function> is made, and called
-      again 5 seconds later. Over that time, 2000 bytes of traffic were
-      written and 10000 bytes read.  <parameter>write_bytes</parameter>
-      will store 2000 bytes, <parameter>read_bytes</parameter> will
-      store 10000, and <parameter>systime</parameter> will store 5.
-      This function copes with wrap arounds by the O/S so should be
-      seemless to use.
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_disk_io_stats</entry>
+        <entry>sg_disk_io_stats *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_disk_io_stats_r</entry>
+        <entry>sg_disk_io_stats *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_disk_io_stats_diff</entry>
+        <entry>sg_disk_io_stats *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_disk_io_stats_diff_between</entry>
+        <entry>sg_disk_io_stats *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      <structname>sg_disk_io_stats</structname> vectors got from
+      <function>sg_get_disk_io_stats_r</function>() or
+      <function>sg_get_disk_io_stats_diff_between</function>() must be
+      freed using <function>sg_free_disk_io_stats</function>() when
+      not needed anymore. The caller is responsible to do it.
+    </para>
+    <para>
+      Additionally two support functions for <function>qsort</function>(3)
+      are available: <function>sg_disk_io_compare_name</function>() and
+      <function>sg_disk_io_compare_traffic</function>().
+      <example>
+        <title>Example</title>
+        <programlisting>
+size_t entries;
+sg_disk_io_stats *io_stats = NULL;
+while( NULL != ( io_stats = sg_get_disk_io_stats_diff(&amp;entries) ) ) {
+    /* show disks with most traffic first */
+    qsort( io_stats, entries, sizeof(io_stats[0]), &amp;sg_disk_io_compare_traffic );
+    show_disk_io_stats( io_stats );
+}
+        </programlisting>
+      </example>
+    </para>
+    <para>
+      On some platforms, such as Solaris 7, the kernel value is stored in
+      a 32bit int, so wraps around when it reaches 4GB. Other platforms,
+      such as Solaris 8 (and most other modern systems), hold the value in
+      a 64bit int, which wraps somewhere near 17 million terabytes.
+      The <function>sg_get_disk_io_stats_diff</function>() function and
+      the <function>sg_get_disk_io_stats_diff_between</function>()
+      function care about these overflows and try to detect overflows
+      when the diff is calculated.
     </para>
     <para>
       On Solaris libstatgrab will attempt to get the cXtXdXsX
@@ -72,7 +163,7 @@
       it fails it will use a name like sd0. On some systems programs
       calling libstatgrab will need elevated privileges to lookup
       some of the names. The mappings are built up when
-      <function>sg_init</function> is called.
+      <function>sg_init</function>() is called first time.
     </para>
   </refsect1>
 
@@ -85,12 +176,12 @@
     </para>
 
     <programlisting>
-typedef struct{
+typedef struct {
         char *disk_name;
-        long long read_bytes;
-        long long write_bytes;
+        unsigned long long read_bytes;
+        unsigned long long write_bytes;
         time_t systime;
-}sg_disk_io_stats;
+} sg_disk_io_stats;
     </programlisting>
 
     <variablelist>
@@ -142,16 +233,28 @@ typedef struct{
   <refsect1>
     <title>Bugs</title>
     <para>
-      On the very first call <function>sg_get_disk_io_stats_diff</function>
-      will return the same as <function>sg_get_disk_io_stats</function>.
-      After the first call it will always return the difference.
+      <function>sg_get_disk_io_stats_diff</function> and
+      <function>sg_get_disk_io_stats_diff_between</function> compare two
+      lists of disk (block device) related i/o statistics. Each entry
+      occuring only in the second list is passed through to the resulting
+      list as if it would have been compared to an entry with all statistic
+      values set to 0. This implies, on the very first call
+      <function>sg_get_disk_io_stats_diff</function> will return the same
+      as <function>sg_get_disk_io_stats</function>.
     </para>
     <para>
       On operating systems that hold only 32bits of data there is a
       problem if the values wrap twice. For example, on Solaris 7 if
       9GB is transferred and the operating system wraps at 4GB, the
-      <function>sg_get_disk_io_stats_diff</function> function will return
+      <function>sg_get_disk_io_stats_diff</function>() function will return
       5GB.
+    </para>
+    <para>
+      The compare functions exists rather for backward compatibility than
+      for functionality enhancements. Limited flexibility (e.g. reverse
+      order) and lack of optimizing opportunities for the compiler leads
+      to the recommendation to implement the required compare routines
+      locally.
     </para>
   </refsect1>
 

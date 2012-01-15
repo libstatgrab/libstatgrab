@@ -2,15 +2,16 @@
 # http://www.i-scream.org/libstatgrab/
 # $Id$
 
-if MANPAGES
 if STATGRAB
 man_MANS = statgrab.1 statgrab-make-mrtg-config.1 \
 	   statgrab-make-mrtg-index.1
 endif
-endif
 
 EXTRA_DIST = $(man_MANS)
 
-.xml.1:
-	docbook2man -N --symlinks $<
+if BUILD_MANPAGES
+CLEANFILES= $(man_MANS)
 
+.xml.1:
+	$(DOCBOOK2MAN) -N --symlinks $<
+endif

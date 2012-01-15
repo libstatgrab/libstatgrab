@@ -1,0 +1,418 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="sg_comp_init">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>sg_comp_init</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>sg_comp_init</refname>
+    <refname>sg_comp_destroy</refname>
+    <refname>sg_comp_get_tls</refname>
+    <refname>sg_global_lock</refname>
+    <refname>sg_global_unlock</refname>
+    <refpurpose>managing system statistics delivery</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &quot;tools.h&quot;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>void *<function>get_global_static</function></funcdef>
+        <paramdef>unsigned int <parameter>id</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_global_lock</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_global_unlock</function></funcdef>
+        <void/>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <function>sg_comp_init</function>() is called by
+      <function>sg_init</function>() to run the initialization for the
+      globals component and each registered libstatgrab component. This
+      registration is done statically by appending a component
+      initialization information structure
+      (instance-of <structname>sg_comp_info</structname>) to the
+      <varname>comp_info</varname> list in
+      <filename>src/libstatgrab/globals.c</filename>. The instance of
+      <structname>sg_comp_info</structname> is usually defined by using
+      one of <function>EASY_COMP_SETUP</function>() or
+      <function>EXTENDED_COMP_SETUP</function>(), respectively.
+    </para>
+    <para>
+      <function>sg_comp_destroy</function>() is called by
+      <function>sg_shutdown</function>() to destroy all global resources,
+      eg. translation tables for device names or compiled regular
+      expressions to match path names etc. Statistics resources are managed
+      somewhere else and are freed (conceptually and usually) before
+      <function>sg_comp_destroy</function>() is invoked.
+    </para>
+    <para>
+      <function>sg_comp_get_tls</function>() is the internal function
+      to access the thread local storage (formerly static globals) of the
+      component. Usually it's easier to rely on the encapsulating macro
+      <function>GLOBAL_GET_TLS</function>().
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Notes</title>
+    <para>
+      Delivering system statistics is the job ob libstatgrab, managing
+      the delivery is the job of the globals component. To fulfil this
+      job, the components to manage must be prepared:
+      <orderedlist numeration="arabic" spacing="compact">
+        <listitem>declare component's global and tls data structure
+        (probably only on paper, not in code)</listitem>
+        <listitem>define global initialization, thread destruction and
+        process destruction functions (if required by 1.)</listitem>
+        <listitem>define component information structure using
+        <function>*_COMP_SETUP</function>()</listitem>
+        <listitem>
+          define component accessors using one or more of
+          <simplelist>
+            <member><function>EASY_COMP_ACCESS</function>()</member>
+            <member><function>EASY_COMP_DIFF</function>()</member>
+            <member><function>MULTI_COMP_ACCESS</function>()</member>
+            <member><function>MULTI_COMP_DIFF</function>()</member>
+          </simplelist>
+        </listitem>
+      </orderedlist>
+      When having done these steps, a new component delivering new
+      statistics is born and needs to be &quot;announced&quot;. Assuming
+      the component is named <emphasis>cpu</emphasis>, append the line
+      <code>{ &amp;sg_cpu_init, 0 }</code> to above named
+      <varname>comp_info</varname> list.
+    </para>
+    <para>
+      Component initialization information in detail:
+      <programlisting>
+typedef sg_error (*comp_global_init_function)(unsigned id);
+typedef void (*comp_global_destroy_function)(void);
+typedef void (*comp_global_cleanup_function)(void *);
+
+struct sg_comp_status {
+        sg_error init_error;
+};
+
+struct sg_comp_init {
+        comp_global_init_function init_fn;
+        comp_global_destroy_function destroy_fn;
+        comp_global_cleanup_function cleanup_fn;
+        size_t static_buf_size;
+#if defined(ENABLE_THREADS) &amp;&amp; defined(HAVE_PTHREAD)
+        const char **required_locks;
+#endif
+        struct sg_comp_status *status;
+};
+      </programlisting>
+
+      Components which do not need something special can rely on
+      <function>EASY_COMP_SETUP</function>():
+
+      <example>
+        <title>Initializing memory component</title>
+        <programlisting>
+EASY_COMP_SETUP(mem,1,NULL);
+        </programlisting>
+      </example>
+
+      When own initialization is needed, do it a bit more complex:
+      <example>
+        <title>Initializing network component</title>
+        <programlisting>
+#define SG_NETWORK_IO_NOW_IDX	0
+#define SG_NETWORK_IO_DIFF_IDX	1
+#define SG_NETWORK_IFACE_IDX	2
+#define SG_NETWORK_MAX_IDX	3
+
+EXTENDED_COMP_SETUP(network,SG_NETWORK_MAX_IDX,NULL);
+
+#ifdef LINUX
+static regex_t network_io_rx;
+#define RX_MATCH_COUNT (8+1)
+#endif
+
+sg_error
+sg_network_init_comp(unsigned id) {
+        GLOBAL_SET_ID(network,id);
+
+#ifdef LINUX
+        if( regcomp( &amp;network_io_rx, ..., REG_EXTENDED)!=0) {
+                return sg_set_error(SG_ERROR_PARSE, NULL);
+        }
+#endif
+
+        return SG_ERROR_NONE;
+}
+
+void
+sg_network_destroy_comp(void) {
+#ifdef LINUX
+	regfree(&amp;network_io_rx);
+#endif
+}
+
+EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
+        </programlisting>
+      </example>
+    </para>
+
+    <refsect2>
+      <title>The MACROS to work with the component manager</title>
+      <para>
+        To simplify the working with the component management functions,
+        some preprocessor macros are available. There're shown here as
+        if they were functions to ease understanding.
+      </para>
+
+      <para>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>void <function>DEFAULT_INIT_COMP</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef><parameter>...</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>EASY_COMP_SETUP</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>size_t <parameter>nvect</parameter></paramdef>
+            <paramdef><parameter>...</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>EXTENDED_COMP_SETUP</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>size_t <parameter>nvect</parameter></paramdef>
+            <paramdef><parameter>...</parameter></paramdef>
+          </funcprototype>
+
+          <funcprototype>
+            <funcdef>void <function>GLOBAL_SET_ID</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>unsigned int <parameter>id</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>struct sg_##comp##_glob *<function>GLOBAL_GET_TLS</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+          </funcprototype>
+
+          <funcprototype>
+            <funcdef>void <function>EASY_COMP_INIT_FN</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>EASY_COMP_DESTROY_FN</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>EASY_COMP_CLEANUP_FN</function></funcdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>size_t <parameter>nvect</parameter></paramdef>
+          </funcprototype>
+
+          <funcprototype>
+            <funcdef>void <function>EASY_COMP_ACCESS</function></funcdef>
+            <paramdef>identifier <parameter>fn</parameter></paramdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>identifier <parameter>stat</parameter></paramdef>
+            <paramdef>size_t <parameter>idx</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>MULTI_COMP_ACCESS</function></funcdef>
+            <paramdef>identifier <parameter>fn</parameter></paramdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>identifier <parameter>stat</parameter></paramdef>
+            <paramdef>size_t <parameter>idx</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>EASY_COMP_DIFF</function></funcdef>
+            <paramdef>identifier <parameter>fn</parameter></paramdef>
+            <paramdef>identifier <parameter>getfn</parameter></paramdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>identifier <parameter>stat</parameter></paramdef>
+            <paramdef>size_t <parameter>diffidx</parameter></paramdef>
+            <paramdef>size_t <parameter>nowidx</parameter></paramdef>
+          </funcprototype>
+          <funcprototype>
+            <funcdef>void <function>MULTI_COMP_DIFF</function></funcdef>
+            <paramdef>identifier <parameter>fn</parameter></paramdef>
+            <paramdef>identifier <parameter>getfn</parameter></paramdef>
+            <paramdef>identifier <parameter>comp</parameter></paramdef>
+            <paramdef>identifier <parameter>stat</parameter></paramdef>
+            <paramdef>size_t <parameter>diffidx</parameter></paramdef>
+            <paramdef>size_t <parameter>nowidx</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+      </para>
+      <para>
+        <function>EASY_COMP_SETUP</function>() cares about anything to be
+        automatically done for instantiating an component information
+        structure for the specified component <parameter>comp</parameter>.
+        The created TLS storage structure will hold
+        <parameter>nvect</parameter> pointer elements and that's it.
+        All initialization, destruction and cleanup-routines are created
+        as needed using <function>EASY_COMP_INIT_FN</function>(),
+        <function>EASY_COMP_DESTROY_FN</function>() and
+        <function>EASY_COMP_CLEANUP_FN</function>(). After the amount of
+        required vector pointers to be stored the list of required mutexes
+        must be specified, finished with a NULL pointer.
+      </para>
+      <para>
+        <function>EXTENDED_COMP_SETUP</function>() cares about anything
+        to be automatically done for instantiating an component information
+        structure for the specified component <parameter>comp</parameter>
+        but the required defintion of the initialization, destruction and
+        cleanup routines. The created TLS storage structure will hold
+        <parameter>nvect</parameter> pointer elements and that's it. After
+        the amount of required vector pointers to be stored the list of
+        required mutexes must be specified, finished with a NULL pointer.
+        All standard routines can be created semi-automatic using
+        <function>EASY_COMP_INIT_FN</function>(),
+        <function>EASY_COMP_DESTROY_FN</function>() and
+        <function>EASY_COMP_CLEANUP_FN</function>().
+      </para>
+      <para>
+        <function>DEFAULT_INIT_COMP</function>() just declares the
+        prototypes for the initialization, destruction and cleanup routines,
+        defines the initialization status buffer, lock-names list and
+        finally fills the component initialization structure.
+        Use this when your TLS storage containes not only vector pointers.
+      </para>
+      <para>
+        <function>GLOBAL_GET_TLS</function>() returns the pointer to the
+        components <emphasis>thread local storage</emphasis>.
+      </para>
+      <para>
+        <function>GLOBAL_SET_ID</function>() stores the component
+        identifier, required eg. to access it's TLS.
+      </para>
+      <para>
+        <function>EASY_COMP_INIT_FN</function>() defines a default
+        component initialization routine. It stores the component
+        identifier and returns with <errorcode>SG_ERROR_NONE</errorcode>.
+      </para>
+      <para>
+        <function>EASY_COMP_DESTROY_FN</function>() defines a default
+        component destructor, called at the end of the entire process
+        (or when the last <function>sg_shutdown</function>() is called).
+        The default destructor does nothing and usually an individual
+        initialization routine requires an individual destructor, too.
+      </para>
+      <para>
+        <function>EASY_COMP_CLEANUP_FN</function>() defines a default
+        TLS cleanup routine, always called when a thread ends to free
+        vectors hold in <emphasis>thread local storage</emphasis>.
+      </para>
+      <para>
+        <function>EASY_COMP_ACCESS</function>() defines accessors to a
+        specific statistic containing one element provided by the
+        component: the functions
+        <function>fn</function>() and the <function>fn##_r</function>().
+        The following function must exists:
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>sg_error <function>fn##_int</function></funcdef>
+            <paramdef>sg_vector *<parameter>name##_vect</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        It accesses the vector idx from TLS of component
+        <parameter>comp</parameter> and returns sg_##name##_stats.
+        It manages all standard thingies like memory and error management,
+        return value etc.
+      </para>
+      <para>
+        <function>EASY_COMP_DIFF</function>() returns the difference between
+        the two statistic collection runs. The variant dealing with statgrab
+        owned statistics return the difference between the content currently
+        in the vector specified by <parameter>nowidx</parameter> and the
+        resulting vector of <function>getfn</function>(). The result is
+        stored in the vector <parameter>diffidx</parameter>. If there is no
+        current result, simply the result of <function>getfn</function>()
+        is returned.
+      </para>
+      <para>
+        <function>MULTI_COMP_ACCESS</function>() defines accessors to a
+        specific statistic containing 0..n elements provided by the
+        component: the functions
+        <function>fn</function>() and the <function>fn##_r</function>().
+        The following function must exists:
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>sg_error <function>fn##_int</function></funcdef>
+            <paramdef>sg_vector **<parameter>name##_vect</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        It accesses the vector idx from TLS of component
+        <parameter>comp</parameter> and returns sg_##name##_stats.
+        It manages all standard thingies like memory and error anagement,
+        return values, <parameter>entries</parameter> update, etc.
+      </para>
+      <para>
+        <function>MULTI_COMP_DIFF</function>() does the same as
+        <function>EASY_COMP_DIFF</function>() but for vectors with more than
+        one element.
+      </para>
+    </refsect2>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>libstatgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_intro</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_set_error</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_comp_init</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_vector_create</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

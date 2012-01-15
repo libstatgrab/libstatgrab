@@ -1,10 +1,6 @@
-#include "statgrab.h"
-#ifdef WIN32
-#include <pdh.h>
-#include <pdhmsg.h>
-#include "win32.h"
-#include <stdio.h>
 #include "tools.h"
+#ifdef WIN32
+#include <pdhmsg.h>
 
 static HQUERY h_query;
 
@@ -331,3 +327,37 @@ void sg_win32_end_capture()
 #endif
 }
 
+#ifdef WIN32
+// DllMain() is the entry-point function for this DLL. 
+ 
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, // DLL module handle
+		    DWORD fdwReason,    // reason called
+		    LPVOID lpvReserved) // reserved
+{
+	switch(fdwReason)
+	{
+	case DLL_PROCESS_ATTACH:
+		if( SG_ERROR_NONE != sg_win32_start_capture() )
+			return FALSE;
+		break;
+
+	case DLL_PROCESS_DETACH:
+		sg_win32_end_capture();
+		break;
+
+#ifdef SG_WITH_THREADS
+	case DLL_THREAD_ATTACH:
+		break;
+
+	case DLL_THREAD_DETACH:
+		sg_destroy_globals(NULL);
+		break;
+#endif
+
+	default:
+		break;
+	}
+
+	return TRUE;
+}
+#endif

@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="sg_lock_mutex">
+
+  <refentryinfo>
+    <date>$Date$</date>
+    <releaseinfo>$Id$</releaseinfo>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>sg_lock_mutex</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>sg_lock_mutex</refname>
+    <refname>sg_unlock_mutex</refname>
+    <refpurpose>guard not MT-safe system API</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_lock_mutex</function></funcdef>
+        <paramdef>char const *<parameter>mutex_name</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_unlock_mutex</function></funcdef>
+        <paramdef>char const *<parameter>mutex_name</parameter></paramdef>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Return Values</title>
+
+    <para>
+      Both functions return an statgrab error code.
+      <segmentedlist list-presentation="table">
+        <segtitle>error code</segtitle>
+        <segtitle>description</segtitle>
+        <seglistitem><seg>SG_ERROR_NONE</seg><seg>No error</seg></seglistitem>
+        <seglistitem><seg>SG_ERROR_INVALID_ARGUMENT</seg><seg>Unknown name for mutex</seg></seglistitem>
+        <seglistitem><seg>SG_ERROR_MUTEX_LOCK</seg><seg>thread library error, error code is set with the delivered value</seg></seglistitem>
+        <seglistitem><seg>SG_ERROR_MUTEX_UNLOCK</seg><seg>thread library error, error code is set with the delivered value</seg></seglistitem>
+      </segmentedlist>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
+ * Copyright (C) 2010,2011 Jens Rehsack
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,392 +22,825 @@
  * $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "statgrab.h"
 #include "tools.h"
-#include "vector.h"
-#if defined(SOLARIS) || defined(LINUX) || defined(AIX)
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <dirent.h>
-#endif
-#include <string.h>
 
-#ifdef SOLARIS
-#include <procfs.h>
-#include <limits.h>
+#ifdef HAVE_PROCFS
+/* XXX move it to a ./configure --with-proc-location[=/proc] setting */
 #define PROC_LOCATION "/proc"
 #define MAX_FILE_LENGTH PATH_MAX
 #endif
-#ifdef LINUX
-#include <limits.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#define PROC_LOCATION "/proc"
-#define MAX_FILE_LENGTH PATH_MAX
-#endif
-#ifdef ALLBSD
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#if defined(FREEBSD) || defined(DFBSD)
-#include <sys/user.h>
-#else
-#include <sys/proc.h>
-#endif
-#include <string.h>
-#include <paths.h>
-#include <fcntl.h>
-#include <limits.h>
-#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-#include <kvm.h>
-#endif
-#include <unistd.h>
-#ifdef NETBSD2
-#include <sys/lwp.h>
-#endif
-#endif
-#ifdef HPUX
-#include <sys/param.h>
-#include <sys/pstat.h>
-#include <unistd.h>
-#define PROCESS_BATCH 30
-#endif
-#ifdef WIN32
-#include <windows.h>
-#include <psapi.h>
-#endif
-#ifdef AIX
-#include <unistd.h>
-#include <errno.h>
-#include <time.h>
-#include <procinfo.h>
-#include <sys/time.h>
+
+#if defined(AIX)
+# ifndef HAVE_DECL_GETPROCS64
 extern int getprocs64(struct procentry64 *, int, struct fdsinfo64 *, int, pid_t *, int);
+# endif
+# ifndef HAVE_DECL_GETARGS
 extern int getargs(struct procentry64 *, int, char *, int);
+# endif
 #endif
 
-static void proc_state_init(sg_process_stats *s) {
-	s->process_name = NULL;
-	s->proctitle = NULL;
+static void sg_process_stats_item_init(sg_process_stats *d) {
+
+	d->process_name = NULL;
+	d->proctitle = NULL;
 }
 
-static void proc_state_destroy(sg_process_stats *s) {
-	free(s->process_name);
-	free(s->proctitle);
+#if 0
+static sg_error sg_process_stats_item_copy(sg_process_stats *d, const sg_process_stats *s) {
+
+	if( SG_ERROR_NONE != sg_update_string(&d->process_name, s->process_name) ||
+	    SG_ERROR_NONE != sg_update_string(&d->proctitle, s->proctitle) ) {
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+	}
+
+	d->pid = s->pid;
+	d->parent = s->parent;
+	d->pgid = s->pgid;
+	d->uid = s->uid;
+	d->euid = s->euid;
+	d->gid = s->gid;
+	d->egid = s->egid;
+	d->proc_size = s->proc_size;
+	d->proc_resident = s->proc_resident;
+	d->time_spent = s->time_spent;
+	d->cpu_percent = s->cpu_percent;
+	d->nice = s->nice;
+	d->state = s->state;
+
+	return SG_ERROR_NONE;
 }
 
-sg_process_stats *sg_get_process_stats(int *entries){
-	VECTOR_DECLARE_STATIC(proc_state, sg_process_stats, 64,
-			      proc_state_init, proc_state_destroy);
-	int proc_state_size = 0;
-	sg_process_stats *proc_state_ptr;
-#ifdef HPUX
-	struct pst_status pstat_procinfo[PROCESS_BATCH];
+static sg_error sg_process_stats_item_compute_diff(const sg_process_stats *s, sg_process_stats *d) {
+
+	/* XXX how "diff" user or nice changes etc. */
+	d->proc_size -= s->proc_size;
+	d->proc_resident -= s->proc_resident;
+	d->time_spent -= s->time_spent;
+	d->cpu_percent -= s->cpu_percent;
+
+	return SG_ERROR_NONE;
+}
+
+static int sg_process_stats_item_compare(const sg_process_stats *a, const sg_process_stats *b) {
+
+	int rc;
+
+	if( ( 0 != ( rc = a->pid - b->pid ) )
+	 || ( 0 != ( rc = a->parent - b->parent ) )
+	 || ( 0 != ( rc = a->pgid - b->pgid ) )
+	 || ( 0 != ( rc = strcmp(a->device_name, b->device_name) ) ) )
+		return rc;
+
+	return 0;
+}
+#else
+#define sg_process_stats_item_copy NULL
+#define sg_process_stats_item_compute_diff NULL
+#define sg_process_stats_item_compare NULL
+#endif
+
+static void sg_process_stats_item_destroy(sg_process_stats *d) {
+
+	free(d->process_name);
+	free(d->proctitle);
+}
+
+VECTOR_INIT_INFO_FULL_INIT(sg_process_stats);
+VECTOR_INIT_INFO_EMPTY_INIT(sg_process_count);
+
+#define SG_PROC_STAT_IDX	0
+#define SG_PROC_COUNT_IDX	1
+#define SG_PROC_IDX_COUNT       2
+
+/* kvm_openfiles() cann succeed at any later point when the admin adjust
+ * permissions of accessed files - no reason to die in init() */
+EASY_COMP_SETUP(process,SG_PROC_IDX_COUNT,NULL);
+
+#if HAVE_PROCFS
+struct pids_in_proc_dir_t {
+	size_t nitems;
+	struct pids_in_proc_dir_t *next;
+	pid_t items[];
+};
+
+static struct pids_in_proc_dir_t *
+alloc_pids_in_proc_dir(void) {
+	ssize_t pagesize = sg_get_sys_page_size();
+	if( -1 != pagesize ) {
+		struct pids_in_proc_dir_t *pipd = malloc( pagesize );
+		if( pipd != NULL ) {
+			pipd->nitems = 0;
+			pipd->next = NULL;
+		}
+
+		return pipd;
+	}
+
+	return NULL;
+}
+
+/**
+ * free pids_in_proc_dir_t structure
+ *
+ * @param pipd - pointer to structure to be freed
+ * @param include_children - when true, next pointer chain is followed and freed, too
+ *
+ * @return next pids_in_proc_dir_t item (or NULL, when no remains)
+ */
+static struct pids_in_proc_dir_t *
+free_pids_in_proc_dir( struct pids_in_proc_dir_t *pipd, bool include_children ) {
+	struct pids_in_proc_dir_t *next = NULL;
+	while( pipd != NULL ) {
+		next = pipd->next;
+		free(pipd);
+		if( include_children )
+			pipd = next;
+		else
+			pipd = NULL;
+	}
+
+	return next;
+}
+
+#define PIPD_IS_FULL(pipd,size) (((size) - ((offsetof(struct pids_in_proc_dir_t, items)))/sizeof(pid_t)) < ((pipd)->nitems + 1))
+
+static struct pids_in_proc_dir_t *
+add_pid_to_pids_in_proc_dir( pid_t pid, struct pids_in_proc_dir_t *pipd ) {
+	assert( pipd != NULL );
+	assert( NULL == pipd->next );
+
+	if( PIPD_IS_FULL( pipd, sg_get_sys_page_size() ) ) {
+		pipd->next = alloc_pids_in_proc_dir();
+		if( NULL == pipd->next )
+			return NULL;
+		pipd = pipd->next;
+	}
+
+	pipd->items[pipd->nitems++] = pid;
+
+	return pipd;
+}
+
+static struct pids_in_proc_dir_t *
+scan_proc_dir( const char *path_to_proc_dir ) {
+	DIR *proc_dir;
+	struct dirent dir_entry, *result = NULL;
+	struct pids_in_proc_dir_t *cnt = alloc_pids_in_proc_dir(), *wrk;
+	int rc;
+
+	if( NULL == cnt )
+		return NULL;
+
+	if( ( proc_dir = opendir(path_to_proc_dir) ) == NULL ) {
+		SET_ERROR_WITH_ERRNO("process", SG_ERROR_OPENDIR, path_to_proc_dir);
+		free_pids_in_proc_dir(cnt, true);
+		return NULL;
+	}
+
+	wrk = cnt;
+	while( ( rc = readdir_r( proc_dir, &dir_entry, &result ) ) == 0 ) {
+		pid_t pid;
+		if( NULL == result )
+			break;
+		if( ( pid = atoi( dir_entry.d_name ) ) != 0 ) {
+			wrk = add_pid_to_pids_in_proc_dir( pid, wrk );
+			if( NULL == wrk ) {
+				free_pids_in_proc_dir(cnt, true);
+				cnt = NULL;
+				break; /* bail out */
+			}
+		}
+	}
+
+	if( rc != 0 ) {
+		SET_ERROR_WITH_ERRNO_CODE( "process", SG_ERROR_READDIR, rc, path_to_proc_dir );
+	}
+
+	closedir(proc_dir);
+
+	return cnt;
+}
+#endif
+
+#if defined(KERN_PROC_ARGS) || defined(KERN_PROC_ARGV) || defined(KERN_PROCARGS2) || defined(AIX) || defined(LINUX)
+static char *
+adjust_procname_cmndline( char *proctitle, size_t len ) {
+
+	char *p, *pt;
+
+	/* XXX OpenBSD prepends char *[] adressing the several embedded argv items */
+	if( len && ( (size_t)(((char **)(proctitle))[0] - proctitle) <= len ) ) {
+		pt = p = ((char **)(proctitle))[0];
+		len -= pt - proctitle;
+	}
+	else {
+		pt = p = proctitle;
+	}
+
+	while( ( len && ( p < (pt + len) ) ) || !len ) {
+		if( *(p+1) == '\0' )
+			break;
+		if( *p == '\0' ) {
+			*p++ = ' ';
+		}
+		else {
+			/* avoid overread when whitespace at end */
+			p += strlen(p);
+		}
+	}
+	if( len ) {
+		pt[len] = '\0';
+	}
+	else {
+		*p = '\0';
+	}
+
+	return pt;
+}
+#endif
+
+
+static sg_error
+sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
+
+	size_t proc_items = 0;
+	sg_process_stats *proc_stats_ptr;
+	time_t now = time(NULL);
+
+#if defined(LINUX)
+	struct pids_in_proc_dir_t *pids_in_proc_dir;
+	size_t pid_item = 0;
+	char filename[MAX_FILE_LENGTH];
+	FILE *f;
+	char s;
+	char read_buf[4096];
+	char *read_ptr;
+	/* XXX or we detect max command line length in ./configure */
+	unsigned long stime, utime;
+	unsigned long long starttime;
+	int x, fd, rc;
+	size_t len;
+	time_t uptime;
+	long tickspersec;
+#elif defined(SOLARIS)
+	struct pids_in_proc_dir_t *pids_in_proc_dir;
+	size_t pid_item = 0;
+	char filename[MAX_FILE_LENGTH];
+	FILE *f;
+	psinfo_t process_info;
+	prusage_t process_usage;
+#elif defined(HPUX)
+#define PROCESS_BATCH 50
+	struct pst_status *pstat_procinfo = NULL;
 	long procidx = 0;
 	long long pagesize;
 	int num, i;
-#endif
-#ifdef AIX
+#elif defined(AIX)
 	struct procentry64 *procs = NULL;
 	long long pagesize;
-	int fetched = 0;
+	ssize_t fetched = 0, ncpus;
 	pid_t index = 0;
-	unsigned proc_idx;
 	time_t utime, stime;
-	int ncpus;
 	struct timeval now_tval;
 	double now_time;
-	char cmndline[ARG_MAX];
-	char comm[ARG_MAX];
-	struct procentry64 curproc_for_getargs;
-#define PROCS_TO_FETCH  1000
-#endif
-#ifdef ALLBSD
-	int mib[4];
-	size_t size;
-	struct kinfo_proc *kp_stats;
-	int procs, i;
+	char *cmndlinebuf = NULL, comm[2*MAXCOMLEN+1];
+	/* struct procentry64 curproc_for_getargs; */
+#define PROCS_TO_FETCH  250
+#elif defined(HAVE_STRUCT_KINFO_PROC2) && defined(KERN_PROC2)
+	int mib[6], rc;
+	size_t size, argbufsize = ARG_MAX, i;
+	struct kinfo_proc2 *kp_stats = NULL, *tmp;
 	char *proctitle;
-#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
+#elif defined(HAVE_STRUCT_KINFO_PROC) && defined(KERN_PROC)
+	int mib[6], rc;
+	size_t size, nprocs, i;
+	struct kinfo_proc *kp_stats = NULL, *tmp;
+	char *proctitle;
+#  if 0
+#   if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD) */
 	kvm_t *kvmd;
 	char **args, **argsp;
 	int argslen = 0;
-#else
+#   else
 	long buflen;
 	char *p, *proctitletmp;
-#endif
-#ifdef NETBSD2
-	int lwps;
+#   endif
+#  endif
+#  ifdef NETBSD2
+	size_t lwps;
 	struct kinfo_lwp *kl_stats;
-#endif
-#endif
-#if defined(SOLARIS) || defined(LINUX)
-	DIR *proc_dir;
-	struct dirent *dir_entry;
-	char filename[MAX_FILE_LENGTH];
-	FILE *f;
-#ifdef SOLARIS
-	psinfo_t process_info;
-#endif
-#ifdef LINUX
-	char s;
-	/* If someone has a executable of 4k filename length, they deserve to get it truncated :) */
-	char ps_name[4096];
-	char *ptr;
-	VECTOR_DECLARE_STATIC(psargs, char, 128, NULL, NULL);
-	unsigned long stime, utime, starttime;
-	int x;
-	int fn;
-	int len;
-	int rc;
-	time_t uptime;
-	long tickspersec;
+#  endif
 #endif
 
-#ifdef LINUX
-	if ((f=fopen("/proc/uptime", "r")) == NULL) {
-		sg_set_error_with_errno(SG_ERROR_OPEN, "/proc/uptime");
-		return NULL;
-	}
-	if((fscanf(f,"%lu %*d",&uptime)) != 1){
-		sg_set_error(SG_ERROR_PARSE, NULL);
-		return NULL;
-	}
-	fclose(f);
-#endif
-
-	if((proc_dir=opendir(PROC_LOCATION))==NULL){
-		sg_set_error_with_errno(SG_ERROR_OPENDIR, PROC_LOCATION);
-		return NULL;
+#if defined(SOLARIS)
+	if( NULL == ( pids_in_proc_dir = scan_proc_dir( PROC_LOCATION ) ) ) {
+                RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 	}
 
-	while((dir_entry=readdir(proc_dir))!=NULL){
-		if(atoi(dir_entry->d_name) == 0) continue;
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP
 
-#ifdef SOLARIS
-		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/psinfo", dir_entry->d_name);
-#endif
-#ifdef LINUX
-		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/stat", dir_entry->d_name);
-#endif
-		if((f=fopen(filename, "r"))==NULL){
-			/* Open failed.. Process since vanished, or the path was too long.
-			 * Ah well, move onwards to the next one */
+	VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + pids_in_proc_dir->nitems, proc_stats_ptr, sg_process_stats);
+
+	while( pids_in_proc_dir != NULL ) {
+
+		if( pids_in_proc_dir->nitems <= pid_item ) {
+			pids_in_proc_dir = free_pids_in_proc_dir( pids_in_proc_dir, false );
+			if( pids_in_proc_dir != NULL ) {
+				VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + pids_in_proc_dir->nitems, proc_stats_ptr, sg_process_stats);
+			}
+			pid_item = 0;
 			continue;
 		}
-#ifdef SOLARIS
+
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/psinfo", pids_in_proc_dir->items[pid_item]);
+		if( ( f = fopen(filename, "r") ) == NULL ) {
+			/* Open failed.. Process since vanished, or the path was too long.
+			 * Ah well, move onwards to the next one */
+			++pid_item;
+			continue;
+		}
+
 		fread(&process_info, sizeof(psinfo_t), 1, f);
 		fclose(f);
-#endif
 
-		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
-			return NULL;
-		}
-		proc_state_ptr = proc_state+proc_state_size;
-
-#ifdef SOLARIS		
-		proc_state_ptr->pid = process_info.pr_pid;
-		proc_state_ptr->parent = process_info.pr_ppid;
-		proc_state_ptr->pgid = process_info.pr_pgid;
-		proc_state_ptr->uid = process_info.pr_uid;
-		proc_state_ptr->euid = process_info.pr_euid;
-		proc_state_ptr->gid = process_info.pr_gid;
-		proc_state_ptr->egid = process_info.pr_egid;
-		proc_state_ptr->proc_size = (process_info.pr_size) * 1024;
-		proc_state_ptr->proc_resident = (process_info.pr_rssize) * 1024;
-		proc_state_ptr->time_spent = process_info.pr_time.tv_sec;
-		proc_state_ptr->cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
-		proc_state_ptr->nice = (int)process_info.pr_lwp.pr_nice - 20;
-		if (sg_update_string(&proc_state_ptr->process_name,
-				     process_info.pr_fname) < 0) {
-			return NULL;
-		}
-		if (sg_update_string(&proc_state_ptr->proctitle,
-				     process_info.pr_psargs) < 0) {
-			return NULL;
+		proc_stats_ptr[proc_items].pid = process_info.pr_pid;
+		proc_stats_ptr[proc_items].parent = process_info.pr_ppid;
+		proc_stats_ptr[proc_items].pgid = process_info.pr_pgid;
+		proc_stats_ptr[proc_items].uid = process_info.pr_uid;
+		proc_stats_ptr[proc_items].euid = process_info.pr_euid;
+		proc_stats_ptr[proc_items].gid = process_info.pr_gid;
+		proc_stats_ptr[proc_items].egid = process_info.pr_egid;
+		proc_stats_ptr[proc_items].proc_size = (process_info.pr_size) * 1024;
+		proc_stats_ptr[proc_items].proc_resident = (process_info.pr_rssize) * 1024;
+		proc_stats_ptr[proc_items].start_time = process_info.pr_start.tv_sec;
+		proc_stats_ptr[proc_items].time_spent = process_info.pr_time.tv_sec;
+		proc_stats_ptr[proc_items].cpu_percent = (process_info.pr_pctcpu * 100.0) / 0x8000;
+		proc_stats_ptr[proc_items].nice = (int)process_info.pr_lwp.pr_nice - 20;
+		if( ( SG_ERROR_NONE != sg_update_string(&proc_stats_ptr[proc_items].process_name, process_info.pr_fname) ) ||
+		    ( SG_ERROR_NONE != sg_update_string(&proc_stats_ptr[proc_items].proctitle, process_info.pr_psargs) ) ) {
+			VECTOR_UPDATE_ERROR_CLEANUP
+			RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 		}
 
 		switch (process_info.pr_lwp.pr_state) {
 		case 1:
-			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
 			break;
 		case 2:
 		case 5:
-			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING; 
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING; 
 			break;
 		case 3:
-			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE; 
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE; 
 			break;
 		case 4:
-			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED; 
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED; 
 			break;
 		}
-#endif
-#ifdef LINUX
-		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %lu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n", &(proc_state_ptr->pid), ps_name, &s, &(proc_state_ptr->parent), &(proc_state_ptr->pgid), &utime, &stime, &(proc_state_ptr->nice), &starttime, &(proc_state_ptr->proc_size), &(proc_state_ptr->proc_resident));
-		/* +3 becuase man page says "Resident  Set Size: number of pages the process has in real memory, minus 3 for administrative purposes." */
-		proc_state_ptr->proc_resident = (proc_state_ptr->proc_resident + 3) * getpagesize();
+
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/usage", pids_in_proc_dir->items[pid_item]);
+		if( ( f = fopen(filename, "r") ) != NULL ) {
+
+			fread(&process_usage, sizeof(process_usage), 1, f);
+			fclose(f);
+
+			proc_stats_ptr[proc_items].context_switches = process_usage.pr_vctx + process_usage.pr_ictx;
+			proc_stats_ptr[proc_items].voluntary_context_switches = process_usage.pr_vctx;
+			proc_stats_ptr[proc_items].involuntary_context_switches = process_usage.pr_ictx;
+		}
+
+		proc_stats_ptr[proc_items].systime = now;
+		++pid_item;
+		++proc_items;
+	}
+#elif defined(LINUX)
+
+/* signed:	-1 / 2 -> 0
+ *		0 % 4 -> 0
+ *		0 + 1 -> 1
+ * unsigned:	0xff / 2 -> 0x7f
+ *		0x7f % 4 -> 3
+ *		3 + 1 -> 4
+ */
+#define UID_SCANF_FMT (sizeof(int[(((uid_t)-1)/2)%4+1]) == sizeof(int[1]) ? "Uid:\t%d\t%d\t%*d\t%*d\n" : "Uid:\t%u\t%u\t%*u\t%*u\n" )
+#define GID_SCANF_FMT (sizeof(int[(((gid_t)-1)/2)%4+1]) == sizeof(int[1]) ? "Gid:\t%d\t%d\t%*d\t%*d\n" : "Gid:\t%u\t%u\t%*u\t%*u\n" )
+#define TIME_T_SCANF_FMT (sizeof(int[(((time_t)-1)/2)%4+1]) == sizeof(int[1]) ? "%ld %*d" : "%lu %*d" )
+
+	if( ( f = fopen(PROC_LOCATION "/uptime", "r") ) == NULL ) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_OPEN, PROC_LOCATION "/uptime");
+	}
+	if( ( fscanf(f, TIME_T_SCANF_FMT, &uptime) ) != 1 ) {
+		fclose(f);
+		RETURN_WITH_SET_ERROR("process", SG_ERROR_PARSE, NULL);
+	}
+	fclose(f);
+
+
+	if( NULL == ( pids_in_proc_dir = scan_proc_dir( PROC_LOCATION ) ) ) {
+                RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+	}
+
+	tickspersec = sysconf (_SC_CLK_TCK);
+
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP fclose(f);
+
+	VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + pids_in_proc_dir->nitems, proc_stats_ptr, sg_process_stats);
+
+	while( pids_in_proc_dir != NULL ) {
+
+		if( pids_in_proc_dir->nitems <= pid_item ) {
+			pids_in_proc_dir = free_pids_in_proc_dir( pids_in_proc_dir, false );
+			if( pids_in_proc_dir != NULL ) {
+				VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + pids_in_proc_dir->nitems, proc_stats_ptr, sg_process_stats);
+			}
+			pid_item = 0;
+			continue;
+		}
+
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/stat", pids_in_proc_dir->items[pid_item]);
+		if( ( f = fopen(filename, "r") ) == NULL ) {
+			/* Open failed.. Process since vanished, or the path was too long.
+			 * Ah well, move onwards to the next one */
+			++pid_item;
+			continue;
+		}
+
+		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + 1, proc_stats_ptr, sg_process_stats);
+
+		x = fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n",
+			   &proc_stats_ptr[proc_items].pid, read_buf, &s, &proc_stats_ptr[proc_items].parent,
+			   &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
+			   &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
+		/* +3 because man page says "Resident  Set Size: number of pages the process has in real memory, minus 3 for administrative purposes." */
+		proc_stats_ptr[proc_items].proc_resident = (proc_stats_ptr[proc_items].proc_resident + 3) * sg_get_sys_page_size();
 		switch (s) {
 		case 'S':
-			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
 			break;
 		case 'R':
-			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
 			break;
 		case 'Z':
-			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE;
 			break;
 		case 'T':
 		case 'D':
-			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
 			break;
 		}
-	
-		/* pa_name[0] should = '(' */
-		ptr = strchr(&ps_name[1], ')');	
-		if(ptr !=NULL) *ptr='\0';
 
-		if (sg_update_string(&proc_state_ptr->process_name,
-				     &ps_name[1]) < 0) {
-			return NULL;
+		/* pa_name[0] should = '(' */
+		read_ptr = strchr(&read_buf[1], ')');	
+		if( read_ptr != NULL ) {
+			*read_ptr = '\0';
+		}
+
+		if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].process_name, &read_buf[1] )) {
+			VECTOR_UPDATE_ERROR_CLEANUP
+			RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 		}
 
 		/* cpu */
-		proc_state_ptr->cpu_percent = (100.0 * (utime + stime)) / ((uptime * 100.0) - starttime);
-		tickspersec = sysconf (_SC_CLK_TCK);
+		proc_stats_ptr[proc_items].cpu_percent = (100.0 * (utime + stime)) / ((uptime * 100.0) - starttime);
 		if (tickspersec < 0) {
-			proc_state_ptr->time_spent = 0;
+			proc_stats_ptr[proc_items].time_spent = 0;
+			proc_stats_ptr[proc_items].start_time = 0;
 		}
 		else {
-			proc_state_ptr->time_spent = (utime + stime) / tickspersec;
+			proc_stats_ptr[proc_items].time_spent = (utime + stime) / tickspersec;
+			proc_stats_ptr[proc_items].start_time = (now - uptime) + (starttime / tickspersec);
 		}
 
 		fclose(f);
 
 		/* uid / gid */
-		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/status", dir_entry->d_name);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/status", pids_in_proc_dir->items[pid_item]);
 		if ((f=fopen(filename, "r")) == NULL) {
 			/* Open failed.. Process since vanished, or the path was too long.
 			 * Ah well, move onwards to the next one */
+			++pid_item;
 			continue;
 		}
 
-		if((ptr=sg_f_read_line(f, "Uid:"))==NULL){
+		/* XXX is it sure that "Uid:" is always found before "Gid:"? */
+		if( sg_f_read_line(f, read_buf, sizeof(read_buf), "Uid:") == NULL ) {
 			fclose(f);
+			++pid_item;
 			continue;
 		}
-		sscanf(ptr, "Uid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->uid), &(proc_state_ptr->euid));
+		sscanf(read_buf, UID_SCANF_FMT, &proc_stats_ptr[proc_items].uid, &proc_stats_ptr[proc_items].euid);
 
-		if((ptr=sg_f_read_line(f, "Gid:"))==NULL){
+		if( sg_f_read_line(f, read_buf, sizeof(read_buf), "Gid:") == NULL ) {
 			fclose(f);
+			++pid_item;
 			continue;
 		}
-		sscanf(ptr, "Gid:\t%d\t%d\t%*d\t%*d\n", &(proc_state_ptr->gid), &(proc_state_ptr->egid));
+		sscanf(read_buf, GID_SCANF_FMT, &proc_stats_ptr[proc_items].gid, &proc_stats_ptr[proc_items].egid);
+
+		if( sg_f_read_line(f, read_buf, sizeof(read_buf), "voluntary_ctxt_switches:") != NULL )
+			sscanf(read_buf, "voluntary_ctxt_switches:\t%llu", &proc_stats_ptr[proc_items].voluntary_context_switches);
+		else
+			proc_stats_ptr[proc_items].voluntary_context_switches = 0;
+
+		if( sg_f_read_line(f, read_buf, sizeof(read_buf), "nonvoluntary_ctxt_switches:") != NULL )
+			sscanf(read_buf, "nonvoluntary_ctxt_switches:\t%llu", &proc_stats_ptr[proc_items].involuntary_context_switches);
+		else
+			proc_stats_ptr[proc_items].involuntary_context_switches = 0;
+
+		proc_stats_ptr[proc_items].context_switches = proc_stats_ptr[proc_items].voluntary_context_switches
+							    + proc_stats_ptr[proc_items].involuntary_context_switches;
 
 		fclose(f);
 
 		/* proctitle */	
-		snprintf(filename, MAX_FILE_LENGTH, "/proc/%s/cmdline", dir_entry->d_name);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/cmdline", pids_in_proc_dir->items[pid_item]);
 
-		if((fn=open(filename, O_RDONLY)) == -1){
+		if( ( fd = open(filename, O_RDONLY) ) == -1 ) {
 			/* Open failed.. Process since vanished, or the path was too long.
 			 * Ah well, move onwards to the next one */
+			++pid_item;
 			continue;
 		}
 
-#define READ_BLOCK_SIZE 128
 		len = 0;
 		do {
-			if (VECTOR_RESIZE(psargs, len + READ_BLOCK_SIZE) < 0) {
-				return NULL;
-			}
-			rc = read(fn, psargs + len, READ_BLOCK_SIZE);
+			rc = read(fd, read_buf, sizeof(read_buf));
 			if (rc > 0) {
+				read_ptr = sg_realloc( proc_stats_ptr[proc_items].proctitle, len + rc + 1 );
+				if( NULL == read_ptr ) {
+					free(proc_stats_ptr[proc_items].proctitle);
+					proc_stats_ptr[proc_items].proctitle = NULL;
+					close(fd);
+					RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+				}
+				proc_stats_ptr[proc_items].proctitle = read_ptr;
+				memcpy( proc_stats_ptr[proc_items].proctitle + len, read_buf, rc );
 				len += rc;
 			}
-		} while (rc == READ_BLOCK_SIZE);
-		close(fn);
+		} while (rc > 0);
+		close(fd);
 
 		if (rc == -1) {
 			/* Read failed; move on. */
+			free(proc_stats_ptr[proc_items].proctitle);
+			proc_stats_ptr[proc_items].proctitle = NULL;
+			++pid_item;
 			continue;
 		}
 
-		/* Turn \0s into spaces within the command line. */
-		ptr = psargs;
-		for(x = 0; x < len; x++) {
-			if (*ptr == '\0') *ptr = ' ';
-			ptr++;
+		if( proc_stats_ptr[proc_items].proctitle ) { /* no title, no finish 0 byte */
+			proc_stats_ptr[proc_items].proctitle[len] = '\0';
+			adjust_procname_cmndline( proc_stats_ptr[proc_items].proctitle, len );
 		}
-
-		if (len == 0) {
-			/* We want psargs to be NULL. */
-			if (VECTOR_RESIZE(psargs, 0) < 0) {
-				return NULL;
+		else {
+			if( -1 == asprintf( &proc_stats_ptr[proc_items].proctitle, "[%s]", proc_stats_ptr[proc_items].process_name ) ) {
+				VECTOR_UPDATE_ERROR_CLEANUP;
+				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_ASPRINTF, NULL);
 			}
-		} else {
-			/* Not empty, so append a \0. */
-			if (VECTOR_RESIZE(psargs, len + 1) < 0) {
-				return NULL;
-			}
-			psargs[len] = '\0';
 		}
 
-		if (sg_update_string(&proc_state_ptr->proctitle, psargs) < 0) {
-			return NULL;
-		}
-#endif
-
-		proc_state_size++;
+		proc_stats_ptr[proc_items].systime = now;
+		++pid_item;
+		++proc_items;
 	}
-	closedir(proc_dir);
+#elif defined(HAVE_STRUCT_KINFO_PROC2) && defined(KERN_PROC2)
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC2;
+#if defined(KERN_PROC_KTHREAD)
+	mib[2] = KERN_PROC_KTHREAD;
+#else
+	mib[2] = KERN_PROC_ALL;
 #endif
+	mib[3] = 0;
+	mib[4] = sizeof(*kp_stats);
 
-#ifdef ALLBSD
+	if( NULL == (proctitle = sg_malloc( ARG_MAX * sizeof(*proctitle) ) ) ) {
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+	}
+
+again:
+	size = 0;
+	mib[5] = 0;
+	if( -1 == ( rc = sysctl(mib, 6, NULL, &size, NULL, 0) ) ) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC2.KERN_PROC_ALL");
+	}
+	mib[5] = size / sizeof(*kp_stats);
+	if( 0 == ( tmp = sg_realloc( kp_stats, size ) ) ) {
+		free(kp_stats);
+		free(proctitle);
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+	}
+
+	kp_stats = tmp;
+	if( -1 == (rc = sysctl(mib, 6, kp_stats, &size, NULL, (size_t)0 ) ) ) {
+		if( errno == ENOMEM ) {
+			goto again;
+		}
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC2.KERN_PROC_ALL");
+	}
+	proc_items = size / sizeof(*kp_stats);
+
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP free(kp_stats); free(proctitle);
+	VECTOR_UPDATE(proc_stats_vector_ptr, proc_items, proc_stats_ptr, sg_process_stats);
+	for( i = 0; i < proc_items; ++i ) {
+
+		if( SG_ERROR_NONE != sg_update_string(&proc_stats_ptr[i].process_name, kp_stats[i].p_comm ) ) {
+			VECTOR_UPDATE_ERROR_CLEANUP
+			RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+		}
+
+		proc_stats_ptr[i].pid = kp_stats[i].p_pid;
+		proc_stats_ptr[i].parent = kp_stats[i].p_ppid;
+		proc_stats_ptr[i].pgid = kp_stats[i].p__pgid;
+		proc_stats_ptr[i].sessid = kp_stats[i].p_sid;
+
+		proc_stats_ptr[i].uid = kp_stats[i].p_uid;
+		proc_stats_ptr[i].euid = kp_stats[i].p_ruid;
+		proc_stats_ptr[i].gid = kp_stats[i].p_gid;
+		proc_stats_ptr[i].egid = kp_stats[i].p_rgid;
+
+		proc_stats_ptr[i].voluntary_context_switches = kp_stats[i].p_uru_nvcsw;
+		proc_stats_ptr[i].involuntary_context_switches = kp_stats[i].p_uru_nivcsw;
+		proc_stats_ptr[i].context_switches = proc_stats_ptr[i].voluntary_context_switches + proc_stats_ptr[i].involuntary_context_switches;
+		proc_stats_ptr[i].proc_size = ((unsigned long long)kp_stats[i].p_vm_dsize) + kp_stats[i].p_vm_ssize;
+		proc_stats_ptr[i].proc_size *= sg_get_sys_page_size();
+		proc_stats_ptr[i].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * sg_get_sys_page_size();
+		proc_stats_ptr[i].start_time = kp_stats[i].p_ustart_sec;
+		proc_stats_ptr[i].time_spent = ((unsigned long long)kp_stats[i].p_uutime_sec) + kp_stats[i].p_ustime_sec;
+		proc_stats_ptr[i].cpu_percent = ((double)kp_stats[i].p_cpticks / FSCALE) * 100.0; /* XXX CTL_KERN.KERN_FSCALE */
+		proc_stats_ptr[i].nice = kp_stats[i].p_nice;
+		switch( kp_stats[i].p_stat )
+		{
+#if defined(LSIDL)
+		case LSIDL:
+#elif defined(SIDL)
+		case SIDL:
+#endif
+#if defined(LSSLEEP)
+		case LSSLEEP:
+#elif defined(SSLEEP)
+		case SSLEEP:
+#endif
+#if defined(LSRUN)
+		case LSRUN: /* on RUN queue - maybe soon be chosen for LSONPROC */
+#elif defined(SRUN)
+		case SRUN: /* on RUN queue - maybe soon be chosen for SONPROC */
+#endif
+#if defined(LSSUSPENDED)
+		case LSSUSPENDED:
+#endif
+			proc_stats_ptr[i].state = SG_PROCESS_STATE_SLEEPING;
+			break;
+
+#if defined(LSDEAD)
+		case LSDEAD:
+#elif defined(SDEAD)
+		case SDEAD:
+#endif
+#if defined(LSZOMB)
+		case LSZOMB:
+#elif defined(SZOMB)
+		case SZOMB:
+#endif
+			proc_stats_ptr[i].state = SG_PROCESS_STATE_ZOMBIE;
+			break;
+
+#if defined(LSSTOP)
+		case LSSTOP:
+#elif defined(SSTOP)
+		case SSTOP:
+#endif
+			proc_stats_ptr[i].state = SG_PROCESS_STATE_STOPPED;
+			break;
+
+#if defined(LSONPROC)
+		case LSONPROC:
+#elif defined(SONPROC)
+		case SONPROC:
+#endif
+			proc_stats_ptr[i].state = SG_PROCESS_STATE_RUNNING;
+			break;
+
+		default:
+			proc_stats_ptr[i].state = SG_PROCESS_STATE_UNKNOWN;
+			break;
+		}
+#if defined(KERN_PROC_ARGS) && defined(KERN_PROC_ARGV)
+		if( 0 != kp_stats[i].p_pid ) {
+			char *p;
+
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_PROC_ARGS;
+			mib[2] = kp_stats[i].p_pid;
+			mib[3] = KERN_PROC_ARGV;
+			*proctitle = '\0';
+argv_again:
+			size = argbufsize * sizeof(*proctitle);
+			rc = sysctl(mib, 4, proctitle, &size, NULL, 0);
+			if( -1 == rc ) {
+				if( 0 == kp_stats[i].p_ppid && errno == EINVAL ) {
+					goto print_kernel_proctitle;
+				}
+				else if( errno == ENOMEM ) {
+					p = sg_realloc( proctitle, size );
+					if( NULL == p ) {
+						VECTOR_UPDATE_ERROR_CLEANUP;
+						RETURN_FROM_PREVIOUS_ERROR("process", sg_get_error() );
+					}
+					argbufsize = size / sizeof(*proctitle);
+					proctitle = p;
+					goto argv_again;
+				}
+				else {
+					long failing_pid = kp_stats[i].p_pid;
+					VECTOR_UPDATE_ERROR_CLEANUP;
+					RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV for pid=%ld", failing_pid);
+				}
+			}
+
+			if( size > 1 && ( ( p = adjust_procname_cmndline( proctitle, size - 1 ) ) != NULL ) && 0 != strlen(p) ) {
+				if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[i].proctitle, p ) ) {
+					VECTOR_UPDATE_ERROR_CLEANUP;
+					RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+				}
+			}
+			else {
+				goto print_kernel_proctitle;
+			}
+
+		}
+		else {
+print_kernel_proctitle:
+			if( -1 == asprintf( &proc_stats_ptr[i].proctitle, "[%s]", proc_stats_ptr[i].process_name ) ) {
+				long failing_pid = kp_stats[i].p_pid;
+				VECTOR_UPDATE_ERROR_CLEANUP;
+				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_ASPRINTF, "pid=%ld", failing_pid);
+			}
+		}
+#endif
+		proc_stats_ptr[i].systime = now;
+	}
+
+	free(kp_stats);
+	free(proctitle);
+
+#elif defined(HAVE_STRUCT_KINFO_PROC) && defined(KERN_PROC)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC;
+#ifdef KERN_PROC_INC_THREAD
+	mib[2] = KERN_PROC_PROC;
+	mib[3] = 0;
+	i = 4;
+#else
 	mib[2] = KERN_PROC_ALL;
-
-	if(sysctl(mib, 3, NULL, &size, NULL, 0) < 0) {
-		sg_set_error_with_errno(SG_ERROR_SYSCTL,
-		                        "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
-		return NULL;
-	}
-
-	procs = size / sizeof(struct kinfo_proc);
-
-	kp_stats = sg_malloc(size);
-	if(kp_stats == NULL) {
-		return NULL;
-	}
-	memset(kp_stats, 0, size);
-
-	if(sysctl(mib, 3, kp_stats, &size, NULL, 0) < 0) {
-		sg_set_error_with_errno(SG_ERROR_SYSCTL,
-		                        "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
-		free(kp_stats);
-		return NULL;
-	}
-
-#if (defined(FREEBSD) && !defined(FREEBSD5)) || defined(DFBSD)
-	kvmd = sg_get_kvm2();
+	i = 3;
 #endif
 
-	for (i = 0; i < procs; i++) {
+	if( NULL == (proctitle = sg_malloc( ARG_MAX * sizeof(*proctitle) ) ) ) {
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+	}
+
+again:
+	size = 0;
+	if( -1 == ( rc = sysctl(mib, i, NULL, &size, NULL, 0) ) ) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
+	}
+	if( 0 == ( tmp = sg_realloc( kp_stats, size ) ) ) {
+		free(kp_stats);
+		free(proctitle);
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+	}
+
+	kp_stats = tmp;
+	if( -1 == (rc = sysctl(mib, i, kp_stats, &size, NULL, (size_t)0) ) ) {
+		if( errno == ENOMEM ) {
+			goto again;
+		}
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
+	}
+
+	proc_items = 0;
+	nprocs = size / sizeof(*kp_stats);
+
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP free(kp_stats); free(proctitle);
+	VECTOR_UPDATE(proc_stats_vector_ptr, nprocs, proc_stats_ptr, sg_process_stats);
+	for( i = 0; i < nprocs; ++i ) {
 		const char *name;
 
-#ifdef FREEBSD5
-		if (kp_stats[i].ki_stat == 0) {
-#else
-		if (kp_stats[i].kp_proc.p_stat == 0) {
-#endif
+# if defined(HAVE_KINFO_PROC_KI_STAT)
+		if( kp_stats[i].ki_stat == 0 )
+# elif defined(HAVE_KINFO_PROC_KP_PID)
+		if( kp_stats[i].kp_stat == 0 )
+# elif defined(HAVE_KINFO_PROC_KP_PROC)
+		if( kp_stats[i].kp_proc.p_stat == 0 )
+# else
+		if(0)
+# endif
+		{
 			/* FreeBSD 5 deliberately overallocates the array that
 			 * the sysctl returns, so we'll get a few junk
 			 * processes on the end that we have to ignore. (Search
@@ -415,397 +849,339 @@ sg_process_stats *sg_get_process_stats(int *entries){
 			continue;
 		}
 
-		if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
-			return NULL;
+# if defined(HAVE_KINFO_PROC_KI_STAT)
+		name = kp_stats[proc_items].ki_comm;
+# elif defined(HAVE_KINFO_PROC_KP_PID)
+		name = kp_stats[proc_items].kp_comm;
+# elif defined(HAVE_KINFO_PROC_KP_THREAD)
+		name = kp_stats[proc_items].kp_thread.td_comm;
+# elif defined(HAVE_KINFO_PROC_KP_PROC)
+		name = kp_stats[proc_items].kp_proc.p_comm;
+# else
+		name = "";
+# endif
+		if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].process_name, name ) ) {
+			VECTOR_UPDATE_ERROR_CLEANUP
+			RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 		}
-		proc_state_ptr = proc_state+proc_state_size;
 
-#ifdef FREEBSD5
-		name = kp_stats[i].ki_comm;
-#elif defined(DFBSD)
-		name = kp_stats[i].kp_thread.td_comm;
-#else
-		name = kp_stats[i].kp_proc.p_comm;
-#endif
-		if (sg_update_string(&proc_state_ptr->process_name, name) < 0) {
-			return NULL;
-		}
+# if defined(HAVE_KINFO_PROC_KI_STAT)
+		proc_stats_ptr[proc_items].pid = kp_stats[i].ki_pid;
+		proc_stats_ptr[proc_items].parent = kp_stats[i].ki_ppid;
+		proc_stats_ptr[proc_items].pgid = kp_stats[i].ki_pgid;
+		proc_stats_ptr[proc_items].sessid = kp_stats[i].ki_sid;
 
-#if defined(FREEBSD5) || defined(NETBSD) || defined(OPENBSD)
+		proc_stats_ptr[proc_items].uid = kp_stats[i].ki_ruid;
+		proc_stats_ptr[proc_items].euid = kp_stats[i].ki_uid;
+		proc_stats_ptr[proc_items].gid = kp_stats[i].ki_rgid;
+		proc_stats_ptr[proc_items].egid = kp_stats[i].ki_svgid;
 
-#ifdef FREEBSD5
-		mib[2] = KERN_PROC_ARGS;
-		mib[3] = kp_stats[i].ki_pid;
-#else
-		mib[1] = KERN_PROC_ARGS;
-		mib[2] = kp_stats[i].kp_proc.p_pid;
-		mib[3] = KERN_PROC_ARGV;
-#endif
+# elif defined(HAVE_KINFO_PROC_KP_EPROC)
+		proc_stats_ptr[proc_items].pid = kp_stats[i].kp_proc.p_pid;
+		proc_stats_ptr[proc_items].parent = kp_stats[i].kp_eproc.e_ppid;
+		proc_stats_ptr[proc_items].pgid = kp_stats[i].kp_eproc.e_pgid;
+		proc_stats_ptr[proc_items].sessid = 0;
+#  if defined(HAVE_KINFO_PROC_KP_EPROC_E_UCRED_CR_RUID)
+		proc_stats_ptr[proc_items].uid = kp_stats[i].kp_eproc.e_ucred.cr_ruid;
+		proc_stats_ptr[proc_items].euid = kp_stats[i].kp_eproc.e_ucred.cr_svuid;
+		proc_stats_ptr[proc_items].gid = kp_stats[i].kp_eproc.e_ucred.cr_rgid;
+		proc_stats_ptr[proc_items].egid = kp_stats[i].kp_eproc.e_ucred.cr_svgid;
+#  else
+		proc_stats_ptr[proc_items].uid = kp_stats[i].kp_eproc.e_pcred.p_ruid;
+		proc_stats_ptr[proc_items].euid = kp_stats[i].kp_eproc.e_pcred.p_svuid;
+		proc_stats_ptr[proc_items].gid = kp_stats[i].kp_eproc.e_pcred.p_rgid;
+		proc_stats_ptr[proc_items].egid = kp_stats[i].kp_eproc.e_pcred.p_svgid;
 
-		free(proc_state_ptr->proctitle);
-		proc_state_ptr->proctitle = NULL;
+		proc_stats_ptr[proc_items].cpu_percent =
+			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
+#  endif
+# elif defined(HAVE_KINFO_PROC_KP_PID)
+		proc_stats_ptr[proc_items].pid = kp_stats[i].kp_pid;
+		proc_stats_ptr[proc_items].parent = kp_stats[i].kp_ppid == ((pid_t)-1) ? 0 : kp_stats[i].kp_ppid;
+		proc_stats_ptr[proc_items].pgid = kp_stats[i].kp_pgid;
+		proc_stats_ptr[proc_items].sessid = kp_stats[i].kp_sid;
 
-/* Starting size - we'll double this straight away */
-#define PROCTITLE_START_SIZE 64
-		buflen = PROCTITLE_START_SIZE;
-		size = buflen;
-		proctitle = NULL;
+		proc_stats_ptr[proc_items].uid = kp_stats[i].kp_ruid;
+		proc_stats_ptr[proc_items].euid = kp_stats[i].kp_uid;
+		proc_stats_ptr[proc_items].gid = kp_stats[i].kp_rgid;
+		proc_stats_ptr[proc_items].egid = kp_stats[i].kp_svgid;
 
-		do {
-			if((long) size >= buflen) {
-				buflen *= 2;
-				size = buflen;
-				proctitletmp = sg_realloc(proctitle, buflen);
-				if(proctitletmp == NULL) {
-					free(proctitle);
-					proctitle = NULL;
-					proc_state_ptr->proctitle = NULL;
-					size = 0;
-					break;
-				}
-				proctitle = proctitletmp;
-				bzero(proctitle, buflen);
-			}
+# else
+		proc_stats_ptr[proc_items].pid = kp_stats[i].kp_proc.p_pid;
+		proc_stats_ptr[proc_items].parent = kp_stats[i].kp_eproc.e_ppid;
+		proc_stats_ptr[proc_items].pgid = kp_stats[i].kp_eproc.e_pgid;
+		proc_stats_ptr[proc_items].sessid = 0;
 
-			if(sysctl(mib, 4, proctitle, &size, NULL, 0) < 0) {
-				free(proctitle);
-				proctitle = NULL;
-				proc_state_ptr->proctitle = NULL;
-				size = 0;
-				break;
-			}
-		} while((long) size >= buflen);
+		proc_stats_ptr[proc_items].time_spent =
+			kp_stats[i].kp_proc.p_runtime / 1000000;
+		proc_stats_ptr[proc_items].cpu_percent =
+			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
+# endif
 
-		if(size > 0) {
-			proc_state_ptr->proctitle = sg_malloc(size+1);
-			if(proc_state_ptr->proctitle == NULL) {
-				return NULL;
-			}
-			p = proctitle;
-#ifdef OPENBSD
-			/* On OpenBSD, this value has the argv pointers (which
-			 * are terminated by a NULL) at the front, so we have
-			 * to skip over them to get to the strings. */
-			while (*(char ***)p != NULL) {
-				p += sizeof(char **);
-			}
-			p += sizeof(char **);
-#endif
-			proc_state_ptr->proctitle[0] = '\0';
-			do {
-				sg_strlcat(proc_state_ptr->proctitle, p, size+1);
-				sg_strlcat(proc_state_ptr->proctitle, " ", size+1);
-				p += strlen(p) + 1;
-			} while (p < proctitle + size);
-			free(proctitle);
-			proctitle = NULL;
-			/* remove trailing space */
-			proc_state_ptr->proctitle[strlen(proc_state_ptr->proctitle)-1] = '\0';
-		}
-		else {
-			if(proctitle != NULL) {
-				free(proctitle);
-				proctitle = NULL;
-			}
-			proc_state_ptr->proctitle = NULL;
-		}
-#else
-		free(proc_state_ptr->proctitle);
-		proc_state_ptr->proctitle = NULL;
-		if(kvmd != NULL) {
-			args = kvm_getargv(kvmd, &(kp_stats[i]), 0);
-			if(args != NULL) {
-				argsp = args;
-				while(*argsp != NULL) {
-					argslen += strlen(*argsp) + 1;
-					argsp++;
-				}
-				proctitle = sg_malloc(argslen + 1);
-				proctitle[0] = '\0';
-				if(proctitle == NULL) {
-					return NULL;
-				}
-				while(*args != NULL) {
-					sg_strlcat(proctitle, *args, argslen + 1);
-					sg_strlcat(proctitle, " ", argslen + 1);
-					args++;
-				}
-				/* remove trailing space */
-				proctitle[strlen(proctitle)-1] = '\0';
-				proc_state_ptr->proctitle = proctitle;
-			}
-			else {
-				proc_state_ptr->proctitle = NULL;
-			}
-		}
-		else {
-			proc_state_ptr->proctitle = NULL;
-		}
-#endif
 
-#ifdef FREEBSD5
-		proc_state_ptr->pid = kp_stats[i].ki_pid;
-		proc_state_ptr->parent = kp_stats[i].ki_ppid;
-		proc_state_ptr->pgid = kp_stats[i].ki_pgid;
-#else
-		proc_state_ptr->pid = kp_stats[i].kp_proc.p_pid;
-		proc_state_ptr->parent = kp_stats[i].kp_eproc.e_ppid;
-		proc_state_ptr->pgid = kp_stats[i].kp_eproc.e_pgid;
-#endif
+		proc_stats_ptr[proc_items].context_switches = 0;
+		proc_stats_ptr[proc_items].voluntary_context_switches = 0;
+		proc_stats_ptr[proc_items].involuntary_context_switches = 0;
+		proc_stats_ptr[proc_items].start_time = 0;
 
-#ifdef FREEBSD5
-		proc_state_ptr->uid = kp_stats[i].ki_ruid;
-		proc_state_ptr->euid = kp_stats[i].ki_uid;
-		proc_state_ptr->gid = kp_stats[i].ki_rgid;
-		proc_state_ptr->egid = kp_stats[i].ki_svgid;
-#elif defined(DFBSD)
-		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_ucred.cr_ruid;
-		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_ucred.cr_svuid;
-		proc_state_ptr->gid = kp_stats[i].kp_eproc.e_ucred.cr_rgid;
-		proc_state_ptr->egid = kp_stats[i].kp_eproc.e_ucred.cr_svgid;
-#else
-		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_pcred.p_ruid;
-		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_pcred.p_svuid;
-		proc_state_ptr->gid = kp_stats[i].kp_eproc.e_pcred.p_rgid;
-		proc_state_ptr->egid = kp_stats[i].kp_eproc.e_pcred.p_svgid;
-#endif
-
-#ifdef FREEBSD5
-		proc_state_ptr->proc_size = kp_stats[i].ki_size;
-		/* This is in pages */
-		proc_state_ptr->proc_resident =
-			kp_stats[i].ki_rssize * getpagesize();
+# if defined(HAVE_KINFO_PROC_KI_STAT)
 		/* This is in microseconds */
-		proc_state_ptr->time_spent = kp_stats[i].ki_runtime / 1000000;
-		proc_state_ptr->cpu_percent =
-			((double)kp_stats[i].ki_pctcpu / FSCALE) * 100.0;
-		proc_state_ptr->nice = kp_stats[i].ki_nice;
-#else
-		proc_state_ptr->proc_size =
-			kp_stats[i].kp_eproc.e_vm.vm_map.size;
-		/* This is in pages */
-		proc_state_ptr->proc_resident =
-			kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
-#if defined(NETBSD) || defined(OPENBSD)
-		proc_state_ptr->time_spent =
-			kp_stats[i].kp_proc.p_rtime.tv_sec;
-#elif defined(DFBSD)
-		proc_state_ptr->time_spent = 
+		proc_stats_ptr[proc_items].time_spent = kp_stats[i].ki_runtime / 1000000;
+		proc_stats_ptr[proc_items].cpu_percent = 0; /* ki_pctcpu */
+		proc_stats_ptr[proc_items].nice = kp_stats[i].ki_nice;
+# elif defined(HAVE_KINFO_PROC_KP_PID)
+		proc_stats_ptr[proc_items].time_spent = kp_stats[i].kp_ru.ru_utime.tv_sec;
+		proc_stats_ptr[proc_items].time_spent += kp_stats[i].kp_ru.ru_stime.tv_sec;
+		proc_stats_ptr[proc_items].cpu_percent = kp_stats[i].kp_lwp.kl_pctcpu;
+		proc_stats_ptr[proc_items].time_spent = kp_stats[i].kp_start.tv_sec;
+		proc_stats_ptr[proc_items].nice = kp_stats[i].kp_nice;
+# elif defined(HAVE_KINFO_PROC_KP_THREAD)
+		proc_stats_ptr[proc_items].time_spent = 
 			( kp_stats[i].kp_thread.td_uticks +
 			kp_stats[i].kp_thread.td_sticks +
 			kp_stats[i].kp_thread.td_iticks ) / 1000000;
-#else
+# else
+		/* p_cpticks?, p_[usi]ticks? */
+#if 0
 		/* This is in microseconds */
-		proc_state_ptr->time_spent =
+		proc_stats_ptr[proc_items].time_spent =
 			kp_stats[i].kp_proc.p_runtime / 1000000;
 #endif
-		proc_state_ptr->cpu_percent =
-			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
-		proc_state_ptr->nice = kp_stats[i].kp_proc.p_nice;
-#endif
+# endif
 
-#ifdef NETBSD2
+# if defined(HAVE_KINFO_PROC_KI_STAT)
+		proc_stats_ptr[proc_items].proc_size = kp_stats[i].ki_size;
+		/* This is in pages */
+		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].ki_rssize) * getpagesize();
+# elif defined(HAVE_KINFO_PROC_KP_PID)
+		proc_stats_ptr[proc_items].proc_size = kp_stats[i].kp_vm_map_size;
+		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].kp_vm_rssize) * getpagesize();
+# else
+#if 0
+		/* This is in microseconds */
+		proc_stats_ptr[proc_items].proc_size = kp_stats[i].kp_eproc.e_vm.vm_map.size;
+		/* This is in pages */
+		proc_stats_ptr[proc_items].proc_resident = kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
+#endif
+		proc_stats_ptr[proc_items].nice = kp_stats[i].kp_proc.p_nice;
+# endif
+
+# if defined(HAVE_KINFO_PROC_KI_STAT)
+		switch (kp_stats[i].ki_stat)
+# elif defined(HAVE_KINFO_PROC_KP_PID)
+		switch (kp_stats[i].kp_stat)
+# else
+		switch (kp_stats[i].kp_proc.p_stat)
+# endif
 		{
-			size_t size;
-			int mib[5];
-
-			mib[0] = CTL_KERN;
-			mib[1] = KERN_LWP;
-			mib[2] = kp_stats[i].kp_proc.p_pid;
-			mib[3] = sizeof(struct kinfo_lwp);
-			mib[4] = 0;
-
-			if(sysctl(mib, 5, NULL, &size, NULL, 0) < 0) {
-				sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_KERN.KERN_LWP.pid.structsize.0");
-				return NULL;
-			}
-
-			lwps = size / sizeof(struct kinfo_lwp);
-			mib[4] = lwps;
-
-			kl_stats = sg_malloc(size);
-			if(kl_stats == NULL) {
-				return NULL;
-			}
-
-			if(sysctl(mib, 5, kl_stats, &size, NULL, 0) < 0) {
-				sg_set_error_with_errno(SG_ERROR_SYSCTL, "CTL_KERN.KERN_LWP.pid.structsize.buffersize");
-				return NULL;
-			}
-		}
-
-		switch(kp_stats[i].kp_proc.p_stat) {
-		case SIDL:
-			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
-			break;
-		case SACTIVE:
-			{
-				int i;
-
-				for(i = 0; i < lwps; i++) {
-					switch(kl_stats[i].l_stat) {
-					case LSONPROC:
-					case LSRUN:
-						proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
-						goto end;
-					case LSSLEEP:
-						proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
-						goto end;
-					case LSSTOP:
-					case LSSUSPENDED:
-						proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
-						goto end;
-					}
-					proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
-				}
-				end: ;
-			}
-			break;
-		case SSTOP:
-			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
-			break;
-		case SZOMB:
-			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
-			break;
-		default:
-			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
-			break;
-		}
-
-		free(kl_stats);
-#else
-#ifdef FREEBSD5
-		switch (kp_stats[i].ki_stat) {
-#else
-		switch (kp_stats[i].kp_proc.p_stat) {
-#endif
-		case SIDL:
+# ifdef SRUN
 		case SRUN:
-#ifdef SONPROC
-		case SONPROC: /* NetBSD */
-#endif
-			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
 			break;
+# endif
+# if defined(HAVE_KINFO_PROC_KP_PID)
+		case SACTIVE:
+			switch(kp_stats[proc_items].kp_lwp.kl_stat)
+			{
+			case LSRUN:
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
+				break;
+
+			case LSSTOP:
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
+				break;
+
+			case LSSLEEP:
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
+				break;
+			}
+			break;
+# endif
+		case SIDL:
+# ifdef SSLEEP
 		case SSLEEP:
-#ifdef SWAIT
+# endif
+# ifdef SWAIT
 		case SWAIT: /* FreeBSD 5 */
-#endif
-#ifdef SLOCK
+# endif
+# ifdef SLOCK
 		case SLOCK: /* FreeBSD 5 */
-#endif
-			proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+# endif
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
 			break;
 		case SSTOP:
-			proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
 			break;
 		case SZOMB:
-#ifdef SDEAD
+# ifdef SDEAD
 		case SDEAD: /* OpenBSD & NetBSD */
-#endif
-			proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+# endif
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE;
 			break;
 		default:
-			proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_UNKNOWN;
 			break;
 		}
-#endif
-		proc_state_size++;
+
+
+# if defined(KERN_PROC_ARGS) || defined(KERN_PROCARGS2)
+		if( 0 != proc_stats_ptr[proc_items].pid ) {
+			char *p;
+
+			size = ARG_MAX * sizeof(*proctitle);
+			*proctitle = '\0';
+			mib[0] = CTL_KERN;
+#  if defined(KERN_PROC_ARGS)
+			mib[2] = KERN_PROC;
+			mib[2] = KERN_PROC_ARGS;
+			mib[3] = ((int)proc_stats_ptr[i].pid);
+			rc = 4;
+			p = "CTL_KERN.KERN_PROC.KERN_PROC_ARGS";
+#  elif defined(KERN_PROCARGS2)
+			mib[1] = KERN_PROCARGS2;
+			mib[2] = ((int)proc_stats_ptr[i].pid);
+			rc = 3;
+			p = "CTL_KERN.KERN_PROCARGS2";
+#  endif
+			if( -1 == ( rc = sysctl(mib, rc, proctitle, &size, NULL, 0) ) ) {
+				long failing_pid = (long)proc_stats_ptr[i].pid;
+#  if defined(KERN_PROCARGS2)
+				if( EINVAL == errno ) {
+					goto print_kernel_proctitle;
+					continue; /* EPERM ^^ */
+				}
+#  endif
+				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=%ld", p, failing_pid);
+			}
+
+			if( size > 1 ) {
+				adjust_procname_cmndline( proctitle, size );
+				if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].proctitle, proctitle ) ) {
+					VECTOR_UPDATE_ERROR_CLEANUP;
+					RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+				}
+			}
+			else {
+				goto print_kernel_proctitle;
+			}
+		}
+		else {
+print_kernel_proctitle:
+			if( -1 == asprintf( &proc_stats_ptr[proc_items].proctitle, "[%s]", proc_stats_ptr[proc_items].process_name ) ) {
+				long failing_pid = (long)proc_stats_ptr[i].pid;
+				VECTOR_UPDATE_ERROR_CLEANUP;
+				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_ASPRINTF, NULL);
+			}
+		}
+# endif
+
+		proc_stats_ptr[proc_items].systime = now;
+		++proc_items;
 	}
 
 	free(kp_stats);
-#endif
-
-#ifdef HPUX
+	free(proctitle);
+#elif defined(HPUX)
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP free(pstat_procinfo);
 	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
-		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-		return NULL;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 	}
 
-	while (1) {
-		num = pstat_getproc(pstat_procinfo, sizeof pstat_procinfo[0],
-		                    PROCESS_BATCH, procidx);
+	pstat_procinfo = malloc( PROCESS_BATCH * sizeof(pstat_procinfo[0]) );
+	if( NULL == pstat_procinfo ) {
+		RETURN_WITH_SET_ERROR( "process", SG_ERROR_MALLOC, "sg_get_process_stats" );
+	}
+
+	for(;;) {
+		memset( pstat_procinfo, 0, PROCESS_BATCH * sizeof(pstat_procinfo[0]) );
+		num = pstat_getproc(pstat_procinfo, sizeof(pstat_procinfo[0]),
+				    PROCESS_BATCH, procidx);
 		if (num == -1) {
-			sg_set_error_with_errno(SG_ERROR_PSTAT,
-			                        "pstat_getproc");
-			return NULL;
-		} else if (num == 0) {
+			free(pstat_procinfo);
+			RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_PSTAT, "pstat_getproc");
+		}
+		else if (num == 0) {
 			break;
 		}
 
-		for (i = 0; i < num; i++) {
+                VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + num, proc_stats_ptr, sg_process_stats);
+	
+		for (i = 0; i < num; ++i) {
 			struct pst_status *pi = &pstat_procinfo[i];
+			sg_error rc;
 
-			if (VECTOR_RESIZE(proc_state, proc_state_size + 1) < 0) {
-				return NULL;
-			}
-			proc_state_ptr = proc_state+proc_state_size;
+			proc_stats_ptr[proc_items].pid = pi->pst_pid;
+			proc_stats_ptr[proc_items].parent = pi->pst_ppid;
+			proc_stats_ptr[proc_items].pgid = pi->pst_pgrp;
+			proc_stats_ptr[proc_items].uid = pi->pst_uid;
+			proc_stats_ptr[proc_items].euid = pi->pst_euid;
+			proc_stats_ptr[proc_items].gid = pi->pst_gid;
+			proc_stats_ptr[proc_items].egid = pi->pst_egid;
+			proc_stats_ptr[proc_items].context_switches = pi->pst_nvcsw + pi->pst_nivcsw;
+			proc_stats_ptr[proc_items].voluntary_context_switches = pi->pst_nvcsw;
+			proc_stats_ptr[proc_items].involuntary_context_switches = pi->pst_nivcsw;
+			proc_stats_ptr[proc_items].proc_size = (pi->pst_dsize + pi->pst_tsize + pi->pst_ssize) * pagesize;
+			proc_stats_ptr[proc_items].proc_resident = pi->pst_rssize * pagesize;
+			proc_stats_ptr[proc_items].start_time = pi->pst_start;
+			proc_stats_ptr[proc_items].time_spent = pi->pst_time;
+			proc_stats_ptr[proc_items].cpu_percent = (pi->pst_pctcpu * 100.0) / 0x8000;
+			proc_stats_ptr[proc_items].nice = pi->pst_nice;
 	
-			proc_state_ptr->pid = pi->pst_pid;
-			proc_state_ptr->parent = pi->pst_ppid;
-			proc_state_ptr->pgid = pi->pst_pgrp;
-			proc_state_ptr->uid = pi->pst_uid;
-			proc_state_ptr->euid = pi->pst_euid;
-			proc_state_ptr->gid = pi->pst_gid;
-			proc_state_ptr->egid = pi->pst_egid;
-			proc_state_ptr->proc_size = (pi->pst_dsize + pi->pst_tsize + pi->pst_ssize) * pagesize;
-			proc_state_ptr->proc_resident = pi->pst_rssize * pagesize;
-			proc_state_ptr->time_spent = pi->pst_time;
-			proc_state_ptr->cpu_percent = (pi->pst_pctcpu * 100.0) / 0x8000;
-			proc_state_ptr->nice = pi->pst_nice;
-	
-			if (sg_update_string(&proc_state_ptr->process_name,
-					     pi->pst_ucomm) < 0) {
-				return NULL;
+			if ( ( SG_ERROR_NONE != ( rc = sg_update_string(&proc_stats_ptr[proc_items].process_name, pi->pst_ucomm ) ) )
+			  || ( SG_ERROR_NONE != ( rc = sg_update_string(&proc_stats_ptr[proc_items].proctitle, pi->pst_cmd ) ) ) ) {
+				free(pstat_procinfo);
+				RETURN_FROM_PREVIOUS_ERROR( "process", rc );
 			}
-			if (sg_update_string(&proc_state_ptr->proctitle,
-					     pi->pst_cmd) < 0) {
-				return NULL;
-			}
-	
+
 			switch (pi->pst_stat) {
 			case PS_SLEEP:
-				proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
 				break;
 			case PS_RUN:
-				proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
 				break;
 			case PS_STOP:
-				proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
 				break;
 			case PS_ZOMBIE:
-				proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE;
 				break;
 			case PS_IDLE:
 			case PS_OTHER:
-				proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_UNKNOWN;
 				break;
 			}
 	
-			proc_state_size++;
+			proc_stats_ptr[proc_items].systime = now;
+
+			++proc_items;
 		}
 		procidx = pstat_procinfo[num - 1].pst_idx + 1;
 	}
-#endif
-
-#ifdef AIX
+	free(pstat_procinfo);
+#elif defined(AIX)
 #define	TVALU_TO_SEC(x)	((x).tv_sec + ((double)((x).tv_usec) / 1000000.0))
 #define	TVALN_TO_SEC(x)	((x).tv_sec + ((double)((x).tv_usec) / 1000000000.0))
 	ncpus = sysconf(_SC_NPROCESSORS_ONLN);
-	if( -1 == ncpus ) {
+	if( -1 == ncpus )
 		ncpus = 1; /* sysconf error - assume 1 */
-	}
 
 	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
-		sg_set_error_with_errno(SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-		return NULL;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 	}
 
-	proc_idx = 0;
 	procs = /* (struct procentry64 *) */ malloc(sizeof(*procs) * PROCS_TO_FETCH);
 	if(NULL == procs) {
-		sg_set_error_with_errno(SG_ERROR_MALLOC, "sg_get_process_stats");
-		return 0;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_MALLOC, "sg_get_process_stats");
 	}
+
+	if( NULL == ( cmndlinebuf = sg_malloc(ARG_MAX + 1) ) ) {
+		free(procs);
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_MALLOC, "sg_get_process_stats");
+	}
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP free(procs); free(cmndlinebuf);
 
 	gettimeofday(&now_tval, 0);
 	now_time = TVALU_TO_SEC(now_tval);
@@ -813,284 +1189,310 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	/* keep on grabbing chunks of processes until getprocs returns a smaller
 	   block than we asked for */
 	do {
+		char *cmndline = NULL;
 		int i;
+                memset( procs, 0, sizeof(*procs) * PROCS_TO_FETCH );
 		fetched = getprocs64(procs, sizeof(*procs), NULL, 0, &index, PROCS_TO_FETCH);
-		if (VECTOR_RESIZE(proc_state, proc_state_size + fetched) < 0) {
-			sg_set_error_with_errno(SG_ERROR_MALLOC, "sg_get_process_stats");
-			free(procs);
-			return NULL;
-		}
+		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + fetched, proc_stats_ptr, sg_process_stats);
 		for( i = 0; i < fetched; ++i ) {
 			struct procentry64 *pi = procs+i;
 			int zombie = 0;
-
-			proc_state_ptr = proc_state + proc_idx;
+			sg_error rc;
 
 			zombie = 0;
 
 			/* set a descriptive name for the process state */
 			switch( pi->pi_state ) {
 			case SSLEEP:
-				proc_state_ptr->state = SG_PROCESS_STATE_SLEEPING;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
 				break;
 			case SRUN:
-				proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
 				break;
 			case SZOMB:
-				proc_state_ptr->state = SG_PROCESS_STATE_ZOMBIE;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE;
 				zombie = 1;
 				break;
 			case SSTOP:
-				proc_state_ptr->state = SG_PROCESS_STATE_STOPPED;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
 				break;
 			case SACTIVE:
-				proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
 				break;
 			case SIDL:
 			default:
-				proc_state_ptr->state = SG_PROCESS_STATE_UNKNOWN;
+				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_UNKNOWN;
 				break;
 			}
 
 			if( zombie ) {
 				utime = pi->pi_utime;
 				stime = pi->pi_stime;
-			} else {
-				utime = TVALN_TO_SEC(pi->pi_ru.ru_utime) + TVALN_TO_SEC(pi->pi_cru.ru_utime);
-				stime = TVALN_TO_SEC(pi->pi_ru.ru_stime) + TVALN_TO_SEC(pi->pi_cru.ru_stime);
+			}
+			else {
+				utime = TVALN_TO_SEC(pi->pi_ru.ru_utime);
+				stime = TVALN_TO_SEC(pi->pi_ru.ru_stime);
 			}
 
-			proc_state_ptr->pid = pi->pi_pid;
-			proc_state_ptr->parent = pi->pi_ppid;
-			proc_state_ptr->pgid = pi->pi_pgrp;
-			proc_state_ptr->uid = pi->pi_cred.crx_ruid;
-			proc_state_ptr->euid = pi->pi_cred.crx_uid;
-			proc_state_ptr->gid = pi->pi_cred.crx_rgid;
-			proc_state_ptr->egid = pi->pi_cred.crx_gid;
-			proc_state_ptr->proc_size = pi->pi_size;
-			proc_state_ptr->proc_resident = pi->pi_drss + pi->pi_trss; /* XXX might be wrong, see P::PT */
-			proc_state_ptr->time_spent = utime + stime;
-			proc_state_ptr->cpu_percent = (((double)(utime + stime) * 100) / ( now_time - pi->pi_start )) / ncpus;
-			proc_state_ptr->nice = pi->pi_nice;
+			proc_stats_ptr[proc_items].pid = pi->pi_pid;
+			proc_stats_ptr[proc_items].parent = pi->pi_ppid;
+			proc_stats_ptr[proc_items].pgid = pi->pi_pgrp;
+			proc_stats_ptr[proc_items].uid = pi->pi_cred.crx_ruid;
+			proc_stats_ptr[proc_items].euid = pi->pi_cred.crx_uid;
+			proc_stats_ptr[proc_items].gid = pi->pi_cred.crx_rgid;
+			proc_stats_ptr[proc_items].egid = pi->pi_cred.crx_gid;
+			proc_stats_ptr[proc_items].context_switches = pi->pi_ru.ru_nvcsw + pi->pi_ru.ru_nivcsw;
+			proc_stats_ptr[proc_items].voluntary_context_switches = pi->pi_ru.ru_nvcsw;
+			proc_stats_ptr[proc_items].involuntary_context_switches = pi->pi_ru.ru_nivcsw;
+			proc_stats_ptr[proc_items].proc_size = pi->pi_dvm * 4096;
+			proc_stats_ptr[proc_items].proc_resident = (pi->pi_drss + pi->pi_trss) * 4096; /* XXX might be wrong, see P::PT */
+			proc_stats_ptr[proc_items].start_time = pi->pi_start;
+			proc_stats_ptr[proc_items].time_spent = utime + stime;
+			proc_stats_ptr[proc_items].cpu_percent = (((double)(utime + stime) * 100) / ( now_time - pi->pi_start )) / ncpus;
+			proc_stats_ptr[proc_items].nice = pi->pi_nice;
+			proc_stats_ptr[proc_items].systime = now;
 
 			/* determine comm & cmndline */
 			if( (pi->pi_flags & SKPROC) == SKPROC ) {
 				if( pi->pi_pid == 0 ) {
-					snprintf(comm, ARG_MAX, "kproc (swapper)");
-					snprintf(cmndline, ARG_MAX, "kproc (swapper)");
-				} else {
-					snprintf(comm, ARG_MAX, "kproc (%s)", pi->pi_comm);
-					snprintf(cmndline, ARG_MAX, "kproc (%s)", pi->pi_comm);
+					snprintf(comm, sizeof(comm), "kproc (swapper)");
+					cmndline = NULL;
 				}
-			} else {
-				snprintf(comm, ARG_MAX, "%s", pi->pi_comm);
+				else {
+					snprintf(comm, sizeof(comm), "kproc (%s)", pi->pi_comm);
+					cmndline = NULL;
+				}
+			}
+			else {
+				snprintf(comm, sizeof(comm), "%s", pi->pi_comm);
+				cmndline = cmndlinebuf;
+				/*
 				curproc_for_getargs.pi_pid = pi->pi_pid;
-				if( getargs(&curproc_for_getargs, sizeof(curproc_for_getargs), cmndline, ARG_MAX) < 0 ) {
-					snprintf(cmndline, ARG_MAX, "%s", pi->pi_comm);
-				} else {
-					int done = 0;
-					/* replace NUL characters in command line with spaces */
-					char *c = cmndline;
-					while( ! done ) {
-						if( *c == '\0' ) {
-							if( *(c+1) == '\0' ) {
-								done = 1;
-							} else {
-								*c++ = ' ';
-							}
-						} else {
-							++c;
-						}
-					}
+				if( getargs(&curproc_for_getargs, sizeof(curproc_for_getargs), cmndline, ARG_MAX) < 0 )
+					cmndline = NULL;
+				else {
+					adjust_procname_cmndline( cmndline, 0 );
+				}
+				*/
+				if( getargs(pi, sizeof(*pi), cmndline, ARG_MAX) < 0 )
+					cmndline = NULL;
+				else {
+					adjust_procname_cmndline( cmndline, 0 );
 				}
 			}
 
+			if( NULL == cmndline )
+				rc = sg_update_string( &proc_stats_ptr[proc_items].proctitle, comm );
+			else
+				rc = sg_update_string( &proc_stats_ptr[proc_items].proctitle, cmndline );
 
-			if (sg_update_string(&proc_state_ptr->process_name, comm) < 0) {
-				free(procs);
-				return NULL;
-			}
-			if (sg_update_string(&proc_state_ptr->proctitle, cmndline) < 0) {
-				free(procs);
-				return NULL;
+			if( ( SG_ERROR_NONE != rc ) /* see above */
+			 || ( SG_ERROR_NONE != ( rc = sg_update_string(&proc_stats_ptr[proc_items].process_name, comm ) ) ) ) {
+				VECTOR_UPDATE_ERROR_CLEANUP;
+				RETURN_FROM_PREVIOUS_ERROR( "process", rc );
 			}
 
-			proc_idx++;
+			++proc_items;
 		}
 	} while( fetched >= PROCS_TO_FETCH );
 
-	proc_state_size = proc_idx;
-
 	free(procs);
-#endif
-
-
-#ifdef CYGWIN
-	sg_set_error(SG_ERROR_UNSUPPORTED, "Cygwin");
-	return NULL;
-#endif
-#ifdef WIN32
-	/* FIXME The data needed for this is probably do able with the 
-	 * "performance registry". Although using this appears to be a black
-	 * art and closely guarded secret.
-	 * This is not directly used in ihost, so not considered a priority */
-	sg_set_error(SG_ERROR_UNSUPPORTED, "Win32");
-	return NULL;
-#endif
-
-	*entries = proc_state_size;
-	return proc_state;
-}
-
-sg_process_count *sg_get_process_count() {
-	static sg_process_count process_stat;
-#ifndef WIN32
-	sg_process_stats *ps;
-	int ps_size, x;
+	free(cmndlinebuf);
 #else
-	DWORD aProcesses[1024];
-	DWORD cbNeeded;
+	RETURN_WITH_SET_ERROR("process", SG_ERROR_UNSUPPORTED, OS_TYPE);
 #endif
 
-	process_stat.sleeping = 0;
-	process_stat.running = 0;
-	process_stat.zombie = 0;
-	process_stat.stopped = 0;
-	process_stat.total = 0;
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP
 
-#ifndef WIN32
-	ps = sg_get_process_stats(&ps_size);
-	if (ps == NULL) {
-		return NULL;
+	if( proc_stats_vector_ptr && *proc_stats_vector_ptr && ( proc_items != (*proc_stats_vector_ptr)->used_count ) ) {
+		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items, proc_stats_ptr, sg_process_stats);
 	}
 
-	for(x = 0; x < ps_size; x++) {
-		switch (ps->state) {
+	return SG_ERROR_NONE;
+}
+
+MULTI_COMP_ACCESS(sg_get_process_stats,process,process,SG_PROC_STAT_IDX)
+
+int sg_process_compare_name(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return strcmp(a->process_name, b->process_name);
+}
+
+int sg_process_compare_pid(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->pid == b->pid) ? 0 : (a->pid < b->pid) ? -1 : 1;
+}
+
+int sg_process_compare_uid(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->uid == b->uid) ? 0 : (a->uid < b->uid) ? -1 : 1;
+}
+
+int sg_process_compare_gid(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->gid == b->gid) ? 0 : (a->gid < b->gid) ? -1 : 1;
+}
+
+int sg_process_compare_size(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->proc_size == b->proc_size) ? 0 : (a->proc_size < b->proc_size) ? -1 : 1;
+}
+
+int sg_process_compare_res(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->proc_resident == b->proc_resident) ? 0 : (a->proc_resident < b->proc_resident) ? -1 : 1;
+}
+
+int sg_process_compare_cpu(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->cpu_percent == b->cpu_percent) ? 0 : (a->cpu_percent < b->cpu_percent) ? -1 : 1;
+}
+
+int sg_process_compare_time(const void *va, const void *vb) {
+	const sg_process_stats *a = va, *b = vb;
+	return (a->time_spent == b->time_spent) ? 0 : (a->time_spent < b->time_spent) ? -1 : 1;
+}
+
+#if 0
+#ifdef WIN32
+	DWORD aProcesses[1024];
+	DWORD cbNeeded;
+	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+		return NULL;
+	process_stat.total = cbNeeded / sizeof(DWORD);
+#endif
+#endif
+
+static sg_error
+sg_get_process_count_int(sg_process_count *process_count_buf, const sg_vector *process_stats_vector) {
+	const sg_process_stats *ps = VECTOR_DATA(process_stats_vector);
+	size_t proc_count = process_stats_vector->used_count;
+
+	process_count_buf->total = 0;
+	process_count_buf->sleeping = 0;
+	process_count_buf->running = 0;
+	process_count_buf->zombie = 0;
+	process_count_buf->stopped = 0;
+	process_count_buf->unknown = 0;
+
+	process_count_buf->total = proc_count;
+	process_count_buf->systime = ps->systime;
+
+	/* post increment is intention! */
+	while( proc_count-- > 0 ) {
+		switch (ps[proc_count].state) {
 		case SG_PROCESS_STATE_RUNNING:
-			process_stat.running++;
+			++process_count_buf->running;
 			break;
 		case SG_PROCESS_STATE_SLEEPING:
-			process_stat.sleeping++;
+			++process_count_buf->sleeping;
 			break;
 		case SG_PROCESS_STATE_STOPPED:
-			process_stat.stopped++;
+			++process_count_buf->stopped;
 			break;
 		case SG_PROCESS_STATE_ZOMBIE:
-			process_stat.zombie++;
+			++process_count_buf->zombie;
+			break;
+		case SG_PROCESS_STATE_UNKNOWN:
+			++process_count_buf->unknown;
 			break;
 		default:
 			/* currently no mapping for SG_PROCESS_STATE_UNKNOWN in
 			 * sg_process_count */
 			break;
 		}
-		ps++;
 	}
 
-	process_stat.total = ps_size;
-#else
-	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+	return SG_ERROR_NONE;
+}
+
+sg_process_count *
+sg_get_process_count_of(sg_process_count_source pcs) {
+
+	struct sg_process_glob *process_glob = GLOBAL_GET_TLS(process);
+	const sg_vector *process_stats_vector = NULL; /* to avoid wrong warning */
+	sg_process_count *process_count;
+
+	TRACE_LOG("process", "entering sg_get_process_count_of");
+
+	if( !process_glob ) {
+		/* assuming error comp can't neither */
+		ERROR_LOG("process", "sg_get_process_count_of failed - cannot get glob"); \
 		return NULL;
-	process_stat.total = cbNeeded / sizeof(DWORD);
-#endif
-
-	return &process_stat;
-}
-
-int sg_process_compare_name(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
-
-	return strcmp(a->process_name, b->process_name);
-}
-
-int sg_process_compare_pid(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
-
-	if (a->pid < b->pid) {
-		return -1;
-	} else if (a->pid == b->pid) {
-		return 0;
-	} else {
-		return 1;
 	}
-}
 
-int sg_process_compare_uid(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
+	if(!process_glob->process_vectors[SG_PROC_COUNT_IDX])
+		process_glob->process_vectors[SG_PROC_COUNT_IDX] = VECTOR_CREATE(sg_process_count, 1);
 
-	if (a->uid < b->uid) {
-		return -1;
-	} else if (a->uid == b->uid) {
-		return 0;
-	} else {
-		return 1;
+	if(!process_glob->process_vectors[SG_PROC_COUNT_IDX]){
+		SET_ERROR("process", SG_ERROR_MALLOC, "sg_get_process_count_of");
+		return NULL;
 	}
-}
 
-int sg_process_compare_gid(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
+	process_count = VECTOR_DATA(process_glob->process_vectors[SG_PROC_COUNT_IDX]);
 
-	if (a->gid < b->gid) {
-		return -1;
-	} else if (a->gid == b->gid) {
-		return 0;
-	} else {
-		return 1;
+	switch(pcs) {
+
+	case sg_last_process_count:
+		process_stats_vector = process_glob->process_vectors[SG_PROC_STAT_IDX];
+		if( process_stats_vector )
+			break;
+		/* else fallthrough */
+
+	case sg_entire_process_count:
+		sg_get_process_stats(NULL);
+		process_stats_vector = process_glob->process_vectors[SG_PROC_STAT_IDX];
+		break;
+
+	default:
+		SET_ERROR("process", SG_ERROR_INVALID_ARGUMENT, "sg_get_process_count_of(sg_process_count_source = %d)", (int)pcs);
+		break;
 	}
-}
 
-int sg_process_compare_size(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
-
-	if (a->proc_size < b->proc_size) {
-		return -1;
-	} else if (a->proc_size == b->proc_size) {
-		return 0;
-	} else {
-		return 1;
+	if( !process_stats_vector ) {
+		TRACE_LOG_FMT("process", "sg_get_cpu_percents_of failed with %s", sg_str_error(sg_get_error()));
+		return NULL;
 	}
-}
 
-int sg_process_compare_res(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
-
-	if (a->proc_resident < b->proc_resident) {
-		return -1;
-	} else if (a->proc_resident == b->proc_resident) {
-		return 0;
-	} else {
-		return 1;
+	if( SG_ERROR_NONE == sg_get_process_count_int(process_count, process_stats_vector) ) {
+		TRACE_LOG("process", "sg_get_cpu_percents_of succeded"); \
+		return process_count;
 	}
+
+	WARN_LOG_FMT("process", "sg_get_cpu_percents_of failed with %s", sg_str_error(sg_get_error()));
+
+	return NULL;
 }
 
-int sg_process_compare_cpu(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
+sg_process_count *
+sg_get_process_count_r(sg_process_stats const * whereof) {
 
-	if (a->cpu_percent < b->cpu_percent) {
-		return -1;
-	} else if (a->cpu_percent == b->cpu_percent) {
-		return 0;
-	} else {
-		return 1;
+	sg_vector *process_count_result_vector;
+	sg_process_count *process_count;
+	sg_vector *process_stats_vector = VECTOR_DATA(whereof);
+
+	TRACE_LOG("process", "entering sg_get_process_count_r");
+
+	if( NULL == process_stats_vector ) {
+		SET_ERROR("process", SG_ERROR_INVALID_ARGUMENT, "sg_get_process_count_r(whereof = %p)", whereof);
+		return NULL;
 	}
-}
 
-int sg_process_compare_time(const void *va, const void *vb) {
-	const sg_process_stats *a = (sg_process_stats *)va;
-	const sg_process_stats *b = (sg_process_stats *)vb;
-
-	if (a->time_spent < b->time_spent) {
-		return -1;
-	} else if (a->time_spent == b->time_spent) {
-		return 0;
-	} else {
-		return 1;
+	process_count_result_vector = VECTOR_CREATE(sg_process_count, 1);
+	if( NULL == process_count_result_vector ) {
+		ERROR_LOG_FMT("process", "sg_get_process_count_r failed with %s", sg_str_error(sg_get_error()));
+		return NULL;
 	}
-}
 
+	process_count = VECTOR_DATA(process_count_result_vector);
+	if( SG_ERROR_NONE == sg_get_process_count_int(process_count, process_stats_vector) ) {
+		TRACE_LOG("process", "sg_get_process_count_r succeded");
+		return process_count;
+	}
+
+	WARN_LOG_FMT("process", "sg_get_process_count_r failed with %s", sg_str_error(sg_get_error()));
+	sg_vector_free(process_count_result_vector);
+
+	return NULL;
+}

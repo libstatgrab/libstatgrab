@@ -1,7 +1,8 @@
 /* 
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
+ * Copyright (C) 2010,2011 Jens Rehsack
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,12 +34,14 @@
 
 typedef enum {
 	LONG_LONG = 0,
+	UNSIGNED_LONG_LONG,
 	BYTES,
 	TIME_T,
 	FLOAT,
 	DOUBLE,
 	STRING,
 	INT,
+	UNSIGNED,
 	BOOL,
 	DUPLEX
 } stat_type;
@@ -173,48 +176,67 @@ void populate_const() {
 }
 
 void populate_cpu() {
+	sg_cpu_stats *cpu_s;
+
+	cpu_s = use_diffs ? sg_get_cpu_stats_diff()
+			  : sg_get_cpu_stats();
+
 	if (use_cpu_percent) {
-		sg_cpu_percents *cpu_p = sg_get_cpu_percents();
+		sg_cpu_percent_source cps;
+		cps = use_diffs ? sg_last_diff_cpu_percent
+				: sg_entire_cpu_percent;
+		sg_cpu_percents *cpu_p = sg_get_cpu_percents_of(cps);
 
 		if (cpu_p != NULL) {
-			add_stat(FLOAT, &cpu_p->user,
+			add_stat(DOUBLE, &cpu_p->user,
 				 "cpu", "user", NULL);
-			add_stat(FLOAT, &cpu_p->kernel,
+			add_stat(DOUBLE, &cpu_p->kernel,
 				 "cpu", "kernel", NULL);
-			add_stat(FLOAT, &cpu_p->idle,
+			add_stat(DOUBLE, &cpu_p->idle,
 				 "cpu", "idle", NULL);
-			add_stat(FLOAT, &cpu_p->iowait,
+			add_stat(DOUBLE, &cpu_p->iowait,
 				 "cpu", "iowait", NULL);
-			add_stat(FLOAT, &cpu_p->swap,
+			add_stat(DOUBLE, &cpu_p->swap,
 				 "cpu", "swap", NULL);
-			add_stat(FLOAT, &cpu_p->nice,
+			add_stat(DOUBLE, &cpu_p->nice,
 				 "cpu", "nice", NULL);
 			add_stat(TIME_T, &cpu_p->time_taken,
 				 "cpu", "time_taken", NULL);
 		}
 	} else {
-		sg_cpu_stats *cpu_s;
-
-		cpu_s = use_diffs ? sg_get_cpu_stats_diff()
-				  : sg_get_cpu_stats();
 		if (cpu_s != NULL) {
-			add_stat(LONG_LONG, &cpu_s->user,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->user,
 				 "cpu", "user", NULL);
-			add_stat(LONG_LONG, &cpu_s->kernel,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->kernel,
 				 "cpu", "kernel", NULL);
-			add_stat(LONG_LONG, &cpu_s->idle,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->idle,
 				 "cpu", "idle", NULL);
-			add_stat(LONG_LONG, &cpu_s->iowait,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->iowait,
 				 "cpu", "iowait", NULL);
-			add_stat(LONG_LONG, &cpu_s->swap,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->swap,
 				 "cpu", "swap", NULL);
-			add_stat(LONG_LONG, &cpu_s->nice,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->nice,
 				 "cpu", "nice", NULL);
-			add_stat(LONG_LONG, &cpu_s->total,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->total,
 				 "cpu", "total", NULL);
 			add_stat(TIME_T, &cpu_s->systime,
 				 "cpu", "systime", NULL);
 		}
+	}
+
+	if (cpu_s != NULL) {
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->context_switches,
+			 "cpu", "ctxsw", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->voluntary_context_switches,
+			 "cpu", "vctxsw", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->involuntary_context_switches,
+			 "cpu", "nvctxsw", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->syscalls,
+			 "cpu", "syscalls", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->interrupts,
+			 "cpu", "intrs", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->soft_interrupts,
+			 "cpu", "softintrs", NULL);
 	}
 }
 
@@ -240,11 +262,23 @@ void populate_load() {
 }
 
 void populate_user() {
-	sg_user_stats *user = sg_get_user_stats();
+	size_t entries;
+	sg_user_stats *users = sg_get_user_stats(&entries);
 
-	if (user != NULL) {
-		add_stat(INT, &user->num_entries, "user", "num", NULL);
-		add_stat(STRING, &user->name_list, "user", "names", NULL);
+	if (users != NULL) {
+		size_t i;
+		for (i = 0; i < entries; i++) {
+			const char *name = users[i].login_name;
+	
+			add_stat(STRING, &users[i].login_name,
+				 "user", name, "login_name", NULL);
+			add_stat(STRING, &users[i].device,
+				 "user", name, "tty", NULL);
+			add_stat(STRING, &users[i].hostname,
+				 "user", name, "from", NULL);
+			add_stat(TIME_T, &users[i].login_time,
+				 "user", name, "login_time", NULL);
+		}
 	}
 }
 
@@ -257,6 +291,18 @@ void populate_swap() {
 		add_stat(BYTES, &swap->free, "swap", "free", NULL);
 	}
 }
+
+#ifndef lengthof
+#define lengthof(x) (sizeof(x)/sizeof((x)[0]))
+#endif
+
+static const char *host_states[] = {
+        "unknown", "physical host",
+        "virtual machine (full virtualized)",
+        "virtual machine (paravirtualized)",
+        "hardware virtualization"
+};
+static const char *unexpected_host_state = "unexpected state (libstatgrab to new)";
 
 void populate_general() {
 	/* FIXME this should be renamed to host. */
@@ -271,12 +317,18 @@ void populate_general() {
 			 "general", "os_version", NULL);
 		add_stat(STRING, &host->platform, "general", "platform", NULL);
 		add_stat(STRING, &host->hostname, "general", "hostname", NULL);
+		add_stat(UNSIGNED, &host->ncpus, "general", "ncpus", NULL);
+		add_stat(UNSIGNED, &host->maxcpus, "general", "ncpus_cfg", NULL);
+		add_stat(UNSIGNED, &host->bitwidth, "general", "bitwidth", NULL);
+		add_stat(STRING, ((size_t)host->host_state) > (lengthof(host_states) - 1)
+		                 ? &unexpected_host_state
+				 : &host_states[host->host_state], "general", "hoststate", NULL);
 		add_stat(TIME_T, &host->uptime, "general", "uptime", NULL);
 	}
 }
 
 void populate_fs() {
-	int n, i;
+	size_t n, i;
 	sg_fs_stats *disk = sg_get_fs_stats(&n);
 
 	if (disk != NULL) {
@@ -312,25 +364,25 @@ void populate_fs() {
 				 "fs", name, "used", NULL);
 			add_stat(BYTES, &disk[i].avail,
 				 "fs", name, "avail", NULL);
-			add_stat(LONG_LONG, &disk[i].total_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].total_inodes,
 				 "fs", name, "total_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].used_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].used_inodes,
 				 "fs", name, "used_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].free_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].free_inodes,
 				 "fs", name, "free_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].avail_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].avail_inodes,
 				 "fs", name, "avail_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].io_size,
+			add_stat(BYTES, &disk[i].io_size,
 				 "fs", name, "io_size", NULL);
-			add_stat(LONG_LONG, &disk[i].block_size,
+			add_stat(BYTES, &disk[i].block_size,
 				 "fs", name, "block_size", NULL);
-			add_stat(LONG_LONG, &disk[i].total_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].total_blocks,
 				 "fs", name, "total_blocks", NULL);
-			add_stat(LONG_LONG, &disk[i].free_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].free_blocks,
 				 "fs", name, "free_blocks", NULL);
-			add_stat(LONG_LONG, &disk[i].avail_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].avail_blocks,
 				 "fs", name, "avail_blocks", NULL);
-			add_stat(LONG_LONG, &disk[i].used_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].used_blocks,
 				 "fs", name, "used_blocks", NULL);
 
 			free(buf);
@@ -339,7 +391,7 @@ void populate_fs() {
 }
 
 void populate_disk() {
-	int n, i;
+	size_t n, i;
 	sg_disk_io_stats *diskio;
 
 	diskio = use_diffs ? sg_get_disk_io_stats_diff(&n)
@@ -365,16 +417,25 @@ void populate_proc() {
 	sg_process_count *proc = sg_get_process_count();
 
 	if (proc != NULL) {
-		add_stat(INT, &proc->total, "proc", "total", NULL);
-		add_stat(INT, &proc->running, "proc", "running", NULL);
-		add_stat(INT, &proc->sleeping, "proc", "sleeping", NULL);
-		add_stat(INT, &proc->stopped, "proc", "stopped", NULL);
-		add_stat(INT, &proc->zombie, "proc", "zombie", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->total, "proc", "total", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->running, "proc", "running", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->sleeping, "proc", "sleeping", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->stopped, "proc", "stopped", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->zombie, "proc", "zombie", NULL);
 	}
+        else {
+                char *errbuf;
+                sg_error_details errdet;
+                if( SG_ERROR_NONE != sg_get_error_details(&errdet) )
+                        return;
+                if( NULL == sg_strperror( &errbuf, &errdet ) )
+                        return;
+                printf( "%s\n", errbuf );
+        }
 }
 
 void populate_net() {
-	int num_io, num_iface, i;
+	size_t num_io, num_iface, i;
 	sg_network_io_stats *io;
 	sg_network_iface_stats *iface;
 
@@ -390,15 +451,15 @@ void populate_net() {
 				 "net", name, "tx", NULL);
 			add_stat(BYTES, &io[i].rx,
 				 "net", name, "rx", NULL);
-			add_stat(LONG_LONG, &io[i].ipackets,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].ipackets,
 				 "net", name, "ipackets", NULL);
-			add_stat(LONG_LONG, &io[i].opackets,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].opackets,
 				 "net", name, "opackets", NULL);
-			add_stat(LONG_LONG, &io[i].ierrors,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].ierrors,
 				 "net", name, "ierrors", NULL);
-			add_stat(LONG_LONG, &io[i].oerrors,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].oerrors,
 				 "net", name, "oerrors", NULL);
-			add_stat(LONG_LONG, &io[i].collisions,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].collisions,
 				 "net", name, "collisions", NULL);
 			add_stat(TIME_T, &io[i].systime,
 				 "net", name, "systime", NULL);
@@ -409,7 +470,8 @@ void populate_net() {
 	if (iface != NULL) {
 		for (i = 0; i < num_iface; i++) {
 			const char *name = iface[i].interface_name;
-			int had_io = 0, j;
+			int had_io = 0;
+			size_t j;
 
 			/* If there wasn't a corresponding io stat,
 			   add interface_name from here. */
@@ -442,8 +504,8 @@ void populate_page() {
 
 	page = use_diffs ? sg_get_page_stats_diff() : sg_get_page_stats();
 	if (page != NULL) {
-		add_stat(LONG_LONG, &page->pages_pagein, "page", "in", NULL);
-		add_stat(LONG_LONG, &page->pages_pageout, "page", "out", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &page->pages_pagein, "page", "in", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &page->pages_pageout, "page", "out", NULL);
 		add_stat(TIME_T, &page->systime, "page", "systime", NULL);
 	}
 }
@@ -509,60 +571,76 @@ void get_stats() {
 
 /* Print the value of a stat_item. */
 void print_stat_value(const stat_item *s) {
-	void *v = s->stat;
-	double fv;
-	long lv;
-	long long llv;
+	void *pv = s->stat;
+	union {
+		double f;
+		long l;
+		unsigned long ul;
+		long long ll;
+		unsigned long long ull;
+	} v;
 
 	switch (s->type) {
 	case LONG_LONG:
 #ifdef WIN32 /* Windows printf does not understand %lld, so use %I64d instead */
-		printf("%I64d", *(long long *)v);
+		printf("%I64d", *(long long *)pv);
 #else
-		printf("%lld", *(long long *)v);
+		printf("%lld", *(long long *)pv);
+#endif
+		break;
+	case UNSIGNED_LONG_LONG:
+#ifdef WIN32 /* Windows printf does not understand %llu, so use %I64u instead */
+		printf("%I64u", *(unsigned long long *)pv);
+#else
+		printf("%llu", *(unsigned long long *)pv);
 #endif
 		break;
 	case BYTES:
-		llv = *(long long *)v;
+		v.ull = *(unsigned long long *)pv;
 		if (bytes_scale_factor != 0) {
-			llv /= bytes_scale_factor;
+			v.ull /= bytes_scale_factor;
 		}
 #ifdef WIN32
-		printf("%I64d", llv);
+		printf("%I64u", v.ull);
 #else
-		printf("%lld", llv);
+		printf("%llu", v.ull);
 #endif
 		break;
 	case TIME_T:
 		/* FIXME option for formatted time? */
-		lv = *(time_t *)v;
-		printf("%ld", lv);
+		v.l = *(time_t *)pv;
+		printf("%ld", v.l);
 		break;
 	case FLOAT:
 	case DOUBLE:
 		if (s->type == FLOAT) {
-			fv = *(float *)v;
-		} else {
-			fv = *(double *)v;
+			v.f = *(float *)pv;
+		}
+		else {
+			v.f = *(double *)pv;
 		}
 		if (float_scale_factor != 0) {
-			printf("%ld", (long)(float_scale_factor * fv));
-		} else {
-			printf("%f", fv);
+			printf("%ld", (long)(float_scale_factor * v.f));
+		}
+		else {
+			printf("%f", v.f);
 		}
 		break;
 	case STRING:
 		/* FIXME escaping? */
-		printf("%s", *(char **)v);
+		printf("%s", *(char **)pv);
 		break;
 	case INT:
-		printf("%d", *(int *)v);
+		printf("%d", *(int *)pv);
+		break;
+	case UNSIGNED:
+		printf("%u", *(unsigned *)pv);
 		break;
 	case BOOL:
-		printf("%s", *(int *)v ? "true" : "false");
+		printf("%s", *(int *)pv ? "true" : "false");
 		break;
 	case DUPLEX:
-		switch (*(sg_iface_duplex *) v) {
+		switch (*(sg_iface_duplex *) pv) {
 		case SG_IFACE_DUPLEX_FULL:
 			printf("full");
 			break;
@@ -733,10 +811,10 @@ int main(int argc, char **argv) {
 		if (repeat_mode == REPEAT_FOREVER)
 			die("mrtg mode: cannot repeat display");
 	}
-
+/*
 	if (use_cpu_percent && repeat_mode == REPEAT_NONE)
 		die("CPU percentage usage display requires stat differences");
-
+*/
 	if (repeat_mode == REPEAT_NONE)
 		use_diffs = 0;
 	else
@@ -746,7 +824,7 @@ int main(int argc, char **argv) {
 
 	/* We don't care if sg_init fails, because we can just display
  	   the statistics that can be read as non-root. */
-	sg_init();
+	sg_init(1);
 	sg_snapshot();
 	if (sg_drop_privileges() != 0)
 		die("Failed to drop setuid/setgid privileges");

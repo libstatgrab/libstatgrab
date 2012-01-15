@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
+ * Copyright (C) 2010,2011 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,6 +64,10 @@
 #define THRESHOLD_WARN_DISK 75.0
 #define THRESHOLD_ALERT_DISK 90.0
 
+#ifndef lengthof
+#define lengthof(x) (sizeof(x)/sizeof((x)[0]))
+#endif
+
 int sig_winch_flag = 0;
 
 typedef struct{
@@ -74,23 +79,25 @@ typedef struct{
 	sg_page_stats *page_stats;
 
 	sg_network_io_stats *network_io_stats;
-	int network_io_entries;
+	size_t network_io_entries;
 
 	sg_disk_io_stats *disk_io_stats;
-	int disk_io_entries;
+	size_t disk_io_entries;
 
 	sg_fs_stats *fs_stats;
-	int fs_entries;
+	size_t fs_entries;
 
 	sg_host_info *host_info;
 	sg_user_stats *user_stats;
+	size_t user_entries;
 }stats_t;
 
 stats_t stats;
 
-char *size_conv(long long number){
-	char type[] = {'B', 'K', 'M', 'G', 'T'};
-	int x=0;
+static char *
+isize_conv(long long number){
+	char type[] = {'B', 'K', 'M', 'G', 'T', 'P'};
+	size_t x=0;
 	int sign=1;
 	static char string[10];
 
@@ -99,11 +106,11 @@ char *size_conv(long long number){
 		number=-number;
 	}
 
-	for(;x<5;x++){
+	for(;x<lengthof(type);x++){
 		if( (number/1024) < (100)) {
 			break;
 		}
-		number = (number/1024);
+		number /= 1024;
 	}
 
 	number = number*sign;
@@ -111,6 +118,23 @@ char *size_conv(long long number){
 	snprintf(string, 10, "%lld%c", number, type[x]);
 	return string;
 
+}
+
+static char *
+size_conv(unsigned long long number){
+	char type[] = {'B', 'K', 'M', 'G', 'T', 'P'};
+	size_t x=0;
+	static char string[10];
+
+	for(;x<lengthof(type);x++){
+		if( (number/1024) < (100)) {
+			break;
+		}
+		number /= 1024;
+	}
+
+	snprintf(string, 10, "%llu%c", number, type[x]);
+	return string;
 }
 
 char *hr_uptime(time_t time){
@@ -237,9 +261,9 @@ void display_data(int colors){
 	char cur_time[20];
 	struct tm *tm_time;
 	time_t epoc_time;
-	int counter, line;
+	size_t counter, line;
 	long long r,w;
-	long long rt, wt;
+	unsigned long long rt, wt;
 	sg_disk_io_stats *disk_io_stat_ptr;
 	sg_network_io_stats *network_stat_ptr;
 	sg_fs_stats *disk_stat_ptr;
@@ -331,27 +355,27 @@ void display_data(int colors){
 	if (stats.process_count != NULL) {
 		/* Process */
 		move(2, 54);
-		printw("%5d", stats.process_count->running);
+		printw("%5llu", stats.process_count->running);
 		move(2,74);
 		if (colors && stats.process_count->zombie > THRESHOLD_WARN_ZMB) {
 			attron(A_STANDOUT);
 			attron(A_BOLD);
 		}
-		printw("%5d", stats.process_count->zombie);
+		printw("%5llu", stats.process_count->zombie);
 		if(colors) {
 			attroff(A_STANDOUT);
 			attroff(A_BOLD);
 		}
 		move(3, 54);
-		printw("%5d", stats.process_count->sleeping);
+		printw("%5llu", stats.process_count->sleeping);
 		move(3, 74);
-		printw("%5d", stats.process_count->total);
+		printw("%5llu", stats.process_count->total);
 		move(4, 54);
-		printw("%5d", stats.process_count->stopped);
+		printw("%5llu", stats.process_count->stopped);
 	}
 	if (stats.user_stats != NULL) {
 		move(4,74);
-		printw("%5d", stats.user_stats->num_entries);
+		printw("%5lu", stats.user_entries);
 	}
 
 	if(colors) {
@@ -422,9 +446,9 @@ void display_data(int colors){
 	if (stats.page_stats != NULL) {
 		/* Paging */
 		move(6, 74);
-		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
+		printw("%5llu", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
 		move(7, 74);
-		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
+		printw("%5llu", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
 	}
 	if (colors) {
 		attroff(COLOR_PAIR(5));
@@ -538,6 +562,7 @@ void display_data(int colors){
 }
 
 void sig_winch_handler(int dummy){
+	(void)dummy;
 	sig_winch_flag = 1;
 	signal(SIGWINCH, sig_winch_handler);
 }
@@ -553,7 +578,7 @@ int get_stats(){
 	stats.disk_io_stats = sg_get_disk_io_stats_diff(&(stats.disk_io_entries));
 	stats.fs_stats = sg_get_fs_stats(&(stats.fs_entries));
 	stats.host_info = sg_get_host_info();
-	stats.user_stats = sg_get_user_stats();
+	stats.user_stats = sg_get_user_stats(&stats.user_entries);
 
 	return 1;
 }
@@ -593,7 +618,7 @@ int main(int argc, char **argv){
 
 	int delay=2;
 
-	sg_init();
+	sg_init(1);
 	if(sg_drop_privileges() != 0){
 		fprintf(stderr, "Failed to drop setuid/setgid privileges\n");
 		return 1;
@@ -691,5 +716,6 @@ int main(int argc, char **argv){
 	}
 
 	endwin();
+        sg_shutdown();
 	return 0;
 }

@@ -33,8 +33,30 @@ There are, of course, the usual GNU-style configure options;
 
   --prefix=PREFIX
 
-For more documentation on the installation process, please read the
-INSTALL document.
+For detailed documentation on the generic installation process, please
+read the INSTALL document.
+
+Enhancements of the general configuration process can be seen in the
+sections "Optional Features" and "Optional Packages" of the output of
+
+  ./configure --help
+
+Prerequisites
+-------------
+
+While libstatgrab will run without additional prerequisites, there're
+several options to improve it.
+
+* Having a current 1.1.0 developer version of log4cplus will enable
+  tracing functionalities
+  See how getting log4cplus on it's project homepage at
+  http://log4cplus.sourceforge.net/
+  Note that libstatgrab doesn't enable it's logging automatically,
+  the using applications must do it.
+* Manpages can be built automatically when docbook2x is installed.
+  See http://docbook2x.sourceforge.net/
+* On Linux it might be necessary to install the ncurses-dev package
+  to get saidar compiled.
 
 Platform Specific Notes
 -----------------------

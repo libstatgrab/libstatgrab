@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
+ * Copyright (C) 2010,2011 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,6 +40,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
+static int quit;
+
 int main(int argc, char **argv){
 
 	extern char *optarg;
@@ -47,9 +52,10 @@ int main(int argc, char **argv){
 	/* We default to 1 second updates and displaying in bytes*/
 	int delay = 1;
 	char units = 'b';
+	unsigned long long divider = 1;
 
 	sg_network_io_stats *network_stats;
-	int num_network_stats;
+	size_t num_network_stats;
 
 	/* Parse command line options */
 	while ((c = getopt(argc, argv, "d:bkm")) != -1){
@@ -61,71 +67,64 @@ int main(int argc, char **argv){
 				units = 'b';
 				break;
 			case 'k':
-				units = 'k';	
+				units = 'k';
+				divider = 1024;
 				break;
 			case 'm':
 				units = 'm';
+				divider = 1024 * 1024;
 				break;
 		}
 	}
 
+	/* Initialise helper - e.g. logging, if any */
+	hlp_init(argc, argv);
+
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
+
+	register_sig_flagger( SIGINT, &quit );
 
 	/* Drop setuid/setgid privileges. */
-	if (sg_drop_privileges() != 0) {
-		perror("Error. Failed to drop privileges");
-		return 1;
-	}
+	if (sg_drop_privileges() != SG_ERROR_NONE)
+		sg_die("Error. Failed to drop privileges", 1);
 
 	/* We are not interested in the amount of traffic ever transmitted, just differences. 
 	 * Because of this, we do nothing for the very first call.
 	 */
 
 	network_stats = sg_get_network_io_stats_diff(&num_network_stats);
-	if (network_stats == NULL){
-		perror("Error. Failed to get network stats");
-		return 1;
-	}
+	if (network_stats == NULL)
+		sg_die("Error. Failed to get network stats", 1);
 
 	/* Clear the screen ready for display the network stats */
 	printf("\033[2J");
 
 	/* Keep getting the network stats */
 	while ( (network_stats = sg_get_network_io_stats_diff(&num_network_stats)) != NULL){
-		int x;
+		size_t x;
 		int line_number = 2;
+		int ch;
 
-		long long total_tx=0;
-		long long total_rx=0;
-		long long total_ipackets=0;
-		long long total_opackets=0;
-		long long total_ierrors=0;
-		long long total_oerrors=0;
-		long long total_collisions=0;
+		unsigned long long total_tx=0;
+		unsigned long long total_rx=0;
+		unsigned long long total_ipackets=0;
+		unsigned long long total_opackets=0;
+		unsigned long long total_ierrors=0;
+		unsigned long long total_oerrors=0;
+		unsigned long long total_collisions=0;
 
 		for(x = 0; x < num_network_stats; x++){	
 			/* Print at location 2, linenumber the interface name */
 			printf("\033[%d;2H%-30s : %-10s", line_number++, "Network Interface Name", network_stats->interface_name);
 			/* Print out at the correct location the traffic in the requsted units passed at command time */
-			switch(units){
-				case 'b':
-					printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Interface Rx", network_stats->rx);
-					printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Interface Tx", network_stats->tx);
-					break;
-				case 'k':
-					printf("\033[%d;2H%-30s : %5lld k", line_number++, "Network Interface Rx", (network_stats->rx / 1024));
-					printf("\033[%d;2H%-30s : %5lld", line_number++, "Network Interface Tx", (network_stats->tx / 1024));
-					break;
-				case 'm':
-					printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Interface Rx", network_stats->rx / (1024.00*1024.00));
-					printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Interface Tx", network_stats->tx / (1024.00*1024.00));
-			}
-			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface packets in", network_stats->ipackets);
-			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface packets out", network_stats->opackets);
-			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface errors in", network_stats->ierrors);
-			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface errors out", network_stats->oerrors);
-			printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Interface collisions", network_stats->collisions);
+			printf("\033[%d;2H%-30s : %8llu %c", line_number++, "Network Interface Rx", network_stats->rx / divider, units);
+			printf("\033[%d;2H%-30s : %8llu %c", line_number++, "Network Interface Tx", network_stats->tx / divider, units);
+			printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Interface packets in", network_stats->ipackets);
+			printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Interface packets out", network_stats->opackets);
+			printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Interface errors in", network_stats->ierrors);
+			printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Interface errors out", network_stats->oerrors);
+			printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Interface collisions", network_stats->collisions);
 			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface systime", (long) network_stats->systime);
 
 			/* Add a blank line between interfaces */	
@@ -146,30 +145,19 @@ int main(int argc, char **argv){
 		}
 
 		printf("\033[%d;2H%-30s : %-10s", line_number++, "Network Interface Name", "Total Network IO");
-		switch(units){
-			case 'b':
-				printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total Rx", total_rx);
-				printf("\033[%d;2H%-30s : %8lld b", line_number++, "Network Total Tx", total_tx);
-				break;
-			case 'k':
-				printf("\033[%d;2H%-30s : %5lld k", line_number++, "Network Total Rx", (total_rx / 1024));
-				printf("\033[%d;2H%-30s : %5lld k", line_number++, "Network Total Tx", (total_tx / 1024));
-				break;
-			case 'm':
-				printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Total Rx", (total_rx  / (1024.00*1024.00)));
-				printf("\033[%d;2H%-30s : %5.2f m", line_number++, "Network Total Tx", (total_tx  / (1024.00*1024.00)));
-				break;
-		}
-		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total packets in", total_ipackets);
-		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total packets out", total_opackets);
-		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total errors in", total_ierrors);
-		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total errors out", total_oerrors);
-		printf("\033[%d;2H%-30s : %lld ", line_number++, "Network Total collisions", total_collisions);
+		printf("\033[%d;2H%-30s : %8llu %c", line_number++, "Network Total Rx", total_rx / divider, units);
+		printf("\033[%d;2H%-30s : %8llu %c", line_number++, "Network Total Tx", total_tx / divider, units);
+		printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Total packets in", total_ipackets);
+		printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Total packets out", total_opackets);
+		printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Total errors in", total_ierrors);
+		printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Total errors out", total_oerrors);
+		printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Total collisions", total_collisions);
 
 		fflush(stdout);
 
-		sleep(delay);
-
+		ch = inp_wait(delay);
+		if( quit || (ch == 'q') )
+			break;
 	}
 
 	return 0;

@@ -8,6 +8,13 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab nnn
+ * thread safety and reentrant functions
+ * complete ports for HP-UX
+ * add support for AIX and Darwin/MacOS X
+ * add experimental support for tracing using log4cplus
+ * remove explicit Linux 2.4 support
+
 libstatgrab 0.17 (21 February 2010)
  * Provide iowait cpu information on Linux version 2.5.41 or later.
  * Display data for ZFS on Solaris.

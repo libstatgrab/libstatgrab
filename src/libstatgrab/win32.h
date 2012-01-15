@@ -1,5 +1,4 @@
 #ifdef WIN32
-#include <pdh.h>
 
 typedef enum {
 	SG_WIN32_PROC_USER,

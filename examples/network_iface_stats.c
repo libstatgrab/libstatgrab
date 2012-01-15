@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
+ * Copyright (C) 2010,2011 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,26 +26,26 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
 int main(int argc, char **argv){
 
 	sg_network_iface_stats *network_iface_stats;
-	int iface_count, i;
+	size_t iface_count, i;
+
+	/* Initialise helper - e.g. logging, if any */
+	hlp_init(argc, argv);
 
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
 
 	/* Drop setuid/setgid privileges. */
-	if (sg_drop_privileges() != 0) {
-		perror("Error. Failed to drop privileges");
-		return 1;
-	}
+	if (sg_drop_privileges() != SG_ERROR_NONE)
+		sg_die("Error. Failed to drop privileges", 1);
 
 	network_iface_stats = sg_get_network_iface_stats(&iface_count);
-
-	if(network_iface_stats == NULL){
-		fprintf(stderr, "Failed to get network interface stats\n");
-		exit(1);
-	}
+	if(network_iface_stats == NULL)
+		sg_die("Failed to get network interface stats", 1);
 
 	if (argc != 1) {
 		/* If an argument is given, use bsearch to find just that

@@ -18,21 +18,194 @@
 
   <refnamediv>
     <refname>sg_get_fs_stats</refname>
-    <refpurpose>get filesystem statistics</refpurpose>
+    <refname>sg_get_fs_stats_r</refname>
+    <refname>sg_free_fs_stats</refname>
+    <refname>sg_get_valid_filesystems</refname>
+    <refname>sg_set_valid_filesystems</refname>
+    <refname>sg_fs_compare_device_name</refname>
+    <refname>sg_fs_compare_mnt_point</refname>
+    <refpurpose>get file system statistics</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <funcsynopsis>
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
-        <funcdef>sg_fs_stats *<function>sg_get_fs_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <funcdef><structname>sg_fs_stats</structname> *<function>sg_get_fs_stats</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_fs_stats *<function>sg_get_fs_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_fs_stats</function></funcdef>
+        <paramdef>sg_fs_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>const char **<function>sg_get_valid_filesystems</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_set_valid_filesystems</function></funcdef>
+        <paramdef>const char *<parameter>valid_fs</parameter>[]</paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>sg_fs_compare_device_name</function></funcdef>
+        <paramdef>const void *<parameter>va</parameter></paramdef>
+        <paramdef>const void *<parameter>vb</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>int <function>sg_fs_compare_mnt_point</function></funcdef>
+        <paramdef>const void *<parameter>va</parameter></paramdef>
+        <paramdef>const void *<parameter>vb</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>Description</title>
+    <para>
+      The <function>sg_get_fs_stats</function> functions provide statistics
+      of mounted file systems. Both functions take an optional
+      <parameter>entries</parameter> parameter, which points (when given)
+      to a size_t to take the amount of resulted vector entries.
+    </para>
+    <para>
+      The <function>sg_get_fs_stats</function>() and
+      <function>sg_get_fs_stats_r</function>() functions deliver the
+      file system statistics of the moment the function is called.
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_fs_stats</entry>
+        <entry><structname>sg_fs_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_fs_stats_r</entry>
+        <entry><structname>sg_fs_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_valid_filesystems</entry>
+        <entry>char **</entry>
+        <entry>libstatgrab (global)</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_fs_stats</structname> vectors got from
+      <function>sg_get_fs_stats_r</function>() must be freed using
+      <function>sg_free_fs_stats</function>() when not needed anymore. The
+      caller is responsible to do it.
+    </para>
+    <para>
+      The statgrab library comes with a built-in list of valid file system
+      types depending on the operating system it was compiled for. Some
+      operating systems additionally provide an API to learn the file system
+      types known or valid to the running OS instance, what is used when
+      detected. Nevertheless there're known problems when collecting file
+      system statistics: networking file systems are mounted from delaunched
+      servers, file system developers run an experimental driver etc.
+    </para>
+    <para>
+      To prevent processes hang in getting file system statistics or allow
+      developers to test their drivers, the processes may modify the list of
+      valid file systems using the
+      <function>sg_get_valid_filesystems</function>() and the
+      <function>sg_set_valid_filesystems</function>(). The list of
+      <parameter>char *</parameter> parameters both functions work with is
+      always finished with an element pointing to NULL.
+    </para>
+    <para>
+      The returned list of
+      <function>sg_get_valid_filesystems</function>() must not be modified.
+      Always copy the list into an own structure, if you plan to extend or
+      reduce the list:
+      <example>
+        <title>Remove Network FS Example</title>
+        <programlisting>
+int compare_fs_type(const void *va, const void *vb) {
+    const char **a = (const char **)va;
+    const char **b = (const char **)vb;
+    return strcmp( *a, *b );
+}
+
+void filter_network_fs_types(void) {
+    /* known network file system names on different platforms */
+    const char *nfs_types[] = { "nfs", "nfs3", "nfs4", "cifs", "smbfs", "samba" };
+    const size_t nfs_types_count = sizeof(nfs_types) / sizeof(nfs_types[0])
+    size_t fs_entries = 0;
+    const char **orig_valid_fs = sg_get_valid_filesystems(&amp;fs_entries);
+
+    /* duplicate into own memory to modify list */
+    char **valid_fs = calloc( entries + 1, sizeof(valid_fs[0]) );
+    memcpy( valid_fs, orig_valid_fs, (entries + 1) * sizeof(valid_fs[0]) );
+    size_t i;
+    for( i = 0; i &lt; nfs_types_count; ++i ) {
+        char **inv_fs = bsearch( &amp;nfs_types[i], &amp;valid_fs[0],
+                                 fs_entries, sizeof(valid_fs[0]),
+                                 compare_fs_type );
+        if( NULL != inv_fs ) {
+            /* copy including trailing NULL pointer */
+            memmove( inv_fs, inv_fs + 1, fs_entries - (inv_fs - valid_fs) );
+            --fs_entries;
+        }
+    }
+    sg_set_valid_filesystems( valid_fs );
+    free( valid_fs );
+}
+        </programlisting>
+      </example>
+      Note that there's no need to duplicate the strings contained in the
+      list of valid file systems in the above example - they aren't
+      modified.
+    </para>
+    <para>
+      The list returned by <function>sg_get_valid_filesystems</function>()
+      might become invalid when used while the process makes calls to
+      <function>sg_set_valid_filesystems</function>(). None of the
+      sg_fs_stats functions protect the access to the globally used
+      storage where the own copy of the list of the valid file systems is
+      hold. It's on the responsibility of the caller not to mix
+      configuration calls with calls to grab statistics.
+    </para>
+    <para>
+      Additionally two support functions for <function>qsort</function>(3)
+      are available: <function>sg_fs_compare_device_name</function>() and
+      <function>sg_fs_compare_mnt_point</function>().
+      <example>
+        <title>Sort Example</title>
+        <programlisting>
+size_t entries;
+sg_fs_stats *fs_stats = NULL;
+while( NULL != ( fs_stats = sg_get_fs_stats_diff(&amp;entries) ) ) {
+    /* order entries alphabetically using the mountpoint */
+    qsort( fs_stats, entries, sizeof(fs_stats[0]), &amp;sg_fs_compare_mnt_point );
+    show_fs_stats( fs_stats );
+}
+        </programlisting>
+      </example>
+    </para>
+    <!--
     <para>
       The <function>sg_get_fs_stats</function> takes a pointer to an
       int, <parameter>entries</parameter>, which is filled with the
@@ -42,9 +215,10 @@
       entries in the array is returned in <parameter>entries</parameter>.
     </para>
     <para>
-      The function returns statistics about mounted filesystems,
+      The function returns statistics about mounted file systems,
       including free space and inode usage.
     </para>
+    -->
   </refsect1>
 
   <refsect1>
@@ -56,23 +230,38 @@
     </para>
 
     <programlisting>
+typedef enum {
+        sg_fs_unknown  = 0,
+        sg_fs_regular  = 1 &lt;&lt; 0,
+        sg_fs_special  = 1 &lt;&lt; 1,
+        sg_fs_loopback = 1 &lt;&lt; 2,
+        sg_fs_remote   = 1 &lt;&lt; 3,
+        sg_fs_local    = (sg_fs_regular | sg_fs_special),
+        sg_fs_alltypes = (sg_fs_regular | sg_fs_special | sg_fs_loopback | sg_fs_remote)
+} sg_fs_device_type;
+    </programlisting>
+
+    <programlisting>
 typedef struct {
         char *device_name;
         char *fs_type;
         char *mnt_point;
-        long long size;
-        long long used;
-        long long avail;
-        long long total_inodes;
-        long long used_inodes;
-        long long free_inodes;
-        long long avail_inodes;
-        long long io_size;
-        long long block_size;
-        long long total_blocks;
-        long long free_blocks;
-        long long used_blocks;
-        long long avail_blocks;
+        sg_fs_device_type device_type;
+        unsigned long long size;
+        unsigned long long used;
+        unsigned long long free;
+        unsigned long long avail;
+        unsigned long long total_inodes;
+        unsigned long long used_inodes;
+        unsigned long long free_inodes;
+        unsigned long long avail_inodes;
+        unsigned long long io_size;
+        unsigned long long block_size;
+        unsigned long long total_blocks;
+        unsigned long long free_blocks;
+        unsigned long long used_blocks;
+        unsigned long long avail_blocks;
+        time_t systime;
 } sg_fs_stats;
     </programlisting>
 
@@ -94,7 +283,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The type of the filesystem.
+            The file system type of the file system (eg. hpfs or ufs).
           </para>
         </listitem>
       </varlistentry>
@@ -104,7 +293,18 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The mount point of the file system.
+            The mount point where the file system is mounted.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>device_type</structfield>
+        </term>
+        <listitem>
+          <para>
+            The device type of the file system, currently not filled and
+            always sg_fs_unknown.
           </para>
         </listitem>
       </varlistentry>
@@ -114,7 +314,10 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The size, in bytes, of the file system.
+            The total size, in bytes, of the file system.
+          </para>
+          <para>
+            size = used + free
           </para>
         </listitem>
       </varlistentry>
@@ -124,8 +327,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The amount of space, in bytes, used on the
-            filesystem.
+            The amount of space, in bytes, used on the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -135,8 +337,21 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The amount of space, in bytes, available on
-            the filesystem.
+            The amount of space, in bytes, available on the file system for
+            non-privileged users/processes (free space less reserved space).
+          </para>
+          <para>
+            avail = free - reserved
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>free</structfield>
+        </term>
+        <listitem>
+          <para>
+            The amount of space, in bytes, free on the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -146,7 +361,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The total number of inodes in the filesystem.
+            The total number of inodes in the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -156,7 +371,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The number of used inodes in the filesystem.
+            The number of used inodes in the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -166,7 +381,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The number of free inodes in the filesystem.
+            The number of free inodes in the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -197,8 +412,8 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            How big blocks actually are on the underlying filesystem
-            (typically for purposes of stats reporting).
+            The size in bytes of the minimum unit of allocation on this
+            file system.
           </para>
         </listitem>
       </varlistentry>
@@ -208,7 +423,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The total number of blocks in the filesystem.
+            The total number of blocks in the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -218,7 +433,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The number of free blocks in the filesystem.
+            The number of free blocks in the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -228,7 +443,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The number of used blocks in the filesystem.
+            The number of used blocks in the file system.
           </para>
         </listitem>
       </varlistentry>
@@ -242,7 +457,40 @@ typedef struct {
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>systime</structfield>
+        </term>
+        <listitem>
+          <para>
+            The time in seconds since epoch when the statistic was got from kernel.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Bugs</title>
+    <para>
+      Only mounted file systems are recognized.
+    </para>
+    <para>
+      Some file systems might be reported twice when mounted on different
+      mount points.
+    </para>
+    <para>
+      The compare functions exists rather for backward compatibility than
+      for functionality enhancements. Limited flexibility (e.g. reverse
+      order) and lack of optimizing opportunities for the compiler leads
+      to the recommendation to implement the required compare routines
+      locally.
+    </para>
+    <para>
+      Calling <function>sg_set_valid_filesystems</function> with an empty
+      list with clear the internal list of valid file systems. There's
+      currently no way to reset to the initial list.
+    </para>
   </refsect1>
 
   <refsect1>

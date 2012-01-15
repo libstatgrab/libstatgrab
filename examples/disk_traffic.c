@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
+ * Copyright (C) 2010,2011 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,6 +40,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
+static int quit;
+
 int main(int argc, char **argv){
 
 	extern char *optarg;
@@ -47,9 +52,10 @@ int main(int argc, char **argv){
 	/* We default to 1 second updates and displaying in bytes*/
 	int delay = 1;
 	char units = 'b';
+	unsigned long long divider = 1;
 
 	sg_disk_io_stats *diskio_stats;
-	int num_diskio_stats;
+	size_t num_diskio_stats;
 
 	/* Parse command line options */
 	while ((c = getopt(argc, argv, "d:bkm")) != -1){
@@ -61,16 +67,21 @@ int main(int argc, char **argv){
 				units = 'b';
 				break;
 			case 'k':
-				units = 'k';	
+				units = 'k';
+				divider = 1024;
 				break;
 			case 'm':
 				units = 'm';
+				divider = 1024 * 1024;
 				break;
 		}
 	}
 
+	/* Initialise helper - e.g. logging, if any */
+	hlp_init(argc, argv);
+
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
 
 	/* Drop setuid/setgid privileges. */
 	if (sg_drop_privileges() != 0) {
@@ -82,40 +93,32 @@ int main(int argc, char **argv){
 	 * Because of this, we do nothing for the very first call.
 	 */
 
+	register_sig_flagger( SIGINT, &quit );
+
 	diskio_stats = sg_get_disk_io_stats_diff(&num_diskio_stats);
-	if (diskio_stats == NULL){
-		perror("Error. Failed to get disk stats");
-		return 1;
-	}
+	if (diskio_stats == NULL)
+		sg_die("Failed to get disk stats", 1);
 
 	/* Clear the screen ready for display the disk stats */
 	printf("\033[2J");
 
 	/* Keep getting the disk stats */
-	while ( (diskio_stats = sg_get_disk_io_stats_diff(&num_diskio_stats)) != NULL){
-		int x;
+	while ( (diskio_stats = sg_get_disk_io_stats_diff(&num_diskio_stats)) != NULL) {
+		size_t x;
 		int line_number = 2;
+		int ch;
 
 		long long total_write=0;
 		long long total_read=0;
+
+                qsort(diskio_stats , num_diskio_stats, sizeof(diskio_stats[0]), sg_disk_io_compare_traffic);
 
 		for(x = 0; x < num_diskio_stats; x++){	
 			/* Print at location 2, linenumber the interface name */
 			printf("\033[%d;2H%-25s : %-10s", line_number++, "Disk Name", diskio_stats->disk_name);
 			/* Print out at the correct location the traffic in the requsted units passed at command time */
-			switch(units){
-				case 'b':
-					printf("\033[%d;2H%-25s : %8lld b", line_number++, "Disk read", diskio_stats->read_bytes);
-					printf("\033[%d;2H%-25s : %8lld b", line_number++, "Disk write", diskio_stats->write_bytes);
-					break;
-				case 'k':
-					printf("\033[%d;2H%-25s : %5lld k", line_number++, "Disk read", (diskio_stats->read_bytes / 1024));
-					printf("\033[%d;2H%-25s : %5lld", line_number++, "Disk write", (diskio_stats->write_bytes / 1024));
-					break;
-				case 'm':
-					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk read", diskio_stats->read_bytes / (1024.00*1024.00));
-					printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk write", diskio_stats->write_bytes / (1024.00*1024.00));
-			}
+			printf("\033[%d;2H%-25s : %8llu %c", line_number++, "Disk read", diskio_stats->read_bytes / divider, units);
+			printf("\033[%d;2H%-25s : %8llu %c", line_number++, "Disk write", diskio_stats->write_bytes / divider, units);
 			printf("\033[%d;2H%-25s : %ld ", line_number++, "Disk systime", (long) diskio_stats->systime);
 
 			/* Add a blank line between interfaces */	
@@ -131,25 +134,14 @@ int main(int argc, char **argv){
 		}
 
 		printf("\033[%d;2H%-25s : %-10s", line_number++, "Disk Name", "Total Disk IO");
-		switch(units){
-			case 'b':
-				printf("\033[%d;2H%-25s : %8lld b", line_number++, "Disk Total read", total_read);
-				printf("\033[%d;2H%-25s : %8lld b", line_number++, "Disk Total write", total_write);
-				break;
-			case 'k':
-				printf("\033[%d;2H%-25s : %5lld k", line_number++, "Disk Total read", (total_read / 1024));
-				printf("\033[%d;2H%-25s : %5lld k", line_number++, "Disk Total write", (total_write / 1024));
-				break;
-			case 'm':
-				printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk Total read", (total_read  / (1024.00*1024.00)));
-				printf("\033[%d;2H%-25s : %5.2f m", line_number++, "Disk Total write", (total_write  / (1024.00*1024.00)));
-				break;
-		}
+		printf("\033[%d;2H%-25s : %8llu %c", line_number++, "Disk Total read", total_read / divider, units);
+		printf("\033[%d;2H%-25s : %8llu %c", line_number++, "Disk Total write", total_write / divider, units);
 
 		fflush(stdout);
 
-		sleep(delay);
-
+		ch = inp_wait(delay);
+		if( quit || (ch == 'q') )
+			break;
 	}
 
 	return 0;

@@ -1,7 +1,7 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2011 i-scream
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,17 +57,17 @@ swap_stat_t *get_swap_stats();
 
 typedef sg_fs_stats disk_stat_t;
 
-disk_stat_t *get_disk_stats(int *entries);
+disk_stat_t *get_disk_stats(size_t *entries);
 
 typedef sg_disk_io_stats diskio_stat_t;
 
-diskio_stat_t *get_diskio_stats(int *entries);
-diskio_stat_t *get_diskio_stats_diff(int *entries);
+diskio_stat_t *get_diskio_stats(size_t *entries);
+diskio_stat_t *get_diskio_stats_diff(size_t *entries);
 
 typedef sg_network_io_stats network_stat_t;
 
-network_stat_t *get_network_stats(int *entries);
-network_stat_t *get_network_stats_diff(int *entries);
+network_stat_t *get_network_stats(size_t *entries);
+network_stat_t *get_network_stats_diff(size_t *entries);
 
 /* Changed in statgrab.h 1.33 */
 typedef enum{
@@ -78,7 +78,7 @@ typedef enum{
 
 typedef sg_network_iface_stats network_iface_stat_t;
 
-network_iface_stat_t *get_network_iface_stats(int *entries);
+network_iface_stat_t *get_network_iface_stats(size_t *entries);
 
 typedef sg_page_stats page_stat_t;
 
