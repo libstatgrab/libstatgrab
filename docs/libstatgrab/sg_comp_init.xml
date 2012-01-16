@@ -168,7 +168,7 @@ sg_network_init_comp(unsigned id) {
 void
 sg_network_destroy_comp(void) {
 #ifdef LINUX
-	regfree(&amp;network_io_rx);
+        regfree(&amp;network_io_rx);
 #endif
 }
 

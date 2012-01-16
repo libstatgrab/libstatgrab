@@ -716,6 +716,6 @@ int main(int argc, char **argv){
 	}
 
 	endwin();
-        sg_shutdown();
+	sg_shutdown();
 	return 0;
 }

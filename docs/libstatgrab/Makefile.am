@@ -8,7 +8,7 @@ man_MANS =	$(statgrab_MANS) $(sg_cpu_MANS) $(sg_disk_MANS) $(sg_error_MANS) \
 		$(sg_user_MANS) $(sg_vect_MANS) $(sg_init_MANS) $(sg_mutex_MANS) \
 		$(sg_intro_MANS) $(sg_glob_MANS) $(sg_seterr_MANS)
 
-statgrab_MANS = statgrab.3 libstatgrab.3
+statgrab_MANS =	statgrab.3 libstatgrab.3
 
 sg_intro_MANS =	sg_intro.3 sg_internal-intro.3
 
@@ -25,11 +25,11 @@ sg_disk_MANS =	sg_get_disk_io_stats.3 sg_get_disk_io_stats_r.3 \
 sg_error_MANS =	sg_get_error.3 sg_get_error_arg.3 sg_get_error_errno.3 \
 		sg_get_error_details.3 sg_strperror.3 sg_str_error.3
 
-sg_fs_MANS = 	sg_get_fs_stats.3 sg_get_fs_stats_r.3 sg_free_fs_stats.3 \
+sg_fs_MANS =	sg_get_fs_stats.3 sg_get_fs_stats_r.3 sg_free_fs_stats.3 \
 		sg_get_valid_filesystems.3 sg_set_valid_filesystems.3 \
 		sg_fs_compare_device_name.3 sg_fs_compare_mnt_point.3
 
-sg_host_MANS = 	sg_get_host_info.3 sg_get_host_info_r.3 sg_free_host_info.3
+sg_host_MANS =	sg_get_host_info.3 sg_get_host_info_r.3 sg_free_host_info.3
 
 sg_load_MANS =	sg_get_load_stats.3 sg_get_load_stats_r.3 sg_free_load_stats.3
 

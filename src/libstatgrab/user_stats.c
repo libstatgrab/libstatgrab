@@ -97,7 +97,7 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
 				/* assert(tmp_buf != NULL); */
 				if( tmp_buf == NULL ) {
 					sg_set_error(SG_ERROR_PERMISSION, "User list");
-                                        ERROR_LOG("user", "Permission denied fetching user details");
+					ERROR_LOG("user", "Permission denied fetching user details");
 					break; /* XXX break and not return? */
 				}
 				/* It's in unicode. We are not. Convert */
@@ -228,7 +228,7 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
 
 	if ((f=fopen(_PATH_UTMP, "r")) == NULL) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("user", SG_ERROR_OPEN, _PATH_UTMP);
-        }
+	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP fclose(f);

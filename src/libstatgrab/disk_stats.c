@@ -362,7 +362,7 @@ init_valid_fs_types(void) {
 		valid_sysfs = calloc( max_fs_type, sizeof(*valid_sysfs) );
 		if( NULL != valid_sysfs ) {
 			int i;
-	
+
 			for( i = 0, num_valid_file_systems = 0; i < max_fs_type; ++i, ++num_valid_file_systems ) {
 				sysfs( GETFSTYP, i, &valid_sysfs[i] );
 			}
@@ -401,7 +401,7 @@ init_valid_fs_types(void) {
 	}
 
 	/* XXX probably better use setvfsent(),getvfsent(),endvfsent() */
-        fh = fopen("/etc/vfs", "r");
+	fh = fopen("/etc/vfs", "r");
 	if( 0 != fh ) {
 		char line[1024];
 
@@ -1425,7 +1425,7 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 			 */
 			rbytes = wbytes = ((long long) di->psd_dkwds) * 64LL;
 #endif
-	
+
 			disk_io_stats[num_diskio].read_bytes = rbytes;
 			disk_io_stats[num_diskio].write_bytes = wbytes;
 

@@ -46,7 +46,7 @@ int main(int argc, char **argv){
 
 	int delay = 1;
 	sg_cpu_percents *cpu_percent;
-        sg_cpu_stats *cpu_diff_stats;
+	sg_cpu_stats *cpu_diff_stats;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -87,7 +87,7 @@ int main(int argc, char **argv){
 	printf("\033[2J");
 
 	while( ( ( cpu_diff_stats = sg_get_cpu_stats_diff() ) != NULL ) &&
-               ( ( cpu_percent = sg_get_cpu_percents_of(sg_last_diff_cpu_percent) ) != NULL ) ) {
+	     ( ( cpu_percent = sg_get_cpu_percents_of(sg_last_diff_cpu_percent) ) != NULL ) ) {
 		int ch;
 		sg_snapshot();
 		printf("\033[2;2H%-14s : %lld (%6.2f)", "User CPU", cpu_diff_stats->user, cpu_percent->user);

@@ -21,9 +21,9 @@
  * $Id$
  */
 
-/* A very basic example of how to get the network statistics from the system 
+/* A very basic example of how to get the network statistics from the system
  * and diaply them. Also it adds up all the traffic to create and print out
- * a total 
+ * a total
  * Takes several arguments :
  * -d <number> 	Takes the number of seconds to wait to get traffic sent since last call
  * 		Note, this is not network traffic per second. Its the traffic since last
@@ -89,7 +89,7 @@ int main(int argc, char **argv){
 	if (sg_drop_privileges() != SG_ERROR_NONE)
 		sg_die("Error. Failed to drop privileges", 1);
 
-	/* We are not interested in the amount of traffic ever transmitted, just differences. 
+	/* We are not interested in the amount of traffic ever transmitted, just differences.
 	 * Because of this, we do nothing for the very first call.
 	 */
 
@@ -114,7 +114,7 @@ int main(int argc, char **argv){
 		unsigned long long total_oerrors=0;
 		unsigned long long total_collisions=0;
 
-		for(x = 0; x < num_network_stats; x++){	
+		for(x = 0; x < num_network_stats; x++){
 			/* Print at location 2, linenumber the interface name */
 			printf("\033[%d;2H%-30s : %-10s", line_number++, "Network Interface Name", network_stats->interface_name);
 			/* Print out at the correct location the traffic in the requsted units passed at command time */
@@ -127,7 +127,7 @@ int main(int argc, char **argv){
 			printf("\033[%d;2H%-30s : %llu ", line_number++, "Network Interface collisions", network_stats->collisions);
 			printf("\033[%d;2H%-30s : %ld ", line_number++, "Network Interface systime", (long) network_stats->systime);
 
-			/* Add a blank line between interfaces */	
+			/* Add a blank line between interfaces */
 			line_number++;
 
 			/* Add up this interface to the total so we can display a "total" network io" */

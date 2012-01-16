@@ -334,7 +334,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 #if defined(SOLARIS)
 	if( NULL == ( pids_in_proc_dir = scan_proc_dir( PROC_LOCATION ) ) ) {
-                RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
@@ -389,13 +389,13 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			break;
 		case 2:
 		case 5:
-			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING; 
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_RUNNING;
 			break;
 		case 3:
-			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE; 
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_ZOMBIE;
 			break;
 		case 4:
-			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED; 
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
 			break;
 		}
 
@@ -438,7 +438,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 
 	if( NULL == ( pids_in_proc_dir = scan_proc_dir( PROC_LOCATION ) ) ) {
-                RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
+		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 	}
 
 	tickspersec = sysconf (_SC_CLK_TCK);
@@ -492,7 +492,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 		}
 
 		/* pa_name[0] should = '(' */
-		read_ptr = strchr(&read_buf[1], ')');	
+		read_ptr = strchr(&read_buf[1], ')');
 		if( read_ptr != NULL ) {
 			*read_ptr = '\0';
 		}
@@ -554,7 +554,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 		fclose(f);
 
-		/* proctitle */	
+		/* proctitle */
 		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/cmdline", pids_in_proc_dir->items[pid_item]);
 
 		if( ( fd = open(filename, O_RDONLY) ) == -1 ) {
@@ -936,7 +936,7 @@ again:
 		proc_stats_ptr[proc_items].time_spent = kp_stats[i].kp_start.tv_sec;
 		proc_stats_ptr[proc_items].nice = kp_stats[i].kp_nice;
 # elif defined(HAVE_KINFO_PROC_KP_THREAD)
-		proc_stats_ptr[proc_items].time_spent = 
+		proc_stats_ptr[proc_items].time_spent =
 			( kp_stats[i].kp_thread.td_uticks +
 			kp_stats[i].kp_thread.td_sticks +
 			kp_stats[i].kp_thread.td_iticks ) / 1000000;
@@ -1105,8 +1105,8 @@ print_kernel_proctitle:
 			break;
 		}
 
-                VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + num, proc_stats_ptr, sg_process_stats);
-	
+		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + num, proc_stats_ptr, sg_process_stats);
+
 		for (i = 0; i < num; ++i) {
 			struct pst_status *pi = &pstat_procinfo[i];
 			sg_error rc;
@@ -1127,7 +1127,7 @@ print_kernel_proctitle:
 			proc_stats_ptr[proc_items].time_spent = pi->pst_time;
 			proc_stats_ptr[proc_items].cpu_percent = (pi->pst_pctcpu * 100.0) / 0x8000;
 			proc_stats_ptr[proc_items].nice = pi->pst_nice;
-	
+
 			if ( ( SG_ERROR_NONE != ( rc = sg_update_string(&proc_stats_ptr[proc_items].process_name, pi->pst_ucomm ) ) )
 			  || ( SG_ERROR_NONE != ( rc = sg_update_string(&proc_stats_ptr[proc_items].proctitle, pi->pst_cmd ) ) ) ) {
 				free(pstat_procinfo);
@@ -1152,7 +1152,7 @@ print_kernel_proctitle:
 				proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_UNKNOWN;
 				break;
 			}
-	
+
 			proc_stats_ptr[proc_items].systime = now;
 
 			++proc_items;
@@ -1191,7 +1191,7 @@ print_kernel_proctitle:
 	do {
 		char *cmndline = NULL;
 		int i;
-                memset( procs, 0, sizeof(*procs) * PROCS_TO_FETCH );
+		memset( procs, 0, sizeof(*procs) * PROCS_TO_FETCH );
 		fetched = getprocs64(procs, sizeof(*procs), NULL, 0, &index, PROCS_TO_FETCH);
 		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + fetched, proc_stats_ptr, sg_process_stats);
 		for( i = 0; i < fetched; ++i ) {

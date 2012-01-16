@@ -110,25 +110,25 @@ sg_die(const char *prefix, int exit_code)
 static void
 err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
-        char buf[4096];
-        int printed;
-        printed = vsnprintf( buf, sizeof(buf), fmt, ap);
-        if(errnoflag)
-                snprintf(buf + printed, sizeof(buf) - printed, ": %s", strerror(error) );
-        fflush(stderr);
-        fputs(buf, stderr);
-        fputs("\n", stderr);
-        fflush(NULL);
+	char buf[4096];
+	int printed;
+	printed = vsnprintf( buf, sizeof(buf), fmt, ap);
+	if(errnoflag)
+		snprintf(buf + printed, sizeof(buf) - printed, ": %s", strerror(error) );
+	fflush(stderr);
+	fputs(buf, stderr);
+	fputs("\n", stderr);
+	fflush(NULL);
 }
 
 void
 die(int error, const char *fmt, ...)
 {
-        va_list ap;
-        va_start(ap, fmt);
-        err_doit(1, error, fmt, ap);
-        va_end(ap);
-        exit(1);
+	va_list ap;
+	va_start(ap, fmt);
+	err_doit(1, error, fmt, ap);
+	va_end(ap);
+	exit(1);
 }
 
 int

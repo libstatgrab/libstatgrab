@@ -146,7 +146,7 @@ get_os_name(const OSVERSIONINFOEX osinfo)
 out:
 	/* strdup failed */
 	sg_set_error_with_errno(SG_ERROR_MALLOC, NULL);
-        ERROR_LOG("os", "get_os_name: strdup() failed");
+	ERROR_LOG("os", "get_os_name: strdup() failed");
 	return NULL;
 }
 #endif
@@ -236,7 +236,7 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 	host_info_buf->systime = 0;
 
 #ifdef WIN32
-	/* these settings are static after boot, so why get them 
+	/* these settings are static after boot, so why get them
 	 * constantly?
 	 *
 	 * Because we want to know some changes anyway - at least
@@ -269,7 +269,7 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 	osinfo.dwOSVersionInfoSize = sizeof(osinfo);
 	if(!GetVersionEx(&osinfo)) {
 		RETURN_WITH_SET_ERROR("os", SG_ERROR_HOST, "GetVersionEx");
-        }
+	}
 
 	/* Release - single number */
 	if(snprintf(tmp, sizeof(tmp), "%ld", osinfo.dwBuildNumber) == -1) {
@@ -336,13 +336,13 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 
 	if(read_counter_large(SG_WIN32_UPTIME, &result)) {
 		RETURN_WITH_SET_ERROR("os", SG_ERROR_PDHREAD, PDH_UPTIME);
-        }
+	}
 
 	host_info_buf->uptime = (time_t) result;
 #else
 	if((uname(&os)) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_UNAME, NULL);
-        }
+	}
 
 	if(SG_ERROR_NONE != sg_update_string(&host_info_buf->os_name, os.sysname)) {
 		RETURN_FROM_PREVIOUS_ERROR( "os", sg_get_error() );
@@ -368,7 +368,7 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 #ifdef HPUX
 	if (pstat_getstatic(&pstat_static, sizeof(pstat_static), 1, 0) == -1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_PSTAT, "pstat_static");
-        }
+	}
 
 	if (pstat_getdynamic(&pstat_dynamic, sizeof(pstat_dynamic), 1, 0) == -1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_PSTAT, "pstat_dynamic");
@@ -400,7 +400,7 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 #elif defined(SOLARIS)
 	if ((kc = kstat_open()) == NULL) {
 		RETURN_WITH_SET_ERROR("os", SG_ERROR_KSTAT_OPEN, NULL);
-        }
+	}
 
 	if((ksp=kstat_lookup(kc, "unix", -1, "system_misc"))==NULL){
 		kstat_close(kc);
@@ -459,7 +459,7 @@ sysinfo_again:
 #elif defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/uptime", "r")) == NULL) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_OPEN, "/proc/uptime");
-        }
+	}
 
 #define TIME_T_SCANF_FMT (sizeof(int[(((time_t)-1)/2)%4+1]) == sizeof(int[1]) ? "%ld %*d" : "%lu %*d" )
 	if((fscanf(f,TIME_T_SCANF_FMT,&host_info_buf->uptime)) != 1){
@@ -487,7 +487,7 @@ sysinfo_again:
 	size = sizeof(boottime);
 	if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_KERN.KERN_BOOTTIME");
-        }
+	}
 	time(&curtime);
 	host_info_buf->uptime= curtime - boottime.tv_sec;
 
@@ -524,7 +524,7 @@ sysinfo_again:
 #elif defined(AIX)
 	if(perfstat_cpu_total(NULL, &cpu_total, sizeof(cpu_total), 1) != 1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "perfstat_cpu_total");
-        }
+	}
 
 	if(SG_ERROR_NONE != sg_update_string(&host_info_buf->platform, cpu_total.description)) {
 		RETURN_FROM_PREVIOUS_ERROR( "os", sg_get_error() );

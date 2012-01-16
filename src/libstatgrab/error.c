@@ -173,11 +173,11 @@ sg_get_error_details(sg_error_details *err_details){
 
 		return SG_ERROR_MEMSTATUS; /* In this case we can't set our global last error :-( */
 	}
-	
+
 	err_details->error = error_glob->error;
 	err_details->errno_value = error_glob->errno_value;
 	err_details->error_arg = error_glob->error_arg;
-	
+
 	return SG_ERROR_NONE;
 }
 

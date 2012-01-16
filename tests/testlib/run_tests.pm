@@ -54,7 +54,7 @@ sub get_test_combinations {
 	my $inv_k;
 	my $want_inv = 0;
 
-        $k > 0 or $k <= scalar(@{$self->{test_functions}}) or return;
+	$k > 0 or $k <= scalar(@{$self->{test_functions}}) or return;
 
 	$self->init_combinations();
 	defined( $self->{combinations}->[$k] ) and return @{ $self->{combinations}->[$k] };
@@ -110,7 +110,7 @@ sub run_tests(\@;\@) {
 
 	ref($variants) eq "ARRAY" or $variants = [ $self->get_all_test_combinations() ];
 
-        plan( tests => scalar(@{$variants}) );
+	plan( tests => scalar(@{$variants}) );
 
 	foreach my $variant (@{$variants}) {
 		ref($variant) eq "ARRAY" or die "Invalid element in variant list";
@@ -128,10 +128,10 @@ sub run_tests(\@;\@) {
 				diag($line);
 			}
 		}
-                cmp_ok( $success, '==', 1, $test_variant );
+		cmp_ok( $success, '==', 1, $test_variant );
 	}
 
-        done_testing();
+	done_testing();
 }
 
 1;

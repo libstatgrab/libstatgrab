@@ -52,7 +52,7 @@ int main(int argc, char **argv){
 		printf("Free memory in bytes : %llu\n", mem_stats->free);
 
 		printf("Swap total in bytes : %llu\n", swap_stats->total);
-		printf("Swap used in bytes : %llu\n", swap_stats->used);	
+		printf("Swap used in bytes : %llu\n", swap_stats->used);
 		printf("Swap free in bytes : %llu\n", swap_stats->free);
 
 		total = mem_stats->total + swap_stats->total;

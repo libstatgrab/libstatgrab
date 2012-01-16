@@ -35,7 +35,7 @@ struct map{
 };
 typedef struct map mapping_t;
 
-static mapping_t *mapping = NULL; 
+static mapping_t *mapping = NULL;
 #endif
 
 #ifdef SOLARIS
@@ -255,7 +255,6 @@ char *
 sg_f_read_line( FILE *f, char *linebuf, size_t buf_size, const char *string ) {
 	assert(linebuf);
 	if( !linebuf ) {
-		
 		SET_ERROR("tools", SG_ERROR_INVALID_ARGUMENT, "sg_f_read_line(linebuf = %p", linebuf);
 		return NULL;
 	}

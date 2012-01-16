@@ -86,16 +86,16 @@ funcnames_to_indices(const char *name_list, size_t **indices) {
 		}
 	}
 
-        if( name_start < name_list ) {
-                size_t idx = find_func( name_start, name_list - name_start );
-                if( idx >= lengthof(statgrab_tests) ) {
-                        fprintf( stderr, "invalid function name for testing: %s\n", name_start );
-                        exit(255);
-                }
-                (*indices)[i++] = idx;
-                name_start = name_list + 1;
-                DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_tests[idx].fn_name );
-        }
+	if( name_start < name_list ) {
+		size_t idx = find_func( name_start, name_list - name_start );
+		if( idx >= lengthof(statgrab_tests) ) {
+			fprintf( stderr, "invalid function name for testing: %s\n", name_start );
+			exit(255);
+		}
+		(*indices)[i++] = idx;
+		name_start = name_list + 1;
+		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_tests[idx].fn_name );
+	}
 
 	return i;
 }
@@ -107,7 +107,7 @@ mark_func(size_t func_index) {
 		exit(1);
 	}
 
-        ++statgrab_tests[func_index].needed;
+	++statgrab_tests[func_index].needed;
 }
 
 void
@@ -136,5 +136,5 @@ done_func(size_t func_index) {
 		exit(1);
 	}
 
-        ++statgrab_tests[func_index].done;
+	++statgrab_tests[func_index].done;
 }

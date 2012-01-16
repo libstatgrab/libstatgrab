@@ -21,9 +21,9 @@
  * $Id$
  */
 
-/* A very basic example of how to get the disk statistics from the system 
+/* A very basic example of how to get the disk statistics from the system
  * and diaply them. Also it adds up all the traffic to create and print out
- * a total 
+ * a total
  * Takes several arguments :
  * -d <number>	Takes the number of seconds to wait to get traffic sent since last call
  * 		Note, this is not disk traffic per second. Its the traffic since last
@@ -89,7 +89,7 @@ int main(int argc, char **argv){
 		return 1;
 	}
 
-	/* We are not interested in the amount of traffic ever transmitted, just differences. 
+	/* We are not interested in the amount of traffic ever transmitted, just differences.
 	 * Because of this, we do nothing for the very first call.
 	 */
 
@@ -111,9 +111,9 @@ int main(int argc, char **argv){
 		long long total_write=0;
 		long long total_read=0;
 
-                qsort(diskio_stats , num_diskio_stats, sizeof(diskio_stats[0]), sg_disk_io_compare_traffic);
+		qsort(diskio_stats , num_diskio_stats, sizeof(diskio_stats[0]), sg_disk_io_compare_traffic);
 
-		for(x = 0; x < num_diskio_stats; x++){	
+		for(x = 0; x < num_diskio_stats; x++){
 			/* Print at location 2, linenumber the interface name */
 			printf("\033[%d;2H%-25s : %-10s", line_number++, "Disk Name", diskio_stats->disk_name);
 			/* Print out at the correct location the traffic in the requsted units passed at command time */
@@ -121,7 +121,7 @@ int main(int argc, char **argv){
 			printf("\033[%d;2H%-25s : %8llu %c", line_number++, "Disk write", diskio_stats->write_bytes / divider, units);
 			printf("\033[%d;2H%-25s : %ld ", line_number++, "Disk systime", (long) diskio_stats->systime);
 
-			/* Add a blank line between interfaces */	
+			/* Add a blank line between interfaces */
 			line_number++;
 
 			/* Add up this interface to the total so we can display a "total" disk io" */

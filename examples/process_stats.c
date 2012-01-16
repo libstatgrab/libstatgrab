@@ -58,7 +58,7 @@ int main(int argc, char **argv){
 
 	register_sig_flagger( SIGINT, &quit );
 
-        if( (process_stat = sg_get_process_count()) == NULL )
+	if( (process_stat = sg_get_process_count()) == NULL )
 		sg_die("Failed to get process list", 1);
 
 	while( (process_stat = sg_get_process_count()) != NULL){

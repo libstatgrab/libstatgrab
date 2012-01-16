@@ -261,7 +261,7 @@ int sg_win32_snapshot()
 	return 0;
 }
 
-/* Must be called before any values can be read. This creates all the 
+/* Must be called before any values can be read. This creates all the
  * necessary PDH values
  */
 int sg_win32_start_capture()
@@ -328,8 +328,8 @@ void sg_win32_end_capture()
 }
 
 #ifdef WIN32
-// DllMain() is the entry-point function for this DLL. 
- 
+// DllMain() is the entry-point function for this DLL.
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, // DLL module handle
 		    DWORD fdwReason,    // reason called
 		    LPVOID lpvReserved) // reserved

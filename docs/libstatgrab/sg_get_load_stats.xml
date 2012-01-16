@@ -100,7 +100,7 @@ typedef struct{
         double min1;
         double min5;
         double min15;
-	time_t systime;
+        time_t systime;
 }sg_load_stats;
     </programlisting>
 

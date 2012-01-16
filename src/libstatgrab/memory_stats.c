@@ -129,7 +129,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	if( pstat_getstatic(&pstat_static, sizeof(pstat_static), 1, 0) == -1 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_PSTAT, "pstat_static");
-        }
+	}
 
 	mem_stats_buf->total = ((long long) pstat_static.physical_memory) * pstat_static.page_size;
 	mem_stats_buf->free = ((long long) pstat_dynamic.psd_free) * pstat_static.page_size;
@@ -167,25 +167,25 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 #else
 	if( (kc = kstat_open()) == NULL ) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_OPEN, NULL);
-        }
+	}
 
 	if((ksp=kstat_lookup(kc, "unix", 0, "system_pages")) == NULL) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_LOOKUP, "unix,0,system_pages");
-        }
+	}
 
 	if (kstat_read(kc, ksp, 0) == -1) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_READ, NULL);
-        }
+	}
 
 	if((kn=kstat_data_lookup(ksp, "physmem")) == NULL) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_DATA_LOOKUP, "physmem");
-        }
+	}
 
 	mem_stats_buf->total = ((unsigned long long)kn->value.ul) * ((unsigned long long)pagesize);
 
 	if((kn=kstat_data_lookup(ksp, "freemem")) == NULL) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_DATA_LOOKUP, "freemem");
-        }
+	}
 
 	mem_stats_buf->free = ((unsigned long long)kn->value.ul) * ((unsigned long long)pagesize);
 	kstat_close(kc);
@@ -349,7 +349,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	/* Because all the vm.stats returns pages, I need to get the page size.
 	 * After that I then need to multiple the anything that used vm.stats to
-	 * get the system statistics by pagesize 
+	 * get the system statistics by pagesize
 	 */
 	pagesize = getpagesize();
 	mem_stats_buf->cache = cache_count * pagesize;

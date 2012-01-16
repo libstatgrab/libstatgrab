@@ -42,7 +42,7 @@ extern const struct sg_comp_init sg_swap_init;
 extern const struct sg_comp_init sg_user_init;
 
 static struct sg_comp_info comp_info[] = {
-	/* error must be the first component to initialize - to hold 
+	/* error must be the first component to initialize - to hold
 	 * the errors for later coming ones */
 	{ &sg_error_init, 0 },
 	{ &sg_cpu_init, 0 },
@@ -122,7 +122,7 @@ sg_lock_mutex(const char *mutex_name) {
 	TRACE_LOG_FMT("globals", "going to lock mutex '%s' for thread %p", mutex_name, (void *)(pthread_self()));
 	rc = pthread_mutex_lock( &found->mutex );
 	if( 0 != rc ) {
-                RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d locking mutex '%s' for thread %p", rc, mutex_name, (void *)(pthread_self()));
+		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d locking mutex '%s' for thread %p", rc, mutex_name, (void *)(pthread_self()));
 	}
 
 	TRACE_LOG_FMT("globals", "mutex '%s' locked for thread %p", mutex_name, (void *)(pthread_self()));
@@ -145,7 +145,7 @@ sg_unlock_mutex(const char *mutex_name) {
 	TRACE_LOG_FMT("globals", "going to unlock mutex '%s' in thread %p", mutex_name, (void *)(pthread_self()));
 	rc = pthread_mutex_unlock( &found->mutex );
 	if( 0 != rc ) {
-                RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d unlocking mutex '%s' in thread %p", rc, mutex_name, (void *)(pthread_self()));
+		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d unlocking mutex '%s' in thread %p", rc, mutex_name, (void *)(pthread_self()));
 	}
 
 	TRACE_LOG_FMT("globals", "mutex '%s' unlocked in thread %p", mutex_name, (void *)(pthread_self()));
@@ -161,7 +161,7 @@ sg_global_lock(void)
 	TRACE_LOG_FMT("globals", "going to lock mutex 'statgrab' for thread %p", (void *)(pthread_self()));
 	rc = pthread_mutex_lock( &glob_lock.mutex );
 	if( 0 != rc ) {
-                RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d locking mutex '%s' in thread %p", rc, "statgrab", (void *)(pthread_self()));
+		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d locking mutex '%s' in thread %p", rc, "statgrab", (void *)(pthread_self()));
 	}
 	TRACE_LOG_FMT("globals", "mutex 'statgrab' locked for thread %p", (void *)(pthread_self()));
 
@@ -176,7 +176,7 @@ sg_global_unlock(void)
 	TRACE_LOG_FMT("globals", "going to unlock mutex 'statgrab' for thread %p", (void *)(pthread_self()));
 	rc = pthread_mutex_unlock( &glob_lock.mutex );
 	if( 0 != rc ) {
-                RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d unlocking mutex '%s' in thread %p", rc, "statgrab", (void *)(pthread_self()));
+		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("globals", SG_ERROR_MUTEX_LOCK, rc, "error %d unlocking mutex '%s' in thread %p", rc, "statgrab", (void *)(pthread_self()));
 	}
 	TRACE_LOG_FMT("globals", "mutex 'statgrab' unlocked for thread %p", (void *)(pthread_self()));
 

@@ -201,7 +201,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 
 	cpu_stats_buf->total = cpu_stats_buf->user + cpu_stats_buf->iowait + cpu_stats_buf->kernel + cpu_stats_buf->idle + cpu_stats_buf->swap;
 	cpu_stats_buf->voluntary_context_switches = cpu_stats_buf->context_switches - cpu_stats_buf->involuntary_context_switches;
-	
+
 	kstat_close(kc);
 #elif defined(LINUX) || defined(CYGWIN)
 	if ((f=fopen("/proc/stat", "r" ))==NULL) {
@@ -300,7 +300,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 	cpu_stats_buf->nice=cp_time[CP_NICE];
 	cpu_stats_buf->kernel=cp_time[CP_SYS];
 	cpu_stats_buf->idle=cp_time[CP_IDLE];
-	
+
 	cpu_stats_buf->total = 0;
 	for( size = 0; size < CPUSTATES; ++size )
 		cpu_stats_buf->total += cp_time[size];
@@ -381,7 +381,7 @@ counter_diff(unsigned long long new, unsigned long long old){
 	if( new >= old ) {
 		return new - old;
 	}
-        else {
+	else {
 		unsigned long long retval = INT_MAX;
 		++retval;
 		retval += new;

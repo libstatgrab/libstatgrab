@@ -139,7 +139,7 @@ typedef struct {
         int speed;
         sg_iface_duplex duplex;
         int up;
-	time_t systime;
+        time_t systime;
 } sg_network_iface_stats;
     </programlisting>
 

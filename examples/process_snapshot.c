@@ -51,7 +51,7 @@ int main(int argc, char **argv){
 	qsort(ps, ps_size, sizeof *ps, sg_process_compare_pid);
 
 	printf("%5s %5s %5s %5s %5s %5s %5s %6s %6s %9s %-10s %-4s %-8s %-6s %-6s %-20s %s\n",
-	 	"pid", "ppid", "pgid", "uid", "euid", "gid", "egid", "size", "res", "time", "cpu", "nice", "state", "nvcsw", "nivcsw", "name", "title");
+		"pid", "ppid", "pgid", "uid", "euid", "gid", "egid", "size", "res", "time", "cpu", "nice", "state", "nvcsw", "nivcsw", "name", "title");
 
 	for(x=0;x<ps_size;x++){
 		switch (ps->state) {
@@ -79,8 +79,8 @@ int main(int argc, char **argv){
 			(unsigned)(ps->proc_resident / (1024*1024)),
 			(unsigned)ps->time_spent, (float)ps->cpu_percent,
 			ps->nice, state,
-                        ps->voluntary_context_switches,
-                        ps->involuntary_context_switches,
+			ps->voluntary_context_switches,
+			ps->involuntary_context_switches,
 			ps->process_name, ps->proctitle);
 		ps++;
 	}

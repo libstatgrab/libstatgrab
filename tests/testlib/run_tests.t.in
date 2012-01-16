@@ -23,7 +23,7 @@ chdir($FindBin::Bin);
 my $tester = run_tests->new( $test_prog );
 my $test_variants;
 foreach my $item_count (@{$cmdOptions{items}}) {
-        push( @$test_variants, $tester->get_test_combinations( $item_count ) );
+	push( @$test_variants, $tester->get_test_combinations( $item_count ) );
 }
 $tester->run_tests( \@ARGV, $test_variants );
 

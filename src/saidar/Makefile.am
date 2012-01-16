@@ -9,9 +9,9 @@ endif
 saidar_SOURCES = saidar.c
 
 AM_CPPFLAGS = @SAIDARCPPFLAGS@ -I$(top_srcdir) -I$(top_builddir) \
-              -I$(top_srcdir)/src -I$(top_builddir)/src\
+              -I$(top_srcdir)/src -I$(top_builddir)/src \
               -I$(top_srcdir)/src/libstatgrab -I$(top_builddir)/src/libstatgrab \
-	       @CLIBFLAGS@
+              @CLIBFLAGS@
 
 LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la @SAIDARLIBS@ @LINKFLAGS@
 

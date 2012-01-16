@@ -108,7 +108,7 @@ help(char *prgname) {
 int
 main(int argc, char **argv) {
 	log_init( argc, argv );
-        sg_init(1);
+	sg_init(1);
 
 	if( 0 != get_params( opt_def, argc, argv ) ) {
 		help(argv[0]);

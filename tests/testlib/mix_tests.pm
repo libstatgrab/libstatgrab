@@ -32,41 +32,41 @@ sub variegate_list($@) {
 }
 
 sub totalcombs($$){
-        my ($n, $k) = @_;
+	my ($n, $k) = @_;
 	my $c = 1;
-        $k > $n and return 0;
-        for my $d ( 1 .. $k ) {
-                $c *= $n--;
-                $c /= $d;
-                $c = int($c);
-        }
+	$k > $n and return 0;
+	for my $d ( 1 .. $k ) {
+		$c *= $n--;
+		$c /= $d;
+		$c = int($c);
+	}
 	return $c;
 }
 
 sub combine_nk($$) {
-        my ($n, $k) = @_;
-        my @indx;
-        my @result;
+	my ($n, $k) = @_;
+	my @indx;
+	my @result;
 
-        @indx = map { $_ } ( 0 .. $k - 1 );
+	@indx = map { $_ } ( 0 .. $k - 1 );
 
 LOOP:
-        while( 1 ) {
-                my @line = map { $indx[$_] } ( 0 .. $k - 1 );
-                push( @result, \@line ) if @line;
-                for( my $iwk = $k - 1; $iwk >= 0; --$iwk ) {
-                        if( $indx[$iwk] <= ($n-1)-($k-$iwk) ) {
-                                ++$indx[$iwk];
-                                for my $swk ( $iwk + 1 .. $k - 1 ) {
-                                        $indx[$swk] = $indx[$swk-1]+1;
-                                }
-                                next LOOP;
-                        }
-                }
-                last;
-        }
+	while( 1 ) {
+		my @line = map { $indx[$_] } ( 0 .. $k - 1 );
+		push( @result, \@line ) if @line;
+		for( my $iwk = $k - 1; $iwk >= 0; --$iwk ) {
+			if( $indx[$iwk] <= ($n-1)-($k-$iwk) ) {
+				++$indx[$iwk];
+				for my $swk ( $iwk + 1 .. $k - 1 ) {
+					$indx[$swk] = $indx[$swk-1]+1;
+				}
+				next LOOP;
+			}
+		}
+		last;
+	}
 
-        return @result;
+	return @result;
 }
 
 sub combine_list($@) {

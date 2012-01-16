@@ -1,4 +1,4 @@
-/* 
+/*
  * i-scream libstatgrab
  * http://www.i-scream.org
  * Copyright (C) 2000-2011 i-scream
@@ -269,7 +269,7 @@ void populate_user() {
 		size_t i;
 		for (i = 0; i < entries; i++) {
 			const char *name = users[i].login_name;
-	
+
 			add_stat(STRING, &users[i].login_name,
 				 "user", name, "login_name", NULL);
 			add_stat(STRING, &users[i].device,
@@ -297,10 +297,10 @@ void populate_swap() {
 #endif
 
 static const char *host_states[] = {
-        "unknown", "physical host",
-        "virtual machine (full virtualized)",
-        "virtual machine (paravirtualized)",
-        "hardware virtualization"
+	"unknown", "physical host",
+	"virtual machine (full virtualized)",
+	"virtual machine (paravirtualized)",
+	"hardware virtualization"
 };
 static const char *unexpected_host_state = "unexpected state (libstatgrab to new)";
 
@@ -322,7 +322,7 @@ void populate_general() {
 		add_stat(UNSIGNED, &host->bitwidth, "general", "bitwidth", NULL);
 		add_stat(STRING, ((size_t)host->host_state) > (lengthof(host_states) - 1)
 		                 ? &unexpected_host_state
-				 : &host_states[host->host_state], "general", "hoststate", NULL);
+		                 : &host_states[host->host_state], "general", "hoststate", NULL);
 		add_stat(TIME_T, &host->uptime, "general", "uptime", NULL);
 	}
 }
@@ -399,7 +399,7 @@ void populate_disk() {
 	if (diskio != NULL) {
 		for (i = 0; i < n; i++) {
 			const char *name = diskio[i].disk_name;
-	
+
 			add_stat(STRING, &diskio[i].disk_name,
 				 "disk", name, "disk_name", NULL);
 			add_stat(BYTES, &diskio[i].read_bytes,
@@ -423,15 +423,15 @@ void populate_proc() {
 		add_stat(UNSIGNED_LONG_LONG, &proc->stopped, "proc", "stopped", NULL);
 		add_stat(UNSIGNED_LONG_LONG, &proc->zombie, "proc", "zombie", NULL);
 	}
-        else {
-                char *errbuf;
-                sg_error_details errdet;
-                if( SG_ERROR_NONE != sg_get_error_details(&errdet) )
-                        return;
-                if( NULL == sg_strperror( &errbuf, &errdet ) )
-                        return;
-                printf( "%s\n", errbuf );
-        }
+	else {
+		char *errbuf;
+		sg_error_details errdet;
+		if( SG_ERROR_NONE != sg_get_error_details(&errdet) )
+			return;
+		if( NULL == sg_strperror( &errbuf, &errdet ) )
+			return;
+		printf( "%s\n", errbuf );
+	}
 }
 
 void populate_net() {
@@ -444,7 +444,7 @@ void populate_net() {
 	if (io != NULL) {
 		for (i = 0; i < num_io; i++) {
 			const char *name = io[i].interface_name;
-	
+
 			add_stat(STRING, &io[i].interface_name,
 				 "net", name, "interface_name", NULL);
 			add_stat(BYTES, &io[i].tx,

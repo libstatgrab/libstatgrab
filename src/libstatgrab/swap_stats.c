@@ -131,7 +131,7 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 
 			if ((si->pss_flags & SW_ENABLED) != SW_ENABLED)
 				continue;
-	
+
 			if ((si->pss_flags & SW_BLOCK) == SW_BLOCK) {
 				swap_stats_buf->total += ((long long) si->pss_nblksavail) * 1024LL;
 				swap_stats_buf->used += ((long long) si->pss_nfpgs) * 1024LL;
@@ -161,7 +161,7 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 	swap_stats_buf->used  = swap_stats_buf->total - swap_stats_buf->free;
 #elif defined(SOLARIS)
 	if( -1 == ( pagesize = sg_get_sys_page_size() ) ) {
-                RETURN_FROM_PREVIOUS_ERROR( "swap", sg_get_error() );
+		RETURN_FROM_PREVIOUS_ERROR( "swap", sg_get_error() );
 	}
 
 # if defined(HAVE_STRUCT_SWAPTABLE)

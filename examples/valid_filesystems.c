@@ -35,7 +35,7 @@
 int main(int argc, char **argv) {
 	size_t nvalid_fs = 0;
 	const char **valid_fs;
-	
+
 	/* Initialise helper - e.g. logging, if any */
 	hlp_init(argc, argv);
 

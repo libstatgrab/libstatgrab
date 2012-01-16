@@ -132,13 +132,13 @@ ACX_WIN32(
 	[ dnl else
 		AC_HEADER_DIRENT
 		AC_CHECK_HEADERS([libdevinfo.h mach/machine.h mntent.h paths.h sys/fstyp.h sys/loadavg.h sys/mnttent.h sys/mnttab.h sys/un.h sys/utsname.h sys/vfs.h utmp.h utmpx.h])
-                AC_CHECK_HEADERS([sys/param.h sys/mount.h sys/proc.h sys/swap.h sys/sysctl.h sys/systeminfo.h sys/user.h], , , [
+		AC_CHECK_HEADERS([sys/param.h sys/mount.h sys/proc.h sys/swap.h sys/sysctl.h sys/systeminfo.h sys/user.h], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-                        ])
-                AC_CHECK_HEADERS([arpa/inet.h netinet/in.h net/if.h netinet/if_ether.h], , , [
+		])
+		AC_CHECK_HEADERS([arpa/inet.h netinet/in.h net/if.h netinet/if_ether.h], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -152,14 +152,14 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_ARPA_INET_H
 # include <arpa/inet.h>
 #endif
-                        ])
-                AC_CHECK_HEADERS([sys/sar.h sys/sysinfo.h], , , [
-                AC_INCLUDES_DEFAULT
+		])
+		AC_CHECK_HEADERS([sys/sar.h sys/sysinfo.h], , , [
+		AC_INCLUDES_DEFAULT
 #if HAVE_SYS_SAR_H
 # include <sys/sar.h>
 #endif
-                        ])
-                AC_CHECK_FUNCS([strncpy])
+		])
+		AC_CHECK_FUNCS([strncpy])
 	]
 )
 
@@ -243,7 +243,7 @@ AS_IF([test "x$ac_cv_header_utmpx_h" = "xyes"], [
 	AC_CHECK_FUNCS([getutxent])
 
 	# FreeBSD 9 (and others) uses utmpx rather than utmp
-        AC_CHECK_TYPES([struct utmpx], , , [#include <utmpx.h>])
+	AC_CHECK_TYPES([struct utmpx], , , [#include <utmpx.h>])
 	AC_CHECK_MEMBER(struct utmpx.ut_type,
 			[AC_DEFINE(HAVE_UTMPX, , [utmpx])],
 			[],
@@ -267,7 +267,7 @@ AS_IF([test "x$ac_cv_header_utmpx_h" = "xyes"], [
 AS_IF([test "x$ac_cv_header_utmp_h" = "xyes"], [
 	AC_CHECK_FUNCS([getutent])
 
-        AC_CHECK_TYPES([struct utmp], , , [
+	AC_CHECK_TYPES([struct utmp], , , [
 AC_INCLUDES_DEFAULT
 
 #include <utmp.h>
@@ -419,22 +419,22 @@ AS_CASE([$host_os],
 		AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 		dnl check whether procfs is really available
 		AC_DEFINE(HAVE_PROCFS, 1, [Define to signal that procfs is available])
-                AC_CHECK_TYPES([struct swapent, struct swaptable, struct anoninfo], , , [
+		AC_CHECK_TYPES([struct swapent, struct swaptable, struct anoninfo], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SWAP_H
 # include <sys/swap.h>
 #endif
-                ])
-                ac_cv_threadsafe_strerror="yes"
+		])
+		ac_cv_threadsafe_strerror="yes"
 	],
 	[hpux11.11*|hpux11.[[23]]*], [
 		AC_DEFINE(HPUX, , [Building on HP-UX 11.11+])
 		AC_DEFINE(HPUX11, , [Building on HP-UX 11.11+])
 		AC_CHECK_HEADERS([sys/pstat.h],,[AC_MSG_ERROR(need sys/pstat.h)])
 		AC_CHECK_HEADERS([sys/dk.h sys/dlpi.h sys/dlpi_ext.h sys/mib.h sys/stropts.h])
-                CPPFLAGS="$CPPFLAGS -D_PSTAT64"
-                ac_cv_threadsafe_strerror="yes"
-                ac_cv_threadsafe_getmntent="yes"
+		CPPFLAGS="$CPPFLAGS -D_PSTAT64"
+		ac_cv_threadsafe_strerror="yes"
+		ac_cv_threadsafe_getmntent="yes"
 		AC_CHECK_MEMBER(struct pst_diskinfo.psd_dkbytewrite,
 				[AC_DEFINE(HAVE_PST_DISKINFO_PSD_DKBYTEWRITE, , [pst_diskinfo.psd_dkbytewrite])],
 				[],
@@ -453,7 +453,7 @@ AC_INCLUDES_DEFAULT
 #endif
 		])
 		AC_CHECK_FUNCS([mntctl])
-                AC_CHECK_DECL([mntctl], [AC_DEFINE([HAVE_DECL_MNTCTL], 1, [define when mntctl() is declared properly])], ,[
+		AC_CHECK_DECL([mntctl], [AC_DEFINE([HAVE_DECL_MNTCTL], 1, [define when mntctl() is declared properly])], ,[
 		AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_MNTCTL_H
 # include <sys/mntctl.h>
@@ -461,19 +461,19 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VMOUNT_H
 #include <sys/vmount.h>
 #endif
-                ])
-                AC_CHECK_DECL([getprocs64], [AC_DEFINE([HAVE_DECL_GETPROCS64], 1, [define when getprocs64() is declared properly])], ,[
+		])
+		AC_CHECK_DECL([getprocs64], [AC_DEFINE([HAVE_DECL_GETPROCS64], 1, [define when getprocs64() is declared properly])], ,[
 		AC_INCLUDES_DEFAULT
 #ifdef HAVE_PROCINFO_H
 # include <procinfo.h>
 #endif
-                ])
-                AC_CHECK_DECL([getargs], [AC_DEFINE([HAVE_DECL_GETARGS], 1, [define when getargs() is declared properly])], ,[
+		])
+		AC_CHECK_DECL([getargs], [AC_DEFINE([HAVE_DECL_GETARGS], 1, [define when getargs() is declared properly])], ,[
 		AC_INCLUDES_DEFAULT
 #ifdef HAVE_PROCINFO_H
 # include <procinfo.h>
 #endif
-                ])
+		])
 	],
 	[freebsd4.*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
@@ -537,26 +537,26 @@ AS_CASE([$host_os],
 dnl check BSD* OS's
 AS_CASE([$host_os],
 	[*bsd*|darwin*|dragonfly*], [
-                AC_DEFINE(ALLBSD, , [Building on some kind of BSD])
-                AC_MSG_CHECKING([for BSD specific features])
-                AC_MSG_RESULT([])
+		AC_DEFINE(ALLBSD, , [Building on some kind of BSD])
+		AC_MSG_CHECKING([for BSD specific features])
+		AC_MSG_RESULT([])
 
 		AC_CHECK_HEADERS([ifaddrs.h kinfo.h net/if_media.h sys/dkstat.h sys/disk.h sys/iostat.h sys/resource.h sys/sched.h sys/ucred.h sys/user.h uvm/uvm.h sys/vmmeter.h vm/vm_param.h], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-                        ])
+		])
 		dnl FBSD 5+
 		AC_CHECK_LIB(devstat, devstat_getnumdevs, [LINKFLAGS="$LINKFLAGS -ldevstat"])
 		dnl FBSD < 5, DragonFlyBSD?, ...?
 		AC_CHECK_LIB(devstat, getnumdevs, [LINKFLAGS="$LINKFLAGS -ldevstat"])
-                AC_CHECK_HEADERS([devstat.h], , , [
-                AC_INCLUDES_DEFAULT
+		AC_CHECK_HEADERS([devstat.h], , , [
+		AC_INCLUDES_DEFAULT
 #if HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
-                        ])
+		])
 
 		AC_CHECK_LIB(kinfo, kinfo_get_sched_cputime, [LINKFLAGS="$LINKFLAGS -lkinfo"])
 
@@ -600,7 +600,7 @@ main()
 			)
 		)
 
-                AC_CHECK_TYPES([struct kinfo_proc, struct kinfo_proc2, struct io_sysctl, struct diskstats, struct disk_sysctl, struct devstat, struct statinfo], , , [
+		AC_CHECK_TYPES([struct kinfo_proc, struct kinfo_proc2, struct io_sysctl, struct diskstats, struct disk_sysctl, struct devstat, struct statinfo], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -626,9 +626,9 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
-                ])
+		])
 
-                AC_CHECK_TYPES([struct kinfo_cputime], , , [
+		AC_CHECK_TYPES([struct kinfo_cputime], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -639,7 +639,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
-                ])
+		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_io_sysctl" = "xyes"], [
 			AC_CHECK_MEMBER(struct io_sysctl.name,
@@ -858,7 +858,7 @@ AC_INCLUDES_DEFAULT
 					]
 			)
 
-                AC_CHECK_TYPES([struct uvmexp_sysctl], , , [
+		AC_CHECK_TYPES([struct uvmexp_sysctl], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -869,7 +869,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_UVM_H
 #include <uvm/uvm.h>
 #endif
-                ])
+		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_uvmexp_sysctl" != "xyes"], [
 			AC_CHECK_TYPES([struct uvmexp], , , [
@@ -939,7 +939,7 @@ AC_INCLUDES_DEFAULT
 			])
 		])
 
-                AC_CHECK_TYPES([struct vmtotal, struct vmmeter], , , [
+		AC_CHECK_TYPES([struct vmtotal, struct vmmeter], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -950,9 +950,9 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VMMETER_H
 #include <sys/vmmeter.h>
 #endif
-                ])
+		])
 
-                AC_CHECK_TYPES([struct xswdev, struct xsw_usage], , , [
+		AC_CHECK_TYPES([struct xswdev, struct xsw_usage], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -963,7 +963,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_VM_VM_PARAM_H
 #include <vm/vm_param.h>
 #endif
-                ])
+		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_xswdev" = "xyes"], [
 			AC_CHECK_MEMBER([struct xswdev.xsw_size], [AC_DEFINE(HAVE_STRUCT_XSWDEV_SIZE, , [struct xswdev.xsw_size])], , [
@@ -980,7 +980,7 @@ AC_INCLUDES_DEFAULT
 			])
 		])
 
-                AC_CHECK_TYPES([struct xvfsconf, struct vfsconf], , , [
+		AC_CHECK_TYPES([struct xvfsconf, struct vfsconf], , , [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -991,7 +991,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
 #endif
-                ])
+		])
 	]
 )
 
@@ -1243,37 +1243,37 @@ AC_SUBST(WITH_VISIBILITY_SUPPORT)
 
 # User specified curses/ncurses prefix
 AC_ARG_WITH([curses-prefix],
-        [  --with-curses-prefix=PATH     curses (or ncurses) is in PATH],
-        [
-                if test -d "$withval/lib"; then
-                        SAIDARLIBS="-L${withval}/lib ${SAIDARLIBS}"
-                fi
-                if test -d "$withval/include"; then
-                        SAIDARCPPFLAGS="-I${withval}/include ${SAIRDARCPPFLAGS}"
-                fi
-        ]
+	[  --with-curses-prefix=PATH     curses (or ncurses) is in PATH],
+	[
+		if test -d "$withval/lib"; then
+			SAIDARLIBS="-L${withval}/lib ${SAIDARLIBS}"
+		fi
+		if test -d "$withval/include"; then
+			SAIDARCPPFLAGS="-I${withval}/include ${SAIRDARCPPFLAGS}"
+		fi
+	]
 )
 
 # Check if user wants to disable statgrab
 AM_CONDITIONAL(STATGRAB, true)
 AC_ARG_ENABLE(statgrab,
-        [  --disable-statgrab      disable building of statgrab],
-        [
-                if test "x$enableval" = "xno" ; then
-                        AM_CONDITIONAL(STATGRAB, false)
-                fi
-        ]
+	[  --disable-statgrab      disable building of statgrab],
+	[
+		if test "x$enableval" = "xno" ; then
+			AM_CONDITIONAL(STATGRAB, false)
+		fi
+	]
 )
 
 # Check if user wants to disable saidar
 AM_CONDITIONAL(SAIDAR, true)
 AC_ARG_ENABLE(saidar,
-        [  --disable-saidar        disable building of saidar],
-        [
-                if test "x$enableval" = "xno" ; then
-                        AM_CONDITIONAL(SAIDAR, false)
-                fi
-        ],
+	[  --disable-saidar        disable building of saidar],
+	[
+		if test "x$enableval" = "xno" ; then
+			AM_CONDITIONAL(SAIDAR, false)
+		fi
+	],
 	[
 		# saidar needs curses
 		# (if we don't find curses we disable saidar)
@@ -1284,12 +1284,12 @@ AC_ARG_ENABLE(saidar,
 # Check if the user would prefer not to build examples
 AM_CONDITIONAL(EXAMPLES, true)
 AC_ARG_ENABLE(examples,
-        [  --disable-examples      disable building of examples],
-        [
-                if test "x$enableval" = "xno" ; then
-                        AM_CONDITIONAL(EXAMPLES, false)
-                fi
-        ]
+	[  --disable-examples      disable building of examples],
+	[
+		if test "x$enableval" = "xno" ; then
+			AM_CONDITIONAL(EXAMPLES, false)
+		fi
+	]
 )
 
 # Check if user wants to make and install manpages
@@ -1297,13 +1297,13 @@ AC_ARG_ENABLE(examples,
 AC_ARG_ENABLE(man-build,
 [  --enable-man-build      enable building of manpages (default in maintainer-mode)
   --disable-man-build     disable building of manpages (default in all other cases)],
-        [ENABLE_BUILD_MANPAGES="${enableval}"],
-        [
+	[ENABLE_BUILD_MANPAGES="${enableval}"],
+	[
 		AS_IF(	[test "x$USE_MAINTAINER_MODE" = "xyes"],
 			[ENABLE_BUILD_MANPAGES="check"],
 			[ENABLE_BUILD_MANPAGES="no"]
 		)
-        ]
+	]
 )
 
 AM_CONDITIONAL(BUILD_MANPAGES, false)
@@ -1312,13 +1312,13 @@ AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
 	[
 		dnl check if whether docbook is available
 		AC_MSG_CHECKING([for applicable docbook2man])
-                AC_PATH_PROGS_FEATURE_CHECK([docbook2man_prog], [docbook2x-man docbook2man], [
+		AC_PATH_PROGS_FEATURE_CHECK([docbook2man_prog], [docbook2x-man docbook2man], [
 			output=`$ac_path_docbook2man_prog --help 2>/dev/null | grep "Convert DocBook XML documents to man pages"`
 			AS_IF([test -n "$output"], [
 				ac_path_docbook2man_prog_found=:
 				ac_cv_path_docbook2man_prog="$ac_path_docbook2man_prog"
 			])
-                ], [
+		], [
 			docbook2man_prog="none"
 			ac_cv_path_docbook2man_prog="none"
 		])
@@ -1330,8 +1330,8 @@ AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
 			[test "x$ac_cv_path_docbook2man_prog" != "xnone"],
 			[
 				AM_CONDITIONAL(BUILD_MANPAGES, true)
-                                DOCBOOK2MAN="$ac_cv_path_docbook2man_prog"
-                                AC_SUBST(DOCBOOK2MAN)
+				DOCBOOK2MAN="$ac_cv_path_docbook2man_prog"
+				AC_SUBST(DOCBOOK2MAN)
 				AC_MSG_NOTICE([enabling build of manpages using $DOCBOOK2MAN])
 			]
 		)
@@ -1342,13 +1342,13 @@ AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
 AC_ARG_ENABLE(tests,
 [  --enable-tests          enable test building (default in maintainer-mode)
   --disable-tests         disable test building (default in all other cases)],
-        [ENABLE_TESTS="${enableval}"],
-        [
+	[ENABLE_TESTS="${enableval}"],
+	[
 		AS_IF(	[test "x$USE_MAINTAINER_MODE" = "xyes"],
 			[ENABLE_TESTS="yes"],
 			[ENABLE_TESTS="check"]
 		)
-        ]
+	]
 )
 
 AM_CONDITIONAL(TESTS, false)
@@ -1365,7 +1365,7 @@ AS_IF(	[test "x$ENABLE_TESTS" != "xno"],
 				])
 			]
 		)
-        ]
+	]
 )
 
 # Check if the user wants to turn off setgid binaries
@@ -1437,7 +1437,7 @@ AS_IF(	[test "x${ENABLE_THREADS}" != "xno"],
 				AS_IF([test -n "$PTHREAD_CFLAGS"], [CFLAGS="$CFLAGS $PTHREAD_CFLAGS"])
 				AC_CHECK_HEADERS([pthread.h])
 				AS_IF(	[test "x$ac_cv_func_strerror_r" != "xyes" -a "x$ac_cv_threadsafe_strerror" != "xyes"],
-                                        [AC_MSG_ERROR([strerror_r or thread safe strerror required])])
+					[AC_MSG_ERROR([strerror_r or thread safe strerror required])])
 				AM_CONDITIONAL(ENABLE_THREADS, true)
 				WITH_THREADS_CONFIGURED=1
 				AC_SEARCH_LIBS([sem_init], [rt])
@@ -1498,13 +1498,13 @@ AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
 # Check if the user would prefer to include compatibility code
 AM_CONDITIONAL(DEPRECATED, false)
 AC_ARG_ENABLE(deprecated,
-        [  --enable-deprecated     enable inclusion of pre-0.10 compatibility code
+	[  --enable-deprecated     enable inclusion of pre-0.10 compatibility code
   --disable-deprecated    disable inclusion of pre-0.10 compatibility code (default)],
-        [
-                if test "x$enableval" = "xyes" ; then
-                        AM_CONDITIONAL(DEPRECATED, true)
-                fi
-        ]
+	[
+		if test "x$enableval" = "xyes" ; then
+			AM_CONDITIONAL(DEPRECATED, true)
+		fi
+	]
 )
 
 dnl Libtool setup.

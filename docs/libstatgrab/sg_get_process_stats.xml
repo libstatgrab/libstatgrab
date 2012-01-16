@@ -172,7 +172,7 @@
     </para>
     <para>
       The <structname>sg_process_stats</structname> vectors got from
-      <function>sg_get_process_stats_r</function>() or the 
+      <function>sg_get_process_stats_r</function>() or the
       <structname>sg_process_count</structname> summaries got from
       <function>sg_get_process_count_r</function> must be
       freed using <function>sg_free_process_stats</function>() or
@@ -212,7 +212,7 @@
       </simplelist>
     </para>
     <para>
-      These functions compare two sg_process_stats entries, and return an 
+      These functions compare two sg_process_stats entries, and return an
       int to represent which one is greater. The main use of these functions
       is to be passed to qsort to sort the sg_process_stats by the given type.
       <example>
@@ -562,7 +562,7 @@ typedef struct{
     <para>
       On the very first call of
       <function>sg_get_process_count_of</function>(sg_last_process_count)
-      will return the same as 
+      will return the same as
       <function>sg_get_process_count_of</function>(sg_entire_process_count).
     </para>
     <para>

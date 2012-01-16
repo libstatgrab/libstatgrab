@@ -41,9 +41,9 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	struct uvmexp uvm;
 	size_t size = sizeof(uvm);
 #elif defined(AIX)
-       perfstat_memory_total_t mem;
+	perfstat_memory_total_t mem;
 #elif defined(HPUX)
-       struct pst_vminfo vminfo;
+	struct pst_vminfo vminfo;
 #endif
 
 	page_stats_buf->systime = time(NULL);
@@ -53,7 +53,7 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 #ifdef SOLARIS
 	if ((kc = kstat_open()) == NULL) {
 		RETURN_WITH_SET_ERROR("page", SG_ERROR_KSTAT_OPEN, NULL);
-        }
+	}
 
 	for (ksp = kc->kc_chain; ksp!=NULL; ksp = ksp->ks_next) {
 		if ((strcmp(ksp->ks_module, "cpu_stat")) != 0)
@@ -90,7 +90,7 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 
 		if( matches < 2 ) {
 			RETURN_WITH_SET_ERROR( "page", SG_ERROR_PARSE, "/proc/vmstat" );
-                }
+		}
 	}
 	else if ((f = fopen("/proc/stat", "r")) != NULL) {
 		if (sg_f_read_line(f, line_buf, sizeof(line_buf), "page") == NULL) {
@@ -102,7 +102,7 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 
 		if( sscanf( line_buf, "page %llu %llu", &page_stats_buf->pages_pagein, &page_stats_buf->pages_pageout ) != 2 ) {
 			RETURN_WITH_SET_ERROR("page", SG_ERROR_PARSE, "page");
-                }
+		}
 	}
 	else {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_OPEN, "/proc/stat");
@@ -111,19 +111,19 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	size = sizeof(page_stats_buf->pages_pagein);
 	if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats_buf->pages_pagein, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsin");
-        }
+	}
 
 	size = sizeof(page_stats_buf->pages_pageout);
 	if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats_buf->pages_pageout, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsout");
-        }
+	}
 #elif defined(NETBSD) || defined(OPENBSD)
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
 
 	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP");
-        }
+	}
 
 	page_stats_buf->pages_pagein = uvm.pgswapin;
 	page_stats_buf->pages_pageout = uvm.pgswapout;
@@ -131,14 +131,14 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	/* return code is number of structures returned */
 	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
-        }
+	}
 
 	page_stats_buf->pages_pagein  = mem.pgins;
 	page_stats_buf->pages_pageout = mem.pgouts;
 #elif defined(HPUX)
 	if( pstat_getvminfo( &vminfo, sizeof(vminfo), 1, 0 ) == -1 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTLBYNAME, "pstat_getswap");
-        }
+	}
 
 	page_stats_buf->pages_pagein  = vminfo.psv_spgin;
 	page_stats_buf->pages_pageout = vminfo.psv_spgout;
@@ -154,7 +154,7 @@ sg_get_page_stats_diff_int(sg_page_stats *tgt, const sg_page_stats *now, const s
 
 	if( NULL == tgt ) {
 		RETURN_WITH_SET_ERROR("page", SG_ERROR_INVALID_ARGUMENT, "sg_get_page_stats_diff_int(tgt)");
-        }
+	}
 
 	if( now ) {
 		*tgt = *now;

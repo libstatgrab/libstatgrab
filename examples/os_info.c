@@ -33,10 +33,10 @@
 #endif
 
 static const char *host_states[] = {
-        "unknown", "physical host",
-        "virtual machine (full virtualized)",
-        "virtual machine (paravirtualized)",
-        "hardware virtualization"
+	"unknown", "physical host",
+	"virtual machine (full virtualized)",
+	"virtual machine (paravirtualized)",
+	"hardware virtualization"
 };
 
 int main(int argc, char **argv){
@@ -63,12 +63,12 @@ int main(int argc, char **argv){
 	printf("Hardware platform : %s\n", general_stats->platform);
 	printf("Machine nodename : %s\n", general_stats->hostname);
 	printf("Machine uptime : %lld\n", (long long)general_stats->uptime);
-        printf("Number of CPU's configured : %u\n", general_stats->maxcpus);
-        printf("Number of CPU's online : %u\n", general_stats->ncpus);
-        printf("Kernel bitwidth : %u\n", general_stats->bitwidth);
-        printf("Host state : %s\n", ((size_t)general_stats->host_state) > (lengthof(host_states) - 1)
-                                    ? "unexpected state (libstatgrab to new)"
-                                    : host_states[general_stats->host_state] );
+	printf("Number of CPU's configured : %u\n", general_stats->maxcpus);
+	printf("Number of CPU's online : %u\n", general_stats->ncpus);
+	printf("Kernel bitwidth : %u\n", general_stats->bitwidth);
+	printf("Host state : %s\n", ((size_t)general_stats->host_state) > (lengthof(host_states) - 1)
+	                            ? "unexpected state (libstatgrab to new)"
+	                            : host_states[general_stats->host_state] );
 
 	exit(0);
 }

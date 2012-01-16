@@ -180,7 +180,7 @@ typedef struct {
 	unsigned long long context_switches;
 	unsigned long long voluntary_context_switches;
 	unsigned long long involuntary_context_switches;
-        unsigned long long syscalls;
+	unsigned long long syscalls;
 	unsigned long long interrupts;
 	unsigned long long soft_interrupts;
 
@@ -278,7 +278,7 @@ typedef struct {
 	char *device_name;
 	char *fs_type;
 	char *mnt_point;
-        sg_fs_device_type device_type;
+	sg_fs_device_type device_type;
 	unsigned long long size;
 	unsigned long long used;
 	unsigned long long free;

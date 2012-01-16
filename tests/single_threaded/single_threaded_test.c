@@ -51,7 +51,7 @@ help(char *prgname) {
 int
 main(int argc, char **argv) {
 	log_init( argc, argv );
-        sg_init(1);
+	sg_init(1);
 
 	if( 0 != get_params( opt_def, argc, argv ) ) {
 		help(argv[0]);
@@ -79,7 +79,7 @@ main(int argc, char **argv) {
 		if( 0 == entries ) {
 			die( ESRCH, "no functions to test" );
 			return 255;
-                }
+		}
 
 		while( opt_def[OPT_NLOOPS].optarg.u-- > 0 ) {
 			size_t func_rel_idx;

@@ -222,7 +222,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 	sg_network_io_stats *network_io_ptr;
 
 #ifdef HPUX
-/* 
+/*
  * talk to Data Link Provider Interface aka /dev/dlpi
  * see: http://docs.hp.com/hpux/onlinedocs/B2355-90139/B2355-90139.html
  */
@@ -433,7 +433,6 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 		if( net_ptr->ifa_addr->sa_family != AF_LINK )
 			continue;
 
-		
 		if( sg_update_string(&network_io_ptr[interfaces].interface_name,
 				     net_ptr->ifa_name) != SG_ERROR_NONE ) {
 			RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
@@ -450,7 +449,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 
 		++interfaces;
 	}
-	freeifaddrs(net);	
+	freeifaddrs(net);
 #elif defined(AIX)
 	/* check how many perfstat_netinterface_t structures are available */
 	interfaces = perfstat_netinterface(NULL, NULL, sizeof(perfstat_netinterface_t), 0);
@@ -459,7 +458,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 	statp = calloc(interfaces, sizeof(perfstat_netinterface_t));
 	if( NULL == statp ) {
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_MALLOC, "sg_get_network_io_stats");
-        }
+	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP free(statp);
@@ -497,7 +496,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 #elif defined(SOLARIS)
 	if ((kc = kstat_open()) == NULL) {
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_KSTAT_OPEN, NULL);
-        }
+	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP kstat_close(kc);
@@ -579,8 +578,8 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 			++interfaces;
 		}
 	}
-		
-	kstat_close(kc);	
+
+	kstat_close(kc);
 #elif defined(LINUX)
 	f=fopen("/proc/net/dev", "r");
 	if(f==NULL) {
@@ -625,7 +624,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 #elif defined(WIN32)
 	if((if_table = win32_get_devices()) == NULL) {
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_DEVICES, "win32_get_devices");
-        }
+	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP free(if_table);
@@ -680,7 +679,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 	RETURN_WITH_SET_ERROR("network", SG_ERROR_UNSUPPORTED, OS_TYPE);
 #endif
 
-	return SG_ERROR_NONE;	
+	return SG_ERROR_NONE;
 }
 
 MULTI_COMP_ACCESS(sg_get_network_io_stats,network,network_io,SG_NETWORK_IO_NOW_IDX)
@@ -846,7 +845,7 @@ skip:
 #endif
 
 		++ifaces;
-	}	
+	}
 	freeifaddrs(net);
 	close(sock);
 #elif defined(AIX)
@@ -1033,7 +1032,7 @@ skip:
 #elif defined(SOLARIS)
 	if ((kc = kstat_open()) == NULL) {
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_KSTAT_OPEN, NULL);
-        }
+	}
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0) {
 		kstat_close(kc);
@@ -1163,7 +1162,7 @@ skip:
 
 		/* We have a good interface to add */
 		VECTOR_UPDATE(network_iface_vector_ptr, ifaces + 1, network_iface_stat, sg_network_iface_stats);
-		
+
 		if (sg_update_string(&network_iface_stat[ifaces].interface_name, name) != SG_ERROR_NONE ) {
 			VECTOR_UPDATE_ERROR_CLEANUP
 			RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
@@ -1207,7 +1206,7 @@ skip:
 #elif defined(WIN32)
 	if((if_table = win32_get_devices()) == NULL) {
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_DEVICES, "network interfaces");
-        }
+	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP free(if_table);
@@ -1263,7 +1262,7 @@ skip:
 	network_iface_stat_ptr->dup = network_iface_stat_ptr->duplex;
 #endif
 
-	return SG_ERROR_NONE; 
+	return SG_ERROR_NONE;
 }
 
 MULTI_COMP_ACCESS(sg_get_network_iface_stats,network,network_iface,SG_NETWORK_IFACE_IDX)

@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  *
- * $Id$ 
+ * $Id$
  */
 
 #include "tools.h"
@@ -34,7 +34,7 @@ static sg_error sg_get_load_stats_int(sg_load_stats *load_stats_buf){
 	perfstat_cpu_total_t all_cpu_info;
 	int rc;
 #elif defined(SOLARIS) && !defined(HAVE_SYS_LOADAVG_H)
-	kstat_ctl_t *kc;	
+	kstat_ctl_t *kc;
 	kstat_t *ksp;
 	kstat_named_t *kn;
 #endif
@@ -66,17 +66,17 @@ static sg_error sg_get_load_stats_int(sg_load_stats *load_stats_buf){
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_1min")) == NULL) {
 		RETURN_WITH_SET_ERROR("load", SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_1min");
-        }
+	}
 	load_stats_buf->min1 = (double)kn->value.ui32 / (double)256;
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_5min")) == NULL) {
 		RETURN_WITH_SET_ERROR("load", SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_5min");
-        }
+	}
 	load_stats_buf->min5 = (double)kn->value.ui32 / (double)256;
 
 	if((kn=kstat_data_lookup(ksp, "avenrun_15min")) == NULL) {
 		RETURN_WITH_SET_ERROR("load", SG_ERROR_KSTAT_DATA_LOOKUP, "avenrun_15min");
-        }
+	}
 	load_stats_buf->min15 = (double)kn->value.ui32 / (double)256;
 #elif defined(HPUX)
 	if (pstat_getdynamic(&pstat_dynamic, sizeof(pstat_dynamic), 1, 0) == -1) {
