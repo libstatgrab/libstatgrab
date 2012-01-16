@@ -13,6 +13,7 @@ endif
 
 SUBDIRS = src examples $(DOCS_SUBDIR) $(TESTS_SUBDIR)
 
+# FIXME - this needs updating to use Git?
 ChangeLog:
 	cvs2cl --stdout --no-wrap -r -t -w -S -g "-d :pserver:anonymous@cvs.i-scream.org:/cvs/i-scream" -g "-q" > ChangeLog
 
