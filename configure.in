@@ -478,22 +478,22 @@ AC_INCLUDES_DEFAULT
 	[freebsd4.*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
 	],
-	[freebsd[[5-9]].*], [
+	[freebsd[[5-9]].*|freebsd10.*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 9.x])
+		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
 	],
 	[dragonfly*], [
 		AC_DEFINE(DFBSD, , [Building on DragonFlyBSD])
 	],
 	[kfreebsd*-gnu*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 9.x])
+		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
 	],
 	[darwin*], [
 		AC_DEFINE(DARWIN, , [Building on Darwin])
 		dnl following 2 are assumed because Darwin was derived from FreeBSD5 - prove it
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 9.x])
+		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
 	],
 	[netbsd*], [
 		AC_DEFINE(NETBSD, , [Building on NetBSD])
