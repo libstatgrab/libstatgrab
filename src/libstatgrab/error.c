@@ -47,6 +47,8 @@ static struct sg_error_glob pre_init_errs = { SG_ERROR_NONE, 0, { '\0' } };
 
 DEFAULT_INIT_COMP(error,NULL);
 
+static va_list empty_ap;
+
 static sg_error
 sg_error_init_comp(unsigned id) {
 	struct sg_error_glob *error_glob = sg_comp_get_tls(id);
@@ -55,6 +57,8 @@ sg_error_init_comp(unsigned id) {
 	if( error_glob && ( pre_init_errs.error != SG_ERROR_NONE ) ) {
 		*error_glob = pre_init_errs;
 	}
+	/* init empty va_list */
+	memset( &empty_ap, 0, sizeof(empty_ap) );
 	return SG_ERROR_NONE;
 }
 
@@ -163,8 +167,7 @@ sg_error
 sg_get_error_details(sg_error_details *err_details){
 	struct sg_error_glob *error_glob = sg_get_error_glob();
 	if(NULL == err_details) {
-		va_list *ap = (va_list *)0;
-		return sg_set_error_int(SG_ERROR_INVALID_ARGUMENT, 0, "sg_get_error_details", *ap);
+		return sg_set_error_int(SG_ERROR_INVALID_ARGUMENT, 0, "sg_get_error_details", empty_ap);
 	}
 	if( !error_glob ) {
 		err_details->error = SG_ERROR_MEMSTATUS;
@@ -300,8 +303,7 @@ sg_strperror(char **buf, const sg_error_details * const err_details) {
 	sg_error_details err_det;
 
 	if((NULL == buf) || (NULL != *buf)) {
-		va_list *ap = (va_list *)0;
-		sg_set_error_int(SG_ERROR_INVALID_ARGUMENT, 0, "strperror", *ap);
+		sg_set_error_int(SG_ERROR_INVALID_ARGUMENT, 0, "strperror", empty_ap);
 		return NULL;
 	}
 
@@ -327,8 +329,7 @@ sg_strperror(char **buf, const sg_error_details * const err_details) {
 			if(NULL == rc)
 # endif
 			{
-				va_list *ap = (va_list *)0;
-				sg_set_error_int(SG_ERROR_MALLOC, errno, "strerror_r", *ap);
+				sg_set_error_int(SG_ERROR_MALLOC, errno, "strerror_r", empty_ap);
 				free(*buf);
 				*buf = NULL;
 				return NULL;
@@ -353,8 +354,7 @@ sg_strperror(char **buf, const sg_error_details * const err_details) {
 
 	}
 	else {
-		va_list *ap = (va_list *)0;
-		sg_set_error_int(SG_ERROR_MALLOC, 0, "sg_strperror", *ap);
+		sg_set_error_int(SG_ERROR_MALLOC, 0, "sg_strperror", empty_ap);
 	}
 
 	return *buf;
