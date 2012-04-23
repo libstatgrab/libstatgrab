@@ -55,6 +55,16 @@ AC_PROG_GREP
 # define default language
 AC_LANG([C])
 
+dnl ensure ac_lib.m4 etc. are present
+dnl optional later gettext features are used ...
+AM_CONDITIONAL(BUILD_WITH_GETTEXT, false)
+AS_IF([0], [
+dnl support NetBSD compatible
+AM_GNU_GETTEXT_VERSION(0.17)
+AM_GNU_GETTEXT(external)
+AM_CONDITIONAL(BUILD_WITH_GETTEXT, true)
+])
+
 # Checks for header files
 AC_HEADER_STDC
 
