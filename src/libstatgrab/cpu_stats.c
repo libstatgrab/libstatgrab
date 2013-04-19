@@ -35,9 +35,11 @@
 #if defined(LINUX) || defined(CYGWIN)
 #include <stdio.h>
 #endif
-#if defined(FREEBSD) || defined(DFBSD)
+#if defined(FREEBSD)
 #include <sys/sysctl.h>
 #include <sys/dkstat.h>
+#elif defined(DFBSD)
+#include <sys/resource.h>
 #endif
 #ifdef NETBSD
 #include <sys/types.h>

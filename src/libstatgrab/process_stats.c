@@ -402,8 +402,10 @@ sg_process_stats *sg_get_process_stats(int *entries){
 	for (i = 0; i < procs; i++) {
 		const char *name;
 
-#ifdef FREEBSD5
+#if defined(FREEBSD5)
 		if (kp_stats[i].ki_stat == 0) {
+#elif defined(DFBSD)
+		if (kp_stats[i].kp_stat == 0) {
 #else
 		if (kp_stats[i].kp_proc.p_stat == 0) {
 #endif
@@ -423,7 +425,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 #ifdef FREEBSD5
 		name = kp_stats[i].ki_comm;
 #elif defined(DFBSD)
-		name = kp_stats[i].kp_thread.td_comm;
+		name = kp_stats[i].kp_comm;
 #else
 		name = kp_stats[i].kp_proc.p_comm;
 #endif
@@ -543,10 +545,14 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		}
 #endif
 
-#ifdef FREEBSD5
+#if defined(FREEBSD5)
 		proc_state_ptr->pid = kp_stats[i].ki_pid;
 		proc_state_ptr->parent = kp_stats[i].ki_ppid;
 		proc_state_ptr->pgid = kp_stats[i].ki_pgid;
+#elif defined(DFBSD)
+		proc_state_ptr->pid = kp_stats[i].kp_pid;
+		proc_state_ptr->parent = kp_stats[i].kp_ppid;
+		proc_state_ptr->pgid = kp_stats[i].kp_pgid;
 #else
 		proc_state_ptr->pid = kp_stats[i].kp_proc.p_pid;
 		proc_state_ptr->parent = kp_stats[i].kp_eproc.e_ppid;
@@ -559,10 +565,10 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->gid = kp_stats[i].ki_rgid;
 		proc_state_ptr->egid = kp_stats[i].ki_svgid;
 #elif defined(DFBSD)
-		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_ucred.cr_ruid;
-		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_ucred.cr_svuid;
-		proc_state_ptr->gid = kp_stats[i].kp_eproc.e_ucred.cr_rgid;
-		proc_state_ptr->egid = kp_stats[i].kp_eproc.e_ucred.cr_svgid;
+		proc_state_ptr->uid = kp_stats[i].kp_ruid;
+		proc_state_ptr->euid = kp_stats[i].kp_svuid;
+		proc_state_ptr->gid = kp_stats[i].kp_rgid;
+		proc_state_ptr->egid = kp_stats[i].kp_svgid;
 #else
 		proc_state_ptr->uid = kp_stats[i].kp_eproc.e_pcred.p_ruid;
 		proc_state_ptr->euid = kp_stats[i].kp_eproc.e_pcred.p_svuid;
@@ -570,7 +576,7 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->egid = kp_stats[i].kp_eproc.e_pcred.p_svgid;
 #endif
 
-#ifdef FREEBSD5
+#if defined(FREEBSD5)
 		proc_state_ptr->proc_size = kp_stats[i].ki_size;
 		/* This is in pages */
 		proc_state_ptr->proc_resident =
@@ -580,20 +586,33 @@ sg_process_stats *sg_get_process_stats(int *entries){
 		proc_state_ptr->cpu_percent =
 			((double)kp_stats[i].ki_pctcpu / FSCALE) * 100.0;
 		proc_state_ptr->nice = kp_stats[i].ki_nice;
+#elif defined(DFBSD)
+		proc_state_ptr->proc_size =
+		    kp_stats[i].kp_vm_map_size;
+
+		/* This is in pages */
+		proc_state_ptr->proc_resident =
+		    kp_stats[i].kp_vm_rssize * getpagesize();
+
+		proc_state_ptr->time_spent =
+		    ( kp_stats[i].kp_lwp.kl_uticks +
+			kp_stats[i].kp_lwp.kl_sticks +
+			kp_stats[i].kp_lwp.kl_iticks ) / 1000000;
+
+		proc_state_ptr->cpu_percent =
+			((double)kp_stats[i].kp_lwp.kl_pctcpu / FSCALE) * 100.0;
+		proc_state_ptr->nice = kp_stats[i].kp_nice;
+
 #else
 		proc_state_ptr->proc_size =
 			kp_stats[i].kp_eproc.e_vm.vm_map.size;
+
 		/* This is in pages */
 		proc_state_ptr->proc_resident =
 			kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
 #if defined(NETBSD) || defined(OPENBSD)
 		proc_state_ptr->time_spent =
 			kp_stats[i].kp_proc.p_rtime.tv_sec;
-#elif defined(DFBSD)
-		proc_state_ptr->time_spent = 
-			( kp_stats[i].kp_thread.td_uticks +
-			kp_stats[i].kp_thread.td_sticks +
-			kp_stats[i].kp_thread.td_iticks ) / 1000000;
 #else
 		/* This is in microseconds */
 		proc_state_ptr->time_spent =
@@ -674,19 +693,31 @@ sg_process_stats *sg_get_process_stats(int *entries){
 
 		free(kl_stats);
 #else
-#ifdef FREEBSD5
+#if defined(FREEBSD5)
 		switch (kp_stats[i].ki_stat) {
+#elif defined(DFBSD)
+		switch (kp_stats[i].kp_stat) {
 #else
 		switch (kp_stats[i].kp_proc.p_stat) {
 #endif
+
+#ifdef DFBSD
+		case SACTIVE:
+#else
 		case SIDL:
 		case SRUN:
+#endif
+
 #ifdef SONPROC
 		case SONPROC: /* NetBSD */
 #endif
 			proc_state_ptr->state = SG_PROCESS_STATE_RUNNING;
 			break;
+#ifdef DFBSD
+                case SIDL:
+#else
 		case SSLEEP:
+#endif
 #ifdef SWAIT
 		case SWAIT: /* FreeBSD 5 */
 #endif

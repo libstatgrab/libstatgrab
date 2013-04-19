@@ -64,8 +64,13 @@
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #endif
-#if defined(FREEBSD) || defined(DFBSD)
+#if defined(FREEBSD)
 #include <sys/dkstat.h>
+#elif defined(DFBSD)
+#include <sys/resource.h>
+#include <errno.h>
+#endif
+#if defined(FREEBSD) || defined(DFBSD)
 #include <devstat.h>
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -226,7 +231,7 @@ static void disk_stat_destroy(sg_fs_stats *d) {
 static int valid_fs_types_initialized = 0;
 
 static int init_valid_fs_types() {
-#if defined(FREEBSD) || defined(DFBSD)
+#if defined(FREEBSD)
 	struct xvfsconf *xvfsp;
 	size_t buflen;
 	int nbvfs = 0;
@@ -248,6 +253,35 @@ static int init_valid_fs_types() {
 	}
 	for (i = 0; i < n_valid_fs_types; i++) {
 		VALID_FS_TYPES[i] = strdup(xvfsp[i].vfc_name);
+	}
+#elif defined(DFBSD)
+	struct vfsconf *vfcp;
+	int name[4], maxtypenum, cnt;
+	size_t buflen;
+	int nbvfs = 0;
+
+	name[0] = CTL_VFS;
+	name[1] = VFS_GENERIC;
+	name[2] = VFS_MAXTYPENUM;
+	buflen = sizeof(maxtypenum);
+	if (sysctl(name, 3, &maxtypenum, &buflen, NULL, (size_t)0) < 0) {
+		sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "vfs_generic_maxtypenum");
+		return 0;
+	}
+	name[2] = VFS_CONF;
+	buflen = sizeof(*vfcp);
+	vfcp = alloca(buflen);
+	for (cnt = 0; cnt < maxtypenum; cnt++) {
+		name[3] = cnt;
+		if (sysctl(name, 4, vfcp, &buflen, NULL, (size_t)0) < 0) {
+			if (errno == EOPNOTSUPP) {
+				continue;
+			} else {
+				sg_set_error_with_errno(SG_ERROR_SYSCTLBYNAME, "init_valid_fs_types");
+				return 0;
+			}
+		}
+		VALID_FS_TYPES[cnt] = strdup(vfcp[cnt].vfc_name);
 	}
 #elif defined(AIX)
 	FILE *fh;
