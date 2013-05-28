@@ -59,7 +59,7 @@ AC_LANG([C])
 dnl ensure ac_lib.m4 etc. are present
 dnl optional later gettext features are used ...
 AM_CONDITIONAL(BUILD_WITH_GETTEXT, false)
-AS_IF([0], [
+AS_IF([false], [
 dnl support NetBSD compatible
 AM_GNU_GETTEXT_VERSION(0.17)
 AM_GNU_GETTEXT(external)
@@ -638,7 +638,7 @@ AC_INCLUDES_DEFAULT
 #endif
 		])])
 
-		AC_CHECK_TYPES([struct kinfo_cputime], , , [
+		AC_CHECK_TYPES([struct kinfo_cputime], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -879,7 +879,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_UVM_H
 #include <uvm/uvm.h>
 #endif
-		])
+		])])
 
 		AS_IF(	[test "x$ac_cv_type_struct_uvmexp_sysctl" != "xyes"], [
 			AC_CHECK_TYPES([struct uvmexp], , , [AC_LANG_SOURCE([
