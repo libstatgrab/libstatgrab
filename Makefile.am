@@ -17,9 +17,15 @@ else
 SUBDIRS = src examples $(DOCS_SUBDIR) $(TESTS_SUBDIR)
 endif
 
-# FIXME - this needs updating to use Git?
 ChangeLog:
-	cvs2cl --stdout --no-wrap -r -t -w -S -g "-d :pserver:anonymous@cvs.i-scream.org:/cvs/i-scream" -g "-q" > ChangeLog
+	git log --stat --name-only --date=short \
+	--format='%n*%ad  %an  <%ae>%n%n%w(76,4,4)%s%n%n%b%n#Hash: %H%n#Files affected:' \
+	| sed \
+		-e 's/^\([^ \*]\)/    \1/' \
+		-e 's/^    \#/  /' \
+		-e 's/     Hash/    Hash/' \
+		-e 's/^\*//' \
+	| tail -n +2 > ChangeLog
 
 test:
 if TEST_SCRIPTS
