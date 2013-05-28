@@ -36,7 +36,7 @@ AC_DEFUN([ACX_CHECK_XOPEN_SOURCE],
   dnl Checks for header files.
   AC_REQUIRE([AC_HEADER_STDC])
 
-  define(xpg7_testcode, [
+  define(xpg7_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <dirent.h>
 #include <string.h>
@@ -68,8 +68,8 @@ main ()
 
   return 0;
 }
-  ])
-  define(xpg6_testcode, [
+  ])])
+  define(xpg6_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <unistd.h>
 
@@ -85,8 +85,8 @@ main ()
 
   return 0;
 }
-  ])
-  define(xpg52_testcode, [
+  ])])
+  define(xpg52_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <arpa/inet.h>
 
@@ -104,8 +104,8 @@ main ()
 
   return 0;
 }
-  ])
-  define(xpg5_testcode, [
+  ])])
+  define(xpg5_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <unistd.h>
 #include <utmpx.h>
@@ -124,8 +124,8 @@ main ()
 
   return 0;
 }
-  ])
-  define(xpg42_testcode, [
+  ])])
+  define(xpg42_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <unistd.h>
 #include <sys/resource.h>
@@ -143,8 +143,8 @@ main ()
 
   return 0;
 }
-  ])
-  define(xpg4_testcode, [
+  ])])
+  define(xpg4_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <unistd.h>
 #include <sys/wait.h>
@@ -163,8 +163,8 @@ main (int argc, char **argv)
 
   return 0;
 }
-  ])
-  define(xpg3_testcode, [
+  ])])
+  define(xpg3_testcode, [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <unistd.h>
 
@@ -178,7 +178,7 @@ main ()
 
   return 0;
 }
-  ])
+  ])])
 
   AC_MSG_CHECKING([which _XOPEN_SOURCE macro must be defined])
   ACX_TRY_COMPILE_XOPEN_SOURCE([xpg3_testcode], [-D_XOPEN_SOURCE], 300, [XPG3])

@@ -10,10 +10,10 @@ AC_PREREQ(2.57)
 
 # Change these to change the package name and version
 AC_INIT(libstatgrab, 0.18, bugs@i-scream.org)
-AM_INIT_AUTOMAKE(libstatgrab, 0.18)
+AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
+AM_INIT_AUTOMAKE()
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
-AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
 # The file we use to pass #define's to the source
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE([disable])
@@ -51,6 +51,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_SED
 AC_PROG_GREP
+AM_PROG_AR
 
 # define default language
 AC_LANG([C])
@@ -551,22 +552,22 @@ AS_CASE([$host_os],
 		AC_MSG_CHECKING([for BSD specific features])
 		AC_MSG_RESULT([])
 
-		AC_CHECK_HEADERS([ifaddrs.h kinfo.h net/if_media.h sys/dkstat.h sys/disk.h sys/iostat.h sys/resource.h sys/sched.h sys/ucred.h sys/user.h uvm/uvm.h sys/vmmeter.h vm/vm_param.h], , , [
+		AC_CHECK_HEADERS([ifaddrs.h kinfo.h net/if_media.h sys/dkstat.h sys/disk.h sys/iostat.h sys/resource.h sys/sched.h sys/ucred.h sys/user.h uvm/uvm.h sys/vmmeter.h vm/vm_param.h], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-		])
+		])])
 		dnl FBSD 5+
 		AC_CHECK_LIB(devstat, devstat_getnumdevs, [LINKFLAGS="$LINKFLAGS -ldevstat"])
 		dnl FBSD < 5, DragonFlyBSD?, ...?
 		AC_CHECK_LIB(devstat, getnumdevs, [LINKFLAGS="$LINKFLAGS -ldevstat"])
-		AC_CHECK_HEADERS([devstat.h], , , [
+		AC_CHECK_HEADERS([devstat.h], , , [AC_LANG_SOURCE([
 		AC_INCLUDES_DEFAULT
 #if HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
-		])
+		])])
 
 		AC_CHECK_LIB(kinfo, kinfo_get_sched_cputime, [LINKFLAGS="$LINKFLAGS -lkinfo"])
 
@@ -577,7 +578,7 @@ AC_INCLUDES_DEFAULT
 
 		AC_CACHE_CHECK([for properly declared and callable getvfsstat], [ac_cv_func_getvfsstat],
 			ac_cv_func_getvfsstat=no
-			AC_LINK_IFELSE([
+			AC_LINK_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -601,8 +602,7 @@ main()
 	struct statvfs buf;
 	getvfsstat(&buf, sizeof(buf), 0);
 }
-				],
-
+				])],
 				[
 					AC_DEFINE([HAVE_GETVFSSTAT], 1, [define when getvfsstat() is declared properly])
 					ac_cv_func_getvfsstat=yes
@@ -610,7 +610,7 @@ main()
 			)
 		)
 
-		AC_CHECK_TYPES([struct kinfo_proc, struct kinfo_proc2, struct io_sysctl, struct diskstats, struct disk_sysctl, struct devstat, struct statinfo], , , [
+		AC_CHECK_TYPES([struct kinfo_proc, struct kinfo_proc2, struct io_sysctl, struct diskstats, struct disk_sysctl, struct devstat, struct statinfo], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -636,7 +636,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
-		])
+		])])
 
 		AC_CHECK_TYPES([struct kinfo_cputime], , , [
 AC_INCLUDES_DEFAULT
@@ -649,17 +649,17 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
-		])
+		])])
 
 		AS_IF(	[test "x$ac_cv_type_struct_io_sysctl" = "xyes"], [
 			AC_CHECK_MEMBER(struct io_sysctl.name,
 					[AC_DEFINE(HAVE_IO_SYSCTL_NAME, 1, [struct io_sysctl.name available])],
 					[AC_MSG_WARN([Probably better stop building libstatgrab when playing with statistic API])],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <sys/iostat.h>
 					]
-			)
+			)])
 		])
 		AS_IF(	[test "x$ac_cv_type_struct_disk_sysctl" = "xyes"], [
 			# Disk IO read and write statistics are only present on recent NetBSD
@@ -667,26 +667,26 @@ AC_INCLUDES_DEFAULT
 			AC_CHECK_MEMBER(struct disk_sysctl.dk_rbytes,
 					[AC_DEFINE(HAVE_DISK_SYSCTL_DK_RBYTES, , [New-style NetBSD disk stats])],
 					[],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <sys/disk.h>
 					]
-			)
+			)])
 			AC_CHECK_MEMBER(struct disk_sysctl.dk_name,
 					[AC_DEFINE(HAVE_DISK_SYSCTL_DK_RBYTES, , [New-style NetBSD disk stats])],
 					[],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <sys/disk.h>
 					]
-			)
+			)])
 		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_devstat" = "xyes"], [
 			AC_CHECK_MEMBER(struct devstat.bytes,
 					[AC_DEFINE(HAVE_DEVSTAT_BYTES, 1, [struct devstat.bytes array available])],
 					[],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #if HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -695,12 +695,12 @@ AC_INCLUDES_DEFAULT
 # include <devstat.h>
 #endif
 					]
-			)
+			)])
 
 			AC_CHECK_MEMBER(struct devstat.bytes_read,
 					[AC_DEFINE(HAVE_DEVSTAT_BYTES_READ, 1, [struct devstat.bytes_read available])],
 					[],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #if HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -709,7 +709,7 @@ AC_INCLUDES_DEFAULT
 # include <devstat.h>
 #endif
 					]
-			)
+			)])
 		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_diskstats" = "xyes"], [
@@ -717,26 +717,26 @@ AC_INCLUDES_DEFAULT
 			AC_CHECK_MEMBER(struct diskstats.ds_rbytes,
 					[AC_DEFINE(HAVE_DISKSTAT_DS_RBYTES, , [New-style OpenBSD disk stats])],
 					[],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <sys/disk.h>
 					]
-			)
+			)])
 			# Disk IO statistics have disknames only on recent OpenBSD.
 			AC_CHECK_MEMBER(struct diskstats.ds_name,
 					[AC_DEFINE(HAVE_DISKSTAT_DS_NAME, , [OpenBSD disk stats disk names])],
 					[],
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #include <sys/disk.h>
 					]
-			)
+			)])
 		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_kinfo_proc" = "xyes" -a "x$ac_cv_type_struct_kinfo_proc2" != "xyes"], [
 			AC_CHECK_MEMBER(struct kinfo_proc.kp_proc,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_PROC, 1, [kp_proc member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -751,11 +751,11 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 
 			AC_CHECK_MEMBER(struct kinfo_proc.kp_thread,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_THREAD, 1, [kp_thread member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -770,11 +770,11 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 
 			AC_CHECK_MEMBER(struct kinfo_proc.kp_eproc,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_EPROC, 1, [kp_eproc member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -789,11 +789,11 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 
 			AC_CHECK_MEMBER(struct kinfo_proc.kp_eproc.e_ucred.cr_ruid,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_EPROC_E_UCRED_CR_RUID, 1, [kp_eproc.e_ucred.cr_ruid member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -808,11 +808,11 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 
 			AC_CHECK_MEMBER(struct kinfo_proc.ki_stat,
 					[AC_DEFINE(HAVE_KINFO_PROC_KI_STAT, 1, [ki_stat member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -827,11 +827,11 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 
 			AC_CHECK_MEMBER(struct kinfo_proc.ki_structsize,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_THREAD, 1, [ki_structsize member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -846,12 +846,12 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 		])
 
 			AC_CHECK_MEMBER(struct kinfo_proc.kp_pid,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_PID, 1, [kp_pid member of struct kinfo_proc available])], ,
-					[
+					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -866,9 +866,9 @@ AC_INCLUDES_DEFAULT
 # include <kinfo.h>
 #endif
 					]
-			)
+			)])
 
-		AC_CHECK_TYPES([struct uvmexp_sysctl], , , [
+		AC_CHECK_TYPES([struct uvmexp_sysctl], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -882,7 +882,7 @@ AC_INCLUDES_DEFAULT
 		])
 
 		AS_IF(	[test "x$ac_cv_type_struct_uvmexp_sysctl" != "xyes"], [
-			AC_CHECK_TYPES([struct uvmexp], , , [
+			AC_CHECK_TYPES([struct uvmexp], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -893,13 +893,13 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_UVM_H
 #include <uvm/uvm.h>
 #endif
-			])
+			])])
 
 			AS_IF(	[test "x$ac_cv_type_struct_uvmexp" = "xyes"], [
 				AC_CHECK_MEMBER(struct uvmexp.swtch,
 						[AC_DEFINE(HAVE_STRUCT_UVMEXP_SWTCH, , [struct uvmexp.swtch])],
 						[],
-						[
+						[AC_LANG_SOURCE([
 	AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -911,12 +911,12 @@ AC_INCLUDES_DEFAULT
 #include <uvm/uvm.h>
 #endif
 						]
-				)
+				)])
 
 				AC_CHECK_MEMBER(struct uvmexp.filepages,
 						[AC_DEFINE(HAVE_STRUCT_UVMEXP_FILEPAGES, , [struct uvmexp.filepages])],
 						[],
-						[
+						[AC_LANG_SOURCE([
 	AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -928,12 +928,12 @@ AC_INCLUDES_DEFAULT
 #include <uvm/uvm.h>
 #endif
 						]
-				)
+				)])
 
 				AC_CHECK_MEMBER(struct uvmexp.execpages,
 						[AC_DEFINE(HAVE_STRUCT_UVMEXP_EXECPAGES, , [struct uvmexp.execpages])],
 						[],
-						[
+						[AC_LANG_SOURCE([
 	AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -945,11 +945,11 @@ AC_INCLUDES_DEFAULT
 #include <uvm/uvm.h>
 #endif
 						]
-				)
+				)])
 			])
 		])
 
-		AC_CHECK_TYPES([struct vmtotal, struct vmmeter], , , [
+		AC_CHECK_TYPES([struct vmtotal, struct vmmeter], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -960,9 +960,9 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VMMETER_H
 #include <sys/vmmeter.h>
 #endif
-		])
+		])])
 
-		AC_CHECK_TYPES([struct xswdev, struct xsw_usage], , , [
+		AC_CHECK_TYPES([struct xswdev, struct xsw_usage], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -973,10 +973,10 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_VM_VM_PARAM_H
 #include <vm/vm_param.h>
 #endif
-		])
+		])])
 
 		AS_IF(	[test "x$ac_cv_type_struct_xswdev" = "xyes"], [
-			AC_CHECK_MEMBER([struct xswdev.xsw_size], [AC_DEFINE(HAVE_STRUCT_XSWDEV_SIZE, , [struct xswdev.xsw_size])], , [
+			AC_CHECK_MEMBER([struct xswdev.xsw_size], [AC_DEFINE(HAVE_STRUCT_XSWDEV_SIZE, , [struct xswdev.xsw_size])], , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -987,10 +987,10 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_VM_VM_PARAM_H
 #include <vm/vm_param.h>
 #endif
-			])
+			])])
 		])
 
-		AC_CHECK_TYPES([struct xvfsconf, struct vfsconf], , , [
+		AC_CHECK_TYPES([struct xvfsconf, struct vfsconf], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -1001,7 +1001,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
 #endif
-		])
+		])])
 	]
 )
 
@@ -1019,7 +1019,7 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
 						AC_CHECK_FILE([/etc/mtab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mtab", [Configure determined mtab file])])
 					])
 				])
-			], [
+			], [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1031,9 +1031,9 @@ AC_INCLUDES_DEFAULT
 # include <sys/mnttab.h>
 #endif
 			]
-		)
+		)])
 
-		AC_CHECK_DECL([setmntent], [AC_DEFINE([HAVE_DECL_SETMNTENT], 1, [define when setmntent() is declared])], ,[
+		AC_CHECK_DECL([setmntent], [AC_DEFINE([HAVE_DECL_SETMNTENT], 1, [define when setmntent() is declared])], ,[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1045,9 +1045,9 @@ AC_INCLUDES_DEFAULT
 # include <sys/mnttab.h>
 #endif
 			]
-		)
+		)])
 
-		AC_CHECK_DECL([endmntent], [AC_DEFINE([HAVE_DECL_ENDMNTENT], 1, [define when endmntent() is declared])], ,[
+		AC_CHECK_DECL([endmntent], [AC_DEFINE([HAVE_DECL_ENDMNTENT], 1, [define when endmntent() is declared])], ,[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1059,9 +1059,9 @@ AC_INCLUDES_DEFAULT
 # include <sys/mnttab.h>
 #endif
 			]
-		)
+		)])
 
-		AC_CHECK_TYPES([struct mntent, struct mnttab], , , [
+		AC_CHECK_TYPES([struct mntent, struct mnttab], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1073,12 +1073,12 @@ AC_INCLUDES_DEFAULT
 # include <sys/mnttab.h>
 #endif
 			]
-		)
+		)])
 
 		AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes"],
 			[
 				AC_CACHE_CHECK([apparent thread safety of getmntent], ac_cv_threadsafe_getmntent, [
-					AC_COMPILE_IFELSE([
+					AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1103,7 +1103,7 @@ int main(void) {
 
 	return 0;
 }
-						], [
+						])], [
 							ac_cv_threadsafe_getmntent="yes"
 						], [
 							ac_cv_threadsafe_getmntent="no"
@@ -1118,7 +1118,7 @@ int main(void) {
 		AS_IF(	[test "x$ac_cv_func_getmntent_r" = "xyes"],
 			[
 				AC_MSG_CHECKING([return type of getmntent_r])
-				AC_COMPILE_IFELSE([
+				AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1140,7 +1140,7 @@ int main(void) {
 
 	return 0;
 }
-					], [
+					])], [
 						AC_MSG_RESULT([int])
 						AC_DEFINE([GETMNTENT_R_RETURN_INT], 1, [define when getmntent_r returns success code])
 					], [
@@ -1152,7 +1152,7 @@ int main(void) {
 	]
 )
 
-AC_CHECK_TYPES([struct statfs], , , [
+AC_CHECK_TYPES([struct statfs], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VFS_H
 # include <sys/vfs.h>
@@ -1166,14 +1166,14 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
-])
+])])
 
 AS_IF(	[test "x$ac_cv_type_struct_statfs" = "xyes"], [
 		# check for several uncommon fields of struct statfs
 		AC_CHECK_MEMBER(struct statfs.f_favail,
 				[AC_DEFINE(HAVE_STATFS_FFAVAIL, , [define when statfs has f_favail member])],
 				[],
-				[
+				[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VFS_H
 # include <sys/vfs.h>
@@ -1187,11 +1187,11 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
-				])
+				])])
 		AC_CHECK_MEMBER(struct statfs.f_iosize,
 				[AC_DEFINE(HAVE_STATFS_FIOSIZE, , [define when statfs has f_iosize member])],
 				[],
-				[
+				[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VFS_H
 # include <sys/vfs.h>
@@ -1205,12 +1205,12 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
-				])
+				])])
 
 		AC_CHECK_MEMBER(struct statfs.f_frsize,
 				[AC_DEFINE(HAVE_STATFS_FFRSIZE, , [define when statfs has f_frsize member])],
 				[],
-				[
+				[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VFS_H
 # include <sys/vfs.h>
@@ -1224,7 +1224,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
-				])
+				])])
 	]
 )
 
@@ -1406,7 +1406,7 @@ AC_ARG_ENABLE(thread-support,
 
 AS_IF([test "x$ac_cv_func_strerror_r" = "xyes"], [
 	AC_MSG_CHECKING([return type of strerror_r])
-	AC_COMPILE_IFELSE([
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 	AC_INCLUDES_DEFAULT
 
 	int main(void) {
@@ -1417,7 +1417,7 @@ AS_IF([test "x$ac_cv_func_strerror_r" = "xyes"], [
 
 		return 0;
 	}
-		], [
+		])], [
 			AC_MSG_RESULT([int])
 			AC_DEFINE([STRERROR_R_RETURN_INT], 1, [define when strerror_r returns success code])
 		], [
@@ -1484,7 +1484,7 @@ AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
   AC_MSG_CHECKING([if liblog4cplus is built with thread support])
   acx_cppflags_safe="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $CLIBFLAGS"
-  AC_COMPILE_IFELSE([
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   AC_INCLUDES_DEFAULT
 
 #include <log4cplus/config.hxx>
@@ -1493,7 +1493,7 @@ AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
 #endif
 
   int main() { return 0; }
-    ], [
+    ])], [
       AC_MSG_RESULT([yes])
       acx_liblog4cplus_threads=yes
     ], [

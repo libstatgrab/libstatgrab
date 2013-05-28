@@ -59,40 +59,16 @@ dnl if succeeds, found_[]name is set
 AC_DEFUN([ACX_CHECK_LIB_COMPILE],
 [
   define([Name],[patsubst(translit([$1],[./+-], [____]),[_*$])])
-  define([testcode], [ifelse([x"regexp([$3], [[^a-zA-Z_]])"], ["x-1"], [
-int
-main()
-{
-    void *p = &$3;
-    return 0;
-}
-            ], [
-int
-main()
-{
-    $3
-    ;
-    return 0;
-}
-    ])
-  ])
+  define([testcode], ifelse(x"regexp([$3], [[^a-zA-Z_]])", x"-1", [void *p = &$3], [$3]))
 
   AC_LIB_APPENDTOVAR([LIBS], ${Name[]_LIBS})
 
   m4_ifnblank([$2], [AC_MSG_CHECKING([if lib[]$1[] can be linked with $2])], [AC_MSG_CHECKING([if lib[]$1[] can be linked alone])])
   AC_LINK_IFELSE(
-    [
-$4
-
-testcode
-    ],
-    [
-      AC_MSG_RESULT([yes])
-      found_[]Name[]="yes"
-    ],
-    [
-      AC_MSG_RESULT([no])
-    ]
+    [AC_LANG_PROGRAM([$4], [testcode])],
+    [AC_MSG_RESULT([yes])
+found_[]Name[]="yes"],
+    [AC_MSG_RESULT([no])]
   )
   LIBS="${acx_safe_libs}"
 ])

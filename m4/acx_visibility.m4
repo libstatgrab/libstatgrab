@@ -16,38 +16,38 @@ AC_DEFUN([ACX_CHECK_VISIBILITY],
 	ac_save_[]_AC_LANG_ABBREV[]_werror_flag="$ac_[]_AC_LANG_ABBREV[]_werror_flag"
 	AC_LANG_WERROR()
 	AC_COMPILE_IFELSE(
-	[
+	[AC_LANG_SOURCE([
 int __attribute__ ((visibility("default"))) foo() { return 1; }
 int __attribute__ ((visibility("hidden"))) bar() { return 1; }
 int __attribute__ ((visibility("private"))) baz() { return 1; }
-	],
+	])],
 	[
 	    dnl GNU C 4 style is supported
 	    acx_cv_visibility="gcc4"
 	],
 	[
 	    AC_COMPILE_IFELSE(
-	    [
+	    [AC_LANG_SOURCE([
 int __attribute__ ((dllexport)) foo() { return 1; }
-	    ],
+	    ])],
 	    [
 		dnl GNU C 3 style
 		acx_cv_visibility="gcc3"
 	    ],
 	    [
 		AC_COMPILE_IFELSE(
-		[
+		[AC_LANG_SOURCE([
 int __hidden foo() { return 1; }
-		],
+		])],
 		[
 		    dnl SUN Pro style
 		    acx_cv_visibility="sunpro"
 		],
 		[
 		    AC_COMPILE_IFELSE(
-		    [
+		    [AC_LANG_SOURCE([
 int __declspec(dllexport) foo() { return 1; }
-		    ],
+		    ])],
 		    [
 			dnl Microsoft style
 			acx_cv_visibility="ms"
