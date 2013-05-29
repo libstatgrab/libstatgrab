@@ -4,7 +4,7 @@
 
 noinst_LIBRARIES = libtestlib.a
 
-EXTRA_DIST = mix_tests.pm run_tests.pm mk_run_tests.pl run_tests.t.in
+EXTRA_DIST = mix_tests.pm run_tests.pm mk_run_tests.pl run_tests.t.in testlib.h
 
 # BUILT_HEADERS = helpers.h
 libtestlib_a_SOURCES = err.c log.c opt.c routines.c
