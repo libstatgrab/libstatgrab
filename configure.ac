@@ -6,10 +6,10 @@
 #
 
 # Might work with older autoconfs... but tested on 2.57
-AC_PREREQ(2.57)
+AC_PREREQ([2.69])
 
 # Change these to change the package name and version
-AC_INIT(libstatgrab, 0.18, bugs@i-scream.org)
+AC_INIT([libstatgrab],[0.18],[bugs@i-scream.org])
 AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_MACRO_DIR([m4])
@@ -1548,4 +1548,5 @@ AC_CONFIG_FILES([	Makefile
 			examples/Makefile
 			libstatgrab.pc src/statgrab/statgrab-make-mrtg-config src/statgrab/statgrab-make-mrtg-index])
 
-AC_OUTPUT([src/libstatgrab/statgrab.h])
+AC_CONFIG_FILES([src/libstatgrab/statgrab.h])
+AC_OUTPUT
