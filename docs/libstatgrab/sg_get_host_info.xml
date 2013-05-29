@@ -5,11 +5,6 @@
 
 <refentry id="sg_get_host_info">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>sg_get_host_info</refentrytitle>
     <manvolnum>3</manvolnum>

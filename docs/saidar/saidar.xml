@@ -5,11 +5,6 @@
 
 <refentry id="saidar">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>saidar</refentrytitle>
     <manvolnum>1</manvolnum>

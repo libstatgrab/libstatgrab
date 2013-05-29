@@ -5,11 +5,6 @@
 
 <refentry id="sg_comp_init">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>sg_comp_init</refentrytitle>
     <manvolnum>3</manvolnum>

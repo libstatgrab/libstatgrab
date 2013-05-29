@@ -5,11 +5,6 @@
 
 <refentry id="statgrab-make-mrtg-config">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>statgrab-make-mrtg-config</refentrytitle>
     <manvolnum>1</manvolnum>

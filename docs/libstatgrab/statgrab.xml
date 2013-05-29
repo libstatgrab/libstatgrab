@@ -5,11 +5,6 @@
 
 <refentry id="statgrab">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>libstatgrab</refentrytitle>
     <manvolnum>3</manvolnum>

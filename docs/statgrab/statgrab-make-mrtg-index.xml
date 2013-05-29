@@ -5,11 +5,6 @@
 
 <refentry id="statgrab-make-mrtg-index">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>statgrab-make-mrtg-index</refentrytitle>
     <manvolnum>1</manvolnum>
