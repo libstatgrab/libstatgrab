@@ -1310,8 +1310,8 @@ AC_ARG_ENABLE(man-build,
 	[ENABLE_BUILD_MANPAGES="${enableval}"],
 	[
 		AS_IF(	[test "x$USE_MAINTAINER_MODE" = "xyes"],
-			[ENABLE_BUILD_MANPAGES="check"],
-			[ENABLE_BUILD_MANPAGES="no"]
+			[ENABLE_BUILD_MANPAGES="yes"],
+			[ENABLE_BUILD_MANPAGES="check"]
 		)
 	]
 )
