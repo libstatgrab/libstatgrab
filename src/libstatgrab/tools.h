@@ -95,10 +95,6 @@
 #  include <time.h>
 # endif
 #endif
-/* and _ftime where needed */
-#ifdef HAVE_SYS_TIMEB_H
-# include <sys/timeb.h>
-#endif
 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>

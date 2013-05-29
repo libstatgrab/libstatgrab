@@ -103,7 +103,7 @@ AC_CHECK_FUNCS([atoll bzero fcntl flock getloadavg getmntent getmntent_r seteuid
 # Check for some additional headers
 AC_HEADER_TIME
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([assert.h ctype.h errno.h fcntl.h libgen.h limits.h netdb.h regex.h sched.h signal.h sys/ioctl.h sys/socket.h sys/statvfs.h sys/timeb.h sys/unistd.h])
+AC_CHECK_HEADERS([assert.h ctype.h errno.h fcntl.h libgen.h limits.h netdb.h regex.h sched.h signal.h sys/ioctl.h sys/socket.h sys/statvfs.h sys/unistd.h])
 ac_includes_default="\
 ${ac_includes_default}
 #ifndef __cplusplus
