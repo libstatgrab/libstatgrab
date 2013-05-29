@@ -44,7 +44,7 @@
   <refsect1>
     <title>Description</title>
     <para>
-      These calls returns details on the operating system and the machine
+      These calls return details on the operating system and the machine
       it's running on.
     </para>
     <para>
@@ -76,10 +76,10 @@
       </table>
     </para>
     <para>
-      The <structname>sg_host_info</structname> buffer got from
+      The <structname>sg_host_info</structname> buffer received from
       <function>sg_get_host_info_r</function>() must be freed using
-      <function>sg_free_host_info</function>() when not needed anymore. The
-      caller is responsible to do it.
+      <function>sg_free_host_info</function>() when not needed any more. The
+      caller is responsible for doing it.
     </para>
   </refsect1>
 
@@ -122,7 +122,7 @@ typedef struct{
         <term><structfield>os_name</structfield></term>
         <listitem>
           <para>
-            the operating system name.
+            The operating system name.
             (eg. SunOS or Linux)
           </para>
         </listitem>
@@ -131,7 +131,7 @@ typedef struct{
         <term><structfield>os_release</structfield></term>
         <listitem>
           <para>
-            the operating system release.
+            The operating system release.
             (eg. 5.8 or 5.9 or Solaris)
           </para>
         </listitem>
@@ -140,7 +140,7 @@ typedef struct{
         <term><structfield>os_version</structfield></term>
         <listitem>
           <para>
-            the version level of the OS.
+            The version level of the OS.
           </para>
         </listitem>
       </varlistentry>
@@ -148,7 +148,7 @@ typedef struct{
         <term><structfield>platform</structfield></term>
         <listitem>
           <para>
-            the hardware platform (architecture) the OS runs on.
+            The hardware platform (architecture) the OS runs on.
           </para>
         </listitem>
       </varlistentry>
@@ -156,7 +156,7 @@ typedef struct{
         <term><structfield>hostname</structfield></term>
         <listitem>
           <para>
-            the name of the machine.
+            The name of the machine.
           </para>
         </listitem>
       </varlistentry>
@@ -164,7 +164,7 @@ typedef struct{
         <term><structfield>uptime</structfield></term>
         <listitem>
           <para>
-            the uptime of the machine in seconds.
+            The uptime of the machine in seconds.
           </para>
         </listitem>
       </varlistentry>
@@ -172,7 +172,7 @@ typedef struct{
         <term><structfield>systime</structfield></term>
         <listitem>
           <para>
-            the timestamp when the above stats where collected in seconds
+            The timestamp when the above stats where collected in seconds
             since epoch
           </para>
         </listitem>

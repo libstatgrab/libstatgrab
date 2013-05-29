@@ -73,7 +73,7 @@
   <refsect1>
     <title>Description</title>
     <para>
-      There're the categories of data delivered by the cpu stats module:
+      These are the categories of data delivered by the cpu stats module:
       <function>sg_get_cpu_stats</function>() and
       <function>sg_get_cpu_stats_r</function>() deliver native cpu
       counters since the machine has been started,
@@ -133,14 +133,14 @@
       </table>
     </para>
     <para>
-      The <structname>sg_cpu_stats</structname> buffer got from
+      The <structname>sg_cpu_stats</structname> buffer received from
       <function>sg_get_cpu_stats_r</function>() and the
       <function>sg_get_cpu_stats_diff_between</function>() as well as the
-      <structname>sg_cpu_percents</structname> buffer got from
+      <structname>sg_cpu_percents</structname> buffer received from
       <function>sg_get_cpu_percents_r</function>() must be freed using
       <function>sg_free_cpu_stats</function>() or the
       <function>sg_free_cpu_percents</function>(), respectively, when not
-      needed anymore. The caller is responsible to do it.
+      needed any more. The caller is responsible for doing it.
     </para>
     <para>
       The value stored (the "ticks") will vary between operating

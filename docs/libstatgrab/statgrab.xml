@@ -325,10 +325,10 @@
       the statgrab library tries to choose the most important values over
       all supported operating systems. This implies that some values might
       not be available on every OS while some specific values are missing
-      when there're no counterparts on any other OS.
+      when there are no counterparts on any other OS.
     </para>
     <para>
-      The libstatgrab is organized in components, each for interrelated
+      The libstatgrab is organised in components, each for interrelated
       statistics.
 
       <table frame='all'><!--<title>Components</title>-->
@@ -390,7 +390,7 @@
       The library was originally written to support the i-scream
       central monitoring system, but has since become a standalone
       package. It has been ported to work on Linux, NetBSD, FreeBSD,
-      OpenBSD, DragonFly BSD, Solaris, HP-UX, AIX, MacOS X and Cygwin.
+      OpenBSD, DragonFly BSD, Solaris, HP-UX, AIX and Cygwin.
     </para>
   </refsect1>
 

@@ -57,7 +57,7 @@
       the speed of the interface, the duplex state, and whether it is
       currently up.  Both functions take an optional
       <parameter>entries</parameter> parameter, which points (when given)
-      to a size_t to take the amount of resulted vector entries.
+      to a size_t to take the number of returned vector entries.
     </para>
     <para>
       <table frame='all'><title>API Shortcut</title>
@@ -88,10 +88,10 @@
       </table>
     </para>
     <para>
-      The <structname>sg_network_iface_stats</structname> vectors got from
+      The <structname>sg_network_iface_stats</structname> vectors received from
       <function>sg_get_network_iface_stats_r</function>() must be freed using
       <function>sg_free_network_iface_stats</function>() when not needed
-      anymore. The caller is responsible to do it.
+      any more. The caller is responsible for doing it.
     </para>
     <para>
       Additionally a support function for <function>qsort</function>(3)
@@ -190,7 +190,7 @@ typedef struct {
         <term><structfield>systime</structfield></term>
         <listitem>
           <para>
-            the timestamp when the above stats where collected in seconds
+            The timestamp when the above stats where collected in seconds
             since epoch
           </para>
         </listitem>
@@ -202,12 +202,12 @@ typedef struct {
     <title>Bugs</title>
     <para>
       Getting specific details may require elevated privileges, eg. on Linux
-      the interface speed isn't visible for non-privileged processes.
+      the interface speed isn't visible to non-privileged processes.
     </para>
     <para>
-      The compare functions exists rather for backward compatibility than
+      The compare functions exist rather for backward compatibility than
       for functionality enhancements. Limited flexibility (e.g. reverse
-      order) and lack of optimizing opportunities for the compiler leads
+      order) and lack of optimising opportunities for the compiler leads
       to the recommendation to implement the required compare routines
       locally.
     </para>

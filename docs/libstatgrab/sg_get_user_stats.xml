@@ -80,10 +80,10 @@
       </table>
     </para>
     <para>
-      The <structname>sg_user_stats</structname> vector got from
+      The <structname>sg_user_stats</structname> vector received from
       <function>sg_get_user_stats_r</function>() must be freed using
-      <function>sg_free_user_stats</function>() when not needed anymore. The
-      caller is responsible to do it.
+      <function>sg_free_user_stats</function>() when not needed any more. The
+      caller is responsible for doing it.
     </para>
   </refsect1>
 
@@ -121,7 +121,7 @@ typedef struct {
         <term><structfield>record_id</structfield></term>
         <listitem>
           <para>
-            record identifier of host database containing login information
+            Record identifier of host database containing login information
             (not necessarily 0-terminated)
           </para>
         </listitem>
@@ -130,7 +130,7 @@ typedef struct {
         <term><structfield>record_id_size</structfield></term>
         <listitem>
           <para>
-            size of the record identifier
+            Size of the record identifier
           </para>
         </listitem>
       </varlistentry>
@@ -138,7 +138,7 @@ typedef struct {
         <term><structfield>device</structfield></term>
         <listitem>
           <para>
-            device name (eg. "pts/0") of the tty assigned to the login
+            Device name (eg. "pts/0") of the tty assigned to the login
             session
           </para>
         </listitem>
@@ -147,7 +147,7 @@ typedef struct {
         <term><structfield>hostname</structfield></term>
         <listitem>
           <para>
-            (remote) hostname from where the user is logged on, eg.
+            (remote) Hostname from where the user is logged on, eg.
             "infoterm7.some.kind.of.domain.local", "localhost",
             "10.42.17.4" or ":0.0" (in case it's a local logon
             via new xterm)
@@ -158,7 +158,7 @@ typedef struct {
         <term><structfield>pid</structfield></term>
         <listitem>
           <para>
-            process identifier of the process which made the entry to
+            Process identifier of the process which made the entry to
             the logged on users database
           </para>
         </listitem>
@@ -167,7 +167,7 @@ typedef struct {
         <term><structfield>login_time</structfield></term>
         <listitem>
           <para>
-            timestamp (time in seconds since epoch) when the user logged on
+            Timestamp (time in seconds since epoch) when the user logged on
           </para>
         </listitem>
       </varlistentry>
@@ -175,7 +175,7 @@ typedef struct {
         <term><structfield>systime</structfield></term>
         <listitem>
           <para>
-            the timestamp when the above stats where collected in seconds
+            The timestamp when the above stats where collected in seconds
             since epoch
           </para>
         </listitem>

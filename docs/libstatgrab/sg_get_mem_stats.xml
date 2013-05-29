@@ -113,13 +113,13 @@
       </table>
     </para>
     <para>
-      The <structname>sg_mem_stats</structname> buffer got from
+      The <structname>sg_mem_stats</structname> buffer received from
       <function>sg_get_mem_stats_r</function>() and the
-      <structname>sg_swap_stats</structname> buffer got from
+      <structname>sg_swap_stats</structname> buffer received from
       <function>sg_get_swap_stats_r</function>() must be freed using
       <function>sg_free_mem_stats</function>() or the
       <function>sg_free_swap_stats</function>(), respectively, when not
-      needed anymore. The caller is responsible to do it.
+      needed any more. The caller is responsible for doing it.
     </para>
     <para>
       On the FreeBSD operating system elevated privileges are required
@@ -244,7 +244,7 @@ typedef struct {
         <term><structfield>systime</structfield></term>
         <listitem>
           <para>
-            the timestamp when the above stats where collected in seconds
+            The timestamp when the above stats where collected in seconds
             since epoch
           </para>
         </listitem>

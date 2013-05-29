@@ -119,7 +119,7 @@
       <function>sg_get_process_stats</function>() and
       <function>sg_get_process_stats_r</function>(), take an optional
       <parameter>entries</parameter> parameter, which points
-      (when given) to a size_t to take the amount of resulted vector
+      (when given) to a size_t to take the number of returned vector
       entries.
     </para>
     <para>
@@ -171,13 +171,14 @@
       </table>
     </para>
     <para>
-      The <structname>sg_process_stats</structname> vectors got from
+      The <structname>sg_process_stats</structname> vectors received from
       <function>sg_get_process_stats_r</function>() or the
-      <structname>sg_process_count</structname> summaries got from
+      <structname>sg_process_count</structname> summaries received from
       <function>sg_get_process_count_r</function> must be
       freed using <function>sg_free_process_stats</function>() or
       <function>sg_free_process_count</function>(), respectively.
-      The caller is responsible to do it when the data isn't needed anymore.
+      The caller is responsible for doing it when the data isn't needed
+      any more.
     </para>
     <!--
     <para>
@@ -287,7 +288,7 @@ typedef enum {
           <para>
             The name of the command that was run. The content of this
             field heavily depends on the underlying operating system,
-            some store there the basename of the executable passes to
+            some store the basename the executable passes to
             the <function>exec</function>(2) system call, some the entire
             path. Most OS restrict the size of this field - some like
             the *BSD family to a very low value of 15 bytes.
@@ -560,15 +561,15 @@ typedef struct{
   <refsect1>
     <title>Bugs</title>
     <para>
-      On the very first call of
+      The very first call of
       <function>sg_get_process_count_of</function>(sg_last_process_count)
       will return the same as
       <function>sg_get_process_count_of</function>(sg_entire_process_count).
     </para>
     <para>
-      The compare functions exists rather for backward compatibility than
+      The compare functions exist rather for backward compatibility than
       for functionality enhancements. Limited flexibility (e.g. reverse
-      order) and lack of optimizing opportunities for the compiler leads
+      order) and lack of optimising opportunities for the compiler leads
       to the recommendation to implement the required compare routines
       locally.
     </para>

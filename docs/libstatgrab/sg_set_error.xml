@@ -53,19 +53,19 @@
   <refsect1>
     <title>Description</title>
     <para>
-      <function>sg_set_error</function>() sets the occured error condition
+      <function>sg_set_error</function>() sets the occurred error condition
       together with an argument. The argument is usually descriptive, eg.
       the file name which failed to open.
     </para>
     <para>
-      <function>sg_set_error_with_errno</function>() sets the occured error
+      <function>sg_set_error_with_errno</function>() sets the occurred error
       condition together with an argument and the value of the system
       libraries <varname>errno</varname> value. The argument is usually
       descriptive, eg. the name of the failed <function>sysctl</function>()
       call.
     </para>
     <para>
-      <function>sg_set_error_with_errno_code</function>() sets the occured
+      <function>sg_set_error_with_errno_code</function>() sets the occurred
       error condition together with an argument and an error value of a
       system library call which doesn't set the <varname>errno</varname>
       value (eg. the pthread_* calls).  The argument is usually descriptive,

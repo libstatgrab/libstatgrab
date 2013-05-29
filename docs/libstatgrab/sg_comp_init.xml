@@ -47,10 +47,10 @@
     <title>Description</title>
     <para>
       <function>sg_comp_init</function>() is called by
-      <function>sg_init</function>() to run the initialization for the
+      <function>sg_init</function>() to run the initialisation for the
       globals component and each registered libstatgrab component. This
       registration is done statically by appending a component
-      initialization information structure
+      initialisation information structure
       (instance-of <structname>sg_comp_info</structname>) to the
       <varname>comp_info</varname> list in
       <filename>src/libstatgrab/globals.c</filename>. The instance of
@@ -77,13 +77,13 @@
   <refsect1>
     <title>Notes</title>
     <para>
-      Delivering system statistics is the job ob libstatgrab, managing
+      Delivering system statistics is the job of libstatgrab, managing
       the delivery is the job of the globals component. To fulfil this
       job, the components to manage must be prepared:
       <orderedlist numeration="arabic" spacing="compact">
-        <listitem>declare component's global and tls data structure
+        <listitem>declare component's global and TLS data structure
         (probably only on paper, not in code)</listitem>
-        <listitem>define global initialization, thread destruction and
+        <listitem>define global initialisation, thread destruction and
         process destruction functions (if required by 1.)</listitem>
         <listitem>define component information structure using
         <function>*_COMP_SETUP</function>()</listitem>
@@ -104,7 +104,7 @@
       <varname>comp_info</varname> list.
     </para>
     <para>
-      Component initialization information in detail:
+      Component initialisation information in detail:
       <programlisting>
 typedef sg_error (*comp_global_init_function)(unsigned id);
 typedef void (*comp_global_destroy_function)(void);
@@ -130,15 +130,15 @@ struct sg_comp_init {
       <function>EASY_COMP_SETUP</function>():
 
       <example>
-        <title>Initializing memory component</title>
+        <title>Initialising memory component</title>
         <programlisting>
 EASY_COMP_SETUP(mem,1,NULL);
         </programlisting>
       </example>
 
-      When own initialization is needed, do it a bit more complex:
+      When own initialisation is needed, doing it is a bit more complex:
       <example>
-        <title>Initializing network component</title>
+        <title>Initialising network component</title>
         <programlisting>
 #define SG_NETWORK_IO_NOW_IDX	0
 #define SG_NETWORK_IO_DIFF_IDX	1
@@ -178,10 +178,10 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
     </para>
 
     <refsect2>
-      <title>The MACROS to work with the component manager</title>
+      <title>MACROS to work with the component manager</title>
       <para>
-        To simplify the working with the component management functions,
-        some preprocessor macros are available. There're shown here as
+        To simplify working with the component management functions,
+        some preprocessor macros are available. They are shown here as
         if they were functions to ease understanding.
       </para>
 
@@ -265,11 +265,11 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
       </para>
       <para>
         <function>EASY_COMP_SETUP</function>() cares about anything to be
-        automatically done for instantiating an component information
+        automatically done for instantiating a component information
         structure for the specified component <parameter>comp</parameter>.
         The created TLS storage structure will hold
         <parameter>nvect</parameter> pointer elements and that's it.
-        All initialization, destruction and cleanup-routines are created
+        All initialisation, destruction and cleanup-routines are created
         as needed using <function>EASY_COMP_INIT_FN</function>(),
         <function>EASY_COMP_DESTROY_FN</function>() and
         <function>EASY_COMP_CLEANUP_FN</function>(). After the amount of
@@ -280,34 +280,34 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
         <function>EXTENDED_COMP_SETUP</function>() cares about anything
         to be automatically done for instantiating an component information
         structure for the specified component <parameter>comp</parameter>
-        but the required defintion of the initialization, destruction and
+        but the required defintion of the initialisation, destruction and
         cleanup routines. The created TLS storage structure will hold
         <parameter>nvect</parameter> pointer elements and that's it. After
-        the amount of required vector pointers to be stored the list of
+        the amount of required vector pointers to be stored, the list of
         required mutexes must be specified, finished with a NULL pointer.
-        All standard routines can be created semi-automatic using
+        All standard routines can be created semi-automatically using
         <function>EASY_COMP_INIT_FN</function>(),
         <function>EASY_COMP_DESTROY_FN</function>() and
         <function>EASY_COMP_CLEANUP_FN</function>().
       </para>
       <para>
         <function>DEFAULT_INIT_COMP</function>() just declares the
-        prototypes for the initialization, destruction and cleanup routines,
-        defines the initialization status buffer, lock-names list and
-        finally fills the component initialization structure.
-        Use this when your TLS storage containes not only vector pointers.
+        prototypes for the initialisation, destruction and cleanup routines,
+        defines the initialisation status buffer, lock-names list and
+        finally fills the component initialisation structure.
+        Use this when your TLS storage contains not only vector pointers.
       </para>
       <para>
         <function>GLOBAL_GET_TLS</function>() returns the pointer to the
-        components <emphasis>thread local storage</emphasis>.
+        component's <emphasis>thread local storage</emphasis>.
       </para>
       <para>
         <function>GLOBAL_SET_ID</function>() stores the component
-        identifier, required eg. to access it's TLS.
+        identifier, required eg. to access its TLS.
       </para>
       <para>
         <function>EASY_COMP_INIT_FN</function>() defines a default
-        component initialization routine. It stores the component
+        component initialisation routine. It stores the component
         identifier and returns with <errorcode>SG_ERROR_NONE</errorcode>.
       </para>
       <para>
@@ -315,12 +315,12 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
         component destructor, called at the end of the entire process
         (or when the last <function>sg_shutdown</function>() is called).
         The default destructor does nothing and usually an individual
-        initialization routine requires an individual destructor, too.
+        initialisation routine requires an individual destructor, too.
       </para>
       <para>
         <function>EASY_COMP_CLEANUP_FN</function>() defines a default
         TLS cleanup routine, always called when a thread ends to free
-        vectors hold in <emphasis>thread local storage</emphasis>.
+        vectors held in <emphasis>thread local storage</emphasis>.
       </para>
       <para>
         <function>EASY_COMP_ACCESS</function>() defines accessors to a
@@ -336,7 +336,7 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
         </funcsynopsis>
         It accesses the vector idx from TLS of component
         <parameter>comp</parameter> and returns sg_##name##_stats.
-        It manages all standard thingies like memory and error management,
+        It manages all standard things like memory and error management,
         return value etc.
       </para>
       <para>
@@ -363,7 +363,7 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
         </funcsynopsis>
         It accesses the vector idx from TLS of component
         <parameter>comp</parameter> and returns sg_##name##_stats.
-        It manages all standard thingies like memory and error anagement,
+        It manages all standard things like memory and error anagement,
         return values, <parameter>entries</parameter> update, etc.
       </para>
       <para>

@@ -46,7 +46,7 @@
     <title>Return Values</title>
 
     <para>
-      Both functions return an statgrab error code.
+      Both functions return a statgrab error code.
       <segmentedlist list-presentation="table">
         <segtitle>error code</segtitle>
         <segtitle>description</segtitle>

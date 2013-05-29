@@ -33,14 +33,14 @@
       The statgrab library provides a cross-platform interface to getting
       system statistics. Each of the function calls to grab some statistics
       returns an array of structures. Functions which return always a fixed
-      amount of array entries (typical one) won't take an additional
+      number of array entries (typical one) won't take an additional
       parameter to store the number of array entries, others will. Anyway,
       if the information isn't available anymore, you can call
       <function>sg_get_nelements</function>().  See the manual page for each
       individual function for more details on usage.
     </para>
     <para>
-      For each statistic type there're two functions available to fetch the
+      For each statistic type there are two functions available to fetch the
       data: <function>sg_get_STATTYPE</function> (e.g.
       <function>sg_get_cpu_stats</function>) and
       <function>sg_get_STATTYPE_r</function> (e.g.
@@ -52,10 +52,10 @@
       memory area owned and controlled by the caller.
       Storage owned by the statgrab library will be reused in follow-up calls
       to the same statistic grabbing function within the same thread. The
-      memory is freed when the thread ends. This could result in dangeling
+      memory is freed when the thread ends. This could result in dangling
       pointers when you exchange those pointers between threads. Storage
       which is owned by the caller must be freed by the caller when it's
-      not used anymore.
+      not used any more.
     </para>
     <para>
       <function>sg_init</function>() must be the first function you call
@@ -64,17 +64,17 @@
       instance, on *BSD it opens a descriptor to be able to read kernel
       structures later on, and on Solaris it reads the device mappings that
       in some cases are only accessible by root (machines with a /dev/osa).
-      To handle this, each statgrab module has a private initialization
+      To handle this, each statgrab module has a private initialisation
       routine called by <function>sg_init</function>().
       <function>sg_init</function>() takes an argument to tell whether
-      initialization errors of components shall abort the library
-      initialization process or not. Regardless of this value, the failing
-      module initializations will usually lead into (partially) unusable
+      initialisation errors of components shall abort the library
+      initialisation process or not. Regardless of this value, the failing
+      module initialisations will usually lead into (partially) unusable
       statistics. Once <function>sg_init</function>() has run, most of
       the other libstatgrab functions no longer need elevated privileges
       (some Unices require higher privileges to access command line argument
       of processes owned by other users, Linux doesn't deliver some network
-      card information to privileged users only, etc.). It is therefore a
+      card information to unprivileged users, etc.). It is therefore a
       good idea to call <function>sg_drop_privileges</function>(), which
       discards setuid and setgid privileges, immediately after you call
       <function>sg_init</function>(), unless your application has a reason
@@ -103,13 +103,13 @@
     <para>
       For proper thread support, <function>sg_lock_mutex</function>() and
       <function>sg_unlock_mutex</function>() are available to allow locking
-      system functions which aren't thread safe. While it's in general
+      system functions which aren't thread safe. While it's generally
       not the wisest idea to mix calls to the statgrab library and similar
       calls to the system library, it is possible to protect known unsafe
       functions. There's currently one system API known to be not
       thread-safe: accessing <varname>utmp</varname>. The other
       non-threadsafe functionality used by the statgrab library is the
-      global component management during initialization (e.g. counting
+      global component management during initialisation (e.g. counting
       the number of calls to <function>sg_init</function>() to prevent
       first call to <function>sg_shutdown</function>() leaves the library
       in an unusable status).

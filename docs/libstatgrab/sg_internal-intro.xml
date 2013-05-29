@@ -30,10 +30,10 @@
   <refsect1>
     <title>Description</title>
     <para>
-      The statgrab library is organized into components, whereby each
+      The statgrab library is organised into components, whereby each
       component contains interrelated functions. Other components are made
-      known to the globals component via filling a
-      <structname>sg_comp_init</structname> structure and append it to
+      known to the globals component by filling a
+      <structname>sg_comp_init</structname> structure and appending it to
       the list <varname>comp_info</varname> in
       <filename>src/libstatgrab/globals.c</filename>. See
       <citerefentry>
@@ -45,12 +45,12 @@
     <para>
       The error managing component is a mixed one, partially public (getting
       error status), partially private (modifying error status). The last
-      error is hold per thread once error component initialization is run
+      error is held per thread once error component initialisation is run
       once.
     </para>
     <para>
       The memory management is done by the vector and tools components. The
-      memory management covers optimized vector management (creating,
+      memory management covers optimised vector management (creating,
       resizing, freeing, comparing, ...) and dynamic storage management
       (improved string management).
     </para>

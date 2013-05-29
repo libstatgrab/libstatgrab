@@ -86,10 +86,10 @@
   <refsect1>
     <title>Description</title>
     <para>
-      <function>sg_vector_create</function>() allocates and initializes a
+      <function>sg_vector_create</function>() allocates and initialises a
       new statgrab vector with <parameter>initial_used</parameter> elements
       ready for use. Space for <parameter>alloc_count</parameter> elements
-      is initially allocated (to avoid to much calls to
+      is initially allocated (to avoid too many calls to
       <function>realloc</function>() during later
       <function>sg_vector_resize</function>() calls). The value of
       <parameter>block_size</parameter> must be a power of 2, it's rounded
@@ -108,7 +108,7 @@
     <para>
       <function>sg_vector_resize</function>() increases or decreases the
       amount of allocated elements in the specified vector. The amount of
-      allocated elements is always a multiple of the intialization parameter
+      allocated elements is always a multiple of the intialisation parameter
       <parameter>block_size</parameter>. In the special case,
       <function>sg_vector_resize</function>() is called with 0 in
       argument <parameter>new_count</parameter>, the vector is freed after
@@ -128,7 +128,7 @@
       <function>sg_vector_clone_into</function>() clones all elements of
       the given source vector into the given target vector. The target
       vector must be created for the same element data type as the source
-      vector. It returns an error code != to SG_ERROR_NONE in case
+      vector. It returns an error code != to SG_ERROR_NONE if
       something went wrong.
     </para>
     <para>
@@ -139,7 +139,7 @@
       result vector. If an element exists only in the opposite vector,
       it doesn't appear in the target vector.
       <function>sg_vector_compute_diff</function>() returns an error
-      code != to SG_ERROR_NONE in case something went wrong.
+      code != to SG_ERROR_NONE if something went wrong.
     </para>
     <para>
       <function>sg_prove_vector</function>() proves whether a pointer to a
@@ -223,14 +223,14 @@ struct sg_vector_size_helper {
     </para>
 
     <refsect2>
-      <title>The vector specialization structure</title>
+      <title>The vector specialisation structure</title>
 
       <para>
         As mentioned, the vector implementation uses strategies from the
         object oriented programming concept named &quot;polymorphism&quot;.
         A vector is described by a small object containing inherent
         attributes like element size and a bunch of &quot;virtual
-        methods&quot; to do element related tasks like initializing or
+        methods&quot; to do element related tasks like initialising or
         destroying elements.
       </para>
 
@@ -253,7 +253,7 @@ struct sg_vector_init_info {
 
       <para>
         The instances of struct <structname>sg_vector_init_info</structname>
-        are conceptional statically initialized by using either the
+        are conceptional statically initialised by using either the
         preprocessor macro
         <function>VECTOR_INIT_INFO_FULL_INIT</function>(<parameter>type</parameter>)
         or
@@ -261,14 +261,14 @@ struct sg_vector_init_info {
         Here're some examples to demonstrate how it's meant:
 
         <example>
-          <title>Initializing CPU statistics vector description</title>
+          <title>Initialising CPU statistics vector description</title>
           <programlisting>
 VECTOR_INIT_INFO_EMPTY_INIT(sg_cpu_stats);
           </programlisting>
         </example>
 
         <example>
-          <title>Initializing Host-Info statistics vector description</title>
+          <title>Initialising Host-Info statistics vector description</title>
           <programlisting>
 static void sg_os_stats_item_init(sg_os_stats *d);
 static void sg_os_stats_item_destroy(sg_os_stats *d);
@@ -282,7 +282,7 @@ VECTOR_INIT_INFO_FULL_INIT(sg_os_stats);
         </example>
 
         <example>
-          <title>Initializing Disk-IO statistics vector description</title>
+          <title>Initialising Disk-IO statistics vector description</title>
           <programlisting>
 static void sg_disk_io_stats_item_init(sg_disk_io_stats *d);
 static sg_error sg_disk_io_stats_item_copy(sg_disk_io_stats *d, const sg_disk_io_stats *s);
@@ -301,7 +301,7 @@ VECTOR_INIT_INFO_FULL_INIT(sg_disk_io_stats);
 
       <para>
         To simplify the working with the vector management functions, some
-        preprocessor macros are available. There're shown here as if they
+        preprocessor macros are available. They are shown here as if they
         were functions to ease understanding.
       </para>
 
@@ -340,7 +340,7 @@ VECTOR_INIT_INFO_FULL_INIT(sg_disk_io_stats);
         <function>VECTOR_CREATE</function>() calls
         <function>sg_vector_create</function>() with
         <code>alloc_count = block_size</code> and <code>initial_used = 0</code>
-        using the vector specialization <code>type##_vector_init_info</code>.
+        using the vector specialisation <code>type##_vector_init_info</code>.
       </para>
 
       <para>
@@ -358,14 +358,14 @@ VECTOR_INIT_INFO_FULL_INIT(sg_disk_io_stats);
 
       <para>
         <function>VECTOR_UPDATE</function>() calls
-        <function>VECTOR_CREATE_OR_RESIZE</function>() and set's data to the
+        <function>VECTOR_CREATE_OR_RESIZE</function>() and sets data to the
         first element of the resulting vector when a non-NULL pointer got, to
         NULL otherwise.
         When <function>VECTOR_CREATE_OR_RESIZE</function>() returns a NULL
         pointer and <parameter>new_count</parameter> is not equal to 0 (zero),
         the intructions from the macro <function>VECTOR_UPDATE_ERROR_CLEANUP</function>
         are executed to cleanup before returning from current subroutine with
-        the error which has been occured.
+        the error which has been occurred.
       </para>
 
       <para>

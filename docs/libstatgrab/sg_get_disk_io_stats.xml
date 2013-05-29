@@ -70,15 +70,15 @@
     <title>Description</title>
     <para>
       The <function>sg_get_disk_io_stats</function> functions provide disk
-      i/o statistics on a per disk basis. All get- and diff-functions take
+      I/O statistics on a per disk basis. All get- and diff-functions take
       an optional <parameter>entries</parameter> parameter, which points
-      (when given) to a size_t to take the amount of resulted vector
+      (when given) to a size_t to take the number of returned vector
       entries.
     </para>
     <para>
       The <function>sg_get_disk_io_stats</function>() and
       <function>sg_get_disk_io_stats_r</function>() functions deliver the
-      i/o-statistics since the disk has been attached to the system.
+      I/O-statistics since the disk has been attached to the system.
       The <function>sg_get_disk_io_stats_diff</function>() and
       <function>sg_get_disk_io_stats_diff_between</function>() deliver the
       difference between two calls of
@@ -128,7 +128,7 @@
       <function>sg_get_disk_io_stats_r</function>() or
       <function>sg_get_disk_io_stats_diff_between</function>() must be
       freed using <function>sg_free_disk_io_stats</function>() when
-      not needed anymore. The caller is responsible to do it.
+      not needed any more. The caller is responsible for doing it.
     </para>
     <para>
       Additionally two support functions for <function>qsort</function>(3)
@@ -163,7 +163,7 @@ while( NULL != ( io_stats = sg_get_disk_io_stats_diff(&amp;entries) ) ) {
       it fails it will use a name like sd0. On some systems programs
       calling libstatgrab will need elevated privileges to lookup
       some of the names. The mappings are built up when
-      <function>sg_init</function>() is called first time.
+      <function>sg_init</function>() is called for the first time.
     </para>
   </refsect1>
 
@@ -235,8 +235,8 @@ typedef struct {
     <para>
       <function>sg_get_disk_io_stats_diff</function> and
       <function>sg_get_disk_io_stats_diff_between</function> compare two
-      lists of disk (block device) related i/o statistics. Each entry
-      occuring only in the second list is passed through to the resulting
+      lists of disk (block device) related I/O statistics. Each entry
+      occurring only in the second list is passed through to the resulting
       list as if it would have been compared to an entry with all statistic
       values set to 0. This implies, on the very first call
       <function>sg_get_disk_io_stats_diff</function> will return the same
@@ -252,7 +252,7 @@ typedef struct {
     <para>
       The compare functions exists rather for backward compatibility than
       for functionality enhancements. Limited flexibility (e.g. reverse
-      order) and lack of optimizing opportunities for the compiler leads
+      order) and lack of optimising opportunities for the compiler leads
       to the recommendation to implement the required compare routines
       locally.
     </para>

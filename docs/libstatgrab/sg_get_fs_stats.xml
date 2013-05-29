@@ -71,7 +71,7 @@
       The <function>sg_get_fs_stats</function> functions provide statistics
       of mounted file systems. Both functions take an optional
       <parameter>entries</parameter> parameter, which points (when given)
-      to a size_t to take the amount of resulted vector entries.
+      to a size_t to take the number of returned vector entries.
     </para>
     <para>
       The <function>sg_get_fs_stats</function>() and
@@ -112,18 +112,18 @@
       </table>
     </para>
     <para>
-      The <structname>sg_fs_stats</structname> vectors got from
+      The <structname>sg_fs_stats</structname> vectors received from
       <function>sg_get_fs_stats_r</function>() must be freed using
       <function>sg_free_fs_stats</function>() when not needed anymore. The
-      caller is responsible to do it.
+      caller is responsible for doing it.
     </para>
     <para>
       The statgrab library comes with a built-in list of valid file system
       types depending on the operating system it was compiled for. Some
       operating systems additionally provide an API to learn the file system
-      types known or valid to the running OS instance, what is used when
-      detected. Nevertheless there're known problems when collecting file
-      system statistics: networking file systems are mounted from delaunched
+      types known or valid to the running OS instance, which is used when
+      detected. Nevertheless there are known problems when collecting file
+      system statistics: network file systems are mounted from delaunched
       servers, file system developers run an experimental driver etc.
     </para>
     <para>
@@ -185,8 +185,8 @@ void filter_network_fs_types(void) {
       <function>sg_set_valid_filesystems</function>(). None of the
       sg_fs_stats functions protect the access to the globally used
       storage where the own copy of the list of the valid file systems is
-      hold. It's on the responsibility of the caller not to mix
-      configuration calls with calls to grab statistics.
+      held. It's the responsibility of the caller not to mix
+      configuration calls with calls to fetch statistics.
     </para>
     <para>
       Additionally two support functions for <function>qsort</function>(3)
@@ -293,7 +293,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The mount point where the file system is mounted.
+            The mount point at which the file system is mounted.
           </para>
         </listitem>
       </varlistentry>
@@ -401,7 +401,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            A suggested optimal block size for IO operations -- if you're
+            A suggested optimal block size for I/O operations -- if you're
             reading or writing lots of data, do it in chunks of this size.
           </para>
         </listitem>
@@ -463,7 +463,8 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            The time in seconds since epoch when the statistic was got from kernel.
+            The time in seconds since epoch when the statistic was
+            retrieved from kernel.
           </para>
         </listitem>
       </varlistentry>
@@ -473,16 +474,16 @@ typedef struct {
   <refsect1>
     <title>Bugs</title>
     <para>
-      Only mounted file systems are recognized.
+      Only mounted file systems are recognised.
     </para>
     <para>
       Some file systems might be reported twice when mounted on different
       mount points.
     </para>
     <para>
-      The compare functions exists rather for backward compatibility than
+      The compare functions exist rather for backward compatibility than
       for functionality enhancements. Limited flexibility (e.g. reverse
-      order) and lack of optimizing opportunities for the compiler leads
+      order) and lack of optimising opportunities for the compiler leads
       to the recommendation to implement the required compare routines
       locally.
     </para>

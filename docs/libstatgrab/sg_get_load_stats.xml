@@ -76,10 +76,10 @@
       </table>
     </para>
     <para>
-      The <structname>sg_load_stats</structname> buffer got from
+      The <structname>sg_load_stats</structname> buffer received from
       <function>sg_get_load_stats_r</function>() must be freed using
-      <function>sg_free_load_stats</function>() when not needed anymore. The
-      caller is responsible to do it.
+      <function>sg_free_load_stats</function>() when not needed any more. The
+      caller is responsible for doing it.
     </para>
     <para>
       On most systems this function is just a wrapper to the
@@ -133,7 +133,7 @@ typedef struct{
         <term><structfield>systime</structfield></term>
         <listitem>
           <para>
-            the timestamp when the above stats where collected in seconds
+            The timestamp when the above stats where collected in seconds
             since epoch
           </para>
         </listitem>

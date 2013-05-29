@@ -55,7 +55,7 @@
   <refsect1>
     <title>Description</title>
     <para>
-      The page stats module deliver the amount of pages swapped in and out,
+      The page stats module deliver the number of pages swapped in and out,
       either since the machine has been booted (by the
       <function>sg_get_page_stats</function>() and
       <function>sg_get_page_stats_r</function>() functions) or the
@@ -110,11 +110,11 @@
       </table>
     </para>
     <para>
-      The <structname>sg_page_stats</structname> buffer got from
+      The <structname>sg_page_stats</structname> buffer received from
       <function>sg_get_page_stats_r</function>() and the
       <function>sg_get_page_stats_diff_between</function>() must be freed
       using <function>sg_free_page_stats</function>() when not
-      needed anymore. The caller is responsible to do it.
+      needed any more. The caller is responsible for doing it.
     </para>
   </refsect1>
 

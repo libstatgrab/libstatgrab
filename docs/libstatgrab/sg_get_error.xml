@@ -60,11 +60,11 @@
   <refsect1>
     <title>Description</title>
     <para>
-      There're four functions to get information about the last occured
+      There are four functions to get information about the last occurred
       error: <function>sg_get_error</function>,
       <function>sg_get_error_arg</function>,
       <function>sg_get_error_errno</function> and
-      <function>sg_get_error_details</function>. The remaining both
+      <function>sg_get_error_details</function>. The remaining
       functions are intended to improve the machine-human-interface (e.g.
       the error log or a message box): <function>sg_str_error</function>
       delivers a human readable error name and <function>sg_strperror</function>
@@ -87,11 +87,11 @@
     <para>
       The function <function>sg_strperror</function> is allowed to be called
       with or without (<parameter>err_details</parameter> is NULL) collected
-      error details. In latter case, the last occured error of this thread
+      error details. In the latter case, the last occurred error of this thread
       is used to prepare the error message. Be aware, the the buffer pointer
       must be non-NULL (points to an existing <type>char *</type> lvalue),
       but the <type>char *</type> lvalue it points to, must be NULL.
-      When invoked correctly, there're only two possible error conditions
+      When invoked correctly, there are only two possible error conditions
       let <function>sg_strperror</function> fail: <errorcode>ENOMEM</errorcode>
       (out of memory) and <errorcode>EINVAL</errorcode> (invalid error code).
       <example>

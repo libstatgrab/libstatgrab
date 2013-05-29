@@ -64,15 +64,15 @@
     <title>Description</title>
     <para>
       The <function>sg_get_network_io_stats</function> functions provide
-      network interface i/o statistics on a per interface basis. All get-
+      network interface I/O statistics on a per interface basis. All get-
       and diff-functions take an optional <parameter>entries</parameter>
-      parameter, which points (when given) to a size_t to take the amount
-      of resulted vector entries.
+      parameter, which points (when given) to a size_t to take the number
+      of returned vector entries.
     </para>
     <para>
       The <function>sg_get_network_io_stats</function>() and
       <function>sg_get_network_io_stats_r</function>() functions deliver the
-      i/o-statistics since the interface has been attached to the system.
+      I/O-statistics since the interface has been attached to the system.
       The <function>sg_get_network_io_stats_diff</function>() and
       <function>sg_get_network_io_stats_diff_between</function>() deliver the
       difference between two calls of
@@ -118,11 +118,11 @@
       </table>
     </para>
     <para>
-      <structname>sg_network_io_stats</structname> vectors got from
+      <structname>sg_network_io_stats</structname> vectors received from
       <function>sg_get_network_io_stats_r</function>() or
       <function>sg_get_network_io_stats_diff_between</function>() must be
       freed using <function>sg_free_network_io_stats</function>() when
-      not needed anymore. The caller is responsible to do it.
+      not needed any more. The caller is responsible for doing it.
     </para>
     <para>
       Additionally a support function for <function>qsort</function>(3)
@@ -143,8 +143,8 @@ while( NULL != ( network_stats = sg_get_network_io_stats_diff(&amp;entries) ) ) 
     <para>
       <function>sg_get_network_io_stats</function> returns the network
       traffic stored in the kernel which holds the amount of data
-      transferred since device attach. On some platforms, such as Solaris 7,
-      this value is stored in a 32bit int, so wraps around when it
+      transferred since device was attached. On some platforms, such as
+      Solaris 7, this value is stored in a 32bit int, so wraps around when it
       reaches 4GB. Other platforms, such as Solaris 8, hold the value
       in a 64bit int, which wraps somewhere near 17 million terabytes.
       The <function>sg_get_network_io_stats_diff</function>() function and
@@ -264,7 +264,7 @@ typedef struct {
         </term>
         <listitem>
           <para>
-            the timestamp when the above stats where collected in seconds
+            The timestamp when the above stats where collected in seconds
             since epoch or the time period over which <parameter>tx</parameter>
             and <parameter>rx</parameter> were transferred.
           </para>
@@ -278,7 +278,7 @@ typedef struct {
     <para>
       <function>sg_get_network_io_stats_diff</function> and
       <function>sg_get_network_io_stats_diff_between</function> compare two
-      lists of network interface related i/o statistics. Each entry occuring
+      lists of network interface related I/O statistics. Each entry occurring
       only in the second list is passed through to the resulting list as if
       it would have been compared to an entry with all statistic values
       set to 0. This implies, on the very first call
@@ -286,7 +286,7 @@ typedef struct {
       as <function>sg_get_network_io_stats</function>.
     </para>
     <para>
-      On operating system that hold only 32bits of data there is a
+      On operating systems that hold only 32bits of data there is a
       problem if the values wrap twice. For example, on Solaris 7 if
       9GB is transferred and the operating system wraps at 4GB, the
       <function>sg_get_network_io_stats_diff</function> function will return
