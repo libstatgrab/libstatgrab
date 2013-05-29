@@ -13,7 +13,7 @@ AC_INIT([libstatgrab],[0.18],[bugs@i-scream.org])
 AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([foreign -Wall])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 # The file we use to pass #define's to the source
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE([disable])
