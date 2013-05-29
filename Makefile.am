@@ -11,11 +11,7 @@ if TESTS
 TESTS_SUBDIR = tests
 endif
 
-if BUILD_WITH_GETTEXT
-SUBDIRS = po src examples $(DOCS_SUBDIR) $(TESTS_SUBDIR)
-else
 SUBDIRS = src examples $(DOCS_SUBDIR) $(TESTS_SUBDIR)
-endif
 
 ChangeLog:
 	git log --stat --name-only --date=short \

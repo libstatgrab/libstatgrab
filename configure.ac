@@ -56,16 +56,6 @@ AM_PROG_AR
 # define default language
 AC_LANG([C])
 
-dnl ensure ac_lib.m4 etc. are present
-dnl optional later gettext features are used ...
-AM_CONDITIONAL(BUILD_WITH_GETTEXT, false)
-AS_IF([false], [
-dnl support NetBSD compatible
-AM_GNU_GETTEXT_VERSION(0.17)
-AM_GNU_GETTEXT(external)
-AM_CONDITIONAL(BUILD_WITH_GETTEXT, true)
-])
-
 # Checks for header files
 AC_HEADER_STDC
 
@@ -97,7 +87,7 @@ AS_IF([test "x$ac_cv_need_minus_d_hpux_source" = "xyes"],
       [CPPFLAGS="$CPPFLAGS -D_HPUX_SOURCE"])
 
 dnl check language / compatibility environment
-ACX_CHECK_XOPEN_SOURCE
+AX_CHECK_XOPEN_SOURCE
 AS_IF([test -n "$XOPEN_SOURCE_CPPFLAGS"], [CPPFLAGS="$CPPFLAGS $XOPEN_SOURCE_CPPFLAGS"])
 
 dnl Checks for inet libraries:
@@ -135,7 +125,7 @@ AC_INCLUDES_DEFAULT
 #endif
 ])
 
-ACX_WIN32(
+AX_WIN32(
 	[
 		AC_CHECK_HEADERS([io.h Iphlpapi.h lm.h pdh.h process.h psapi.h winsock2.h ws2tcpip.h wspiapi.h winsock.h])
 		AC_CHECK_FUNCS([strerror_s])
@@ -373,7 +363,7 @@ AC_INCLUDES_DEFAULT
 	)
 ])
 
-acx_include_sockets="\
+ax_include_sockets="\
 #if HAVE_WINSOCK2_H
 # include <winsock2.h>
 # if HAVE_WS2TCPIP_H
@@ -405,7 +395,7 @@ acx_include_sockets="\
 
 AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family, struct sockaddr_storage.__ss_family], [], [], [
 AC_INCLUDES_DEFAULT
-$acx_include_sockets
+$ax_include_sockets
 ])
 
 # Default needing setgid/setuid to false
@@ -571,10 +561,10 @@ AC_INCLUDES_DEFAULT
 
 		AC_CHECK_LIB(kinfo, kinfo_get_sched_cputime, [LINKFLAGS="$LINKFLAGS -lkinfo"])
 
-		acx_save_libs="$LIBS"
+		ax_save_libs="$LIBS"
 		LIBS="$LIBS $LINKFLAGS"
 		AC_CHECK_FUNCS([getfsstat devstat_getdevs devstat_selectdevs getdevs kinfo_get_sched_cputime selectdevs sysctlbyname])
-		LIBS="$acx_save_libs"
+		LIBS="$ax_save_libs"
 
 		AC_CACHE_CHECK([for properly declared and callable getvfsstat], [ac_cv_func_getvfsstat],
 			ac_cv_func_getvfsstat=no
@@ -1231,14 +1221,14 @@ AC_INCLUDES_DEFAULT
 dnl check whether procfs is really available
 dnl AC_DEFINE(HAVE_PROCFS, 1, [Define to signal that procfs is available])
 
-ACX_CHECK_VISIBILITY(
+AX_CHECK_VISIBILITY(
 [
-	dnl AC_DEFINE_UNQUOTED([__sg_export], $acx_visibility_export, [Define export declarator])
-	dnl AC_DEFINE_UNQUOTED([__sg_import], $acx_visibility_import, [Define import declarator])
-	dnl AC_DEFINE_UNQUOTED([__sg_private], $acx_visibility_private, [Define private declarator])
-	SG_EXPORT="$acx_visibility_export"
-	SG_IMPORT="$acx_visibility_import"
-	SG_PRIVATE="$acx_visibility_private"
+	dnl AC_DEFINE_UNQUOTED([__sg_export], $ax_visibility_export, [Define export declarator])
+	dnl AC_DEFINE_UNQUOTED([__sg_import], $ax_visibility_import, [Define import declarator])
+	dnl AC_DEFINE_UNQUOTED([__sg_private], $ax_visibility_private, [Define private declarator])
+	SG_EXPORT="$ax_visibility_export"
+	SG_IMPORT="$ax_visibility_import"
+	SG_PRIVATE="$ax_visibility_private"
 	WITH_VISIBILITY_SUPPORT=1
 	AC_SUBST(SG_EXPORT)
 	AC_SUBST(SG_IMPORT)
@@ -1366,7 +1356,7 @@ AM_CONDITIONAL(TEST_SCRIPTS, false)
 AS_IF(	[test "x$ENABLE_TESTS" != "xno"],
 	[
 		AM_CONDITIONAL(TESTS, true)
-		ACX_PROG_PERL5( , , [5.006], [Getopt::Long, Test::More 0.90, Data::Dumper, IPC::Cmd], [
+		AX_PROG_PERL5( , , [5.006], [Getopt::Long, Test::More 0.90, Data::Dumper, IPC::Cmd], [
 				AC_MSG_NOTICE([enabling build of test automation using $PERL5])
 				AM_CONDITIONAL(TEST_SCRIPTS, true)
 			], [
@@ -1430,7 +1420,7 @@ AM_CONDITIONAL(ENABLE_THREADS, false)
 WITH_THREADS_CONFIGURED=0
 AS_IF(	[test "x${ENABLE_THREADS}" != "xno"],
 	[
-		ACX_WIN32(
+		AX_WIN32(
 		[
 			AC_DEFINE([ENABLE_THREADS], 1, [Define if you want the thread support compiled in.])
 			WITH_THREADS_CONFIGURED=1
@@ -1462,18 +1452,18 @@ AS_IF(	[test "x${ENABLE_THREADS}" != "xno"],
 	]
 ) # endif : --enable-threads
 
-ACX_CHECK_WITH_LIB([log4cplus],[check])
+AX_CHECK_WITH_LIB([log4cplus],[check])
 
 AM_CONDITIONAL(WITH_LIBLOG4CPLUS, false)
 WITH_LIBLOG4CPLUS=0
-ACX_CHECK_LIB_FLAGS([log4cplus], [stdc++,stdc++ unwind], [log4cplus_basic_configure();], [
+AX_CHECK_LIB_FLAGS([log4cplus], [stdc++,stdc++ unwind], [log4cplus_basic_configure();], [
 AC_INCLUDES_DEFAULT
 #include <log4cplus/clogger.h>
   ], [log4cplus >= 1.0.5], [
     AM_CONDITIONAL(WITH_LIBLOG4CPLUS, true)
     WITH_LIBLOG4CPLUS=1
-    AC_LIB_APPENDTOVAR([LINKFLAGS], ${LIBS_LOG4CPLUS})
-    AC_LIB_APPENDTOVAR([CLIBFLAGS], ${INC_LOG4CPLUS})
+    AX_APPEND_TO_VAR([LINKFLAGS], ${LIBS_LOG4CPLUS})
+    AX_APPEND_TO_VAR([CLIBFLAGS], ${INC_LOG4CPLUS})
     AC_DEFINE([WITH_LIBLOG4CPLUS], 1, [Define this when tracing shall be done using log4cplus])
     AC_MSG_NOTICE([compiling in support for liblog4cplus (LIBS="$LIBS_LOG4CPLUS}")])
   ]
@@ -1482,7 +1472,7 @@ AC_INCLUDES_DEFAULT
 AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
   AC_LANG_PUSH([C++])
   AC_MSG_CHECKING([if liblog4cplus is built with thread support])
-  acx_cppflags_safe="$CPPFLAGS"
+  ax_cppflags_safe="$CPPFLAGS"
   CPPFLAGS="$CPPFLAGS $CLIBFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   AC_INCLUDES_DEFAULT
@@ -1495,13 +1485,13 @@ AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
   int main() { return 0; }
     ])], [
       AC_MSG_RESULT([yes])
-      acx_liblog4cplus_threads=yes
+      ax_liblog4cplus_threads=yes
     ], [
       AC_MSG_RESULT([no])
-      acx_liblog4cplus_threads=no
+      ax_liblog4cplus_threads=no
     ]
   )
-  CPPFLAGS="$acx_cppflags_safe"
+  CPPFLAGS="$ax_cppflags_safe"
   AC_LANG_POP([C++])
 ])
 

@@ -80,7 +80,7 @@
 
 #serial 12
 
-AU_ALIAS([ACX_PTHREAD], [AX_PTHREAD])
+AU_ALIAS([AX_PTHREAD], [AX_PTHREAD])
 AC_DEFUN([AX_PTHREAD], [
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_LANG_PUSH([C])
@@ -183,7 +183,7 @@ case "${host_cpu}-${host_os}" in
         # of view.  (We need to link with -pthread to use the right runtime
         # libraries.) But there're old gcc versions known to fail for this
         # ...  so, we'll just look for -lpthreads first for them:
-        ax_pthread_flags="-pthread pthreads $acx_pthread_flags"
+        ax_pthread_flags="-pthread pthreads $ax_pthread_flags"
         ;;
 esac
 
