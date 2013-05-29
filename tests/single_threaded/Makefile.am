@@ -26,7 +26,7 @@ script_edit=	$(PERL5) $(srcdir)/../testlib/mk_run_tests.pl \
 
 test_script = run_tests.t
 
-run_tests_t_SOURCES = $(srcdir)/../testlib/run_tests.pl.in run_tests.synopsis.in
+run_tests_t_SOURCES = $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
 
 run_tests.t: Makefile $(srcdir)/../testlib/mk_run_tests.pl $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
 	rm -f $@ $@.tmp
