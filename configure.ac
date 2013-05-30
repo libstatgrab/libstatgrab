@@ -103,7 +103,7 @@ AC_CHECK_FUNCS([atoll bzero fcntl flock getloadavg getmntent getmntent_r seteuid
 # Check for some additional headers
 AC_HEADER_TIME
 AC_CHECK_HEADER_STDBOOL
-AS_IF(["x$ac_cv_header_stdc" != "xyes"], [
+AS_IF([test "x$ac_cv_header_stdc" != "xyes"], [
   AC_CHECK_HEADERS([assert.h ctype.h errno.h float.h limits.h locale.h math.h setjmp.h signal.h stdarg.h stddef.h stdlib.h string.h])
 ])
 AC_CHECK_HEADERS([fcntl.h inttypes.h libgen.h limits.h netdb.h regex.h sched.h signal.h stdint.h sys/ioctl.h sys/socket.h sys/statvfs.h sys/unistd.h])
