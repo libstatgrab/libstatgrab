@@ -326,7 +326,7 @@ static const char *host_states[] = {
 	"virtual machine (paravirtualized)",
 	"hardware virtualization"
 };
-static const char *unexpected_host_state = "unexpected state (libstatgrab to new)";
+static const char *unexpected_host_state = "unexpected state (libstatgrab too new)";
 
 void populate_general() {
 	/* FIXME this should be renamed to host. */
