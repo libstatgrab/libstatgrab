@@ -262,13 +262,18 @@ void populate_load() {
 }
 
 void populate_user() {
-	size_t entries;
+	static size_t entries;
+	static char *name_list = NULL;
+	size_t name_list_length = 0, pos = 0;
+
 	sg_user_stats *users = sg_get_user_stats(&entries);
 
 	if (users != NULL) {
 		size_t i;
 		for (i = 0; i < entries; i++) {
 			const char *name = users[i].login_name;
+
+			name_list_length += strlen(name) + 1;
 
 			add_stat(STRING, &users[i].login_name,
 				 "user", name, "login_name", NULL);
@@ -279,6 +284,25 @@ void populate_user() {
 			add_stat(TIME_T, &users[i].login_time,
 				 "user", name, "login_time", NULL);
 		}
+
+		name_list = realloc(name_list, name_list_length + 1);
+
+		for (i = 0; i < entries; i++) {
+			const char *name = users[i].login_name;
+
+			strncpy(name_list + pos, name, strlen(name));
+			pos += strlen(name);
+			name_list[pos] = ' ';
+			pos ++;
+		}
+
+		if (entries != 0) {
+			pos--;
+		}
+		name_list[pos] = '\0';
+
+		add_stat(INT, &entries, "user", "num", NULL);
+		add_stat(STRING, &name_list, "user", "names", NULL);
 	}
 }
 
