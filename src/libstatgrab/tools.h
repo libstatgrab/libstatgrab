@@ -38,9 +38,53 @@
 
 #include <stdio.h>
 #ifdef STDC_HEADERS
-# include <stdlib.h>
+# include <assert.h>
+# include <ctype.h>
+# include <errno.h>
+# include <float.h>
+# include <limits.h>
+# include <locale.h>
+# include <math.h>
+# include <setjmp.h>
+# include <signal.h>
+# include <stdarg.h>
 # include <stddef.h>
+# include <stdlib.h>
+# include <string.h>
 #else
+# ifdef HAVE_FLOAT_H
+#  include <float.h>
+# endif
+# ifdef HAVE_LOCALE_H
+#  include <locale.h>
+# endif
+# ifdef HAVE_MATH_H
+#  include <math.h>
+# endif
+# ifdef HAVE_SETJMP_H
+#  include <setjmp.h>
+# endif
+# ifdef HAVE_STDARG_H
+#  include <stdarg.h>
+# endif
+# ifdef HAVE_CTYPE_H
+#  include <ctype.h>
+# endif
+# ifdef HAVE_SIGNAL_H
+#  include <signal.h>
+# endif
+# ifdef HAVE_ERRNO_H
+#  include <errno.h>
+# endif
+# ifdef HAVE_LIMITS_H
+#  include <limits.h>
+# endif
+# ifdef HAVE_ASSERT_H
+#  include <assert.h>
+# endif
+# ifdef HAVE_STDDEF_H
+#  include <stddef.h>
+# endif
 # ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
 # endif
@@ -57,23 +101,20 @@
 #ifdef HAVE_INTTYPES_H
 # include <inttypes.h>
 #endif
-#ifdef HAVE_CTYPE_H
-# include <ctype.h>
-#endif
-#ifdef HAVE_SIGNAL_H
-# include <signal.h>
-#endif
-#ifdef HAVE_ERRNO_H
-# include <errno.h>
-#endif
-#ifdef HAVE_LIMITS_H
-# include <limits.h>
-#endif
-#ifdef HAVE_ASSERT_H
-# include <assert.h>
-#endif
 #ifdef HAVE_STDBOOL_H
 # include <stdbool.h>
+#else
+# ifndef HAVE__BOOL
+#  ifdef __cplusplus
+typedef bool _Bool;
+#  else
+#   define _Bool signed char
+#  endif
+# endif
+# define bool _Bool
+# define false 0
+# define true 1
+# define __bool_true_false_are_defined 1
 #endif
 
 #ifdef HAVE_UNISTD_H
