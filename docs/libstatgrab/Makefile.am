@@ -62,7 +62,8 @@ sg_vect_MANS =	sg_vector_create.3 sg_vector_free.3 \
 		sg_vector_clear.3 sg_vector_resize.3 \
 		sg_vector_clone.3 sg_vector_clone_into.3 \
 		sg_vector_compute_diff.3 \
-		sg_get_nelements.3 sg_free_stats_buf.3
+		sg_get_nelements.3 sg_free_stats_buf.3 \
+		sg_prove_vector.3
 
 sg_init_MANS =	sg_init.3 sg_snapshot.3 sg_shutdown.3 sg_drop_privileges.3
 
