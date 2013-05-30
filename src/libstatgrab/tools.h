@@ -244,6 +244,9 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 # include <regex.h>
 #endif
 
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
 #ifdef HAVE_SYS_USER_H
 # include <sys/user.h>
 #endif
@@ -324,9 +327,6 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 #endif
 #ifdef HAVE_SYS_UCRED_H
 # include <sys/ucred.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
 #endif
 #ifdef HAVE_VM_VM_PARAM_H
 # include <vm/vm_param.h>
