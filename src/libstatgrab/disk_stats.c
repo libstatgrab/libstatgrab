@@ -1536,16 +1536,15 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 		dev_ptr = &stats.dinfo->devices[counter];
 
 		/* care only for disk-like block-devices */
-		if( ( DEVSTAT_TYPE_DIRECT != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_SEQUENTIAL != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_WORM != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_CDROM != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_OPTICAL != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_CHANGER != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_STORARRAY != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_FLOPPY != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_PASS != dev_ptr->device_type ) )
-			continue;
+		if( ( DEVSTAT_TYPE_DIRECT != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_SEQUENTIAL != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_WORM != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_CDROM != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_OPTICAL != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_CHANGER != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_STORARRAY != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_FLOPPY != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) )
+		    continue;
 
 		++num_diskio;
 	}
@@ -1556,15 +1555,14 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 		dev_ptr = &stats.dinfo->devices[counter];
 
 		/* care only for disk-like block-devices */
-		if( ( DEVSTAT_TYPE_DIRECT != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_SEQUENTIAL != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_WORM != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_CDROM != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_OPTICAL != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_CHANGER != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_STORARRAY != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_FLOPPY != dev_ptr->device_type ) &&
-		    ( DEVSTAT_TYPE_PASS != dev_ptr->device_type ) )
+		if( ( DEVSTAT_TYPE_DIRECT != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_SEQUENTIAL != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_WORM != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_CDROM != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_OPTICAL != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_CHANGER != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_STORARRAY != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) &&
+		    ( DEVSTAT_TYPE_FLOPPY != (dev_ptr->device_type & DEVSTAT_TYPE_MASK) ) )
 		    continue;
 
 #if defined(HAVE_DEVSTAT_BYTES)
