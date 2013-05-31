@@ -515,6 +515,7 @@ __sg_private char *sg_get_string_match(char *line, regmatch_t *match);
 __sg_private char *sg_f_read_line(FILE *f, char *linebuf, size_t buf_size, const char *string);
 #endif
 
+#if defined(__NEED_SG_GET_SYS_PAGE_SIZE)
 __sg_private ssize_t sys_page_size;
 
 static inline ssize_t
@@ -527,6 +528,7 @@ sg_get_sys_page_size(void) {
 
 	return sys_page_size;
 }
+#endif
 
 __sg_private void *sg_realloc(void *ptr, size_t size);
 #define sg_malloc(size) sg_realloc(NULL, size)

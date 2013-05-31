@@ -22,6 +22,7 @@
  * $Id$
  */
 
+#define __NEED_SG_GET_SYS_PAGE_SIZE
 #include "tools.h"
 
 #if defined(HAVE_STRUCT_XSWDEV)

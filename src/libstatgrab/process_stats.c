@@ -22,6 +22,7 @@
  * $Id$
  */
 
+#define __NEED_SG_GET_SYS_PAGE_SIZE
 #include "tools.h"
 
 #ifdef HAVE_PROCFS
@@ -184,25 +185,33 @@ add_pid_to_pids_in_proc_dir( pid_t pid, struct pids_in_proc_dir_t *pipd ) {
 static struct pids_in_proc_dir_t *
 scan_proc_dir( const char *path_to_proc_dir ) {
 	DIR *proc_dir;
-	struct dirent dir_entry, *result = NULL;
+	struct dirent *dir_entry, *result = NULL;
+	size_t dir_entry_size = sizeof(*dir_entry) - sizeof(dir_entry->d_name) + PATH_MAX + 1;
 	struct pids_in_proc_dir_t *cnt = alloc_pids_in_proc_dir(), *wrk;
 	int rc;
 
 	if( NULL == cnt )
 		return NULL;
 
-	if( ( proc_dir = opendir(path_to_proc_dir) ) == NULL ) {
-		SET_ERROR_WITH_ERRNO("process", SG_ERROR_OPENDIR, path_to_proc_dir);
+	dir_entry = calloc(1, dir_entry_size);
+	if( NULL == dir_entry) {
 		free_pids_in_proc_dir(cnt, true);
 		return NULL;
 	}
 
+	if( ( proc_dir = opendir(path_to_proc_dir) ) == NULL ) {
+		SET_ERROR_WITH_ERRNO("process", SG_ERROR_OPENDIR, path_to_proc_dir);
+		free_pids_in_proc_dir(cnt, true);
+		free(dir_entry);
+		return NULL;
+	}
+
 	wrk = cnt;
-	while( ( rc = readdir_r( proc_dir, &dir_entry, &result ) ) == 0 ) {
+	while( ( rc = readdir_r( proc_dir, dir_entry, &result ) ) == 0 ) {
 		pid_t pid;
 		if( NULL == result )
 			break;
-		if( ( pid = atoi( dir_entry.d_name ) ) != 0 ) {
+		if( ( pid = atoi( dir_entry->d_name ) ) != 0 ) {
 			wrk = add_pid_to_pids_in_proc_dir( pid, wrk );
 			if( NULL == wrk ) {
 				free_pids_in_proc_dir(cnt, true);
@@ -216,6 +225,7 @@ scan_proc_dir( const char *path_to_proc_dir ) {
 		SET_ERROR_WITH_ERRNO_CODE( "process", SG_ERROR_READDIR, rc, path_to_proc_dir );
 	}
 
+	free(dir_entry);
 	closedir(proc_dir);
 
 	return cnt;
