@@ -56,8 +56,20 @@ AM_PROG_AR
 # define default language
 AC_LANG([C])
 
-# Checks for header files
+# Checks for standard C header files
 AC_HEADER_STDC
+AC_HEADER_TIME
+AC_CHECK_HEADER_STDBOOL
+AS_IF([test "x$ac_cv_header_stdc" != "xyes"], [
+  AC_CHECK_HEADERS([assert.h ctype.h errno.h float.h limits.h locale.h math.h setjmp.h signal.h stdarg.h stddef.h stdlib.h string.h])
+])
+ac_includes_default="\
+${ac_includes_default}
+#ifndef __cplusplus
+# ifdef HAVE_STDBOOL_H
+#  include <stdbool.h>
+# endif
+#endif"
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_CONST
@@ -101,19 +113,7 @@ AC_FUNC_GETMNTENT
 AC_CHECK_FUNCS([atoll bzero fcntl flock getloadavg getmntent getmntent_r seteuid setegid setresuid setresgid statfs statvfs statvfs64 strerror_r vsprintf vsnprintf])
 
 # Check for some additional headers
-AC_HEADER_TIME
-AC_CHECK_HEADER_STDBOOL
-AS_IF([test "x$ac_cv_header_stdc" != "xyes"], [
-  AC_CHECK_HEADERS([assert.h ctype.h errno.h float.h limits.h locale.h math.h setjmp.h signal.h stdarg.h stddef.h stdlib.h string.h])
-])
 AC_CHECK_HEADERS([fcntl.h inttypes.h libgen.h limits.h netdb.h regex.h sched.h signal.h stdint.h sys/ioctl.h sys/socket.h sys/statvfs.h sys/unistd.h])
-ac_includes_default="\
-${ac_includes_default}
-#ifndef __cplusplus
-# ifdef HAVE_STDBOOL_H
-#  include <stdbool.h>
-# endif
-#endif"
 
 AC_CHECK_DECL([F_SETLK], [AC_DEFINE([HAVE_DECL_F_SETLK], 1, [define when F_SETLK is declared])], ,[
 AC_INCLUDES_DEFAULT
