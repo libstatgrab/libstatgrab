@@ -517,7 +517,7 @@ __sg_private char *sg_f_read_line(FILE *f, char *linebuf, size_t buf_size, const
 
 __sg_private ssize_t sys_page_size;
 
-static ssize_t
+static inline ssize_t
 sg_get_sys_page_size(void) {
 	if( 0 == sys_page_size ) {
 		if( ( sys_page_size = sysconf(_SC_PAGESIZE) ) == -1 ) {
