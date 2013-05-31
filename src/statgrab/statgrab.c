@@ -282,17 +282,18 @@ populate_user(void) {
 		size_t i;
 		for (i = 0; i < entries; i++) {
 			const char *name = users[i].login_name;
+			const char *tty = users[i].device;
 
 			name_list_length += strlen(name) + 1;
 
 			add_stat(STRING, &users[i].login_name,
-				 "user", name, "login_name", NULL);
+				 "user", tty, "login_name", NULL);
 			add_stat(STRING, &users[i].device,
-				 "user", name, "tty", NULL);
+				 "user", tty, "tty", NULL);
 			add_stat(STRING, &users[i].hostname,
-				 "user", name, "from", NULL);
+				 "user", tty, "from", NULL);
 			add_stat(TIME_T, &users[i].login_time,
-				 "user", name, "login_time", NULL);
+				 "user", tty, "login_time", NULL);
 		}
 
 		name_list = realloc(name_list, name_list_length + 1);
