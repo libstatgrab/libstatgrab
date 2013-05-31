@@ -895,6 +895,7 @@ skip:
 		ifc.ifc_len = n * pagesize;
 	}
 
+	lifr = (struct ifreq *)&ifc.ifc_buf[ifc.ifc_len];
 	for ( ifr = ifc.ifc_req;
 	      ifr < lifr;
 	      ifr = (struct ifreq *)&(((char *)ifr)[_SIZEOF_ADDR_IFREQ(*ifr)]) )
@@ -912,7 +913,6 @@ skip:
 
 	VECTOR_UPDATE(network_iface_vector_ptr, ifaces, network_iface_stat, sg_network_iface_stats);
 
-	lifr = (struct ifreq *)&ifc.ifc_buf[ifc.ifc_len];
 	for ( ifaces = 0, ifr = ifc.ifc_req;
 	      ifr < lifr;
 	      ifr = (struct ifreq *)&(((char *)ifr)[_SIZEOF_ADDR_IFREQ(*ifr)]) )
