@@ -83,13 +83,15 @@ long float_scale_factor = 0;
 long long bytes_scale_factor = 0;
 
 /* Exit with an error message. */
-void die(const char *s) {
+static void
+die(const char *s) {
 	fprintf(stderr, "fatal: %s\n", s);
 	exit(1);
 }
 
 /* Remove all the recorded stats. */
-void clear_stats() {
+static void
+clear_stats(void) {
 	int i;
 
 	for (i = 0; i < num_stats; i++)
@@ -99,7 +101,8 @@ void clear_stats() {
 
 /* Add a stat. The varargs make up the name, joined with dots; the name is
    terminated with a NULL. */
-void add_stat(stat_type type, void *stat, ...) {
+static void
+add_stat(stat_type type, void *stat, ...) {
 	va_list ap;
 	int len = 0;
 	char *name, *p;
@@ -156,26 +159,30 @@ void add_stat(stat_type type, void *stat, ...) {
 }
 
 /* Compare two stats by name for qsort and bsearch. */
-int stats_compare(const void *a, const void *b) {
+static int
+stats_compare(const void *a, const void *b) {
 	return strcmp(((stat_item *)a)->name, ((stat_item *)b)->name);
 }
 
 /* Compare up to the length of the key for bsearch. */
-int stats_compare_prefix(const void *key, const void *item) {
+static int
+stats_compare_prefix(const void *key, const void *item) {
 	const char *kn = ((stat_item *)key)->name;
 	const char *in = ((stat_item *)item)->name;
 
 	return strncmp(kn, in, strlen(kn));
 }
 
-void populate_const() {
+static void
+populate_const(void) {
 	static int zero = 0;
 
 	/* Constants, for use with MRTG mode. */
 	add_stat(INT, &zero, "const", "0", NULL);
 }
 
-void populate_cpu() {
+static void
+populate_cpu(void) {
 	sg_cpu_stats *cpu_s;
 
 	cpu_s = use_diffs ? sg_get_cpu_stats_diff()
@@ -240,7 +247,8 @@ void populate_cpu() {
 	}
 }
 
-void populate_mem() {
+static void
+populate_mem(void) {
 	sg_mem_stats *mem = sg_get_mem_stats();
 
 	if (mem != NULL) {
@@ -251,7 +259,8 @@ void populate_mem() {
 	}
 }
 
-void populate_load() {
+static void
+populate_load(void) {
 	sg_load_stats *load = sg_get_load_stats();
 
 	if (load != NULL) {
@@ -261,7 +270,8 @@ void populate_load() {
 	}
 }
 
-void populate_user() {
+static void
+populate_user(void) {
 	static size_t entries;
 	static char *name_list = NULL;
 	size_t name_list_length = 0, pos = 0;
@@ -306,7 +316,8 @@ void populate_user() {
 	}
 }
 
-void populate_swap() {
+static void
+populate_swap(void) {
 	sg_swap_stats *swap = sg_get_swap_stats();
 
 	if (swap != NULL) {
@@ -328,7 +339,8 @@ static const char *host_states[] = {
 };
 static const char *unexpected_host_state = "unexpected state (libstatgrab too new)";
 
-void populate_general() {
+static void
+populate_general(void) {
 	/* FIXME this should be renamed to host. */
 	sg_host_info *host = sg_get_host_info();
 
@@ -351,7 +363,8 @@ void populate_general() {
 	}
 }
 
-void populate_fs() {
+static void
+populate_fs(void) {
 	size_t n, i;
 	sg_fs_stats *disk = sg_get_fs_stats(&n);
 
@@ -414,7 +427,8 @@ void populate_fs() {
 	}
 }
 
-void populate_disk() {
+static void
+populate_disk(void) {
 	size_t n, i;
 	sg_disk_io_stats *diskio;
 
@@ -436,7 +450,8 @@ void populate_disk() {
 	}
 }
 
-void populate_proc() {
+static void
+populate_proc(void) {
 	/* FIXME expose individual process info too */
 	sg_process_count *proc = sg_get_process_count();
 
@@ -458,7 +473,8 @@ void populate_proc() {
 	}
 }
 
-void populate_net() {
+static void
+populate_net(void) {
 	size_t num_io, num_iface, i;
 	sg_network_io_stats *io;
 	sg_network_iface_stats *iface;
@@ -523,7 +539,8 @@ void populate_net() {
 	}
 }
 
-void populate_page() {
+static void
+populate_page(void) {
 	sg_page_stats *page;
 
 	page = use_diffs ? sg_get_page_stats_diff() : sg_get_page_stats();
@@ -557,7 +574,8 @@ toplevel toplevels[] = {
 
 /* Set the "interesting" flag on the sections that we actually need to
    fetch. */
-void select_interesting(int argc, char **argv) {
+static void
+select_interesting(int argc, char **argv) {
 	toplevel *t;
 
 	if (argc == 0) {
@@ -579,7 +597,8 @@ void select_interesting(int argc, char **argv) {
 }
 
 /* Clear and rebuild the stat_items array. */
-void get_stats() {
+static void
+get_stats(void) {
 	toplevel *t;
 
 	clear_stats();
@@ -594,7 +613,8 @@ void get_stats() {
 }
 
 /* Print the value of a stat_item. */
-void print_stat_value(const stat_item *s) {
+static void
+print_stat_value(const stat_item *s) {
 	void *pv = s->stat;
 	union {
 		double f;
@@ -680,7 +700,8 @@ void print_stat_value(const stat_item *s) {
 }
 
 /* Print the name and value of a stat. */
-void print_stat(const stat_item *s) {
+static void
+print_stat(const stat_item *s) {
 	switch (display_mode) {
 	case DISPLAY_LINUX:
 		printf("%s = ", s->name);
@@ -697,7 +718,8 @@ void print_stat(const stat_item *s) {
 }
 
 /* Print stats as specified on the provided command line. */
-void print_stats(int argc, char **argv) {
+static void
+print_stats(int argc, char **argv) {
 	int i;
 
 	if (argc == optind) {
@@ -751,7 +773,8 @@ void print_stats(int argc, char **argv) {
 	}
 }
 
-void usage() {
+static void
+usage(void) {
 	printf("Usage: statgrab [OPTION]... [STAT]...\n"
 	       "Display system statistics.\n"
 	       "\n"
@@ -778,7 +801,8 @@ void usage() {
 	exit(1);
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) {
 	opterr = 0;
 	while (1) {
 		int c = getopt(argc, argv, "lbmunsot:pf:KMG");
@@ -884,4 +908,3 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
-
