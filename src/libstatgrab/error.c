@@ -87,6 +87,7 @@ sg_set_error_int(sg_error code, int errno_value, const char *arg, va_list ap) {
 #if defined(HAVE_VSNPRINTF)
 		vsnprintf( error_glob->error_arg, sizeof(error_glob->error_arg), arg, ap );
 #else
+		error_glob->error_override_protection = ERROR_OVERRIDE_PROTECTION;
 		vsprintf( error_glob->error_arg, arg, ap );
 		assert( error_glob->error_override_protection == ERROR_OVERRIDE_PROTECTION );
 #endif
