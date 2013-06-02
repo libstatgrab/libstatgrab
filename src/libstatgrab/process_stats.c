@@ -847,6 +847,8 @@ again:
 		if( kp_stats[i].kp_stat == 0 )
 # elif defined(HAVE_KINFO_PROC_KP_PROC)
 		if( kp_stats[i].kp_proc.p_stat == 0 )
+# elif defined(HAVE_KINFO_PROC_P_STAT)
+		if( kp_stats[i].p_stat == 0 )
 # else
 		if(0)
 # endif
@@ -867,6 +869,8 @@ again:
 		name = kp_stats[proc_items].kp_thread.td_comm;
 # elif defined(HAVE_KINFO_PROC_KP_PROC)
 		name = kp_stats[proc_items].kp_proc.p_comm;
+# elif defined(HAVE_KINFO_PROC_P_STAT)
+		name = kp_stats[proc_items].p_comm;
 # else
 		name = "";
 # endif
@@ -915,7 +919,16 @@ again:
 		proc_stats_ptr[proc_items].euid = kp_stats[i].kp_uid;
 		proc_stats_ptr[proc_items].gid = kp_stats[i].kp_rgid;
 		proc_stats_ptr[proc_items].egid = kp_stats[i].kp_svgid;
+#elif defined(HAVE_KINFO_PROC_P_PID)
+		proc_stats_ptr[proc_items].pid = kp_stats[i].p_pid;
+		proc_stats_ptr[proc_items].parent = kp_stats[i].p_ppid == ((pid_t)-1) ? 0 : kp_stats[i].p_ppid;
+		proc_stats_ptr[proc_items].pgid = kp_stats[i].p__pgid;
+		proc_stats_ptr[proc_items].sessid = kp_stats[i].p_sid;
 
+		proc_stats_ptr[proc_items].uid = kp_stats[i].p_ruid;
+		proc_stats_ptr[proc_items].euid = kp_stats[i].p_uid;
+		proc_stats_ptr[proc_items].gid = kp_stats[i].p_rgid;
+		proc_stats_ptr[proc_items].egid = kp_stats[i].p_svgid;
 # else
 		proc_stats_ptr[proc_items].pid = kp_stats[i].kp_proc.p_pid;
 		proc_stats_ptr[proc_items].parent = kp_stats[i].kp_eproc.e_ppid;
@@ -966,6 +979,9 @@ again:
 # elif defined(HAVE_KINFO_PROC_KP_PID)
 		proc_stats_ptr[proc_items].proc_size = kp_stats[i].kp_vm_map_size;
 		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].kp_vm_rssize) * getpagesize();
+# elif defined(HAVE_KINFO_PROC_P_VM_MAP_SIZE)
+		proc_stats_ptr[proc_items].proc_size = kp_stats[i].p_vm_map_size;
+		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * getpagesize();
 # else
 #if 0
 		/* This is in microseconds */
@@ -980,6 +996,8 @@ again:
 		switch (kp_stats[i].ki_stat)
 # elif defined(HAVE_KINFO_PROC_KP_PID)
 		switch (kp_stats[i].kp_stat)
+# elif defined(HAVE_KINFO_PROC_P_STAT)
+		switch (kp_stats[i].p_stat)
 # else
 		switch (kp_stats[i].kp_proc.p_stat)
 # endif
@@ -1078,7 +1096,6 @@ again:
 		else {
 print_kernel_proctitle:
 			if( -1 == asprintf( &proc_stats_ptr[proc_items].proctitle, "[%s]", proc_stats_ptr[proc_items].process_name ) ) {
-				long failing_pid = (long)proc_stats_ptr[i].pid;
 				VECTOR_UPDATE_ERROR_CLEANUP;
 				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_ASPRINTF, NULL);
 			}

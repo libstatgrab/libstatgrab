@@ -822,6 +822,44 @@ AC_INCLUDES_DEFAULT
 					]
 			)])
 
+			AC_CHECK_MEMBER(struct kinfo_proc.p_stat,
+					[AC_DEFINE(HAVE_KINFO_PROC_P_STAT, 1, [p_stat member of struct kinfo_proc available])], ,
+					[AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_KINFO_H
+# include <kinfo.h>
+#endif
+					]
+			)])
+
+			AC_CHECK_MEMBER(struct kinfo_proc.p_vm_map_size,
+					[AC_DEFINE(HAVE_KINFO_PROC_P_VM_MAP_SIZE, 1, [p_vm_map_size member of struct kinfo_proc available])], ,
+					[AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_KINFO_H
+# include <kinfo.h>
+#endif
+					]
+			)])
+
 			AC_CHECK_MEMBER(struct kinfo_proc.ki_structsize,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_THREAD, 1, [ki_structsize member of struct kinfo_proc available])], ,
 					[AC_LANG_SOURCE([
@@ -844,6 +882,25 @@ AC_INCLUDES_DEFAULT
 
 			AC_CHECK_MEMBER(struct kinfo_proc.kp_pid,
 					[AC_DEFINE(HAVE_KINFO_PROC_KP_PID, 1, [kp_pid member of struct kinfo_proc available])], ,
+					[AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_KINFO_H
+# include <kinfo.h>
+#endif
+					]
+			)])
+
+			AC_CHECK_MEMBER(struct kinfo_proc.p_pid,
+					[AC_DEFINE(HAVE_KINFO_PROC_P_PID, 1, [p_pid member of struct kinfo_proc available])], ,
 					[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
