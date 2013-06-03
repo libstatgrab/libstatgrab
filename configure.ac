@@ -443,6 +443,7 @@ AC_INCLUDES_DEFAULT
 				[AC_DEFINE(HAVE_PST_DISKINFO_PSD_DKBYTEWRITE, , [pst_diskinfo.psd_dkbytewrite])],
 				[],
 				[#include <sys/pstat.h>])
+		AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 	],
 	[aix*], [
 		AC_DEFINE(AIX, , [Building on AIX 5.x - 9.x])
