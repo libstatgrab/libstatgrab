@@ -46,7 +46,13 @@
 #ifdef HAVE_NCURSES_H
 #define COLOR_SUPPORT
 #endif
-#include CURSES_HEADER_FILE
+#if defined(HAVE_NCURSES_H)
+# include <ncurses.h>
+#elif defined(HAVE_NCURSES_NCURSES_H)
+# include <ncurses/ncurses.h>
+#elif defined(HAVE_CURSES_H)
+# include <curses.h>
+#endif
 
 #define THRESHOLD_LOAD 1.0
 
