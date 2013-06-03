@@ -27,9 +27,9 @@ AC_DEFUN([MP_WITH_CURSES], [
           LIBS="$mp_save_LIBS $SAIDARLIBS -lcurses"
           CPPFLAGS="$mp_save_CPPFLAGS $SAIDARCPPFLAGS"
           AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <curses.h>], [testcode])], [
-            mp_cv_curses="curses.h"
+            mp_cv_ncurses="curses.h"
             CURSES_LIB="-lcurses"
-          ], [mp_cv_curses=no])
+          ], [mp_cv_ncurses=no])
         ])
       ])
     ])
