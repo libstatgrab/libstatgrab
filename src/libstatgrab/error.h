@@ -29,35 +29,35 @@ __sg_private sg_error sg_set_error_fmt(sg_error code, const char *arg, ...);
 __sg_private sg_error sg_set_error_with_errno_fmt(sg_error code, const char *arg, ...);
 __sg_private sg_error sg_set_error_with_errno_code_fmt(sg_error code, int errno_value, const char *arg, ...);
 
-#define SET_ERROR(comp, code, arg, ...) \
+#define SET_ERROR(comp, code, ...) \
 do { \
 	char *buf = NULL; \
-	sg_set_error_fmt(code, arg, ## __VA_ARGS__); \
+	sg_set_error_fmt(code, __VA_ARGS__); \
 	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
 
-#define RETURN_WITH_SET_ERROR(comp, code, arg, ...) SET_ERROR(comp, code, arg, ## __VA_ARGS__); return code
+#define RETURN_WITH_SET_ERROR(comp, code, ...) SET_ERROR(comp, code, __VA_ARGS__); return code
 
-#define SET_ERROR_WITH_ERRNO(comp, code, arg, ...) \
+#define SET_ERROR_WITH_ERRNO(comp, code, ...) \
 do { \
 	char *buf = NULL; \
-	sg_set_error_with_errno_fmt(code, arg, ## __VA_ARGS__); \
+	sg_set_error_fmt(code, __VA_ARGS__); \
 	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
 
-#define RETURN_WITH_SET_ERROR_WITH_ERRNO(comp, code, arg, ...) SET_ERROR_WITH_ERRNO(comp, code, arg, ## __VA_ARGS__); return code
+#define RETURN_WITH_SET_ERROR_WITH_ERRNO(comp, code, ...) SET_ERROR_WITH_ERRNO(comp, code, __VA_ARGS__); return code
 
-#define SET_ERROR_WITH_ERRNO_CODE(comp, code, errno_value, arg, ...) \
+#define SET_ERROR_WITH_ERRNO_CODE(comp, code, errno_value, ...) \
 do { \
 	char *buf = NULL; \
-	sg_set_error_with_errno_code_fmt(code, errno_value, arg, ## __VA_ARGS__); \
+	sg_set_error_with_errno_code_fmt(code, errno_value, __VA_ARGS__); \
 	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
 
-#define RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE(comp, code, errno_value, arg, ...) SET_ERROR_WITH_ERRNO_CODE(comp, code, errno_value, arg, ## __VA_ARGS__); return code
+#define RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE(comp, code, errno_value, ...) SET_ERROR_WITH_ERRNO_CODE(comp, code, errno_value, __VA_ARGS__); return code
 
 #define RETURN_FROM_PREVIOUS_ERROR(comp, code) \
 do { \
