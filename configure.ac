@@ -408,6 +408,8 @@ AM_CONDITIONAL(SETUIDBINS, false)
 # Default MINGW setting
 AM_CONDITIONAL(MINGW, false)
 
+ENABLE_THREADS_DEFAULT="check"
+
 # Set things up for different OS's
 # We define the name of the OS so the code can act accordingly
 # We also need to add the right LDFLAGS
@@ -489,6 +491,7 @@ AC_INCLUDES_DEFAULT
 	],
 	[dragonfly*], [
 		AC_DEFINE(DFBSD, , [Building on DragonFlyBSD])
+		ENABLE_THREADS_DEFAULT="no"
 	],
 	[kfreebsd*-gnu*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
@@ -1453,7 +1456,7 @@ AC_ARG_ENABLE(setuid-binaries,
 # Check if the user wants to support access from multiple threads
 AC_ARG_ENABLE(thread-support,
 	[  --disable-thread-support      disable support for multi-threaded environments],
-	[ENABLE_THREADS="$enableval"], [ENABLE_THREADS="check"]
+	[ENABLE_THREADS="$enableval"], [ENABLE_THREADS="$ENABLE_THREADS_DEFAULT"]
 )
 
 AS_IF([test "x$ac_cv_func_strerror_r" = "xyes"], [
