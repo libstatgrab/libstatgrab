@@ -64,7 +64,6 @@ threadfunc(void *parm)
 	prove_libcall("pthread_mutex_lock", rc);
 
 	++test_counter;
-	mark_func(*func_idx);
 
 	while (!conditionMet) {
 		TRACE_LOG( "multi_threaded", "Thread blocked" );
@@ -159,6 +158,7 @@ main(int argc, char **argv) {
 
 		TRACE_LOG_FMT( "multi_threaded", "create %d threads", numthreads );
 		for( i = 0; i < numthreads; ++i ) {
+			mark_func(test_routines[i % entries]);
 			rc = pthread_create( &threadid[i], NULL, threadfunc, &test_routines[i % entries] );
 			prove_libcall("pthread_create", rc);
 		}
