@@ -103,7 +103,7 @@ funcnames_to_indices(const char *name_list, size_t **indices) {
 void
 mark_func(size_t func_index) {
 	if( func_index >= lengthof(statgrab_tests) ) {
-		fprintf( stderr, "run_func: index out of range: %lu\n", (unsigned long int)(func_index) );
+		fprintf( stderr, "mark_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
@@ -132,7 +132,7 @@ run_func(size_t func_index) {
 void
 done_func(size_t func_index) {
 	if( func_index >= lengthof(statgrab_tests) ) {
-		fprintf( stderr, "run_func: index out of range: %lu\n", (unsigned long int)(func_index) );
+		fprintf( stderr, "done_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
