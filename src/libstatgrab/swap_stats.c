@@ -288,16 +288,18 @@ again:
 			if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, 0) < 0) {
 				if (errno == ENOENT)
 					break;
+# if defined(HAVE_STRUCT_XSWDEV)
 				if( xswbuf )
 					free( xswbuf );
-# if defined(HAVE_STRUCT_XSWDEV)
 				RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, swapinfo_sysctl_name);
 # else
 				RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, "CTL_VM.VM_SWAPUSAGE" );
 # endif
 			}
 
+# if defined(HAVE_STRUCT_XSWDEV)
 			xswptr = &xsw;
+# endif
 		}
 # if defined(HAVE_STRUCT_XSWDEV) && defined(HAVE_STRUCT_XSWDEV_SIZE)
 		else {
@@ -305,32 +307,34 @@ again:
 				break;
 			xswptr = xswbuf + n;
 		}
-# endif
 
 		if( xswptr == NULL ) {
 			RETURN_WITH_SET_ERROR("swap", SG_ERROR_MEMSTATUS, "no swap status");
 		}
 
-# ifdef XSWDEV_VERSION
+#  ifdef XSWDEV_VERSION
 		if( xswptr->xsw_version != XSWDEV_VERSION ) {
 			if( xswbuf )
 				free( xswbuf );
 			RETURN_WITH_SET_ERROR("swap", SG_ERROR_XSW_VER_MISMATCH, NULL);
 		}
+#  endif
 # endif
 
 # if defined(HAVE_STRUCT_XSWDEV)
 		swap_stats_buf->total += (unsigned long long) xswptr->xsw_nblks;
 		swap_stats_buf->used += (unsigned long long) xswptr->xsw_used;
 # elif defined(HAVE_STRUCT_XSW_USAGE)
-		swap_stats_buf->total += (unsigned long long) xswptr->xsu_total;
-		swap_stats_buf->used += (unsigned long long) xswptr->xsu_used;
-		swap_stats_buf->free += (unsigned long long) xswptr->xsu_avail;
+		swap_stats_buf->total += (unsigned long long) xsw.xsu_total;
+		swap_stats_buf->used += (unsigned long long) xsw.xsu_used;
+		swap_stats_buf->free += (unsigned long long) xsw.xsu_avail;
 # endif
 	}
 
+# if defined(HAVE_STRUCT_XSWDEV)
 	if( xswbuf )
 		free( xswbuf );
+# endif
 
 	swap_stats_buf->total *= pagesize;
 	swap_stats_buf->used *= pagesize;
