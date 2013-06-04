@@ -408,20 +408,24 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 #ifdef HAVE_LIBDEVINFO_H
 # include <libdevinfo.h>
 #endif
-#ifdef HAVE_MACH_MACHINE_H
-# include <mach/machine.h>
-#endif
-#ifdef HAVE_MACH_HOST_H
-# include <mach/mach_host.h>
-#endif
-#ifdef HAVE_MACH_VM_STATISTICS_H
-# include <mach/vm_statistics.h>
-#endif
-#ifdef HAVE_MACH_KERN_RETURN_H
-# include <mach/kern_return.h>
-#endif
-#ifdef HAVE_MACH_HOST_INFO_H
-# include <mach/host_info.h>
+#ifdef HAVE_MACH_MACH_H
+# include <mach/mach.h>
+#else
+# ifdef HAVE_MACH_MACHINE_H
+#  include <mach/machine.h>
+# endif
+# ifdef HAVE_MACH_MACH_HOST_H
+#  include <mach/mach_host.h>
+# endif
+# ifdef HAVE_MACH_VM_STATISTICS_H
+#  include <mach/vm_statistics.h>
+# endif
+# ifdef HAVE_MACH_KERN_RETURN_H
+#  include <mach/kern_return.h>
+# endif
+# ifdef HAVE_MACH_HOST_INFO_H
+#  include <mach/host_info.h>
+# endif
 #endif
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>

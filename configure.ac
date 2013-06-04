@@ -535,7 +535,9 @@ dnl check Mach OS's
 AS_CASE([$host_os],
 	dnl Darwin, probably OSF/1, Plan9?, ...
 	[darwin*], [
-		AC_CHECK_HEADERS([mach/mach_host.h mach/vm_statistics.h mach/kern_return.h mach/host_info.h])
+		AC_CHECK_HEADERS([mach/mach.h])
+		
+		AS_IF([test "x$ac_cv_header_mach_mach_h" != "xyes"], [AC_CHECK_HEADERS([mach/mach_host.h mach/vm_statistics.h mach/kern_return.h mach/host_info.h])])
 
 		dnl Part of Mach Kernel Interface
 		AC_CHECK_FUNCS([host_statistics host_statistics64])
