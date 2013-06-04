@@ -35,6 +35,10 @@
 			"ufs", "umsdos", "vfat", "xfs" }
 #elif defined(CYGWIN)
 #define VALID_FS_TYPES {"user"}
+#elif defined(DARWIN)
+#define VALID_FS_TYPES {"CoreStorage", "acfs", "afpfs", "autofs", "cd9660", \
+			"cddafs", "devfs", "exfat", "fdesc", "ftp", "hfs", \
+			"msdos", "nfs", "ntfs", "smbfs", "udf", "webdav"}
 #elif defined(FREEBSD)
 /*#define VALID_FS_TYPES {"hpfs", "msdosfs", "ntfs", "udf", "ext2fs", \
 			"ufs", "mfs", "nfs", "zfs", "tmpfs", "reiserfs", \
@@ -295,7 +299,7 @@ init_valid_fs_types(void) {
 			mib[3] = k + 1;
 			buflen = sizeof(vfsp[k]);
 			if( sysctl(mib, 4, &vfsp[k], &buflen, (void *)0, (size_t)0) < 0 ) {
-				if (errno == EOPNOTSUPP) {
+				if (errno == EOPNOTSUPP || errno == ENOTSUP) {
 					continue;
 				}
 
