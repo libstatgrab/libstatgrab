@@ -259,7 +259,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 #elif defined(ALLBSD)
 # if defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
 	self_host_port = mach_host_self();
-	if( (rc = host_statistics(self_host_port, HOST_CPU_LOAD_INFO, &cpustats, &count)) != KERN_SUCCESS ) {
+	if( (rc = host_statistics(self_host_port, HOST_CPU_LOAD_INFO, (host_info_t)(&cpustats), &count)) != KERN_SUCCESS ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE( "cpu", SG_ERROR_MACHCALL, rc, "host_statistics" );
 	}
 
