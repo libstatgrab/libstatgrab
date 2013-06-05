@@ -156,12 +156,18 @@ main(int argc, char **argv) {
 		if( NULL == ( threadid = calloc( sizeof(threadid[0]), numthreads ) ) )
 			die( ENOMEM, "%s", argv[0] );
 
+		rc = pthread_mutex_lock(&mutex);
+		prove_libcall("pthread_mutex_lock", rc);
+
 		TRACE_LOG_FMT( "multi_threaded", "create %d threads", numthreads );
 		for( i = 0; i < numthreads; ++i ) {
 			mark_func(test_routines[i % entries]);
 			rc = pthread_create( &threadid[i], NULL, threadfunc, &test_routines[i % entries] );
 			prove_libcall("pthread_create", rc);
 		}
+
+		rc = pthread_mutex_unlock(&mutex);
+		prove_libcall("pthread_mutex_unlock", rc);
 
 		while( test_counter < numthreads )
 			sched_yield();
