@@ -902,13 +902,13 @@ fsnmcmp(const void *va, const void *vb) {
 static sg_error
 set_valid_filesystems(char const *fslist) {
 	char const **newfs;
+	char const **given_fs;
 
 	while(isspace(*fslist))
 		++fslist;
 	if('!' == *fslist) {
 		size_t new_items = 0, given_items = 0;
 		const char **old_valid_fs = sg_get_valid_filesystems(0);
-		char const **given_fs;
 
 		if( NULL == old_valid_fs )
 			sg_die("sg_get_valid_filesystems()", 1);
@@ -935,11 +935,15 @@ set_valid_filesystems(char const *fslist) {
 		newfs = push_item(newfs, NULL, new_items);
 	}
 	else {
-		newfs = split_list(fslist);
+		newfs = given_fs = split_list(fslist);
 	}
 
-        if( SG_ERROR_NONE != sg_set_valid_filesystems( newfs ) )
+	if( SG_ERROR_NONE != sg_set_valid_filesystems( newfs ) )
 		sg_die("sg_set_valid_filesystems() failed", 1);
+
+	for(newfs = given_fs; *newfs; ++newfs) {
+		free((void *)(*newfs));
+	}
 
 	return SG_ERROR_NONE;
 }
