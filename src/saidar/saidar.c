@@ -640,6 +640,22 @@ void usage(char *progname){
 	exit(1);
 }
 
+#ifndef HAVE_STRNDUP
+static char *
+strndup(char const *s, size_t n)
+{
+	char *r = malloc(n + 1);
+	char *d = r;
+
+	if(!r)
+		return r;
+	while((n-- != 0) && *s)
+		*d++ = *s++;
+	*d = 0;
+	return r;
+}
+#endif
+
 #define STACK_UNIT 4
 
 static char const **
