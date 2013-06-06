@@ -116,6 +116,7 @@ sub run_tests(\@;\@) {
 		ref($variant) eq "ARRAY" or die "Invalid element in variant list";
 		my $test_variant = $self->map_test_variant($variant);
 		my @exec_args = ($self->{exename}, @$args, '-r', $test_variant);
+		note('"' . join('" "', @exec_args) . '"');
 		my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf) = IPC::Cmd::run(
 			command => \@exec_args, verbose => 0, timeout => 60 );
 		if( "ARRAY" eq ref($stdout_buf) and 0 != scalar(@{$stdout_buf}) ) {

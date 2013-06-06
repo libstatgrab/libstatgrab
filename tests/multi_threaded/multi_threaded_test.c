@@ -129,7 +129,7 @@ main(int argc, char **argv) {
 		return 0;
 	}
 	else if( opt_def[OPT_RUN].optarg.str ) {
-		size_t numthreads, i, nfuncs, ok = 0;
+		size_t numthreads, i, nfuncs, ok;
 		size_t *test_routines = NULL;
 		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&nfuncs);
 		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines);
@@ -186,12 +186,14 @@ main(int argc, char **argv) {
 
 		TRACE_LOG( "multi_threaded", "Wait for threads and cleanup" );
 		do {
+			ok = 0;
 			sleep(1);
 			for( i = 0; i < nfuncs; ++i ) {
-				printf( "%s - needed: %d, done: %d\n",
-					sg_testfuncs[i].fn_name,
-					sg_testfuncs[i].needed,
-					sg_testfuncs[i].done );
+				if(0 != sg_testfuncs[i].needed)
+					printf( "%s - needed: %d, done: %d\n",
+						sg_testfuncs[i].fn_name,
+						sg_testfuncs[i].needed,
+						sg_testfuncs[i].done );
 				if( sg_testfuncs[i].needed == sg_testfuncs[i].done ) {
 					++ok;
 				}
