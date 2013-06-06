@@ -30,7 +30,6 @@
 
 int main(int argc, char **argv){
 
-	extern char *optarg;
 	size_t nusers, x;
 	sg_user_stats *users;
 
