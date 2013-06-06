@@ -21,9 +21,7 @@
  * $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "tools.h"
 
 #include <statgrab.h>
 #include <string.h>
@@ -87,6 +85,31 @@ static void
 die(const char *s) {
 	fprintf(stderr, "fatal: %s\n", s);
 	exit(1);
+}
+
+static void
+sg_die(const char *prefix, int exit_code)
+{
+	sg_error_details err_det;
+	char *errmsg = NULL;
+	sg_error errc;
+
+	if( SG_ERROR_NONE != ( errc = sg_get_error_details(&err_det) ) ) {
+		fprintf(stderr, "panic: can't get error details (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	if( NULL == sg_strperror(&errmsg, &err_det) ) {
+		errc = sg_get_error();
+		fprintf(stderr, "panic: can't prepare error message (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	fprintf( stderr, "%s: %s\n", prefix, errmsg );
+
+	free( errmsg );
+
+	exit(exit_code);
 }
 
 /* Remove all the recorded stats. */
@@ -793,6 +816,7 @@ usage(void) {
 	       "  -p         Display CPU usage differences as percentages rather than\n"
 	       "             absolute values\n"
 	       "  -f FACTOR  Display floating-point values as integers scaled by FACTOR\n"
+	       "  -F fs-list List of file systems (!) to show\n"
 	       "  -K         Display byte counts in kibibytes\n"
 	       "  -M         Display byte counts in mebibytes\n"
 	       "  -G         Display byte counts in gibibytes\n"
@@ -802,11 +826,115 @@ usage(void) {
 	exit(1);
 }
 
+#define STACK_UNIT 4
+
+static char const **
+push_item(char const **stack, char const *item, size_t items) {
+	char const **s = stack;
+	size_t stack_size = items;
+	size_t desired = (items / STACK_UNIT) * STACK_UNIT;
+
+	if (desired < ++items) {
+		desired = ((items / STACK_UNIT) + 1) * STACK_UNIT;
+		if (desired >= stack_size) {
+			s = realloc(stack, desired * sizeof(stack[0]));
+			if(NULL == s)
+				die("Out of memory");
+		}
+	}
+
+	s[stack_size] = item;
+
+	return s;
+}
+
+static char const **
+split_list(char const *list) {
+	char const *l = list;
+	char const **sp = NULL;
+	size_t items = 0;
+
+	for(l = list; *l; ) {
+		while(*l && !(isspace(*l) || (',' == *l)))
+			++l;
+		sp = push_item(sp, strndup(list, l-list), items++);
+		while(*l && (isspace(*l) || (',' == *l)))
+			++l;
+		list = l;
+	}
+
+	sp = push_item(sp, NULL, items);
+
+	return sp;
+}
+
+static int
+fsnmcmp(const void *va, const void *vb) {
+	const char *a = * (char * const *)va;
+	const char *b = * (char * const *)vb;
+
+	if( a && b )
+		return strcasecmp(a, b);
+	/* force NULL sorted at end */
+	if( a && !b )
+		return -1;
+	if( !a && b )
+		return 1;
+	return 0;
+}
+
+static sg_error
+set_valid_filesystems(char const *fslist) {
+	char const **newfs;
+
+	while(isspace(*fslist))
+		++fslist;
+	if('!' == *fslist) {
+		size_t new_items = 0, given_items = 0;
+		const char **old_valid_fs = sg_get_valid_filesystems(0);
+		char const **given_fs;
+
+		if( NULL == old_valid_fs )
+			sg_die("sg_get_valid_filesystems()", 1);
+
+		++fslist;
+		while(*fslist && isspace(*fslist))
+			++fslist;
+
+		given_fs = split_list(fslist);
+		for(newfs = given_fs; *newfs; ++newfs) {
+			++given_items;
+		}
+		qsort(given_fs, given_items, sizeof(given_fs[0]), fsnmcmp);
+
+		newfs = NULL;
+		new_items = 0;
+
+		while(*old_valid_fs) {
+			if (NULL == bsearch(old_valid_fs, given_fs, given_items, sizeof(given_fs[0]), fsnmcmp)) {
+				newfs = push_item(newfs, *old_valid_fs, new_items++);
+			}
+			++old_valid_fs;
+		}
+		newfs = push_item(newfs, NULL, new_items);
+	}
+	else {
+		newfs = split_list(fslist);
+	}
+
+        if( SG_ERROR_NONE != sg_set_valid_filesystems( newfs ) )
+		sg_die("sg_set_valid_filesystems() failed", 1);
+
+	return SG_ERROR_NONE;
+}
+
 int
 main(int argc, char **argv) {
+	char *fslist = NULL;
+
 	opterr = 0;
 	while (1) {
-		int c = getopt(argc, argv, "lbmunsot:pf:KMG");
+		int c = getopt(argc, argv, "lbmunsot:pf:F:KMG");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -839,6 +967,10 @@ main(int argc, char **argv) {
 			break;
 		case 'f':
 			float_scale_factor = atol(optarg);
+			break;
+		case 'F':
+			free(fslist);
+			fslist = strdup(optarg);
 			break;
 		case 'K':
 			bytes_scale_factor = 1024;
@@ -877,6 +1009,18 @@ main(int argc, char **argv) {
 	sg_snapshot();
 	if (sg_drop_privileges() != 0)
 		die("Failed to drop setuid/setgid privileges");
+
+	if (fslist) {
+		sg_error rc = set_valid_filesystems(fslist);
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
+		free(fslist);
+	}
+	else {
+		sg_error rc = set_valid_filesystems("!nfs, nfs3, nfs4, cifs, smbfs, samba, autofs");
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
+	}
 
 	switch (repeat_mode) {
 	case REPEAT_NONE:

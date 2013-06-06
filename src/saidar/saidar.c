@@ -21,21 +21,10 @@
  * $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "tools.h"
 
-#include <stdio.h>
-#include <string.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <errno.h>
 #include <statgrab.h>
-#include <sys/times.h>
-#include <limits.h>
-#include <time.h>
 #include <math.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -74,7 +63,7 @@
 #define lengthof(x) (sizeof(x)/sizeof((x)[0]))
 #endif
 
-int sig_winch_flag = 0;
+static int sig_winch_flag = 0;
 
 typedef struct{
 	sg_cpu_percents *cpu_percents;
@@ -96,10 +85,11 @@ typedef struct{
 	sg_host_info *host_info;
 	sg_user_stats *user_stats;
 	size_t user_entries;
-}stats_t;
+} stats_t;
 
-stats_t stats;
+static stats_t stats;
 
+#if 0
 static char *
 isize_conv(long long number){
 	char type[] = {'B', 'K', 'M', 'G', 'T', 'P'};
@@ -122,9 +112,10 @@ isize_conv(long long number){
 	number = number*sign;
 
 	snprintf(string, 10, "%lld%c", number, type[x]);
-	return string;
 
+	return string;
 }
+#endif
 
 static char *
 size_conv(unsigned long long number){
@@ -140,10 +131,12 @@ size_conv(unsigned long long number){
 	}
 
 	snprintf(string, 10, "%llu%c", number, type[x]);
+
 	return string;
 }
 
-char *hr_uptime(time_t time){
+static char *
+hr_uptime(time_t time) {
 	int day = 0, hour = 0, min = 0;
 	static char uptime_str[25];
 	int sec = (int) time;
@@ -155,15 +148,16 @@ char *hr_uptime(time_t time){
 	min = sec / 60;
 	sec = sec % 60;
 
-	if(day){
+	if(day) {
 		snprintf(uptime_str, 25, "%dd %02d:%02d:%02d", day, hour, min, sec);
-	}else{
+	} else {
 		snprintf(uptime_str, 25, "%02d:%02d:%02d", hour, min, sec);
 	}
 	return uptime_str;
 }
 
-void display_headings(){
+static void
+display_headings(void) {
 	int line;
 
 	move(0,0);
@@ -263,7 +257,8 @@ void display_headings(){
 	refresh();
 }
 
-void display_data(int colors){
+static void
+display_data(int colors) {
 	char cur_time[20];
 	struct tm *tm_time;
 	time_t epoc_time;
@@ -567,13 +562,15 @@ void display_data(int colors){
 	refresh();
 }
 
-void sig_winch_handler(int dummy){
+static void
+sig_winch_handler(int dummy) {
 	(void)dummy;
 	sig_winch_flag = 1;
 	signal(SIGWINCH, sig_winch_handler);
 }
 
-int get_stats(){
+static int
+get_stats(void) {
 	stats.cpu_percents = sg_get_cpu_percents();
 	stats.mem_stats = sg_get_mem_stats();
 	stats.swap_stats = sg_get_swap_stats();
@@ -589,10 +586,42 @@ int get_stats(){
 	return 1;
 }
 
-void version_num(char *progname){
+static void
+version_num(char const *progname) {
 	fprintf(stderr, "%s version %s\n", progname, PACKAGE_VERSION);
 	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
 	exit(1);
+}
+
+static void
+die(const char *s) {
+	fprintf(stderr, "fatal: %s\n", s);
+	exit(1);
+}
+
+static void
+sg_die(const char *prefix, int exit_code)
+{
+	sg_error_details err_det;
+	char *errmsg = NULL;
+	sg_error errc;
+
+	if( SG_ERROR_NONE != ( errc = sg_get_error_details(&err_det) ) ) {
+		fprintf(stderr, "panic: can't get error details (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	if( NULL == sg_strperror(&errmsg, &err_det) ) {
+		errc = sg_get_error();
+		fprintf(stderr, "panic: can't prepare error message (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	fprintf( stderr, "%s: %s\n", prefix, errmsg );
+
+	free( errmsg );
+
+	exit(exit_code);
 }
 
 void usage(char *progname){
@@ -611,10 +640,113 @@ void usage(char *progname){
 	exit(1);
 }
 
+#define STACK_UNIT 4
+
+static char const **
+push_item(char const **stack, char const *item, size_t items) {
+	char const **s = stack;
+	size_t stack_size = items;
+	size_t desired = (items / STACK_UNIT) * STACK_UNIT;
+
+	if (desired < ++items) {
+		desired = ((items / STACK_UNIT) + 1) * STACK_UNIT;
+		if (desired >= stack_size) {
+			s = realloc(stack, desired * sizeof(stack[0]));
+			if(NULL == s)
+				die("Out of memory");
+		}
+	}
+
+	s[stack_size] = item;
+
+	return s;
+}
+
+static char const **
+split_list(char const *list) {
+	char const *l = list;
+	char const **sp = NULL;
+	size_t items = 0;
+
+	for(l = list; *l; ) {
+		while(*l && !(isspace(*l) || (',' == *l)))
+			++l;
+		sp = push_item(sp, strndup(list, l-list), items++);
+		while(*l && (isspace(*l) || (',' == *l)))
+			++l;
+		list = l;
+	}
+
+	sp = push_item(sp, NULL, items);
+
+	return sp;
+}
+
+static int
+fsnmcmp(const void *va, const void *vb) {
+	const char *a = * (char * const *)va;
+	const char *b = * (char * const *)vb;
+
+	if( a && b )
+		return strcasecmp(a, b);
+	/* force NULL sorted at end */
+	if( a && !b )
+		return -1;
+	if( !a && b )
+		return 1;
+	return 0;
+}
+
+static sg_error
+set_valid_filesystems(char const *fslist) {
+	char const **newfs;
+
+	while(isspace(*fslist))
+		++fslist;
+	if('!' == *fslist) {
+		size_t new_items = 0, given_items = 0;
+		const char **old_valid_fs = sg_get_valid_filesystems(0);
+		char const **given_fs;
+
+		if( NULL == old_valid_fs )
+			sg_die("sg_get_valid_filesystems()", 1);
+
+		++fslist;
+		while(*fslist && isspace(*fslist))
+			++fslist;
+
+		given_fs = split_list(fslist);
+		for(newfs = given_fs; *newfs; ++newfs) {
+			++given_items;
+		}
+		qsort(given_fs, given_items, sizeof(given_fs[0]), fsnmcmp);
+
+		newfs = NULL;
+		new_items = 0;
+
+		while(*old_valid_fs) {
+			if (NULL == bsearch(old_valid_fs, given_fs, given_items, sizeof(given_fs[0]), fsnmcmp)) {
+				newfs = push_item(newfs, *old_valid_fs, new_items++);
+			}
+			++old_valid_fs;
+		}
+		newfs = push_item(newfs, NULL, new_items);
+	}
+	else {
+		newfs = split_list(fslist);
+	}
+
+        if( SG_ERROR_NONE != sg_set_valid_filesystems( newfs ) )
+		sg_die("sg_set_valid_filesystems() failed", 1);
+
+	return SG_ERROR_NONE;
+}
+
 int main(int argc, char **argv){
-	extern char *optarg;
 	int c;
 	int colouron = 0;
+
+	char *fslist = NULL;
 
 	time_t last_update = 0;
 
@@ -631,9 +763,9 @@ int main(int argc, char **argv){
 	}
 
 #ifdef COLOR_SUPPORT
-	while ((c = getopt(argc, argv, "d:cvh")) != -1){
+	while ((c = getopt(argc, argv, "d:F:cvh")) != -1){
 #else
-	while ((c = getopt(argc, argv, "d:vh")) != -1){
+	while ((c = getopt(argc, argv, "d:F:vh")) != -1){
 #endif
 		switch (c){
 			case 'd':
@@ -657,6 +789,18 @@ int main(int argc, char **argv){
 				return 1;
 				break;
 		}
+	}
+
+	if (fslist) {
+		sg_error rc = set_valid_filesystems(fslist);
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
+		free(fslist);
+	}
+	else {
+		sg_error rc = set_valid_filesystems("!nfs, nfs3, nfs4, cifs, smbfs, samba, autofs");
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
 	}
 
 	signal(SIGWINCH, sig_winch_handler);
