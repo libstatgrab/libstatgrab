@@ -88,6 +88,8 @@ threadfunc(void *parm)
 	rc = pthread_mutex_unlock(&mutex);
 	prove_libcall("pthread_mutex_unlock", rc);
 
+	pthread_cond_signal(&cond);
+
 	return NULL;
 }
 
@@ -186,8 +188,18 @@ main(int argc, char **argv) {
 
 		TRACE_LOG( "multi_threaded", "Wait for threads and cleanup" );
 		do {
+			struct timespec ts = { 1, 0 };
+
+			rc = pthread_mutex_lock(&mutex);
+			prove_libcall("pthread_mutex_lock", rc);
+
+			pthread_cond_timedwait(&cond, &mutex, &ts);
+			prove_libcall("pthread_cond_timedwait", rc);
+
+			rc = pthread_mutex_unlock(&mutex);
+			prove_libcall("pthread_mutex_unlock", rc);
+
 			ok = 0;
-			sleep(1);
 			for( i = 0; i < nfuncs; ++i ) {
 				if(0 != sg_testfuncs[i].needed)
 					printf( "%s - needed: %d, done: %d\n",
@@ -198,7 +210,9 @@ main(int argc, char **argv) {
 					++ok;
 				}
 			}
-			printf( "---------------\n" );
+			if( ok != nfuncs )
+				printf( "---------------\n" );
+			fflush(stdout);
 		} while( ok != nfuncs );
 
 		for (i=0; i<numthreads; ++i) {
