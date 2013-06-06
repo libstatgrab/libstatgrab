@@ -286,7 +286,7 @@ sg_vector_clone_into(sg_vector **dest, const sg_vector *src){
 sg_vector *
 sg_vector_clone(const sg_vector *src){
 
-	sg_vector *dest;
+	sg_vector *dest = NULL;
 
 	if( !src )
 		return NULL;
