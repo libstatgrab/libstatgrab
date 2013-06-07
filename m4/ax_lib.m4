@@ -80,6 +80,9 @@ AS_CASE(["$host"],
          [*-[[Hh]][[Pp]][[Uu]][[Xx]]*], [ax_linkext_default_shared=".sl";
 	      ax_linkext_default_archive=".a";
 	      ax_linkext_default_objext="$OBJEXT"],
+	 [*-[[Dd]][[Aa]][[Rr]][[Ww]][[Ii]][[Nn]]*], [ax_linkext_default_shared=".dylib";
+	      ax_linkext_default_archive=".a";
+	      ax_linkext_default_objext="$OBJEXT"],
 	     [ax_linkext_default_shared=".so";
 	      ax_linkext_default_archive=".a";
 	      ax_linkext_default_objext="$OBJEXT"])
