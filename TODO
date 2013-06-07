@@ -1,0 +1,12 @@
+1) FreeBSD 10/sparc64 (more?) compiler & test run issues
+
+2) HP-UX stability
+
+3) MacOS X disk_io_stats
+
+4) configure.ac - xpg\d vs. their funcs
+   * ac_check_funcs ...
+
+5) configure.ac - pid_t, gid_t, size_t, time_t - sizes / fmt (printf/scanf)
+
+6) DragonflyBSD & NetBSD testing
