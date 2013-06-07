@@ -129,6 +129,7 @@ sub run_tests(\@;\@) {
 				diag($line);
 			}
 		}
+		defined $success or $success = 0;
 		cmp_ok( $success, '==', 1, $test_variant );
 	}
 
