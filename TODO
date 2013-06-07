@@ -10,3 +10,5 @@
 5) configure.ac - pid_t, gid_t, size_t, time_t - sizes / fmt (printf/scanf)
 
 6) DragonflyBSD & NetBSD testing
+
+7) FreeBSD memory stats; totals don't add up
