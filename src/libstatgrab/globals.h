@@ -275,8 +275,7 @@ void *sg_comp_get_tls(unsigned id);
 	sg_##name##_stats *fn(void){			\
 							\
 		struct sg_##comp##_glob *comp##_glob = GLOBAL_GET_TLS(comp); \
-		sg_error rc;				\
-		TRACE_LOG(#comp, "entering " #fn); \
+		TRACE_LOG(#comp, "entering " #fn);	\
 		if( !comp##_glob ) {			\
 			/* assuming error comp can't neither */ \
 			ERROR_LOG(#comp, #fn " failed - cannot get glob"); \
@@ -304,8 +303,7 @@ void *sg_comp_get_tls(unsigned id);
 			}				\
 		}					\
 							\
-		rc = sg_get_error();			\
-		WARN_LOG_FMT(#comp, #fn " failed with %s", sg_str_error(rc)); \
+		WARN_LOG_FMT(#comp, #fn " failed with %s", sg_str_error(sg_get_error())); \
 							\
 		return NULL;				\
 	}						\
@@ -313,11 +311,11 @@ void *sg_comp_get_tls(unsigned id);
 	sg_##name##_stats *fn##_between(const sg_##name##_stats *name##_now, const sg_##name##_stats *name##_last){ \
 							\
 		sg_vector *name##_diff_vector;		\
-		sg_error rc;				\
 							\
 		TRACE_LOG(#comp, "entering " #fn "_between"); \
 		name##_diff_vector = VECTOR_CREATE(sg_##name##_stats, 1); \
 		if(name##_diff_vector){			\
+			sg_error rc;			\
 			sg_##name##_stats *name##_diff = (sg_##name##_stats *)VECTOR_DATA(name##_diff_vector); \
 			TRACE_LOG_FMT(#comp, "calling " #fn "_diff(%p, %p, %p)", name##_diff, name##_now, &name##_last); \
 			rc = fn##_int(name##_diff, name##_now, name##_last); \
@@ -329,8 +327,7 @@ void *sg_comp_get_tls(unsigned id);
 			sg_vector_free(name##_diff_vector); \
 		}					\
 							\
-		rc = sg_get_error();			\
-		WARN_LOG_FMT(#comp, #fn "_between failed with %s", sg_str_error(rc)); \
+		WARN_LOG_FMT(#comp, #fn "_between failed with %s", sg_str_error(sg_get_error())); \
 							\
 		return NULL;				\
 	}
@@ -339,7 +336,6 @@ void *sg_comp_get_tls(unsigned id);
 	sg_##name##_stats *fn(size_t *entries){		\
 							\
 		struct sg_##comp##_glob *comp##_glob = GLOBAL_GET_TLS(comp); \
-		sg_error rc;				\
 		TRACE_LOG(#comp, "entering " #fn); \
 		if( !comp##_glob ) {			\
 			/* assuming error comp can't neither */ \
@@ -358,6 +354,7 @@ void *sg_comp_get_tls(unsigned id);
 			comp##_glob->comp##_vectors[diffidx] = VECTOR_CREATE(sg_##name##_stats, comp##_glob->comp##_vectors[nowidx]->used_count); \
 							\
 		if( comp##_glob->comp##_vectors[diffidx] ) { \
+			sg_error rc;			\
 			sg_vector *last = sg_vector_clone(comp##_glob->comp##_vectors[nowidx]); \
 							\
 			if(!last)			\
@@ -382,8 +379,7 @@ void *sg_comp_get_tls(unsigned id);
 		if(entries)				\
 			*entries = 0;			\
 							\
-		rc = sg_get_error();			\
-		WARN_LOG_FMT(#comp, #fn " failed with %s", sg_str_error(rc)); \
+		WARN_LOG_FMT(#comp, #fn " failed with %s", sg_str_error(sg_get_error())); \
 							\
 		return NULL;				\
 	}						\
