@@ -21,10 +21,21 @@
  * $Id$
  */
 
-#include "tools.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
+#include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
 #include <statgrab.h>
+#include <sys/times.h>
+#include <limits.h>
+#include <time.h>
 #include <math.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
