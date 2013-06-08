@@ -255,9 +255,6 @@ sg_comp_init(int ignore_init_errors) {
 	}
 	required_locks[0] = glob_lock;
 	num_required_locks = 1;
-#else
-	num_required_locks = 0;
-	required_locks = 0;
 #endif
 
 	for( i = 0; i < lengthof(comp_info); ++i ) {
@@ -348,7 +345,9 @@ sg_comp_init(int ignore_init_errors) {
 	}
 #endif
 
+#ifdef ENABLE_THREADS
 	sg_global_unlock();
+#endif
 
 	TRACE_LOG_FMT("globals", "%lu components initialized", i);
 
@@ -360,9 +359,11 @@ sg_comp_destroy(void) {
 
 	unsigned i;
 
+#ifdef ENABLE_THREADS
 	sg_global_lock();
 	if( 0 != --initialized )
 		return sg_global_unlock();
+#endif
 
 	glob_size = 0;
 
@@ -381,7 +382,11 @@ sg_comp_destroy(void) {
 	num_required_locks = 0;
 #endif
 
+#ifdef ENABLE_THREADS
 	return sg_global_unlock();
+#else
+	return SG_ERROR_NONE;
+#endif
 }
 
 void *

@@ -133,9 +133,12 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
 #define UTMP_MUTEX_NAME "utmp"
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
-#define VECTOR_UPDATE_ERROR_CLEANUP endutxent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
-
+#ifdef ENABLE_THREADS
+# define VECTOR_UPDATE_ERROR_CLEANUP endutxent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
 	sg_lock_mutex(UTMP_MUTEX_NAME);
+#else
+# define VECTOR_UPDATE_ERROR_CLEANUP endutxent();
+#endif
 	setutxent();
 	while( NULL != (ut = getutxent()) ) {
 		if( USER_PROCESS != ut->ut_type )
@@ -166,16 +169,21 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
 	}
 
 	endutxent();
+#ifdef ENABLE_THREADS
 	sg_unlock_mutex(UTMP_MUTEX_NAME);
+#endif
 #elif defined(HAVE_GETUTENT)
 	struct utmp *ut;
 
 #define UTMP_MUTEX_NAME "utmp"
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
-#define VECTOR_UPDATE_ERROR_CLEANUP endutent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
-
+#ifdef ENABLE_THREADS
+# define VECTOR_UPDATE_ERROR_CLEANUP endutent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
 	sg_lock_mutex(UTMP_MUTEX_NAME);
+#else
+# define VECTOR_UPDATE_ERROR_CLEANUP endutent();
+#endif
 	setutent();
 	while( NULL != (ut = getutent()) ) {
 #ifdef HAVE_UTMP_TYPE
@@ -221,7 +229,9 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
 	}
 
 	endutent();
+#ifdef ENABLE_THREADS
 	sg_unlock_mutex(UTMP_MUTEX_NAME);
+#endif
 #elif defined(HAVE_STRUCT_UTMP) && defined(_PATH_UTMP)
 	struct utmp entry;
 	FILE *f;

@@ -540,9 +540,11 @@ sysinfo_again:
 		host_info_buf->host_state = sg_physical_host;
 	}
 
+#ifdef ENABLE_THREADS
 	if( SG_ERROR_NONE != ( rc = sg_lock_mutex("utmp") ) ) {
 		RETURN_FROM_PREVIOUS_ERROR( "os", rc );
 	}
+#endif
 # if defined(HAVE_GETUTXENT)
 #  define UTENTFN getutxent
 #  define UTENTTM ut->ut_tv.tv_sec
@@ -563,9 +565,11 @@ sysinfo_again:
 # else
 	endutent();
 # endif
+#ifdef ENABLE_THREADS
 	if( SG_ERROR_NONE != ( rc = sg_unlock_mutex("utmp") ) ) {
 		RETURN_FROM_PREVIOUS_ERROR( "os", rc );
 	}
+#endif
 #else
 	RETURN_WITH_SET_ERROR("os", SG_ERROR_UNSUPPORTED, OS_TYPE);
 #endif
