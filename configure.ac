@@ -1507,6 +1507,39 @@ AS_IF(	[test "x${ENABLE_THREADS}" != "xno"],
 					[AC_MSG_ERROR([strerror_r or thread safe strerror required])])
 				AM_CONDITIONAL(ENABLE_THREADS, true)
 				WITH_THREADS_CONFIGURED=1
+
+				# Braces checks derived from here:
+				# http://git.savannah.gnu.org/gitweb/?p=guile.git;a=blob_plain;f=configure.ac;hb=HEAD
+				old_CFLAGS="$CFLAGS"
+
+				if test "$GCC" = "yes"; then
+					# Since GCC only issues a warning for missing braces, so we need
+					# `-Werror' to catch it.
+					CFLAGS="-Werror -Wmissing-braces $CFLAGS"
+				fi
+
+				AC_CACHE_CHECK([whether PTHREAD_ONCE_INIT needs braces],
+				  mp_cv_need_braces_on_pthread_once_init,
+				  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pthread.h>
+				     pthread_once_t foo = PTHREAD_ONCE_INIT;]])],
+				    [mp_cv_need_braces_on_pthread_once_init=no],
+				    [mp_cv_need_braces_on_pthread_once_init=yes])])
+				if test "$mp_cv_need_braces_on_pthread_once_init" = yes; then
+					AC_DEFINE([NEED_PTHREAD_ONCE_INIT_BRACES], 1, [Define to 1 if PTHREAD_ONCE_INIT needs braces.])
+				fi
+
+				AC_CACHE_CHECK([whether PTHREAD_MUTEX_INITIALIZER needs braces],
+				  mp_cv_need_braces_on_pthread_mutex_initializer,
+				  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <pthread.h>
+				     pthread_mutex_t foo = PTHREAD_MUTEX_INITIALIZER;]])],
+				    [mp_cv_need_braces_on_pthread_mutex_initializer=no],
+				    [mp_cv_need_braces_on_pthread_mutex_initializer=yes])])
+				if test "$mp_cv_need_braces_on_pthread_mutex_initializer" = yes; then
+					AC_DEFINE([NEED_PTHREAD_MUTEX_INITIALIZER_BRACES], 1, [Define to 1 if PTHREAD_ONCE_INIT needs braces.])
+				fi
+
+				CFLAGS="$old_CFLAGS"
+
 				AC_SEARCH_LIBS([sem_init], [rt])
 			],
 			[

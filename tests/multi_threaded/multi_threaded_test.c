@@ -36,7 +36,11 @@ prove_libcall(char *libcall, int err_code)
 int conditionMet = 0;
 size_t test_counter = 0;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+#ifdef NEED_PTHREAD_MUTEX_INITIALIZER_BRACES
+pthread_mutex_t mutex = { PTHREAD_MUTEX_INITIALIZER };
+#else
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 struct opt_def opt_def[] = {
 #define OPT_HLP 	0

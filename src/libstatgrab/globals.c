@@ -67,7 +67,11 @@ static void sg_destroy_globals(void *);
 # if defined(HAVE_PTHREAD)
 #  include <pthread.h>
 static pthread_key_t glob_key;
+#ifdef NEED_PTHREAD_ONCE_INIT_BRACES
+static pthread_once_t once_control = { PTHREAD_ONCE_INIT };
+#else
 static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+#endif
 # elif defined(_WIN32)
 #  include <windows.h>
 static DWORD glob_tls_idx = TLS_OUT_OF_INDEXES;
@@ -91,7 +95,11 @@ struct sg_named_mutex {
 	pthread_mutex_t mutex;
 };
 
+#ifdef NEED_PTHREAD_MUTEX_INITIALIZER_BRACES
+static struct sg_named_mutex glob_lock = { "statgrab", { PTHREAD_MUTEX_INITIALIZER } };
+#else
 static struct sg_named_mutex glob_lock = { "statgrab", PTHREAD_MUTEX_INITIALIZER };
+#endif
 static struct sg_named_mutex *required_locks = NULL;
 static size_t num_required_locks = 0;
 static unsigned initialized = 0;
