@@ -67,7 +67,7 @@ int main(int argc, char **argv){
 
 		tm = localtime(&users[x].login_time);
 		strftime(ltbuf, sizeof(ltbuf), "%c", tm);
-		printf( "%16s %16s %24s %8d %24s\n", users[x].login_name, users[x].device, users[x].hostname, users[x].pid, ltbuf );
+		printf( "%16s %16s %24s %8d %24s\n", users[x].login_name, users[x].device, users[x].hostname, (int) users[x].pid, ltbuf );
 	}
 
 	exit(0);

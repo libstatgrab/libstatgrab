@@ -363,7 +363,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			continue;
 		}
 
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/psinfo", pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/psinfo", (int) pids_in_proc_dir->items[pid_item]);
 		if( ( f = fopen(filename, "r") ) == NULL ) {
 			/* Open failed.. Process since vanished, or the path was too long.
 			 * Ah well, move onwards to the next one */
@@ -409,7 +409,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			break;
 		}
 
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/usage", pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/usage", (int) pids_in_proc_dir->items[pid_item]);
 		if( ( f = fopen(filename, "r") ) != NULL ) {
 
 			fread(&process_usage, sizeof(process_usage), 1, f);
