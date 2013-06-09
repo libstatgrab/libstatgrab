@@ -782,8 +782,6 @@ int main(int argc, char **argv){
 
 	time_t last_update = 0;
 
-	WINDOW *window;
-
 	extern int errno;
 
 	int delay=2;
@@ -860,7 +858,7 @@ int main(int argc, char **argv){
 	cbreak();
 	noecho();
 	timeout(delay * 1000);
-	window=newwin(0, 0, 0, 0);
+	newwin(0, 0, 0, 0);
 	clear();
 
 	if(!get_stats()){
