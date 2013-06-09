@@ -162,36 +162,20 @@ typedef bool _Bool;
 # include <libgen.h>
 #endif
 
-#if HAVE_WINSOCK2_H
-# include <winsock2.h>
-# if HAVE_WS2TCPIP_H
-#  include <ws2tcpip.h>
-# endif
-# if HAVE_WSPIAPI_H
-#  include <wspiapi.h>
-# endif
-#elif HAVE_WINSOCK_H
-  /* IIRC winsock.h must be included before windows.h */
-# include <winsock.h>
-#else
-# ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-# endif
-# ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-# endif
-# ifdef HAVE_NETDB_H
-#  include <netdb.h>
-# endif
-# ifdef HAVE_ARPA_INET_H
-#  include <arpa/inet.h>
-# endif
-# ifdef HAVE_NET_IF_H
-#  include <net/if.h>
-# endif
-#endif
-
 #ifdef _WIN32
+# ifdef HAVE_WINSOCK2_H
+#  include <winsock2.h>
+#  if HAVE_WS2TCPIP_H
+#   include <ws2tcpip.h>
+#  endif
+#  if HAVE_WSPIAPI_H
+#   include <wspiapi.h>
+#  endif
+# elif defined(HAVE_WINSOCK_H)
+  /* IIRC winsock.h must be included before windows.h */
+#  include <winsock.h>
+# endif
+
 # ifdef HAVE_IO_H
 #  include <io.h>
 # endif
@@ -212,6 +196,22 @@ typedef bool _Bool;
 #  include <lm.h>
 # endif
 # include "win32.h"
+#else
+# ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+# endif
+# ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+# endif
+# ifdef HAVE_NETDB_H
+#  include <netdb.h>
+# endif
+# ifdef HAVE_ARPA_INET_H
+#  include <arpa/inet.h>
+# endif
+# ifdef HAVE_NET_IF_H
+#  include <net/if.h>
+# endif
 #endif
 
 #if 0

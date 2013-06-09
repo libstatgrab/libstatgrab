@@ -59,12 +59,12 @@ typedef struct sg_vector_init_info {
 
 #ifndef NDEBUG
 typedef struct sg_vector {
-	unsigned start_eye;
+	size_t start_eye;
 	size_t used_count;
 	size_t alloc_count;
 	size_t block_shift;
 	struct sg_vector_init_info info;
-	unsigned final_eye;
+	size_t final_eye;
 } sg_vector;
 __sg_private sg_error sg_prove_vector(const sg_vector *vec);
 #else
@@ -85,7 +85,7 @@ __sg_private struct sg_vector *sg_vector_create(size_t block_size, size_t alloc_
 __sg_private void sg_vector_clear(struct sg_vector *vector);
 
 #define VECTOR_CREATE(type, block_size) \
-	sg_vector_create(block_size, block_size, 0, & VECTOR_INIT_INFO(type))
+	sg_vector_create((size_t)(block_size), (size_t)(block_size), 0, & VECTOR_INIT_INFO(type))
 #define VECTOR_CLEAR(vector) \
 	sg_vector_clear(vector)
 
@@ -98,7 +98,9 @@ __sg_private struct sg_vector *sg_vector_resize(struct sg_vector *vector, size_t
 __sg_private void sg_vector_free(struct sg_vector *vector);
 
 #define VECTOR_CREATE_OR_RESIZE(vector, new_count, type) \
-	vector ? sg_vector_resize(vector, new_count) : sg_vector_create(new_count, new_count, new_count, & VECTOR_INIT_INFO(type))
+	vector ? sg_vector_resize(vector, (size_t)(new_count)) \
+	       : sg_vector_create((size_t)(new_count), (size_t)(new_count), \
+				  (size_t)(new_count), & VECTOR_INIT_INFO(type))
 
 struct sg_vector_size_helper {
 	struct sg_vector v;
@@ -126,7 +128,7 @@ struct sg_vector_size_helper {
 #define VECTOR_UPDATE(vectorptr,new_count,data,datatype) \
 	do { \
 		if( NULL != (*(vectorptr) = VECTOR_CREATE_OR_RESIZE(*(vectorptr), new_count, datatype)) ){ \
-			assert(VECTOR_ITEM_COUNT(*(vectorptr)) == ((size_t)new_count)); \
+			assert(VECTOR_ITEM_COUNT(*(vectorptr)) == ((size_t)(new_count))); \
 			data = (datatype *)(VECTOR_DATA(*(vectorptr))); \
 		} \
 		else if( new_count == 0 ) {\
