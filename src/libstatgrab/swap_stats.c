@@ -303,7 +303,7 @@ again:
 		}
 # if defined(HAVE_STRUCT_XSWDEV) && defined(HAVE_STRUCT_XSWDEV_SIZE)
 		else {
-			if( n >= (size / xswbuf->xsw_size) )
+			if( ((size_t)n) >= (size / xswbuf->xsw_size) )
 				break;
 			xswptr = xswbuf + n;
 		}
