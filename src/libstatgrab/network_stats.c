@@ -48,15 +48,16 @@ sg_network_io_stats_item_copy(sg_network_io_stats *d, const sg_network_io_stats 
 	return SG_ERROR_NONE;
 }
 
-static long long
-transfer_diff(long long new, long long old){
+static unsigned long long
+transfer_diff(unsigned long long new, unsigned long long old){
 #if defined(SOL7) || defined(LINUX) || defined(FREEBSD) || defined(DFBSD) || defined(OPENBSD) || defined(WIN32)
 	/* 32-bit quantities, so we must explicitly deal with wraparound. */
 #define MAXVAL 0x100000000LL
-	if (new >= old) {
+	long long cmp_new = (long long)new, cmp_old = (long long)old;
+	if (cmp_new >= cmp_old) {
 		return new - old;
 	} else {
-		return MAXVAL + new - old;
+		return (unsigned long long)(MAXVAL + cmp_new - cmp_old);
 	}
 #else
 	/* 64-bit quantities, so plain subtraction works. */
