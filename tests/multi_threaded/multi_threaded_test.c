@@ -193,15 +193,16 @@ main(int argc, char **argv) {
 		TRACE_LOG( "multi_threaded", "Wait for threads and cleanup" );
 		do {
 			struct timespec ts = { 1, 0 };
+			struct timeval tv;
+
+			gettimeofday(&tv, NULL);
+			ts.tv_sec += tv.tv_sec;
 
 			rc = pthread_mutex_lock(&mutex);
 			prove_libcall("pthread_mutex_lock", rc);
 
 			pthread_cond_timedwait(&cond, &mutex, &ts);
 			prove_libcall("pthread_cond_timedwait", rc);
-
-			rc = pthread_mutex_unlock(&mutex);
-			prove_libcall("pthread_mutex_unlock", rc);
 
 			ok = 0;
 			for( i = 0; i < nfuncs; ++i ) {
@@ -214,6 +215,10 @@ main(int argc, char **argv) {
 					++ok;
 				}
 			}
+
+			rc = pthread_mutex_unlock(&mutex);
+			prove_libcall("pthread_mutex_unlock", rc);
+
 			if( ok != nfuncs )
 				printf( "---------------\n" );
 			fflush(stdout);
