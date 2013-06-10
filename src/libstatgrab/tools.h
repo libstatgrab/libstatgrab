@@ -448,7 +448,7 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 # ifdef __ICC
 #  define offsetof(type,memb) ((size_t)(((char *)(&((type*)0)->memb)) - ((char *)0)))
 # else
-#  define offsetof(type,memb) ((size_t)&((type*)0)->memb)
+#  define offsetof(type,memb) ((size_t)(((char *)(&((type*)0)->memb)) - ((char *)0)))
 # endif
 #endif
 
