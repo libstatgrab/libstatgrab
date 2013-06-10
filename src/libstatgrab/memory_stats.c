@@ -22,6 +22,7 @@
  * $Id$
  */
 
+#define __NEED_SG_GET_SYS_PAGE_SIZE
 #include "tools.h"
 
 #if defined(HAVE_STRUCT_VMTOTAL) && \
@@ -67,7 +68,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	kstat_t *ksp;
 	kstat_named_t *kn;
 # endif
-	long pagesize;
+	ssize_t pagesize;
 #elif defined(LINUX) || defined(CYGWIN)
 #define LINE_BUF_SIZE 256
 	char *line_ptr, line_buf[LINE_BUF_SIZE];
@@ -84,7 +85,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 #elif defined(HAVE_STRUCT_VMTOTAL)
 	struct vmtotal vmtotal;
 	size_t size;
-	int pagesize, page_multiplier;
+	ssize_t pagesize, page_multiplier;
 #ifdef HW_PHYSMEM
 	int mib[2];
 	u_long total_mem;
@@ -96,10 +97,10 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	u_long free_count;
 	u_long cache_count;
 	u_long inactive_count;
-	int pagesize;
+	ssize_t pagesize;
 #elif defined(AIX)
 	perfstat_memory_total_t mem;
-	long long pagesize;
+	ssize_t pagesize;
 #elif defined(WIN32)
 	MEMORYSTATUSEX memstats;
 #endif
@@ -135,7 +136,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	mem_stats_buf->free = ((long long) pstat_dynamic.psd_free) * pstat_static.page_size;
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 #elif defined(AIX)
-	if((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
+	if((pagesize = sg_get_sys_page_size()) == -1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 	}
 
@@ -278,7 +279,9 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	 * To convert this into the number of bytes we need to know the
 	 * page size on this system.
 	 */
-	pagesize = sysconf(_SC_PAGESIZE);
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
 
 	/* The pagesize gives us the base 10 multiplier, so we need to work
 	 * out what the base 2 multiplier is. This means dividing
@@ -304,11 +307,11 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	/* Convert the raw stats to bytes, and return these to the caller
 	 */
-	mem_stats_buf->used = vmtotal.t_rm;   /* total real mem in use */
+	mem_stats_buf->used = (unsigned long long)vmtotal.t_rm;   /* total real mem in use */
 	mem_stats_buf->used <<= page_multiplier;
 	/* XXX scan top source to look how it determines cache size */
 	mem_stats_buf->cache = 0;				  /* no cache stats */
-	mem_stats_buf->free = vmtotal.t_free; /* free memory pages */
+	mem_stats_buf->free = (unsigned long long)vmtotal.t_free; /* free memory pages */
 	mem_stats_buf->free <<= page_multiplier;
 # ifdef HW_PHYSMEM
 	mib[0] = CTL_HW;
@@ -351,7 +354,13 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	 * After that I then need to multiple the anything that used vm.stats to
 	 * get the system statistics by pagesize
 	 */
+#if 0
 	pagesize = getpagesize();
+#else
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
+#endif
 	mem_stats_buf->cache = cache_count * pagesize;
 
 	/* Of couse nothing is ever that simple :) And I have inactive pages to
