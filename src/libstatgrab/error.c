@@ -29,12 +29,12 @@
 #endif
 
 #define ERROR_ARG_MAX 4096
-#define ERROR_OVERRIDE_PROTECTION MAGIC_EYE('e','r','r','e')
 struct sg_error_glob {
 	sg_error error;
 	int errno_value;
 	char error_arg[ERROR_ARG_MAX];
 #if !defined(HAVE_VSNPRINTF)
+#define ERROR_OVERRIDE_PROTECTION MAGIC_EYE('e','r','r','e')
 	unsigned error_override_protection;
 #endif
 };
