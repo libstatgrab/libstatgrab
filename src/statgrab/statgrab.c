@@ -864,6 +864,14 @@ push_item(char const **stack, char const *item, size_t items) {
 	return s;
 }
 
+static int
+sg_is_spc(char ch)
+{
+    unsigned char uch = (unsigned char)ch;
+    int i = (int)((unsigned)uch);
+    return isspace(i);
+}
+
 static char const **
 split_list(char const *list) {
 	char const *l = list;
@@ -871,10 +879,10 @@ split_list(char const *list) {
 	size_t items = 0;
 
 	for(l = list; *l; ) {
-		while(*l && !(isspace(*l) || (',' == *l)))
+		while(*l && !(sg_is_spc(*l) || (',' == *l)))
 			++l;
 		sp = push_item(sp, strndup(list, l-list), items++);
-		while(*l && (isspace(*l) || (',' == *l)))
+		while(*l && (sg_is_spc(*l) || (',' == *l)))
 			++l;
 		list = l;
 	}
@@ -904,7 +912,7 @@ set_valid_filesystems(char const *fslist) {
 	char const **newfs;
 	char const **given_fs;
 
-	while(isspace(*fslist))
+	while(sg_is_spc(*fslist))
 		++fslist;
 	if('!' == *fslist) {
 		size_t new_items = 0, given_items = 0;
@@ -914,7 +922,7 @@ set_valid_filesystems(char const *fslist) {
 			sg_die("sg_get_valid_filesystems()", 1);
 
 		++fslist;
-		while(*fslist && isspace(*fslist))
+		while(*fslist && sg_is_spc(*fslist))
 			++fslist;
 
 		given_fs = split_list(fslist);
