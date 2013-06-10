@@ -36,18 +36,18 @@ AC_DEFUN([AX_CHECK_TYPE_SIGN_CHECK], [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$2])
 ])
 
 AC_DEFUN([AX_CHECK_TYPE_SIZE_CMP], [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$3])],
-  [int sizechk[[sizeof($1) == sizeof($2)]];
+  [int sizechk[[(sizeof($1) == sizeof($2)) * 2 - 1]];
   unsigned scs = sizeof(sizechk);
   printf("%u\n", scs); /* avoid -Wunused ... */
   ])
 ])
 
 AC_DEFUN([AX_CHECK_TYPE_FMT_CHECK], [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$3])],
-       [$1 test$1; sscanf("1234567890", "$2", &test$1); printf("$2\n", test$1);])
+  [$1 test$1; sscanf("1234567890", "$2", &test$1); printf("$2\n", test$1);])
 ])
 
 AC_DEFUN([AX_CHECK_TYPE_FMT], [
-  define([Name],[translit([$1],[ ], [_])])
+  define([Name],[translit([$1], [ ], [_])])
   define([NAME],[translit([$1], [ abcdefghijklmnopqrstuvwxyz], [_ABCDEFGHIJKLMNOPQRSTUVWXYZ])])
   AC_REQUIRE([AC_TYPE_][]NAME)dnl
   AC_CACHE_CHECK([for format string for $1], [ax_cv_type_fmt_]Name, [
@@ -81,3 +81,28 @@ AC_DEFUN([AX_CHECK_TYPE_FMT], [
 
 AC_DEFUN([AX_CHECK_TYPES_FMT], [m4_foreach_w([AX_Type], [$1], [
 AX_CHECK_TYPE_FMT(AX_Type, [$2])])])
+
+AC_DEFUN([AX_CHECK_ALIGNOF], [
+  define([Name],[translit([$1], [ ], [_])])
+  define([NAME],[translit([$1], [ abcdefghijklmnopqrstuvwxyz], [_ABCDEFGHIJKLMNOPQRSTUVWXYZ])])
+  AC_CACHE_CHECK([whether $1 needs alignment helper], [ax_cv_alignment_helper_]Name, [
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$2])
+#if defined(__ICC) && defined(offsetof)
+# undef offsetof
+#endif
+
+#ifndef offsetof
+# define offsetof(type,memb) ((unsigned)(((char *)(&((type*)0)->memb)) - ((char *)0)))
+#endif
+
+typedef struct { $1 a; size_t b; } ax_type_alignof_;],
+    [int __ax_alignof[[(offsetof(ax_type_alignof_, b) == (unsigned long)((($1 *)0)+1)) * 2 - 1]];
+     unsigned acs = sizeof(__ax_alignof);
+     printf("%u\n", acs); /* avoid -Wunused ... */]
+    )],
+    [ax_cv_alignment_helper_[]Name[]="no"], [ax_cv_alignment_helper_[]Name[]="yes"])
+  ])
+
+  AS_IF([test "$ax_cv_alignment_helper_[]Name" = "no"],
+    [AC_DEFINE([NAME[]_ALIGN_OK], [1], [Defined with a true value when $1 is well aligned])])
+])

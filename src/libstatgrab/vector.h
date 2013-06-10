@@ -102,6 +102,15 @@ __sg_private void sg_vector_free(struct sg_vector *vector);
 	       : sg_vector_create((size_t)(new_count), (size_t)(new_count), \
 				  (size_t)(new_count), & VECTOR_INIT_INFO(type))
 
+#ifdef STRUCT_SG_VECTOR_ALIGN_OK
+#define VECTOR_SIZE ((size_t)(((struct sg_vector *)0) + 1))
+#define VECTOR_DATA(vector) \
+	(vector ? (void *)(vector+1) : NULL)
+#define VECTOR_ADDR_ARITH(ptr) \
+	(((struct sg_vector *)ptr)-1)
+#define VECTOR_ADDRESS(ptr) \
+	(ptr ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_ADDR_ARITH(ptr)) ? VECTOR_ADDR_ARITH(ptr) : NULL ) : NULL)
+#else
 struct sg_vector_size_helper {
 	struct sg_vector v;
 	long long ll;
@@ -118,6 +127,7 @@ struct sg_vector_size_helper {
 /* Return the vector for a data */
 #define VECTOR_ADDRESS(ptr) \
 	((ptr) ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_ADDR_ARITH(ptr)) ? VECTOR_ADDR_ARITH(ptr) : NULL ) : NULL)
+#endif
 
 /* Return the current size of a vector. */
 #define VECTOR_ITEM_COUNT(vector) \

@@ -187,6 +187,34 @@ AC_INCLUDES_DEFAULT
 
 AX_CHECK_TYPES_FMT([pid_t uid_t gid_t time_t])
 
+AX_CHECK_ALIGNOF([struct sg_vector], [AC_INCLUDES_DEFAULT
+struct sg_vector_init_info {
+        size_t item_size;
+        void * init_fn;
+        void * copy_fn;
+        void * compute_diff_fn;
+        void * compare_fn;
+        void * destroy_fn;
+};
+#ifndef NDEBUG
+struct sg_vector {
+        size_t start_eye;
+        size_t used_count;
+        size_t alloc_count;
+        size_t block_shift;
+        struct sg_vector_init_info info;
+        size_t final_eye;
+};
+#else
+struct sg_vector {
+        size_t used_count;
+        size_t alloc_count;
+        size_t block_shift;
+        struct sg_vector_init_info info;
+};
+#endif
+])
+
 AC_CHECK_TYPES([struct statvfs], , , [
 AC_INCLUDES_DEFAULT
 #include <sys/statvfs.h>
