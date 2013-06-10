@@ -276,7 +276,7 @@ init_valid_fs_types(void) {
 	const char *int_valid_fs[] = VALID_FS_TYPES;
 	struct vfsconf *vfsp = 0;
 	size_t buflen;
-	unsigned int nbvfs = 0, k;
+	int nbvfs = 0, k;
 	int mib[4] = { CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM };
 
 	buflen = sizeof(nbvfs);
@@ -295,8 +295,8 @@ init_valid_fs_types(void) {
 	}
 	if( vfsp ) {
 		mib[2] = VFS_CONF;
-		for( k = 0; k < nbvfs && k < ((unsigned)INT_MAX); ++k ) {
-			mib[3] = (int)(k + 1);
+		for( k = 0; k < nbvfs; ++k ) {
+			mib[3] = k + 1;
 			buflen = sizeof(vfsp[k]);
 			if( sysctl(mib, 4, &vfsp[k], &buflen, (void *)0, (size_t)0) < 0 ) {
 				if (errno == EOPNOTSUPP || errno == ENOTSUP) {
@@ -817,13 +817,12 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 		return SG_ERROR_NONE;
 	}
 
-	fs_count *= sizeof(*mntbuf);
-	mntbuf = malloc( (size_t)fs_count );
+	mntbuf = malloc( sizeof(*mntbuf) * (size_t)fs_count );
 	if( NULL == mntbuf ) {
 		return_set_mnt_error(SG_ERROR_MALLOC, #GETMOUNTS_FN);
 	}
 
-	if( fs_count != GETMOUNTS_FN(mntbuf, fs_count, GETMOUNTS_FLAG) ) {
+	if( fs_count != GETMOUNTS_FN(mntbuf, fs_count * sizeof(*mntbuf), GETMOUNTS_FLAG) ) {
 		free(mntbuf);
 		return_set_mnt_error(SG_ERROR_GETMNTINFO, #GETMOUNTS_FN);
 	}
