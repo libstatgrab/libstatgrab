@@ -33,29 +33,30 @@ AC_DEFUN([AX_CHECK_TYPE_FMT_CHECK], [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$3])]
 AC_DEFUN([AX_CHECK_TYPE_FMT], [
   define([Name],[translit([$1],[ ], [_])])
   define([NAME],[translit([$1], [ abcdefghijklmnopqrstuvwxyz], [_ABCDEFGHIJKLMNOPQRSTUVWXYZ])])
-dnl AC_REQUIRE([AC_TYPE_][]NAME)dnl
+  AC_REQUIRE([AC_TYPE_][]NAME)dnl
   AC_CACHE_CHECK([for format string for $1], [ax_cv_type_fmt_]Name, [
+    ax_save_[]_AC_LANG_ABBREV[]_werror_flag="$ac_[]_AC_LANG_ABBREV[]_werror_flag"
+    AC_LANG_WERROR()
     AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIGN_CHECK([$1], [$2])], [
       AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [unsigned int], [$2])], [
-        AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%u], [$2])], [ax_cv_type_fmt_[]Name[]="%u"])], [
+        AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%u], [$2])], [ax_cv_type_fmt_[]Name[]="%u"])])
+      AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [
 	AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [unsigned long], [$2])], [
-	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%lu], [$2])], [ax_cv_type_fmt_[]Name[]="%lu"])], [
-	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [unsigned long long], [$2])], [
-	    AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%llu], [$2])], [ax_cv_type_fmt_[]Name[]="%llu"])])
-	  ]
-	)]
-      )
+	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%lu], [$2])], [ax_cv_type_fmt_[]Name[]="%lu"])])])
+      AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [
+	AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [unsigned long long], [$2])], [
+	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%llu], [$2])], [ax_cv_type_fmt_[]Name[]="%llu"])])])
     ], [
       AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [int], [$2])], [
-        AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%d], [$2])], [ax_cv_type_fmt_[]Name[]="%d"])], [
-	AC_LINK_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [long], [$2])], [
-	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%ld], [$2])], [ax_cv_type_fmt_[]Name[]="%ld"])], [
-	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [long long], [$2])], [
-	    AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%lld], [$2])], [ax_cv_type_fmt_[]Name[]="%lld"])])
-	  ]
-	)]
-      )
+        AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%d], [$2])], [ax_cv_type_fmt_[]Name[]="%d"])])
+      AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [
+	AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [long], [$2])], [
+	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%ld], [$2])], [ax_cv_type_fmt_[]Name[]="%ld"])])])
+      AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [
+	AC_COMPILE_IFELSE([AX_CHECK_TYPE_SIZE_CMP([$1], [long long], [$2])], [
+	  AC_COMPILE_IFELSE([AX_CHECK_TYPE_FMT_CHECK([$1], [%lld], [$2])], [ax_cv_type_fmt_[]Name[]="%lld"])])])
     ])
+    ac_[]_AC_LANG_ABBREV[]_werror_flag="$ax_save_[]_AC_LANG_ABBREV[]_werror_flag"
   ])
 
   AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [AC_MSG_WARN([Unable to find format string for $1])],
