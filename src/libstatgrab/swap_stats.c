@@ -285,7 +285,7 @@ again:
 			mib[mibsize] = n;
 			size = sizeof(xsw);
 
-			if (sysctl(mib, mibsize + 1, &xsw, &size, NULL, 0) < 0) {
+			if (sysctl(mib, (unsigned)(mibsize + 1), &xsw, &size, NULL, 0) < 0) {
 				if (errno == ENOENT)
 					break;
 # if defined(HAVE_STRUCT_XSWDEV)
@@ -336,12 +336,12 @@ again:
 		free( xswbuf );
 # endif
 
-	swap_stats_buf->total *= pagesize;
-	swap_stats_buf->used *= pagesize;
+	swap_stats_buf->total *= (size_t)pagesize;
+	swap_stats_buf->used *= (size_t)pagesize;
 	if( 0 == swap_stats_buf->free )
 		swap_stats_buf->free = swap_stats_buf->total - swap_stats_buf->used;
 	else
-		swap_stats_buf->free *= pagesize;
+		swap_stats_buf->free *= (size_t)pagesize;
 #elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
 	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP2");

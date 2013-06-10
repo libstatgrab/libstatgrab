@@ -509,7 +509,7 @@ sysinfo_again:
 	host_info_buf->bitwidth = get_bitwidth_by_arch_name(arch_name);
 # endif
 	host_info_buf->host_state = sg_unknown_configuration; /* details must be analysed "manually", no syscall */
-	host_info_buf->maxcpus = ncpus;
+	host_info_buf->maxcpus = (unsigned)ncpus;
 # if defined(HW_NCPUONLINE)
 	/* use knowledge about number of cpu's online, when available instead of assuming all of them */
 	mib[0] = CTL_HW;
@@ -519,7 +519,7 @@ sysinfo_again:
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_NCPUONLINE" );
 	}
 # endif
-	host_info_buf->ncpus = ncpus;
+	host_info_buf->ncpus = (unsigned)ncpus;
 
 #elif defined(AIX)
 	if(perfstat_cpu_total(NULL, &cpu_total, sizeof(cpu_total), 1) != 1) {

@@ -117,7 +117,7 @@ VECTOR_INIT_INFO_EMPTY_INIT(sg_process_count);
  * permissions of accessed files - no reason to die in init() */
 EASY_COMP_SETUP(process,SG_PROC_IDX_COUNT,NULL);
 
-#if HAVE_PROCFS
+#ifdef HAVE_PROCFS
 struct pids_in_proc_dir_t {
 	size_t nitems;
 	struct pids_in_proc_dir_t *next;
@@ -239,7 +239,7 @@ adjust_procname_cmndline( char *proctitle, size_t len ) {
 	char *p, *pt;
 
 	/* XXX OpenBSD prepends char *[] adressing the several embedded argv items */
-	if( len && ( (size_t)(((char **)(proctitle))[0] - proctitle) <= len ) ) {
+	if( len && ( (size_t)((((char **)(proctitle))[0]) - proctitle) <= len ) ) {
 		pt = p = ((char **)(proctitle))[0];
 		len -= pt - proctitle;
 	}
@@ -806,7 +806,7 @@ print_kernel_proctitle:
 
 again:
 	size = 0;
-	if( -1 == ( rc = sysctl(mib, i, NULL, &size, NULL, 0) ) ) {
+	if( -1 == ( rc = sysctl(mib, (unsigned)i, NULL, &size, NULL, 0) ) ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
 	}
 	if( 0 == ( tmp = sg_realloc( kp_stats, size ) ) ) {
@@ -816,7 +816,7 @@ again:
 	}
 
 	kp_stats = tmp;
-	if( -1 == (rc = sysctl(mib, i, kp_stats, &size, NULL, (size_t)0) ) ) {
+	if( -1 == (rc = sysctl(mib, (unsigned)i, kp_stats, &size, NULL, (size_t)0) ) ) {
 		if( errno == ENOMEM ) {
 			goto again;
 		}
@@ -1065,10 +1065,8 @@ again:
 			if( -1 == ( rc = sysctl(mib, rc, proctitle, &size, NULL, 0) ) ) {
 				long failing_pid = (long)proc_stats_ptr[i].pid;
 #  if defined(KERN_PROCARGS2)
-				if( EINVAL == errno ) {
+				if( EINVAL == errno )
 					goto print_kernel_proctitle;
-					continue; /* EPERM ^^ */
-				}
 #  endif
 				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=%ld", p, failing_pid);
 			}
