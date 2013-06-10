@@ -85,6 +85,7 @@ AX_CHECK_TYPE_FMT(AX_Type, [$2])])])
 AC_DEFUN([AX_CHECK_ALIGNOF], [
   define([Name],[translit([$1], [ ], [_])])
   define([NAME],[translit([$1], [ abcdefghijklmnopqrstuvwxyz], [_ABCDEFGHIJKLMNOPQRSTUVWXYZ])])
+  AC_REQUIRE([AC_TYPE_UNSIGNED_LONG_LONG_INT])
   AC_CACHE_CHECK([whether $1 needs alignment helper], [ax_cv_alignment_helper_]Name, [
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$2])
 #if defined(__ICC) && defined(offsetof)
@@ -95,7 +96,13 @@ AC_DEFUN([AX_CHECK_ALIGNOF], [
 # define offsetof(type,memb) ((unsigned)(((char *)(&((type*)0)->memb)) - ((char *)0)))
 #endif
 
-typedef struct { $1 a; size_t b; } ax_type_alignof_;],
+typedef struct { $1 a;
+#ifdef HAVE_UNSIGNED_LONG_LONG_INT
+unsigned long long b;
+#else
+size_t b;
+#endif
+} ax_type_alignof_;],
     [int __ax_alignof[[(offsetof(ax_type_alignof_, b) == (unsigned long)((($1 *)0)+1)) * 2 - 1]];
      unsigned acs = sizeof(__ax_alignof);
      printf("%u\n", acs); /* avoid -Wunused ... */]
