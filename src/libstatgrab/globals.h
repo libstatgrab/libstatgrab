@@ -70,7 +70,7 @@ void *sg_comp_get_tls(unsigned id);
 		REQUIRED_COMP_LOCKS(comp)		\
 		&sg_##comp##_status			\
 	};						\
-	static int sg_##comp##_glob_id
+	static unsigned int sg_##comp##_glob_id
 
 #define GLOBAL_GET_TLS(comp) (struct sg_##comp##_glob *)(sg_comp_get_tls(sg_##comp##_glob_id))
 #define GLOBAL_SET_ID(comp,id) sg_##comp##_glob_id = (id)
