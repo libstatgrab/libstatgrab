@@ -73,6 +73,22 @@ ${ac_includes_default}
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_C_CONST
+AC_C_INLINE
+AC_TYPE_INT8_T
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_UID_T
+AC_TYPE_LONG_LONG_INT
+AC_TYPE_UNSIGNED_LONG_LONG_INT
 
 dnl Check for extra flags to enable some kind of behavior
 AC_CHECK_DECL([_AIX],[ac_cv_need_minus_d_linux_source_compat="yes"; ac_cv_need_minus_d_all_source="yes"])
@@ -166,6 +182,8 @@ AC_INCLUDES_DEFAULT
 		AC_CHECK_FUNCS([strncpy])
 	]
 )
+
+AX_CHECK_TYPES_FMT([pid_t uid_t gid_t time_t])
 
 AC_CHECK_TYPES([struct statvfs], , , [
 AC_INCLUDES_DEFAULT

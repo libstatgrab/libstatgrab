@@ -211,7 +211,7 @@ scan_proc_dir( const char *path_to_proc_dir ) {
 		pid_t pid;
 		if( NULL == result )
 			break;
-		if( ( pid = atoi( dir_entry->d_name ) ) != 0 ) {
+		if( 0 != sscanf(dir_entry->d_name, FMT_PID_T, &pid) ) {
 			wrk = add_pid_to_pids_in_proc_dir( pid, wrk );
 			if( NULL == wrk ) {
 				free_pids_in_proc_dir(cnt, true);
@@ -363,7 +363,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			continue;
 		}
 
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/psinfo", (int) pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/psinfo", pids_in_proc_dir->items[pid_item]);
 		if( ( f = fopen(filename, "r") ) == NULL ) {
 			/* Open failed.. Process since vanished, or the path was too long.
 			 * Ah well, move onwards to the next one */
@@ -409,7 +409,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			break;
 		}
 
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/usage", (int) pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/usage", pids_in_proc_dir->items[pid_item]);
 		if( ( f = fopen(filename, "r") ) != NULL ) {
 
 			fread(&process_usage, sizeof(process_usage), 1, f);
@@ -426,21 +426,10 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 	}
 #elif defined(LINUX)
 
-/* signed:	-1 / 2 -> 0
- *		0 % 4 -> 0
- *		0 + 1 -> 1
- * unsigned:	0xff / 2 -> 0x7f
- *		0x7f % 4 -> 3
- *		3 + 1 -> 4
- */
-#define UID_SCANF_FMT (sizeof(int[(((uid_t)-1)/2)%4+1]) == sizeof(int[1]) ? "Uid:\t%d\t%d\t%*d\t%*d\n" : "Uid:\t%u\t%u\t%*u\t%*u\n" )
-#define GID_SCANF_FMT (sizeof(int[(((gid_t)-1)/2)%4+1]) == sizeof(int[1]) ? "Gid:\t%d\t%d\t%*d\t%*d\n" : "Gid:\t%u\t%u\t%*u\t%*u\n" )
-#define TIME_T_SCANF_FMT (sizeof(int[(((time_t)-1)/2)%4+1]) == sizeof(int[1]) ? "%ld %*d" : "%lu %*d" )
-
 	if( ( f = fopen(PROC_LOCATION "/uptime", "r") ) == NULL ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_OPEN, PROC_LOCATION "/uptime");
 	}
-	if( ( fscanf(f, TIME_T_SCANF_FMT, &uptime) ) != 1 ) {
+	if( ( fscanf(f, FMT_TIME_T " %*d", &uptime) ) != 1 ) {
 		fclose(f);
 		RETURN_WITH_SET_ERROR("process", SG_ERROR_PARSE, NULL);
 	}
@@ -469,7 +458,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			continue;
 		}
 
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/stat", pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/stat", pids_in_proc_dir->items[pid_item]);
 		if( ( f = fopen(filename, "r") ) == NULL ) {
 			/* Open failed.. Process since vanished, or the path was too long.
 			 * Ah well, move onwards to the next one */
@@ -479,7 +468,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + 1, proc_stats_ptr, sg_process_stats);
 
-		fscanf(f, "%d %4096s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n",
+		fscanf(f, FMT_PID_T "%4096s %c " FMT_PID_T " " FMT_PID_T " %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n",
 			   &proc_stats_ptr[proc_items].pid, read_buf, &s, &proc_stats_ptr[proc_items].parent,
 			   &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
 			   &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
@@ -526,7 +515,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 		fclose(f);
 
 		/* uid / gid */
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/status", pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/status", pids_in_proc_dir->items[pid_item]);
 		if ((f=fopen(filename, "r")) == NULL) {
 			/* Open failed.. Process since vanished, or the path was too long.
 			 * Ah well, move onwards to the next one */
@@ -540,14 +529,16 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			++pid_item;
 			continue;
 		}
-		sscanf(read_buf, UID_SCANF_FMT, &proc_stats_ptr[proc_items].uid, &proc_stats_ptr[proc_items].euid);
+		sscanf(read_buf, "Uid:\t" FMT_UID_T "\t" FMT_UID_T "\t%*d\t%*d\n",
+		       &proc_stats_ptr[proc_items].uid, &proc_stats_ptr[proc_items].euid);
 
 		if( sg_f_read_line(f, read_buf, sizeof(read_buf), "Gid:") == NULL ) {
 			fclose(f);
 			++pid_item;
 			continue;
 		}
-		sscanf(read_buf, GID_SCANF_FMT, &proc_stats_ptr[proc_items].gid, &proc_stats_ptr[proc_items].egid);
+		sscanf(read_buf, "Gid:\t" FMT_GID_T "\t" FMT_GID_T "\t%*d\t%*d\n",
+		       &proc_stats_ptr[proc_items].gid, &proc_stats_ptr[proc_items].egid);
 
 		if( sg_f_read_line(f, read_buf, sizeof(read_buf), "voluntary_ctxt_switches:") != NULL )
 			sscanf(read_buf, "voluntary_ctxt_switches:\t%llu", &proc_stats_ptr[proc_items].voluntary_context_switches);
@@ -565,7 +556,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 		fclose(f);
 
 		/* proctitle */
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/%d/cmdline", pids_in_proc_dir->items[pid_item]);
+		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/cmdline", pids_in_proc_dir->items[pid_item]);
 
 		if( ( fd = open(filename, O_RDONLY) ) == -1 ) {
 			/* Open failed.. Process since vanished, or the path was too long.
