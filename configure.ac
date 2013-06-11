@@ -550,6 +550,8 @@ AC_INCLUDES_DEFAULT
 		dnl following 2 are assumed because Darwin was derived from FreeBSD5 - prove it
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
 		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
+		AX_APPEND_TO_VAR([LINKFLAGS], ["-framework IOKit" "-framework CoreFoundation"])
+		#LINKFLAGS="${LINKFLAGS} -framework IOKit"
 	],
 	[netbsd*], [
 		AC_DEFINE(NETBSD, , [Building on NetBSD])

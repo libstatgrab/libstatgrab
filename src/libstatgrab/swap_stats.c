@@ -82,16 +82,17 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 	char line_buf[LINE_BUF_SIZE];
 	unsigned long long value;
 	unsigned matches = 0;
-#elif defined(HAVE_STRUCT_XSWDEV) || defined(HAVE_STRUCT_XSW_USAGE)
-	int pagesize;
-# if defined(HAVE_STRUCT_XSWDEV)
+#elif defined(HAVE_STRUCT_XSWDEV)
+	ssize_t pagesize;
 	struct xswdev xsw;
 	struct xswdev *xswbuf = NULL, *xswptr = NULL;
-# elif defined(HAVE_STRUCT_XSW_USAGE)
-	struct xsw_usage xsw;
-# endif
-	int mib[16], n;
+	int n;
+	int mib[16];
 	size_t mibsize, size;
+#elif defined(HAVE_STRUCT_XSW_USAGE)
+	int mib[2] = {CTL_VM, VM_SWAPUSAGE};
+	struct xsw_usage xsw;
+	size_t mibsize = 2, size = sizeof(xsw);
 #elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
 	int mib[2] = { CTL_VM, VM_UVMEXP2 };
 	struct uvmexp_sysctl uvm;
@@ -249,10 +250,11 @@ again:
 	}
 
 	swap_stats_buf->used = swap_stats_buf->total - swap_stats_buf->free;
-#elif defined(HAVE_STRUCT_XSWDEV) || defined(HAVE_STRUCT_XSW_USAGE)
-	pagesize=getpagesize();
+#elif defined(HAVE_STRUCT_XSWDEV)
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
 
-# if defined(HAVE_STRUCT_XSWDEV)
 	mibsize = 2;
 	if( swapinfo_array ) {
 		size = 0;
@@ -270,38 +272,22 @@ again:
 		mib[0] = swapinfo_mib[0];
 		mib[1] = swapinfo_mib[1];
 	}
-# elif defined(HAVE_STRUCT_XSW_USAGE)
-	mib[0] = CTL_VM;
-	mib[1] = VM_SWAPUSAGE;
-	mibsize = 2;
-# endif
+
 	for (n = 0; ; ++n) {
-# if defined(HAVE_STRUCT_XSWDEV)
-		if( !swapinfo_array )
-# else
-		if( 1 )
-# endif
-		{
+		if( !swapinfo_array ) {
 			mib[mibsize] = n;
 			size = sizeof(xsw);
 
 			if (sysctl(mib, (unsigned)(mibsize + 1), &xsw, &size, NULL, 0) < 0) {
 				if (errno == ENOENT)
 					break;
-# if defined(HAVE_STRUCT_XSWDEV)
-				if( xswbuf )
-					free( xswbuf );
+				free( xswbuf );
 				RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, swapinfo_sysctl_name);
-# else
-				RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, "CTL_VM.VM_SWAPUSAGE" );
-# endif
 			}
 
-# if defined(HAVE_STRUCT_XSWDEV)
 			xswptr = &xsw;
-# endif
 		}
-# if defined(HAVE_STRUCT_XSWDEV) && defined(HAVE_STRUCT_XSWDEV_SIZE)
+# if defined(HAVE_STRUCT_XSWDEV_SIZE)
 		else {
 			if( ((size_t)n) >= (size / xswbuf->xsw_size) )
 				break;
@@ -314,27 +300,17 @@ again:
 
 #  ifdef XSWDEV_VERSION
 		if( xswptr->xsw_version != XSWDEV_VERSION ) {
-			if( xswbuf )
-				free( xswbuf );
+			free( xswbuf );
 			RETURN_WITH_SET_ERROR("swap", SG_ERROR_XSW_VER_MISMATCH, NULL);
 		}
 #  endif
 # endif
 
-# if defined(HAVE_STRUCT_XSWDEV)
 		swap_stats_buf->total += (unsigned long long) xswptr->xsw_nblks;
 		swap_stats_buf->used += (unsigned long long) xswptr->xsw_used;
-# elif defined(HAVE_STRUCT_XSW_USAGE)
-		swap_stats_buf->total += (unsigned long long) xsw.xsu_total;
-		swap_stats_buf->used += (unsigned long long) xsw.xsu_used;
-		swap_stats_buf->free += (unsigned long long) xsw.xsu_avail;
-# endif
 	}
 
-# if defined(HAVE_STRUCT_XSWDEV)
-	if( xswbuf )
-		free( xswbuf );
-# endif
+	free( xswbuf );
 
 	swap_stats_buf->total *= (size_t)pagesize;
 	swap_stats_buf->used *= (size_t)pagesize;
@@ -342,6 +318,16 @@ again:
 		swap_stats_buf->free = swap_stats_buf->total - swap_stats_buf->used;
 	else
 		swap_stats_buf->free *= (size_t)pagesize;
+
+#elif defined(HAVE_STRUCT_XSW_USAGE)
+
+	if (sysctl(mib, (unsigned)mibsize, &xsw, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, "CTL_VM.VM_SWAPUSAGE" );
+	}
+
+	swap_stats_buf->total = (unsigned long long) xsw.xsu_total;
+	swap_stats_buf->used = (unsigned long long) xsw.xsu_used;
+	swap_stats_buf->free = (unsigned long long) xsw.xsu_avail;
 #elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
 	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP2");
