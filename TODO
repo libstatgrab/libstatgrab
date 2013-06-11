@@ -12,3 +12,5 @@
 6) DragonflyBSD & NetBSD testing
 
 7) FreeBSD memory stats; totals don't add up
+
+8) define __NEED_SG_GET_SYS_PAGE_SIZE only when needed
