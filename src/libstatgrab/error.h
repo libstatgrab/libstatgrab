@@ -42,7 +42,7 @@ do { \
 #define SET_ERROR_WITH_ERRNO(comp, code, ...) \
 do { \
 	char *buf = NULL; \
-	sg_set_error_fmt(code, __VA_ARGS__); \
+	sg_set_error_with_errno_fmt(code, __VA_ARGS__); \
 	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
