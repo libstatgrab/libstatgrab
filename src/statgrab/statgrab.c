@@ -493,7 +493,7 @@ populate_proc(void) {
 			return;
 		if( NULL == sg_strperror( &errbuf, &errdet ) )
 			return;
-		printf( "%s\n", errbuf );
+		fprintf( stderr, "%s\n", errbuf );
 	}
 }
 
@@ -774,7 +774,7 @@ print_stats(int argc, char **argv) {
 			}
 
 			if (s == NULL) {
-				printf("Unknown stat %s\n", name);
+				fprintf(stderr, "Unknown stat %s\n", name);
 				continue;
 			}
 
