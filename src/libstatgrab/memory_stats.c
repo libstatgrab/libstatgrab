@@ -86,9 +86,14 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	struct vmtotal vmtotal;
 	size_t size;
 	ssize_t pagesize, page_multiplier;
-#ifdef HW_PHYSMEM
+#if defined(HW_PHYSMEM) || defined(HW_USERMEM)
 	int mib[2];
+# if defined(HW_PHYSMEM)
 	u_long total_mem;
+# endif
+# if defined(HW_USERMEM)
+	u_long user_mem;
+# endif
 #endif
 #elif defined(FREEBSD) || defined(DFBSD)
 	int mib[2];
@@ -323,6 +328,15 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	mem_stats_buf->total = total_mem;
 # else
 	mem_stats_buf->total = (mem_stats_buf->used + mem_stats_buf->free);
+# endif
+# ifdef HW_USERMEM
+	mib[0] = CTL_HW;
+	mib[1] = HW_USERMEM;
+	size = sizeof(user_mem);
+	if (sysctl(mib, 2, &user_mem, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTL, "CTL_HW.HW_USERMEM");
+	}
+	mem_stats_buf->used += total_mem - user_mem;
 # endif
 #elif defined(FREEBSD) || defined(DFBSD)
 	/* Returns bytes */
