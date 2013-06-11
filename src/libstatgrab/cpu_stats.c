@@ -333,7 +333,8 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 	mib[0] = CTL_VM;
 	mib[1] = VM_METER;
 	size = sizeof(vmmeter);
-	if( sysctl( mib, 2, &vmmeter, &size, NULL, 0 ) == 0 ) {
+	memset(&vmmeter, 0, sizeof(vmmeter));
+	if( (sysctl( mib, 2, &vmmeter, &size, NULL, 0 ) == 0) && (size == sizeof(vmmeter)) ) {
 		cpu_stats_buf->context_switches = vmmeter.v_swtch;
 		cpu_stats_buf->syscalls = vmmeter.v_syscall;
 		cpu_stats_buf->syscalls += vmmeter.v_trap;
