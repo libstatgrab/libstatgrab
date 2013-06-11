@@ -82,6 +82,14 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	int mib[2];
 	struct uvmexp uvm;
 	size_t size = sizeof(uvm);
+#elif defined(FREEBSD) || defined(DFBSD)
+	int mib[2];
+	u_long physmem;
+	size_t size;
+	u_long free_count;
+	u_long cache_count;
+	u_long inactive_count;
+	ssize_t pagesize;
 #elif defined(HAVE_STRUCT_VMTOTAL)
 	struct vmtotal vmtotal;
 	size_t size;
@@ -95,14 +103,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	u_long user_mem;
 # endif
 #endif
-#elif defined(FREEBSD) || defined(DFBSD)
-	int mib[2];
-	u_long physmem;
-	size_t size;
-	u_long free_count;
-	u_long cache_count;
-	u_long inactive_count;
-	ssize_t pagesize;
 #elif defined(AIX)
 	perfstat_memory_total_t mem;
 	ssize_t pagesize;
@@ -271,6 +271,61 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	mem_stats_buf->free *= uvm.pagesize;
 
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
+#elif defined(FREEBSD) || defined(DFBSD)
+	/* Returns bytes */
+	mib[0] = CTL_HW;
+	mib[1] = HW_PHYSMEM;
+	size = sizeof(physmem);
+	if (sysctl(mib, 2, &physmem, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTL, "CTL_HW.HW_PHYSMEM");
+	}
+	mem_stats_buf->total = physmem;
+
+	/*returns pages*/
+	size = sizeof(free_count);
+	if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_free_count");
+	}
+
+	size = sizeof(inactive_count);
+	if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive_count , &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_inactive_count");
+	}
+
+	size = sizeof(cache_count);
+	if (sysctlbyname("vm.stats.vm.v_cache_count", &cache_count, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_cache_count");
+	}
+
+	/* Because all the vm.stats returns pages, I need to get the page size.
+	 * After that I then need to multiple the anything that used vm.stats to
+	 * get the system statistics by pagesize
+	 */
+#if 0
+	pagesize = getpagesize();
+#else
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
+#endif
+	mem_stats_buf->cache = cache_count * pagesize;
+
+	/* Of couse nothing is ever that simple :) And I have inactive pages to
+	 * deal with too. So I'm going to add them to free memory :)
+	 */
+	mem_stats_buf->free = (free_count * pagesize) + (inactive_count * pagesize);
+	mem_stats_buf->used = physmem - mem_stats_buf->free;
+#elif defined(WIN32)
+	memstats.dwLength = sizeof(memstats);
+	if (!GlobalMemoryStatusEx(&memstats)) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_MEMSTATUS, NULL);
+	}
+
+	mem_stats_buf->free = memstats.ullAvailPhys;
+	mem_stats_buf->total = memstats.ullTotalPhys;
+	mem_stats_buf->used = mem_stat.total - mem_stat.free;
+	if(read_counter_large(SG_WIN32_MEM_CACHE, &mem_stats_buf->cache))
+		mem_stats_buf->cache = 0;
 #elif defined(HAVE_STRUCT_VMTOTAL)
 	/* The code in this section is based on the code in the OpenBSD
 	 * top utility, located at src/usr.bin/top/machine.c in the
@@ -338,61 +393,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	}
 	mem_stats_buf->used += total_mem - user_mem;
 # endif
-#elif defined(FREEBSD) || defined(DFBSD)
-	/* Returns bytes */
-	mib[0] = CTL_HW;
-	mib[1] = HW_PHYSMEM;
-	size = sizeof(physmem);
-	if (sysctl(mib, 2, &physmem, &size, NULL, 0) < 0) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTL, "CTL_HW.HW_PHYSMEM");
-	}
-	mem_stats_buf->total = physmem;
-
-	/*returns pages*/
-	size = sizeof(free_count);
-	if (sysctlbyname("vm.stats.vm.v_free_count", &free_count, &size, NULL, 0) < 0) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_free_count");
-	}
-
-	size = sizeof(inactive_count);
-	if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive_count , &size, NULL, 0) < 0) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_inactive_count");
-	}
-
-	size = sizeof(cache_count);
-	if (sysctlbyname("vm.stats.vm.v_cache_count", &cache_count, &size, NULL, 0) < 0) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_cache_count");
-	}
-
-	/* Because all the vm.stats returns pages, I need to get the page size.
-	 * After that I then need to multiple the anything that used vm.stats to
-	 * get the system statistics by pagesize
-	 */
-#if 0
-	pagesize = getpagesize();
-#else
-	if((pagesize = sg_get_sys_page_size()) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-#endif
-	mem_stats_buf->cache = cache_count * pagesize;
-
-	/* Of couse nothing is ever that simple :) And I have inactive pages to
-	 * deal with too. So I'm going to add them to free memory :)
-	 */
-	mem_stats_buf->free = (free_count * pagesize) + (inactive_count * pagesize);
-	mem_stats_buf->used = physmem - mem_stats_buf->free;
-#elif defined(WIN32)
-	memstats.dwLength = sizeof(memstats);
-	if (!GlobalMemoryStatusEx(&memstats)) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_MEMSTATUS, NULL);
-	}
-
-	mem_stats_buf->free = memstats.ullAvailPhys;
-	mem_stats_buf->total = memstats.ullTotalPhys;
-	mem_stats_buf->used = mem_stat.total - mem_stat.free;
-	if(read_counter_large(SG_WIN32_MEM_CACHE, &mem_stats_buf->cache))
-		mem_stats_buf->cache = 0;
 #else
 	RETURN_WITH_SET_ERROR("mem", SG_ERROR_UNSUPPORTED, OS_TYPE);
 #endif
