@@ -666,7 +666,9 @@ print_stat_value(const stat_item *s) {
 	case BYTES:
 		v.ull = *(unsigned long long *)pv;
 		if (bytes_scale_factor != 0) {
-			v.ull /= bytes_scale_factor;
+			v.ull >>= (bytes_scale_factor-1);
+			++v.ull;
+			v.ull >>= 1;
 		}
 #ifdef WIN32
 		printf("%I64u", v.ull);
@@ -1001,13 +1003,13 @@ main(int argc, char **argv) {
 			fslist = strdup(optarg);
 			break;
 		case 'K':
-			bytes_scale_factor = 1024;
+			bytes_scale_factor = 10;
 			break;
 		case 'M':
-			bytes_scale_factor = 1024 * 1024;
+			bytes_scale_factor = 20;
 			break;
 		case 'G':
-			bytes_scale_factor = 1024 * 1024 * 1024;
+			bytes_scale_factor = 30;
 			break;
 		default:
 			usage();
