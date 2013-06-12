@@ -593,7 +593,7 @@ sg_set_valid_filesystems(const char *valid_fs[]) {
 		}
 
 		tmp = num_new_valid_fs;
-		while( tmp-- > 0 ) {
+		while( tmp-- ) {
 			sg_error errc;
 			if( SG_ERROR_NONE != ( errc = sg_update_string( &new_valid_fs[tmp], valid_fs[tmp] ) ) ) {
 				WARN_LOG_FMT("disk", "couldn't update index %d for list of valid file systems", tmp);
@@ -685,7 +685,7 @@ static regex_t not_part_re, part_re;
 #endif
 #endif
 
-sg_error
+static sg_error
 sg_disk_init_comp(unsigned id){
 	sg_error rc;
 	GLOBAL_SET_ID(disk,id);
@@ -708,7 +708,7 @@ sg_disk_init_comp(unsigned id){
 	return SG_ERROR_NONE;
 }
 
-void
+static void
 sg_disk_destroy_comp(void)
 {
 #if 0
@@ -1181,16 +1181,13 @@ sg_get_fs_stats_int(sg_vector **fs_stats_vector_ptr){
 
 		i = VECTOR_ITEM_COUNT(tmp);
 		item += i;
-		while( i > 0 ) {
+		while( i ) {
 			 --i; --item;
 			if( is_valid_fs_type(item->fs_type) ) {
 				if( SG_ERROR_NONE != sg_fill_fs_stat_int(item) )
 					continue;
 				BIT_SET(valid, i);
 				++n;
-			}
-			else {
-				/* kick'em out of the list :P */
 			}
 		}
 	}

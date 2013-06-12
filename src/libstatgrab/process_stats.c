@@ -1396,7 +1396,7 @@ sg_get_process_count_int(sg_process_count *process_count_buf, const sg_vector *p
 	process_count_buf->systime = ps->systime;
 
 	/* post increment is intention! */
-	while( proc_count-- > 0 ) {
+	while( proc_count-- ) {
 		switch (ps[proc_count].state) {
 		case SG_PROCESS_STATE_RUNNING:
 			++process_count_buf->running;

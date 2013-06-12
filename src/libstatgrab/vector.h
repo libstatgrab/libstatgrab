@@ -105,9 +105,9 @@ __sg_private void sg_vector_free(struct sg_vector *vector);
 #ifdef STRUCT_SG_VECTOR_ALIGN_OK
 #define VECTOR_SIZE ((size_t)(((struct sg_vector *)0) + 1))
 #define VECTOR_DATA(vector) \
-	(vector ? (void *)(vector+1) : NULL)
+	(vector ? (void *)&((vector)[1]) : NULL)
 #define VECTOR_ADDR_ARITH(ptr) \
-	(((struct sg_vector *)ptr)-1)
+	&(((struct sg_vector *)ptr)[-1])
 #define VECTOR_ADDRESS(ptr) \
 	(ptr ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_ADDR_ARITH(ptr)) ? VECTOR_ADDR_ARITH(ptr) : NULL ) : NULL)
 #else
@@ -141,7 +141,7 @@ struct sg_vector_size_helper {
 			assert(VECTOR_ITEM_COUNT(*(vectorptr)) == ((size_t)(new_count))); \
 			data = (datatype *)(VECTOR_DATA(*(vectorptr))); \
 		} \
-		else if( new_count == 0 ) {\
+		else if( !new_count ) {\
 			data = NULL; \
 		} \
 		else {\

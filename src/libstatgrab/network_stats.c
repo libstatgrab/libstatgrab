@@ -146,7 +146,7 @@ static regex_t network_io_rx;
 #define RX_MATCH_COUNT (8+1)
 #endif
 
-sg_error
+static sg_error
 sg_network_init_comp(unsigned id) {
 	GLOBAL_SET_ID(network,id);
 
@@ -173,7 +173,7 @@ sg_network_init_comp(unsigned id) {
 	return SG_ERROR_NONE;
 }
 
-void
+static void
 sg_network_destroy_comp(void) {
 #ifdef LINUX
 	regfree(&network_io_rx);
@@ -304,7 +304,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 	}
 
 	// save all the PPA information
-	memcpy ((u_char*) ppa_area, (u_char*) ctrl_area + ppa_ack->dl_offset, ppa_ack->dl_length);
+	memcpy ((u_char*) ppa_area, &(((u_char*) ctrl_area)[ppa_ack->dl_offset]), ppa_ack->dl_length);
 	ppa_count = ppa_ack->dl_count;
 
 	for (count = 0, ppa_info = (dl_hp_ppa_info_t*) ppa_area;
@@ -360,11 +360,9 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 			RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_PARSE, "DL_GET_STATISTICS_ACK ppa %u", ppa_lan_number);
 		}
 
-		mib_ptr = (mib_ifEntry*) ((u_char*) ctrl_area + get_statistics_ack->dl_stat_offset);
-
-		if (0 == (mib_ptr->ifOper & 1)) {
+		mib_ptr = (mib_ifEntry *) (((u_char*) ctrl_area) + (size_t)(get_statistics_ack->dl_stat_offset));
+		if (0 == (mib_ptr->ifOper & 1))
 			continue;
-		}
 
 		VECTOR_UPDATE(network_io_stats_vector_ptr, interfaces + 1, network_io_ptr, sg_network_io_stats);
 
@@ -381,7 +379,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 		network_io_ptr[interfaces].ierrors = mib_ptr->ifInErrors;
 		network_io_ptr[interfaces].oerrors = mib_ptr->ifOutErrors;
 #ifdef HPUX11
-		mib_Dot3_ptr = (mib_Dot3StatsEntry *) (void *) ((int) mib_ptr + sizeof (mib_ifEntry));
+		mib_Dot3_ptr = (mib_Dot3StatsEntry *) (((char *) mib_ptr) + sizeof (mib_ifEntry));
 		network_io_ptr[interfaces].collisions = mib_Dot3_ptr->dot3StatsSingleCollisionFrames
 						      + mib_Dot3_ptr->dot3StatsMultipleCollisionFrames;
 #else
