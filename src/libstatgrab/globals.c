@@ -61,17 +61,17 @@ static struct sg_comp_info comp_info[] = {
 
 static size_t glob_size = 0;
 
-#ifdef ENABLE_THREADS
 static void *sg_alloc_globals(void);
 static void sg_destroy_globals(void *);
+#ifdef ENABLE_THREADS
 # if defined(HAVE_PTHREAD)
 #  include <pthread.h>
 static pthread_key_t glob_key;
-#ifdef NEED_PTHREAD_ONCE_INIT_BRACES
+#  ifdef NEED_PTHREAD_ONCE_INIT_BRACES
 static pthread_once_t once_control = { PTHREAD_ONCE_INIT };
-#else
+#  else
 static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-#endif
+#  endif
 # elif defined(_WIN32)
 #  include <windows.h>
 static DWORD glob_tls_idx = TLS_OUT_OF_INDEXES;
@@ -82,24 +82,24 @@ static DWORD glob_tls_idx = TLS_OUT_OF_INDEXES;
 static void
 sg_destroy_main_globals(void)
 {
-#if defined(HAVE_PTHREAD)
+# if defined(HAVE_PTHREAD)
 	char *glob_buf;
 	while( NULL != ( glob_buf = pthread_getspecific(glob_key) ) )
 		sg_destroy_globals(glob_buf);
-#endif
+# endif
 }
 
-#if defined(ENABLE_THREADS) && defined(HAVE_PTHREAD)
+# if defined(HAVE_PTHREAD)
 struct sg_named_mutex {
 	const char *name;
 	pthread_mutex_t mutex;
 };
 
-#ifdef NEED_PTHREAD_MUTEX_INITIALIZER_BRACES
+#  ifdef NEED_PTHREAD_MUTEX_INITIALIZER_BRACES
 static struct sg_named_mutex glob_lock = { "statgrab", { PTHREAD_MUTEX_INITIALIZER } };
-#else
+#  else
 static struct sg_named_mutex glob_lock = { "statgrab", PTHREAD_MUTEX_INITIALIZER };
-#endif
+#  endif
 static struct sg_named_mutex *required_locks = NULL;
 static size_t num_required_locks = 0;
 static unsigned initialized = 0;
@@ -210,7 +210,7 @@ sg_first_init(void)
 	if( 0 != rc )
 		abort(); // can't store error state without TLS
 }
-#endif
+# endif
 
 static sg_error
 sg_init_thread_local(void) {
@@ -397,7 +397,7 @@ sg_comp_destroy(void) {
 #endif
 }
 
-void *
+static void *
 sg_alloc_globals(void) {
 #ifdef ENABLE_THREADS
 	void *glob_buf = NULL;
@@ -443,7 +443,7 @@ sg_alloc_globals(void) {
 	return glob_buf;
 }
 
-void
+static void
 sg_destroy_globals(void *glob_buf){
 #ifdef ENABLE_THREADS
 # if defined(HAVE_PTHREAD)
@@ -455,12 +455,13 @@ sg_destroy_globals(void *glob_buf){
 # endif
 #endif
 	if( glob_buf ) {
-		size_t i = lengthof(comp_info) - 1, zero_size;
 # if defined(HAVE_PTHREAD)
 		int rc;
 # endif
-		zero_size = comp_info[i].glob_ofs + comp_info[i].init_comp->static_buf_size;
-		for( i = lengthof(comp_info) - 1; i < lengthof(comp_info) /*overflow!*/; --i ) {
+		size_t i = lengthof(comp_info) - 1;
+		size_t zero_size = comp_info[i].glob_ofs + comp_info[i].init_comp->static_buf_size;
+
+		while(i--) {
 			if(comp_info[i].init_comp->cleanup_fn)
 				comp_info[i].init_comp->cleanup_fn(((char *)glob_buf) + comp_info[i].glob_ofs);
 		}
