@@ -143,7 +143,7 @@ void *sg_comp_get_tls(unsigned id);
 	}
 
 #define EASY_COMP_ACCESS(fn,comp,name,idx)		\
-	sg_##name##_stats *fn(void){			\
+	sg_##name##_stats *fn(size_t *entries) {	\
 							\
 		struct sg_##comp##_glob *comp##_glob = GLOBAL_GET_TLS(comp); \
 		sg_error rc;				\
@@ -151,6 +151,8 @@ void *sg_comp_get_tls(unsigned id);
 		if( !comp##_glob ) {			\
 			/* assuming error comp can't neither */ \
 			ERROR_LOG(#comp, #fn " failed - cannot get glob"); \
+			if(entries)			\
+				*entries = 0;		\
 			return NULL;			\
 		}					\
 							\
@@ -164,6 +166,8 @@ void *sg_comp_get_tls(unsigned id);
 			if(SG_ERROR_NONE == rc){	\
 				TRACE_LOG(#comp, #fn " succeded"); \
 				sg_clear_error();	\
+				if(entries)		\
+					*entries = VECTOR_ITEM_COUNT(comp##_glob->comp##_vectors[idx]); \
 				return name##_stats;	\
 			}				\
 		}					\
@@ -173,21 +177,26 @@ void *sg_comp_get_tls(unsigned id);
 							\
 		WARN_LOG_FMT(#comp, #fn " failed with %s", sg_str_error(rc)); \
 							\
+		if(entries)				\
+			*entries = 0;			\
+							\
 		return NULL;				\
 	}						\
 							\
-	sg_##name##_stats *fn##_r(void){		\
+	sg_##name##_stats *fn##_r(size_t *entries) {	\
 							\
 		sg_vector *name##_stats_vector = sg_vector_create(1, 1, 1, & VECTOR_INIT_INFO(sg_##name##_stats)); \
 		sg_error rc;				\
 		TRACE_LOG(#comp, "entering " #fn "_r"); \
-		if(name##_stats_vector){		\
+		if(name##_stats_vector) {		\
 			sg_##name##_stats *name##_stats = (sg_##name##_stats *)VECTOR_DATA(name##_stats_vector); \
 			TRACE_LOG_FMT(#comp, "calling " #fn "_int(%p)", name##_stats); \
 			rc = fn##_int(name##_stats);	\
 			if(SG_ERROR_NONE == rc){ 	\
 				TRACE_LOG(#comp, #fn "_r succeded"); \
 				sg_clear_error();	\
+				if(entries)		\
+					*entries = VECTOR_ITEM_COUNT(name##_stats_vector); \
 				return name##_stats;	\
 			}				\
 			sg_vector_free(name##_stats_vector); \
@@ -197,6 +206,9 @@ void *sg_comp_get_tls(unsigned id);
 		}					\
 							\
 		WARN_LOG_FMT(#comp, #fn "_r failed with %s", sg_str_error(rc)); \
+							\
+		if(entries)				\
+			*entries = 0;			\
 							\
 		return NULL;				\
 	}
@@ -210,6 +222,8 @@ void *sg_comp_get_tls(unsigned id);
 		if( !comp##_glob ) {			\
 			/* assuming error comp can't neither */ \
 			ERROR_LOG(#comp, #fn " failed - cannot get glob"); \
+			if(entries)			\
+				*entries = 0;		\
 			return NULL;			\
 		}					\
 							\
@@ -272,43 +286,50 @@ void *sg_comp_get_tls(unsigned id);
 	}
 
 #define EASY_COMP_DIFF(fn,getfn,comp,name,diffidx,nowidx) \
-	sg_##name##_stats *fn(void){			\
+	sg_##name##_stats *fn(size_t *entries) {	\
 							\
 		struct sg_##comp##_glob *comp##_glob = GLOBAL_GET_TLS(comp); \
 		TRACE_LOG(#comp, "entering " #fn);	\
 		if( !comp##_glob ) {			\
 			/* assuming error comp can't neither */ \
 			ERROR_LOG(#comp, #fn " failed - cannot get glob"); \
+			if(entries)			\
+				*entries = 0;		\
 			return NULL;			\
 		}					\
 							\
-		if(!comp##_glob->comp##_vectors[nowidx]){ \
+		if(!comp##_glob->comp##_vectors[nowidx]) { \
 			TRACE_LOG_FMT(#comp, #fn " has nothing to compare with - calling %s", #getfn); \
-			return getfn();			\
+			return getfn(entries);		\
 		}					\
 							\
 		if(!comp##_glob->comp##_vectors[diffidx]) \
 			comp##_glob->comp##_vectors[diffidx] = VECTOR_CREATE(sg_##name##_stats, 1); \
 							\
-		if(comp##_glob->comp##_vectors[diffidx]){ \
+		if(comp##_glob->comp##_vectors[diffidx]) { \
 			sg_##name##_stats name##_last = *((sg_##name##_stats *)VECTOR_DATA(comp##_glob->comp##_vectors[nowidx])); \
 			sg_##name##_stats *name##_diff = (sg_##name##_stats *)VECTOR_DATA(comp##_glob->comp##_vectors[diffidx]); \
-			sg_##name##_stats *name##_now = getfn(); \
+			sg_##name##_stats *name##_now = getfn(NULL); \
 							\
 			TRACE_LOG_FMT(#comp, "calling " #fn "_diff(%p, %p, %p)", name##_diff, name##_now, &name##_last); \
 			if( (NULL != name##_now) && ( SG_ERROR_NONE == fn##_int(name##_diff, name##_now, &name##_last) ) ) { \
 				TRACE_LOG(#comp, #fn " succeded"); \
 				sg_clear_error();	\
+				if(entries)		\
+					*entries = VECTOR_ITEM_COUNT(comp##_glob->comp##_vectors[diffidx]); \
 				return name##_diff;	\
 			}				\
 		}					\
 							\
 		WARN_LOG_FMT(#comp, #fn " failed with %s", sg_str_error(sg_get_error())); \
 							\
+		if(entries)				\
+			*entries = 0;			\
+							\
 		return NULL;				\
 	}						\
 							\
-	sg_##name##_stats *fn##_between(const sg_##name##_stats *name##_now, const sg_##name##_stats *name##_last){ \
+	sg_##name##_stats *fn##_between(const sg_##name##_stats *name##_now, const sg_##name##_stats *name##_last, size_t *entries) { \
 							\
 		sg_vector *name##_diff_vector;		\
 							\
@@ -322,12 +343,17 @@ void *sg_comp_get_tls(unsigned id);
 			if( SG_ERROR_NONE == rc ) {	\
 				TRACE_LOG(#comp, #fn "_between succeded"); \
 				sg_clear_error();	\
+				if(entries)		\
+					*entries = VECTOR_ITEM_COUNT(name##_diff_vector); \
 				return name##_diff;	\
 			}				\
 			sg_vector_free(name##_diff_vector); \
 		}					\
 							\
 		WARN_LOG_FMT(#comp, #fn "_between failed with %s", sg_str_error(sg_get_error())); \
+							\
+		if(entries)				\
+			*entries = 0;			\
 							\
 		return NULL;				\
 	}

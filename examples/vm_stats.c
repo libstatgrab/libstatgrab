@@ -45,7 +45,8 @@ int main(int argc, char **argv){
 	if (sg_drop_privileges() != SG_ERROR_NONE)
 		sg_die("Error. Failed to drop privileges", 1);
 
-	if( ((mem_stats = sg_get_mem_stats()) != NULL) && (swap_stats = sg_get_swap_stats()) != NULL){
+	if( ((mem_stats = sg_get_mem_stats(NULL)) != NULL) &&
+	    ((swap_stats = sg_get_swap_stats(NULL)) != NULL) ) {
 		printf("Total memory in bytes : %llu\n", mem_stats->total);
 		printf("Used memory in bytes : %llu\n", mem_stats->used);
 		printf("Cache memory in bytes : %llu\n", mem_stats->cache);

@@ -583,16 +583,16 @@ sig_winch_handler(int dummy) {
 
 static int
 get_stats(void) {
-	stats.cpu_percents = sg_get_cpu_percents();
-	stats.mem_stats = sg_get_mem_stats();
-	stats.swap_stats = sg_get_swap_stats();
-	stats.load_stats = sg_get_load_stats();
+	stats.cpu_percents = sg_get_cpu_percents(NULL);
+	stats.mem_stats = sg_get_mem_stats(NULL);
+	stats.swap_stats = sg_get_swap_stats(NULL);
+	stats.load_stats = sg_get_load_stats(NULL);
 	stats.process_count = sg_get_process_count();
-	stats.page_stats = sg_get_page_stats_diff();
+	stats.page_stats = sg_get_page_stats_diff(NULL);
 	stats.network_io_stats = sg_get_network_io_stats_diff(&(stats.network_io_entries));
 	stats.disk_io_stats = sg_get_disk_io_stats_diff(&(stats.disk_io_entries));
 	stats.fs_stats = sg_get_fs_stats(&(stats.fs_entries));
-	stats.host_info = sg_get_host_info();
+	stats.host_info = sg_get_host_info(NULL);
 	stats.user_stats = sg_get_user_stats(&stats.user_entries);
 
 	return 1;

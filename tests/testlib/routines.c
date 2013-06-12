@@ -24,22 +24,21 @@
 #include <tools.h>
 #include "testlib.h"
 
-#define SG_SINGLE_TEST_FUNC(name) { #name, 0, { (statgrab_single_fn)(&name) }, 0, 0 }
-#define SG_MULTI_TEST_FUNC(name) { #name, 1, { (statgrab_single_fn)(&name) }, 0, 0 }
+#define SG_TEST_FUNC(name) { #name, (statgrab_multi_fn)(&name), 0, 0 }
 
 static struct statgrab_testfuncs statgrab_tests[] =
 {
-	SG_SINGLE_TEST_FUNC(sg_get_host_info),
-	SG_SINGLE_TEST_FUNC(sg_get_cpu_stats),
-	SG_SINGLE_TEST_FUNC(sg_get_mem_stats),
-	SG_SINGLE_TEST_FUNC(sg_get_load_stats),
-	SG_MULTI_TEST_FUNC(sg_get_user_stats),
-	SG_SINGLE_TEST_FUNC(sg_get_swap_stats),
-	SG_MULTI_TEST_FUNC(sg_get_fs_stats),
-	SG_MULTI_TEST_FUNC(sg_get_disk_io_stats),
-	SG_MULTI_TEST_FUNC(sg_get_network_io_stats),
-	SG_SINGLE_TEST_FUNC(sg_get_page_stats),
-	SG_MULTI_TEST_FUNC(sg_get_process_stats)
+	SG_TEST_FUNC(sg_get_host_info),
+	SG_TEST_FUNC(sg_get_cpu_stats),
+	SG_TEST_FUNC(sg_get_mem_stats),
+	SG_TEST_FUNC(sg_get_load_stats),
+	SG_TEST_FUNC(sg_get_user_stats),
+	SG_TEST_FUNC(sg_get_swap_stats),
+	SG_TEST_FUNC(sg_get_fs_stats),
+	SG_TEST_FUNC(sg_get_disk_io_stats),
+	SG_TEST_FUNC(sg_get_network_io_stats),
+	SG_TEST_FUNC(sg_get_page_stats),
+	SG_TEST_FUNC(sg_get_process_stats)
 };
 
 struct statgrab_testfuncs *
@@ -112,21 +111,16 @@ mark_func(size_t func_index) {
 
 void
 run_func(size_t func_index) {
+	size_t entries;
+
 	if( func_index >= lengthof(statgrab_tests) ) {
 		fprintf( stderr, "run_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
 	INFO_LOG_FMT( "testlib", "Calling %s...", statgrab_tests[func_index].fn_name );
-	if( statgrab_tests[func_index].need_entries_parm ) {
-		size_t entries;
-		(*(statgrab_tests[func_index].fn.multi))(&entries);
-		INFO_LOG_FMT( "testlib", "%s - entries = %lu", statgrab_tests[func_index].fn_name, entries );
-	}
-	else {
-		(*(statgrab_tests[func_index].fn.uniq))();
-		INFO_LOG_FMT( "testlib", "%s - ok", statgrab_tests[func_index].fn_name );
-	}
+	statgrab_tests[func_index].fn(&entries);
+	INFO_LOG_FMT( "testlib", "%s - entries = %lu", statgrab_tests[func_index].fn_name, entries );
 }
 
 void

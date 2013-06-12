@@ -58,10 +58,10 @@ int main(int argc, char **argv){
 	if (sg_drop_privileges() != SG_ERROR_NONE)
 		sg_die("Error. Failed to drop privileges", 1);
 
-	if ((load_stat = sg_get_load_stats()) == NULL)
+	if ((load_stat = sg_get_load_stats(NULL)) == NULL)
 		sg_die("Failed to get load stats", 1);
 
-	while( (load_stat = sg_get_load_stats()) != NULL){
+	while( (load_stat = sg_get_load_stats(NULL)) != NULL){
 		int ch;
 		printf("Load 1 : %5.2f\t Load 5 : %5.2f\t Load 15 : %5.2f\n", load_stat->min1, load_stat->min5, load_stat->min15);
 		ch = inp_wait(delay);

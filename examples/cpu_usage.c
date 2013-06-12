@@ -79,15 +79,15 @@ int main(int argc, char **argv){
 
 	/* Throw away the first reading as thats averaged over the machines uptime */
 	sg_snapshot();
-	cpu_percent = sg_get_cpu_percents();
+	cpu_percent = sg_get_cpu_percents(NULL);
 	if( NULL == cpu_percent )
 		sg_die("Failed to get cpu stats", 1);
 
 	/* Clear the screen ready for display the cpu usage */
 	printf("\033[2J");
 
-	while( ( ( cpu_diff_stats = sg_get_cpu_stats_diff() ) != NULL ) &&
-	     ( ( cpu_percent = sg_get_cpu_percents_of(sg_last_diff_cpu_percent) ) != NULL ) ) {
+	while( ( ( cpu_diff_stats = sg_get_cpu_stats_diff(NULL) ) != NULL ) &&
+	     ( ( cpu_percent = sg_get_cpu_percents_of(sg_last_diff_cpu_percent, NULL) ) != NULL ) ) {
 		int ch;
 		sg_snapshot();
 		printf("\033[2;2H%-14s : %lld (%6.2f)", "User CPU", cpu_diff_stats->user, cpu_percent->user);

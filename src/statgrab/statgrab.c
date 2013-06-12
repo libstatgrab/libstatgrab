@@ -208,14 +208,14 @@ static void
 populate_cpu(void) {
 	sg_cpu_stats *cpu_s;
 
-	cpu_s = use_diffs ? sg_get_cpu_stats_diff()
-			  : sg_get_cpu_stats();
+	cpu_s = use_diffs ? sg_get_cpu_stats_diff(NULL)
+			  : sg_get_cpu_stats(NULL);
 
 	if (use_cpu_percent) {
 		sg_cpu_percent_source cps;
 		cps = use_diffs ? sg_last_diff_cpu_percent
 				: sg_entire_cpu_percent;
-		sg_cpu_percents *cpu_p = sg_get_cpu_percents_of(cps);
+		sg_cpu_percents *cpu_p = sg_get_cpu_percents_of(cps, NULL);
 
 		if (cpu_p != NULL) {
 			add_stat(DOUBLE, &cpu_p->user,
@@ -272,7 +272,7 @@ populate_cpu(void) {
 
 static void
 populate_mem(void) {
-	sg_mem_stats *mem = sg_get_mem_stats();
+	sg_mem_stats *mem = sg_get_mem_stats(NULL);
 
 	if (mem != NULL) {
 		add_stat(BYTES, &mem->total, "mem", "total", NULL);
@@ -284,7 +284,7 @@ populate_mem(void) {
 
 static void
 populate_load(void) {
-	sg_load_stats *load = sg_get_load_stats();
+	sg_load_stats *load = sg_get_load_stats(NULL);
 
 	if (load != NULL) {
 		add_stat(DOUBLE, &load->min1, "load", "min1", NULL);
@@ -342,7 +342,7 @@ populate_user(void) {
 
 static void
 populate_swap(void) {
-	sg_swap_stats *swap = sg_get_swap_stats();
+	sg_swap_stats *swap = sg_get_swap_stats(NULL);
 
 	if (swap != NULL) {
 		add_stat(BYTES, &swap->total, "swap", "total", NULL);
@@ -366,7 +366,7 @@ static const char *unexpected_host_state = "unexpected state (libstatgrab too ne
 static void
 populate_general(void) {
 	/* FIXME this should be renamed to host. */
-	sg_host_info *host = sg_get_host_info();
+	sg_host_info *host = sg_get_host_info(NULL);
 
 	if (host != NULL) {
 		add_stat(STRING, &host->os_name,
@@ -567,7 +567,7 @@ static void
 populate_page(void) {
 	sg_page_stats *page;
 
-	page = use_diffs ? sg_get_page_stats_diff() : sg_get_page_stats();
+	page = use_diffs ? sg_get_page_stats_diff(NULL) : sg_get_page_stats(NULL);
 	if (page != NULL) {
 		add_stat(UNSIGNED_LONG_LONG, &page->pages_pagein, "page", "in", NULL);
 		add_stat(UNSIGNED_LONG_LONG, &page->pages_pageout, "page", "out", NULL);

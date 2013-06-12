@@ -58,11 +58,11 @@ int main(int argc, char **argv){
 	if (sg_drop_privileges() != SG_ERROR_NONE)
 		sg_die("Error. Failed to drop privileges", 1);
 
-	page_stats = sg_get_page_stats_diff();
+	page_stats = sg_get_page_stats_diff(NULL);
 	if(page_stats == NULL)
 		sg_die("Failed to get page stats", 1);
 
-	while( (page_stats = sg_get_page_stats_diff()) != NULL){
+	while( (page_stats = sg_get_page_stats_diff(NULL)) != NULL){
 		int ch;
 		printf("Pages in : %llu\n", page_stats->pages_pagein);
 		printf("Pages out : %llu\n", page_stats->pages_pageout);

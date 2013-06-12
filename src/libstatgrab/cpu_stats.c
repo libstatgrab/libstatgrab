@@ -489,7 +489,7 @@ sg_get_cpu_percents_int(sg_cpu_percents *cpu_percent_buf, const sg_cpu_stats *cp
 #endif
 
 sg_cpu_percents *
-sg_get_cpu_percents_of(sg_cpu_percent_source cps){
+sg_get_cpu_percents_of(sg_cpu_percent_source cps, size_t *entries) {
 
 	struct sg_cpu_glob *cpu_glob = GLOBAL_GET_TLS(cpu);
 	sg_vector *cpu_stats_vector = NULL; /* to avoid wrong warning */
@@ -520,7 +520,7 @@ sg_get_cpu_percents_of(sg_cpu_percent_source cps){
 	case sg_entire_cpu_percent:
 		cpu_stats_vector = cpu_glob->cpu_vectors[SG_CPU_NOW_IDX];
 		if( !cpu_stats_vector )
-			cs_ptr = sg_get_cpu_stats();
+			cs_ptr = sg_get_cpu_stats(NULL);
 		break;
 
 	case sg_last_diff_cpu_percent:
@@ -530,7 +530,7 @@ sg_get_cpu_percents_of(sg_cpu_percent_source cps){
 		/* else fallthrough */
 
 	case sg_new_diff_cpu_percent:
-		cs_ptr = sg_get_cpu_stats_diff();
+		cs_ptr = sg_get_cpu_stats_diff(NULL);
 		break;
 
 	default:
@@ -540,6 +540,8 @@ sg_get_cpu_percents_of(sg_cpu_percent_source cps){
 
 	if( !cpu_stats_vector && !cs_ptr ) {
 		ERROR_LOG_FMT("cpu", "sg_get_cpu_percents_of failed with %s", sg_str_error(sg_get_error()));
+		if(entries)
+			*entries = 0;
 		return NULL; /* error should been set by called subroutine */
 	}
 
@@ -547,16 +549,21 @@ sg_get_cpu_percents_of(sg_cpu_percent_source cps){
 		cs_ptr = VECTOR_DATA(cpu_stats_vector);
 	if( SG_ERROR_NONE == sg_get_cpu_percents_int(cpu_usage, cs_ptr) ) {
 		TRACE_LOG("cpu", "sg_get_cpu_percents_of succeded"); \
+		if(entries)
+			*entries = VECTOR_ITEM_COUNT(cpu_stats_vector);
 		return cpu_usage;
 	}
 
 	WARN_LOG_FMT("cpu", "sg_get_cpu_percents_of failed with %s", sg_str_error(sg_get_error()));
 
+	if(entries)
+		*entries = 0;
+
 	return NULL;
 }
 
 sg_cpu_percents *
-sg_get_cpu_percents_r(sg_cpu_stats const * whereof){
+sg_get_cpu_percents_r(sg_cpu_stats const * whereof, size_t *entries) {
 
 	sg_vector *cpu_percents_result_vector;
 	sg_cpu_percents *cpu_usage;
@@ -565,24 +572,33 @@ sg_get_cpu_percents_r(sg_cpu_stats const * whereof){
 
 	if( NULL == whereof ) {
 		SET_ERROR("cpu", SG_ERROR_INVALID_ARGUMENT, "sg_get_cpu_percents_r(whereof = %p)", whereof);
+		if(entries)
+			*entries = 0;
 		return NULL;
 	}
 
 	cpu_percents_result_vector = VECTOR_CREATE(sg_cpu_percents, 1);
 	if( NULL == cpu_percents_result_vector ) {
 		ERROR_LOG_FMT("cpu", "sg_get_cpu_percents_r failed with %s", sg_str_error(sg_get_error()));
+		if(entries)
+			*entries = 0;
 		return NULL;
 	}
 
 	cpu_usage = VECTOR_DATA(cpu_percents_result_vector);
 	if( SG_ERROR_NONE == sg_get_cpu_percents_int(cpu_usage, whereof) ) {
 		TRACE_LOG("cpu", "sg_get_cpu_percents_r succeded");
+		if(entries)
+			*entries = VECTOR_ITEM_COUNT(cpu_percents_result_vector);
 		return cpu_usage;
 	}
 
 	WARN_LOG_FMT("cpu", "sg_get_cpu_percents_r failed with %s", sg_str_error(sg_get_error()));
 
 	sg_vector_free(cpu_percents_result_vector);
+
+	if(entries)
+		*entries = 0;
 
 	return NULL;
 }

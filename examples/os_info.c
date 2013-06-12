@@ -53,7 +53,7 @@ int main(int argc, char **argv){
 	if (sg_drop_privileges() != SG_ERROR_NONE)
 		sg_die("Error. Failed to drop privileges", 1);
 
-	general_stats = sg_get_host_info();
+	general_stats = sg_get_host_info(NULL);
 	if(general_stats == NULL)
 		sg_die("Failed to get os stats", 1);
 

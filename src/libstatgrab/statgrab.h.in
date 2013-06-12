@@ -164,8 +164,8 @@ typedef struct {
 	time_t systime;
 } sg_host_info;
 
-__sg_public sg_host_info *sg_get_host_info(void);
-__sg_public sg_host_info *sg_get_host_info_r(void);
+__sg_public sg_host_info *sg_get_host_info(size_t *entries);
+__sg_public sg_host_info *sg_get_host_info_r(size_t *entries);
 #define sg_free_host_info(data) sg_free_stats_buf(data);
 
 typedef struct {
@@ -187,10 +187,10 @@ typedef struct {
 	time_t systime;
 } sg_cpu_stats;
 
-__sg_public sg_cpu_stats *sg_get_cpu_stats(void);
-__sg_public sg_cpu_stats *sg_get_cpu_stats_diff(void);
-__sg_public sg_cpu_stats *sg_get_cpu_stats_r(void);
-__sg_public sg_cpu_stats *sg_get_cpu_stats_diff_between(const sg_cpu_stats *cpu_now, const sg_cpu_stats *cpu_last);
+__sg_public sg_cpu_stats *sg_get_cpu_stats(size_t *entries);
+__sg_public sg_cpu_stats *sg_get_cpu_stats_diff(size_t *entries);
+__sg_public sg_cpu_stats *sg_get_cpu_stats_r(size_t *entries);
+__sg_public sg_cpu_stats *sg_get_cpu_stats_diff_between(const sg_cpu_stats *cpu_now, const sg_cpu_stats *cpu_last, size_t *entries);
 #define sg_free_cpu_stats(data) sg_free_stats_buf(data);
 
 typedef struct {
@@ -209,11 +209,11 @@ typedef enum sg_cpu_percent_source {
 	sg_new_diff_cpu_percent
 } sg_cpu_percent_source;
 
-__sg_public sg_cpu_percents *sg_get_cpu_percents_of(sg_cpu_percent_source cps);
-__sg_public sg_cpu_percents *sg_get_cpu_percents_r(sg_cpu_stats const * whereof);
+__sg_public sg_cpu_percents *sg_get_cpu_percents_of(sg_cpu_percent_source cps, size_t *entries);
+__sg_public sg_cpu_percents *sg_get_cpu_percents_r(sg_cpu_stats const * whereof, size_t *entries);
 #define sg_free_cpu_percents(data) sg_free_stats_buf(data);
 
-#define sg_get_cpu_percents() sg_get_cpu_percents_of(sg_new_diff_cpu_percent)
+#define sg_get_cpu_percents(entries) sg_get_cpu_percents_of(sg_new_diff_cpu_percent, entries)
 
 typedef struct {
 	unsigned long long total;
@@ -223,8 +223,8 @@ typedef struct {
 	time_t systime;
 } sg_mem_stats;
 
-__sg_public sg_mem_stats *sg_get_mem_stats(void);
-__sg_public sg_mem_stats *sg_get_mem_stats_r(void);
+__sg_public sg_mem_stats *sg_get_mem_stats(size_t *entries);
+__sg_public sg_mem_stats *sg_get_mem_stats_r(size_t *entries);
 #define sg_free_mem_stats(data) sg_free_stats_buf(data);
 
 typedef struct {
@@ -234,8 +234,8 @@ typedef struct {
 	time_t systime;
 } sg_load_stats;
 
-__sg_public sg_load_stats *sg_get_load_stats(void);
-__sg_public sg_load_stats *sg_get_load_stats_r(void);
+__sg_public sg_load_stats *sg_get_load_stats(size_t *entries);
+__sg_public sg_load_stats *sg_get_load_stats_r(size_t *entries);
 #define sg_free_load_stats(data) sg_free_stats_buf(data);
 
 typedef struct {
@@ -260,8 +260,8 @@ typedef struct {
 	time_t systime;
 } sg_swap_stats;
 
-__sg_public sg_swap_stats *sg_get_swap_stats(void);
-__sg_public sg_swap_stats *sg_get_swap_stats_r(void);
+__sg_public sg_swap_stats *sg_get_swap_stats(size_t *entries);
+__sg_public sg_swap_stats *sg_get_swap_stats_r(size_t *entries);
 #define sg_free_swap_stats(data) sg_free_stats_buf(data);
 
 typedef enum {
@@ -337,7 +337,7 @@ typedef struct {
 __sg_public sg_network_io_stats *sg_get_network_io_stats(size_t *entries);
 __sg_public sg_network_io_stats *sg_get_network_io_stats_r(size_t *entries);
 __sg_public sg_network_io_stats *sg_get_network_io_stats_diff(size_t *entries);
-__sg_public sg_network_io_stats *sg_get_network_io_stats_diff_between(const sg_network_io_stats *cur, const sg_network_io_stats *last,size_t *entries);
+__sg_public sg_network_io_stats *sg_get_network_io_stats_diff_between(const sg_network_io_stats *cur, const sg_network_io_stats *last, size_t *entries);
 #define sg_free_network_io_stats(data) sg_free_stats_buf(data);
 
 __sg_public int sg_network_io_compare_name(const void *va, const void *vb);
@@ -371,10 +371,10 @@ typedef struct {
 	time_t systime;
 } sg_page_stats;
 
-__sg_public sg_page_stats *sg_get_page_stats(void);
-__sg_public sg_page_stats *sg_get_page_stats_r(void);
-__sg_public sg_page_stats *sg_get_page_stats_diff(void);
-__sg_public sg_page_stats *sg_get_page_stats_diff_between(const sg_page_stats *now, const sg_page_stats *last);
+__sg_public sg_page_stats *sg_get_page_stats(size_t *entries);
+__sg_public sg_page_stats *sg_get_page_stats_r(size_t *entries);
+__sg_public sg_page_stats *sg_get_page_stats_diff(size_t *entries);
+__sg_public sg_page_stats *sg_get_page_stats_diff_between(const sg_page_stats *now, const sg_page_stats *last, size_t *entries);
 #define sg_free_page_stats(data) sg_free_stats_buf(data);
 
 /* Recommend to add SG_PROCESS_STATE_IDLE */

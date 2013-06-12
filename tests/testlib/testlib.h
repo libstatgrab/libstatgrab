@@ -28,21 +28,14 @@
 void log_init(int argc, char **argv);
 
 /* routines.c */
-typedef void * (*statgrab_single_fn)(void);
 typedef void * (*statgrab_multi_fn)(size_t *entries);
-
-union statgrab_testfunc_addr {
-	statgrab_single_fn uniq;
-	statgrab_multi_fn multi;
-};
 
 struct statgrab_testfuncs
 {
 	char *fn_name;
-	int need_entries_parm;
-	union statgrab_testfunc_addr fn;
-	int needed;
-	int done;
+	statgrab_multi_fn fn;
+	unsigned needed;
+	unsigned done;
 };
 
 struct statgrab_testfuncs *get_testable_functions(size_t *entries);
