@@ -62,7 +62,7 @@ void *
 threadfunc(void *parm)
 {
 	int rc;
-	int *func_idx = (int *)parm;
+	size_t func_idx = *((size_t *)parm);
 
 	rc = pthread_mutex_lock(&mutex);
 	prove_libcall("pthread_mutex_lock", rc);
@@ -80,14 +80,14 @@ threadfunc(void *parm)
 		prove_libcall("pthread_mutex_unlock", rc);
 	}
 
-	run_func( *func_idx );
+	run_func( func_idx );
 
 	if( !opt_def[OPT_SEQ].optarg.b ) {
 		rc = pthread_mutex_lock(&mutex);
 		prove_libcall("pthread_mutex_lock", rc);
 	}
 
-	done_func(*func_idx);
+	done_func(func_idx);
 
 	rc = pthread_mutex_unlock(&mutex);
 	prove_libcall("pthread_mutex_unlock", rc);
