@@ -96,9 +96,6 @@ sg_network_iface_stats_item_init(sg_network_iface_stats *d) {
 	d->interface_name = NULL;
 	d->speed = 0;
 	d->duplex = SG_IFACE_DUPLEX_UNKNOWN;
-#ifdef SG_ENABLE_DEPRECATED
-	d->dup = SG_IFACE_DUPLEX_UNKNOWN;
-#endif
 	d->up = 0;
 }
 
@@ -111,9 +108,6 @@ sg_network_iface_stats_item_copy(sg_network_iface_stats *d, const sg_network_ifa
 
 	d->speed = s->speed;
 	d->duplex = s->duplex;
-#ifdef SG_ENABLE_DEPRECATED
-	d->dup = s->dup;
-#endif
 	d->up = s->up;
 
 	return SG_ERROR_NONE;
@@ -839,9 +833,6 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 		}
 
 skip:
-#ifdef SG_ENABLE_DEPRECATED
-		network_iface_stat[ifaces].dup = network_iface_stat[ifaces].duplex;
-#endif
 
 		++ifaces;
 	}
@@ -937,9 +928,6 @@ skip:
 
 		network_iface_stat[ifaces].speed = 0;
 		/* XXX */
-#ifdef SG_ENABLE_DEPRECATED
-		network_iface_stat[ifaces].dup =
-#endif
 		network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		network_iface_stat[ifaces].systime = now;
 		++ifaces;
@@ -1018,9 +1006,6 @@ skip:
 		 * but for monitoring we don't care
 		 */
 		network_iface_stat[ifaces].speed = 0;
-#ifdef SG_ENABLE_DEPRECATED
-		network_iface_stat[ifaces].dup =
-#endif
 		network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		network_iface_stat[ifaces].systime = now;
 		++ifaces;
@@ -1100,9 +1085,6 @@ skip:
 				}
 			}
 
-#ifdef SG_ENABLE_DEPRECATED
-			network_iface_stat[ifaces].dup = network_iface_stat[ifaces].duplex;
-#endif
 			network_iface_stat[ifaces].systime = now;
 
 			++ifaces;
@@ -1190,9 +1172,6 @@ skip:
 		else {
 			/* Not all interfaces support the ethtool ioctl. */
 			network_iface_stat[ifaces].speed = 0;
-#ifdef SG_ENABLE_DEPRECATED
-			network_iface_stat[ifaces].dup =
-#endif
 			network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		}
 
@@ -1255,10 +1234,6 @@ skip:
 	}
 #else
 	RETURN_WITH_SET_ERROR("network", SG_ERROR_UNSUPPORTED, OS_TYPE);
-#endif
-
-#ifdef SG_ENABLE_DEPRECATED
-	network_iface_stat_ptr->dup = network_iface_stat_ptr->duplex;
 #endif
 
 	return SG_ERROR_NONE;

@@ -353,9 +353,6 @@ typedef struct {
 	char *interface_name;
 	int speed;	/* In megabits/sec */
 	sg_iface_duplex duplex;
-#ifdef SG_ENABLE_DEPRECATED
-	sg_iface_duplex dup;
-#endif
 	int up;
 	time_t systime;
 } sg_network_iface_stats;
@@ -456,10 +453,6 @@ __sg_public sg_process_count *sg_get_process_count_of(sg_process_count_source pc
 __sg_public sg_process_count *sg_get_process_count_r(sg_process_stats const * whereof);
 #define sg_get_process_count() sg_get_process_count_of(sg_entire_process_count)
 #define sg_free_process_count(data) sg_free_stats_buf(data);
-
-#ifdef SG_ENABLE_DEPRECATED
-#include <statgrab_deprecated.h>
-#endif
 
 #ifdef __cplusplus
 }

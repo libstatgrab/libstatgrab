@@ -1645,18 +1645,6 @@ AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
   AC_LANG_POP([C++])
 ])
 
-# Check if the user would prefer to include compatibility code
-AM_CONDITIONAL(DEPRECATED, false)
-AC_ARG_ENABLE(deprecated,
-	[  --enable-deprecated     enable inclusion of pre-0.10 compatibility code
-  --disable-deprecated    disable inclusion of pre-0.10 compatibility code (default)],
-	[
-		if test "x$enableval" = "xyes" ; then
-			AM_CONDITIONAL(DEPRECATED, true)
-		fi
-	]
-)
-
 dnl Libtool setup.
 dnl must be latest to catch rpath compiled in by changes made during checks before
 
