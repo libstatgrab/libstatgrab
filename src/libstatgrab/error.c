@@ -254,6 +254,8 @@ sg_str_error(sg_error code) {
 		return "sysctlnametomib failed";
 	case SG_ERROR_MACHCALL:
 		return "mach kernel operation failed";
+	case SG_ERROR_IOKIT:
+		return "I/O Kit operation failed";
 	case SG_ERROR_UNAME:
 		return "uname failed";
 	case SG_ERROR_UNSUPPORTED:
