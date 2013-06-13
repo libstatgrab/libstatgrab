@@ -24,6 +24,14 @@
 
 #include "tools.h"
 
+#ifdef DARWIN
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/storage/IOBlockStorageDriver.h>
+#include <IOKit/storage/IOMedia.h>
+#include <IOKit/IOBSD.h>
+#endif
+
 #ifdef SOLARIS
 #define VALID_FS_TYPES {"ufs", "tmpfs", "vxfs", "nfs", "zfs", "lofs"}
 #elif defined(LINUX)
@@ -684,6 +692,9 @@ EXTENDED_COMP_SETUP(disk,SG_DISK_IDX_COUNT,NULL);
 static regex_t not_part_re, part_re;
 #endif
 #endif
+#ifdef DARWIN
+static mach_port_t masterPort;
+#endif
 
 static sg_error
 sg_disk_init_comp(unsigned id){
@@ -705,6 +716,12 @@ sg_disk_init_comp(unsigned id){
 #endif
 #endif
 
+#ifdef DARWIN
+	/*
+	 * Get the I/O Kit communication handle.
+	 */
+	IOMasterPort(bootstrap_port, &masterPort);
+#endif
 	return SG_ERROR_NONE;
 }
 
@@ -1246,6 +1263,7 @@ static sg_error
 sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 	size_t num_diskio = 0;
 	sg_disk_io_stats *disk_io_stats;
+	time_t now = time(NULL);
 
 #ifdef HPUX
 	long long rbytes = 0, wbytes = 0;
@@ -1258,12 +1276,15 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 	int diskidx = 0;
 	int num, i;
 	size_t n;
-	time_t now = time(NULL);
 #elif defined(SOLARIS)
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
 	kstat_io_t kios;
-	time_t now = time(NULL);
+#elif defined(DARWIN)
+	io_iterator_t drivelist;
+	io_registry_entry_t drive;
+	CFMutableDictionaryRef match;
+	kern_return_t status;
 #elif defined(LINUX)
 	FILE *f;
 #define LINE_BUF_SIZE 256
@@ -1271,7 +1292,6 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 #if 0
 	int has_pp_stats = 1;
 #endif
-	time_t now = time(NULL);
 	const char *format;
 #elif defined(HAVE_STRUCT_IO_SYSCTL) || defined(HAVE_STRUCT_DISKSTATS) || defined(HAVE_STRUCT_DISK_SYSCTL)
 	int num_disks, i;
@@ -1306,7 +1326,6 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 #    endif
 #  endif
 	STATS_TYPE *stats;
-	time_t now = time(NULL);
 #elif defined(HAVE_STRUCT_DEVSTAT) && defined(HAVE_STRUCT_STATINFO)
 	struct statinfo stats;
 	int counter;
@@ -1316,12 +1335,10 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 	long sel_gen;
 #endif
 	struct devstat *dev_ptr;
-	time_t now = time(NULL);
 #elif defined(AIX)
 	ssize_t ret, disks;
 	perfstat_disk_t *dskperf;
 	perfstat_id_t name;
-	time_t now = time(NULL);
 #elif defined(WIN32)
 	char *name;
 	long long rbytes;
@@ -1383,6 +1400,139 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 	}
 
 	free(dskperf);
+#elif defined(DARWIN)
+	/*
+	 * following code is partially taken from XNU and Darwin Sources provided via
+	 * http://www.opensource.apple.com/source/system_cmds/system_cmds-336/
+	 * and other parts from Hyperion-Sigar.
+	 */
+#define IoStatGetIntValue(src, key, val) \
+	do { \
+		CFNumberRef number; \
+		if ((number = (CFNumberRef)CFDictionaryGetValue(src, CFSTR(key)))) \
+			CFNumberGetValue(number, kCFNumberSInt64Type, &(val)); \
+	} while(0)
+#define IoStatGetStringValue(src, key, val) \
+	do { \
+		CFStringRef name = (CFStringRef)CFDictionaryGetValue(src, CFSTR(key)); \
+		if(name) { \
+			const char *valbp = CFStringGetCStringPtr(name, CFStringGetSystemEncoding()); \
+			sg_error errc; \
+			if(NULL == valbp) { char valbuf[PATH_MAX]; \
+				CFStringGetCString(name, valbuf, sizeof(valbuf), CFStringGetSystemEncoding()); \
+				errc = sg_update_string(&(val), valbuf); \
+			} \
+			else \
+				errc = sg_update_string(&(val), valbp); \
+			if( errc != SG_ERROR_NONE ) { \
+				VECTOR_UPDATE_ERROR_CLEANUP; \
+				RETURN_FROM_PREVIOUS_ERROR( "disk", sg_get_error() ); \
+			} \
+		} \
+	} while(0)
+
+	/*
+	 * Get an iterator for IOMedia objects.
+	 */
+	match = IOServiceMatching("IOMedia");
+	CFDictionaryAddValue(match, CFSTR(kIOMediaWholeKey), kCFBooleanTrue);
+	status = IOServiceGetMatchingServices(masterPort, match, &drivelist);
+	if (status != KERN_SUCCESS) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("disk", SG_ERROR_IOKIT, status, "couldn't match whole IOMedia devices");
+	}
+
+	/*
+	 * Scan all of the IOMedia objects, and for each
+	 * object that has a parent IOBlockStorageDriver, save
+	 * the object's name and the parent (from which we can
+	 * fetch statistics).
+	 *
+	 * XXX What about RAID devices?
+	 */
+	while( (drive = IOIteratorNext(drivelist)) ) {
+
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP IOObjectRelease(drive); IOObjectRelease(parent);
+
+		io_registry_entry_t parent;
+
+		/* get drive's parent */
+		status = IORegistryEntryGetParentEntry(drive, kIOServicePlane, &parent);
+		if (status != KERN_SUCCESS) {
+			RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("disk", SG_ERROR_IOKIT, status, "device has no parent");
+		}
+		if (IOObjectConformsTo(parent, "IOBlockStorageDriver")) {
+			CFDictionaryRef properties;
+			CFDictionaryRef stats;
+
+			VECTOR_UPDATE(disk_io_stats_vector_ptr, num_diskio + 1, disk_io_stats, sg_disk_io_stats);
+
+			/* get drive properties */
+			status = IORegistryEntryCreateCFProperties(drive,
+				(CFMutableDictionaryRef *)&properties,
+				kCFAllocatorDefault,
+				kNilOptions);
+
+			if (status != KERN_SUCCESS) {
+				IOObjectRelease(parent);
+				IOObjectRelease(drive);
+
+				CFRelease(properties);
+
+				RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("disk", SG_ERROR_IOKIT, status, "device has no properties");
+			}
+
+			/*
+			 * > kIOMediaPreferredBlockSizeKey
+			 * > kIOBSDNameKey
+			 * > kIOBlockStorageDriverStatisticsReadsKey
+			 * > kIOBlockStorageDriverStatisticsBytesReadKey
+			 * > kIOBlockStorageDriverStatisticsTotalReadTimeKey
+			 * > kIOBlockStorageDriverStatisticsWritesKey
+			 * > kIOBlockStorageDriverStatisticsBytesWrittenKey
+			 * > kIOBlockStorageDriverStatisticsTotalWriteTimeKey
+			 */
+
+			IoStatGetStringValue(properties, kIOBSDNameKey, disk_io_stats[num_diskio].disk_name);
+
+			CFRelease(properties);
+
+			status = IORegistryEntryCreateCFProperties(parent,
+				(CFMutableDictionaryRef *)&properties,
+				kCFAllocatorDefault,
+				kNilOptions);
+			if (status != KERN_SUCCESS) {
+				IOObjectRelease(parent);
+				IOObjectRelease(drive);
+
+				CFRelease(properties);
+
+				RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("disk", SG_ERROR_IOKIT, status, "parent has no properties");
+			}
+
+			stats = (CFDictionaryRef)CFDictionaryGetValue(properties, CFSTR(kIOBlockStorageDriverStatisticsKey));
+
+			if(stats) {
+				IoStatGetIntValue(stats, kIOBlockStorageDriverStatisticsBytesReadKey, disk_io_stats[num_diskio].read_bytes);
+				IoStatGetIntValue(stats, kIOBlockStorageDriverStatisticsBytesWrittenKey, disk_io_stats[num_diskio].write_bytes);
+			}
+
+			disk_io_stats[num_diskio].systime = now;
+
+			/* clean up, return success */
+			CFRelease(properties);
+
+			++num_diskio;
+		}
+
+		IOObjectRelease(parent);
+		IOObjectRelease(drive);
+
+#undef VECTOR_UPDATE_ERROR_CLEANUP
+
+	}
+	IOObjectRelease(drivelist);
+
 #elif defined(HPUX)
 	for(;;) {
 		size_t enabled_disks = 0;
