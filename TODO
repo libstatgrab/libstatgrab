@@ -1,15 +1,9 @@
-1) FreeBSD 10/sparc64 (more?) compiler & test run issues
-   ==> done?
-
 2) HP-UX stability
 
 3) MacOS X disk_io, page and general stats
 
 4) configure.ac - xpg\d vs. their funcs
    * ac_check_funcs ...
-
-5) configure.ac - pid_t, gid_t, size_t, time_t - sizes / fmt (printf/scanf)
-   ==> done?
 
 6) DragonflyBSD & NetBSD testing
    ==> done?
@@ -18,5 +12,3 @@
    ==> done?
 
 8) define __NEED_SG_GET_SYS_PAGE_SIZE only when needed
-
-9) all funcs shall deliver size_t *entries ...
