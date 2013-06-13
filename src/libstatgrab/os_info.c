@@ -31,7 +31,7 @@
 #define GET_BITWIDTH_BY_ARCH_NAME
 static const char *isa32[] = { "i386", "sparc" };
 static const char *isa64[] = { "amd64", "sparcv9" };
-#elif defined(CTL_HW) && defined(HW_MACHINE_ARCH)
+#elif defined(CTL_HW) && (defined(HW_MACHINE_ARCH)||defined(HW_MACHINE))
 #define GET_BITWIDTH_BY_ARCH_NAME
 static const char *isa32[] = { "arm", "armeb", "hppa", "i386", "m68000", "m68k", "mips", "powerpc", "sh3el", "sh3eb", "sparc", "vax" };
 static const char *isa64[] = { "alpha", "amd64", "hppa64", "ia64", "mips64", "mips64el", "sparc64", "x86_64" };
@@ -214,7 +214,7 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 	time_t curtime;
 	size_t size;
 	int ncpus;
-#  if defined(HW_MACHINE_ARCH)
+#  if defined(HW_MACHINE_ARCH) || defined(HW_MACHINE)
 	char arch_name[16];
 #  endif
 # elif defined(AIX)
@@ -503,10 +503,25 @@ sysinfo_again:
 	mib[0] = CTL_HW;
 	mib[1] = HW_MACHINE_ARCH;
 	size = sizeof(arch_name);
-	if( sysctl( mib, 2, arch_name, &size, NULL, 0 ) < 0 ) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_MACHINE_ARCH" );
+	if( sysctl( mib, 2, arch_name, &size, NULL, 0 ) == 0 ) {
+		host_info_buf->bitwidth = get_bitwidth_by_arch_name(arch_name);
 	}
-	host_info_buf->bitwidth = get_bitwidth_by_arch_name(arch_name);
+	else {
+		SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_MACHINE_ARCH" );
+# endif
+# if defined(HW_MACHINE)
+	mib[0] = CTL_HW;
+	mib[1] = HW_MACHINE;
+	size = sizeof(arch_name);
+	if( sysctl( mib, 2, arch_name, &size, NULL, 0 ) == 0 ) {
+		host_info_buf->bitwidth = get_bitwidth_by_arch_name(arch_name);
+	}
+	else {
+		SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_MACHINE" );
+	}
+# endif
+# if defined(HW_MACHINE_ARCH)
+	}
 # endif
 	host_info_buf->host_state = sg_unknown_configuration; /* details must be analysed "manually", no syscall */
 	host_info_buf->maxcpus = (unsigned)ncpus;
