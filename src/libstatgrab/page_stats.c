@@ -34,6 +34,24 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	FILE *f;
 #define LINE_BUF_SIZE 256
 	char line_buf[LINE_BUF_SIZE];
+#elif defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
+# if defined(HAVE_HOST_STATISTICS64)
+	struct vm_statistics64 vm_stats;
+# else
+	struct vm_statistics vm_stats;
+# endif
+	mach_msg_type_number_t count;
+	mach_port_t self_host_port;
+	ssize_t pagesize;
+	kern_return_t rc;
+#elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
+	int mib[2];
+	struct uvmexp_sysctl uvm;
+	size_t size = sizeof(uvm);
+#elif defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP)
+	int mib[2];
+	struct uvmexp uvm;
+	size_t size = sizeof(uvm);
 #elif defined(FREEBSD) || defined(DFBSD)
 	size_t size;
 #elif defined(NETBSD) || defined(OPENBSD)
@@ -107,6 +125,41 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	else {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_OPEN, "/proc/stat");
 	}
+#elif defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
+	self_host_port = mach_host_self();
+# if defined(HAVE_HOST_STATISTICS64)
+	count = HOST_VM_INFO64_COUNT;
+	rc = host_statistics64(self_host_port, HOST_VM_INFO64, (host_info64_t)(&vm_stats), &count);
+# else
+	count = HOST_VM_INFO_COUNT;
+	rc = host_statistics(self_host_port, HOST_VM_INFO, (host_info_t)(&vm_stats), &count);
+# endif
+	if( rc != KERN_SUCCESS ) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE( "mem", SG_ERROR_MACHCALL, rc, "host_statistics" );
+	}
+
+	page_stats_buf->pages_pagein = vm_stats.pageins;
+	page_stats_buf->pages_pageout = vm_stats.pageouts;
+#elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP2;
+
+	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP2");
+	}
+
+	page_stats_buf->pages_pagein = uvm.pgswapin;
+	page_stats_buf->pages_pageout = uvm.pgswapout;
+#elif defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP)
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP;
+
+	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP");
+	}
+
+	page_stats_buf->pages_pagein = uvm.pgswapin;
+	page_stats_buf->pages_pageout = uvm.pgswapout;
 #elif defined(FREEBSD) || defined(DFBSD)
 	size = sizeof(page_stats_buf->pages_pagein);
 	if (sysctlbyname("vm.stats.vm.v_swappgsin", &page_stats_buf->pages_pagein, &size, NULL, 0) < 0) {
@@ -117,16 +170,6 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	if (sysctlbyname("vm.stats.vm.v_swappgsout", &page_stats_buf->pages_pageout, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTLBYNAME, "vm.stats.vm.v_swappgsout");
 	}
-#elif defined(NETBSD) || defined(OPENBSD)
-	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
-
-	if (sysctl(mib, 2, &uvm, &size, NULL, 0) < 0) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("page", SG_ERROR_SYSCTL, "CTL_VM.VM_UVMEXP");
-	}
-
-	page_stats_buf->pages_pagein = uvm.pgswapin;
-	page_stats_buf->pages_pageout = uvm.pgswapout;
 #elif defined(AIX)
 	/* return code is number of structures returned */
 	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
