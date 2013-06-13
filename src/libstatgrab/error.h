@@ -33,7 +33,7 @@ __sg_private sg_error sg_set_error_with_errno_code_fmt(sg_error code, int errno_
 do { \
 	char *buf = NULL; \
 	sg_set_error_fmt(code, __VA_ARGS__); \
-	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
+	ERROR_LOG_FMT(comp, "%s:%d: %s", __FILE__, __LINE__, sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
 
@@ -43,7 +43,7 @@ do { \
 do { \
 	char *buf = NULL; \
 	sg_set_error_with_errno_fmt(code, __VA_ARGS__); \
-	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
+	ERROR_LOG_FMT(comp, "%s:%d: %s", __FILE__, __LINE__, sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
 
@@ -53,7 +53,7 @@ do { \
 do { \
 	char *buf = NULL; \
 	sg_set_error_with_errno_code_fmt(code, errno_value, __VA_ARGS__); \
-	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
+	ERROR_LOG_FMT(comp, "%s:%d: %s", __FILE__, __LINE__, sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0)
 
@@ -62,7 +62,7 @@ do { \
 #define RETURN_FROM_PREVIOUS_ERROR(comp, code) \
 do { \
 	char *buf = NULL; \
-	ERROR_LOG_FMT(comp, "%s", sg_strperror(&buf, NULL)); \
+	ERROR_LOG_FMT(comp, "%s:%d: %s", __FILE__, __LINE__, sg_strperror(&buf, NULL)); \
 	free(buf); \
 } while(0); return code
 
