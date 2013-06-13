@@ -27,7 +27,8 @@
 
 #if defined(HAVE_STRUCT_VMTOTAL) && \
     !(defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)) && \
-    !(defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP))
+    !(defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP)) && \
+    !defined(DARWIN)
 EXTENDED_COMP_SETUP(mem,1,NULL);
 
 static int vmtotal_mib[2];
