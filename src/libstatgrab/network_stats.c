@@ -418,7 +418,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 	}
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
-#define VECTOR_UPDATE_ERROR_CLEANUP
+#define VECTOR_UPDATE_ERROR_CLEANUP freeifaddrs(net);
 
 	VECTOR_UPDATE(network_io_stats_vector_ptr, interfaces, network_io_ptr, sg_network_io_stats);
 
