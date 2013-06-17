@@ -66,8 +66,33 @@ static void sg_user_stats_item_destroy(sg_user_stats *d) {
 
 VECTOR_INIT_INFO_FULL_INIT(sg_user_stats);
 
+#if defined(HAVE_GETUTXENT) && defined(HAVE_SETUTXENT) && defined(HAVE_ENDUTXENT) && defined(HAVE_STRUCT_UTMPX)
+# define CAN_USE_UTMPX
+# if defined(HAVE_DECL_GETUTXENT) && !HAVE_DECL_GETUTXENT
+extern struct utmpx * getutxent(void);
+# endif
+# if defined(HAVE_DECL_SETUTXENT) && !HAVE_DECL_SETUTXENT
+extern void setutxent(void);
+# endif
+# if defined(HAVE_DECL_ENDUTXENT) && !HAVE_DECL_ENDUTXENT
+extern void endutxent(void);
+# endif
+#endif
+#if defined(HAVE_GETUTENT) && defined(HAVE_SETUTENT) && defined(HAVE_ENDUTENT) && defined(HAVE_STRUCT_UTMP)
+# define CAN_USE_UTMP
+# if defined(HAVE_DECL_GETUTENT) && !HAVE_DECL_GETUTENT
+extern struct utmp * getutent(void);
+# endif
+# if defined(HAVE_DECL_SETUTENT) && !HAVE_DECL_SETUTENT
+extern void setutent(void);
+# endif
+# if defined(HAVE_DECL_ENDUTENT) && !HAVE_DECL_ENDUTENT
+extern void endutent(void);
+# endif
+#endif
+
 static sg_error
-sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
+sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 	size_t num_users = 0;
 	sg_user_stats *user_ptr;
 	time_t now = time(NULL);
@@ -127,161 +152,175 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr){
 
 	if (buf != NULL)
 		NetApiBufferFree(buf);
-#elif defined(HAVE_GETUTXENT)
-	struct utmpx *ut;
+#elif defined(CAN_USE_UTMPX) || defined(CAN_USE_UTMP)
 
 #define UTMP_MUTEX_NAME "utmp"
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
-#ifdef ENABLE_THREADS
-# define VECTOR_UPDATE_ERROR_CLEANUP endutxent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
+# if defined(CAN_USE_UTMPX)
+	struct utmpx *utx;
+# endif
+# if defined(CAN_USE_UTMP)
+	struct utmp *ut;
+# endif
+
+	/* following block contains code for utmpx */
+# if defined(CAN_USE_UTMPX)
+#  ifdef ENABLE_THREADS
+#   define VECTOR_UPDATE_ERROR_CLEANUP endutxent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
 	sg_lock_mutex(UTMP_MUTEX_NAME);
-#else
-# define VECTOR_UPDATE_ERROR_CLEANUP endutxent();
-#endif
+#  else
+#   define VECTOR_UPDATE_ERROR_CLEANUP endutxent();
+#  endif
 	setutxent();
-	while( NULL != (ut = getutxent()) ) {
-		if( USER_PROCESS != ut->ut_type )
+	while( NULL != (utx = getutxent()) ) {
+		if( USER_PROCESS != utx->ut_type )
 			continue;
 
 		VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
 
-		if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->ut_user ) ) ||
-#if defined(HAVE_UTMPX_HOST)
-#if defined(HAVE_UTMPX_SYSLEN)
-		    ( SG_ERROR_NONE != sg_lupdate_string( &user_ptr[num_users].hostname, ut->ut_host, ut->ut_syslen + 1 ) ) ||
-#else
-		    ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, ut->ut_host ) ) ||
-#endif
-#endif
-		    ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, ut->ut_line ) ) ||
-		    ( SG_ERROR_NONE != sg_update_mem( (void *)(&user_ptr[num_users].record_id), ut->ut_id, sizeof(ut->ut_id) ) ) ) {
+		if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, utx->ut_user ) ) ||
+#  if defined(HAVE_UTMPX_HOST)
+#   if defined(HAVE_UTMPX_SYSLEN)
+		    ( SG_ERROR_NONE != sg_lupdate_string( &user_ptr[num_users].hostname, utx->ut_host, utx->ut_syslen + 1 ) ) ||
+#   else
+		    ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, utx->ut_host ) ) ||
+#   endif
+#  endif
+		    ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, utx->ut_line ) ) ||
+		    ( SG_ERROR_NONE != sg_update_mem( (void *)(&user_ptr[num_users].record_id), utx->ut_id, sizeof(utx->ut_id) ) ) ) {
 			    VECTOR_UPDATE_ERROR_CLEANUP
 			    RETURN_FROM_PREVIOUS_ERROR( "user", sg_get_error() );
 		}
 
-		user_ptr[num_users].record_id_size = sizeof(ut->ut_id);
-		user_ptr[num_users].pid = ut->ut_pid;
-		user_ptr[num_users].login_time = ut->ut_tv.tv_sec;
+		user_ptr[num_users].record_id_size = sizeof(utx->ut_id);
+		user_ptr[num_users].pid = utx->ut_pid;
+		user_ptr[num_users].login_time = utx->ut_tv.tv_sec;
 		user_ptr[num_users].systime = now;
 
 		++num_users;
 	}
 
 	endutxent();
-#ifdef ENABLE_THREADS
-	sg_unlock_mutex(UTMP_MUTEX_NAME);
-#endif
-#elif defined(HAVE_GETUTENT)
-	struct utmp *ut;
 
-#define UTMP_MUTEX_NAME "utmp"
+	if(!num_users) {
+# endif
 
-#undef VECTOR_UPDATE_ERROR_CLEANUP
-#ifdef ENABLE_THREADS
-# define VECTOR_UPDATE_ERROR_CLEANUP endutent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
-	sg_lock_mutex(UTMP_MUTEX_NAME);
-#else
-# define VECTOR_UPDATE_ERROR_CLEANUP endutent();
-#endif
+	/* following block contains code for utmp */
+# if defined(CAN_USE_UTMP)
+
+#  undef VECTOR_UPDATE_ERROR_CLEANUP
+#  ifdef ENABLE_THREADS
+#   define VECTOR_UPDATE_ERROR_CLEANUP endutent(); sg_unlock_mutex(UTMP_MUTEX_NAME);
+#  else
+#   define VECTOR_UPDATE_ERROR_CLEANUP endutent();
+#  endif
 	setutent();
 	while( NULL != (ut = getutent()) ) {
-#ifdef HAVE_UTMP_TYPE
+#  ifdef HAVE_UTMP_TYPE
 		if( USER_PROCESS != ut->ut_type )
 			continue;
-#elif defined(HAVE_UTMP_NAME)
-		if (entry.ut_name[0] == '\0')
-			continue;
-#elif defined(HAVE_UTMP_USER)
-		if (entry.ut_user[0] == '\0')
-			continue;
+#  elif defined(HAVE_UTMP_NAME)
+	    if (ut->ut_name[0] == '\0')
+		    continue;
+#  elif defined(HAVE_UTMP_USER)
+	    if (ut->ut_user[0] == '\0')
+		    continue;
+#  endif
+
+	    VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
+
+	    if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, ut->ut_line ) )
+#  if defined(HAVE_UTMP_USER)
+	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->ut_user ) )
+#  elif defined(HAVE_UTMP_NAME)
+	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->ut_name ) )
+#  endif
+#  if defined(HAVE_UTMP_HOST)
+	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, ut->ut_host ) )
+#  endif
+#  if defined(HAVE_UTMP_ID)
+	     || ( SG_ERROR_NONE != sg_update_mem( &user_ptr[num_users].record_id, ut->ut_id, sizeof(ut->ut_id) ) )
+#  endif
+	    ) {
+			VECTOR_UPDATE_ERROR_CLEANUP
+			RETURN_FROM_PREVIOUS_ERROR( "user", sg_get_error() );
+	    }
+
+#  if defined(HAVE_UTMP_ID)
+	    user_ptr[num_users].record_id_size = sizeof(ut->ut_id);
+#  endif
+#  if defined(HAVE_UTMP_PID)
+	    user_ptr[num_users].pid = ut->ut_pid;
+#  endif
+#if defined(HAVE_UTMP_TIME)
+	    user_ptr[num_users].login_time = ut->ut_time;
+#endif
+	    user_ptr[num_users].systime = now;
+
+	    ++num_users;
+    }
+
+    endutent();
+# endif
+
+# if defined(CAN_USE_UTMPX)
+    }
 #endif
 
-		VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
-
-		if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, ut->ut_line ) )
-#if defined(HAVE_UTMP_USER)
-		 || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->user ) )
-#elif defined(HAVE_UTMP_NAME)
-		 || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->name ) )
-#endif
-#if defined(HAVE_UTMP_HOST)
-		 || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, ut->ut_host ) )
-#endif
-#if defined(HAVE_UTMP_ID)
-		 || ( SG_ERROR_NONE != sg_update_mem( &user_ptr[num_users].record_id, ut->ut_id, sizeof(ut->ut_id) ) )
-#endif
-		) {
-			    VECTOR_UPDATE_ERROR_CLEANUP
-			    RETURN_FROM_PREVIOUS_ERROR( "user", sg_get_error() );
-		}
-
-#if defined(HAVE_UTMP_ID)
-		user_ptr[num_users].record_id_size = sizeof(ut->ut_id);
-#endif
-#if defined(HAVE_UTMP_PID)
-		user_ptr[num_users].pid = ut->ut_pid;
-#endif
-		user_ptr[num_users].login_time = ut->ut_tv.tv_sec;
-		user_ptr[num_users].systime = now;
-
-		++num_users;
-	}
-
-	endutent();
-#ifdef ENABLE_THREADS
-	sg_unlock_mutex(UTMP_MUTEX_NAME);
-#endif
+# ifdef ENABLE_THREADS
+    sg_unlock_mutex(UTMP_MUTEX_NAME);
+# endif
 #elif defined(HAVE_STRUCT_UTMP) && defined(_PATH_UTMP)
-	struct utmp entry;
-	FILE *f;
+    struct utmp entry;
+    FILE *f;
 
-	if ((f=fopen(_PATH_UTMP, "r")) == NULL) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("user", SG_ERROR_OPEN, _PATH_UTMP);
-	}
+    if ((f=fopen(_PATH_UTMP, "r")) == NULL) {
+	    RETURN_WITH_SET_ERROR_WITH_ERRNO("user", SG_ERROR_OPEN, _PATH_UTMP);
+    }
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP fclose(f);
 
-	while((fread(&entry, sizeof(entry),1,f)) != 0){
+    while((fread(&entry, sizeof(entry),1,f)) != 0){
 #ifdef HAVE_UTMP_TYPE
-		if( USER_PROCESS != ut->ut_type )
-			continue;
+	    if( USER_PROCESS != ut->ut_type )
+		    continue;
 #elif defined(HAVE_UTMP_NAME)
-		if (entry.ut_name[0] == '\0')
-			continue;
+	    if (entry.ut_name[0] == '\0')
+		    continue;
 #elif defined(HAVE_UTMP_USER)
-		if (entry.ut_user[0] == '\0')
-			continue;
+	    if (entry.ut_user[0] == '\0')
+		    continue;
 #endif
 
-		VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
+	    VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
 
-		if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, entry.ut_line ) )
+	    if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, entry.ut_line ) )
 #if defined(HAVE_UTMP_USER)
-		 || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, entry.ut_user ) )
+	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, entry.ut_user ) )
 #elif defined(HAVE_UTMP_NAME)
-		 || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, entry.ut_name ) )
+	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, entry.ut_name ) )
 #endif
 #if defined(HAVE_UTMP_HOST)
-		 || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, entry.ut_host ) )
+	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, entry.ut_host ) )
 #endif
 #if defined(HAVE_UTMP_ID)
-		 || ( SG_ERROR_NONE != sg_update_mem( &user_ptr[num_users].record_id, entry.ut_id, sizeof(entry.ut_id) ) )
+	     || ( SG_ERROR_NONE != sg_update_mem( &user_ptr[num_users].record_id, entry.ut_id, sizeof(entry.ut_id) ) )
 #endif
-		) {
-			    VECTOR_UPDATE_ERROR_CLEANUP
-			    RETURN_FROM_PREVIOUS_ERROR( "user", sg_get_error() );
-		}
+	    ) {
+			VECTOR_UPDATE_ERROR_CLEANUP
+			RETURN_FROM_PREVIOUS_ERROR( "user", sg_get_error() );
+	    }
 
 #if defined(HAVE_UTMP_ID)
-		user_ptr[num_users].record_id_size = sizeof(entry.ut_id);
+	    user_ptr[num_users].record_id_size = sizeof(entry.ut_id);
 #endif
 #if defined(HAVE_UTMP_PID)
-		user_ptr[num_users].pid = entry.ut_pid;
+	    user_ptr[num_users].pid = entry.ut_pid;
 #endif
 #if defined(HAVE_UTMP_TIME)
-		user_ptr[num_users].login_time = entry.ut_time;
+	    user_ptr[num_users].login_time = entry.ut_time;
 #endif
 		user_ptr[num_users].systime = now;
 

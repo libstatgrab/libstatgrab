@@ -402,7 +402,8 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 #endif
 #if defined(HAVE_UTMPX_H)
 # include <utmpx.h>
-#elif defined(HAVE_UTMP_H)
+#endif
+#if defined(HAVE_UTMP_H)
 # include <utmp.h>
 #endif
 #ifdef HAVE_LIBDEVINFO_H

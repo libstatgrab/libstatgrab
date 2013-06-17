@@ -292,7 +292,10 @@ AC_INCLUDES_DEFAULT
 AC_CHECK_FUNCS([sysfs])
 
 AS_IF([test "x$ac_cv_header_utmpx_h" = "xyes"], [
-	AC_CHECK_FUNCS([getutxent])
+	AC_CHECK_FUNCS([getutxent setutxent endutxent])
+	AC_CHECK_DECLS([getutxent, setutxent, endutxent], , , [AC_INCLUDES_DEFAULT()
+#include <utmpx.h>
+])
 
 	# FreeBSD 9 (and others) uses utmpx rather than utmp
 	AC_CHECK_TYPES([struct utmpx], , , [#include <utmpx.h>])
@@ -317,7 +320,10 @@ AS_IF([test "x$ac_cv_header_utmpx_h" = "xyes"], [
 ])
 
 AS_IF([test "x$ac_cv_header_utmp_h" = "xyes"], [
-	AC_CHECK_FUNCS([getutent])
+	AC_CHECK_FUNCS([setutent endutent getutent])
+	AC_CHECK_DECLS([getutent, setutent, endutent], , , [AC_INCLUDES_DEFAULT()
+#include <utmp.h>
+])
 
 	AC_CHECK_TYPES([struct utmp], , , [
 AC_INCLUDES_DEFAULT
