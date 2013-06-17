@@ -63,6 +63,8 @@ static size_t glob_size = 0;
 
 static void *sg_alloc_globals(void);
 static void sg_destroy_globals(void *);
+static void sg_destroy_main_globals(void);
+
 #ifdef ENABLE_THREADS
 # if defined(HAVE_PTHREAD)
 #  include <pthread.h>
@@ -78,16 +80,6 @@ static DWORD glob_tls_idx = TLS_OUT_OF_INDEXES;
 # else
 #  error unsupport thread library
 # endif
-
-static void
-sg_destroy_main_globals(void)
-{
-# if defined(HAVE_PTHREAD)
-	char *glob_buf;
-	while( NULL != ( glob_buf = pthread_getspecific(glob_key) ) )
-		sg_destroy_globals(glob_buf);
-# endif
-}
 
 # if defined(HAVE_PTHREAD)
 struct sg_named_mutex {
@@ -222,12 +214,35 @@ sg_init_thread_local(void) {
 		abort(); // can't store error state without TLS
 # endif
 
-	atexit((void (*)(void))sg_destroy_main_globals);
 	return SG_ERROR_NONE;
 }
 #else /* !ENABLE_THREADS */
 static char *glob_buf = NULL;
 #endif /* ?ENABLE_THREADS */
+
+static void
+sg_destroy_main_globals(void)
+{
+#if defined(ENABLE_THREADS)
+# if defined(HAVE_PTHREAD)
+	char *glob_buf;
+	while( NULL != ( glob_buf = pthread_getspecific(glob_key) ) )
+		sg_destroy_globals(glob_buf);
+# elif defined(WIN32)
+	glob_buf = TlsGetValue(glob_tls_idx);
+	if((NULL == glob_buf) && (ERROR_SUCCESS != GetLastError())){
+		RETURN_WITH_SET_ERROR("globals", SG_ERROR_MEMSTATUS, NULL);
+	}
+	if(glob_buf)
+		sg_destroy_globals(glob_buf);
+# endif
+#else
+	if(glob_buf) {
+		sg_destroy_globals(glob_buf);
+		glob_buf = NULL;
+	}
+#endif
+}
 
 sg_error
 sg_comp_init(int ignore_init_errors) {
@@ -245,6 +260,8 @@ sg_comp_init(int ignore_init_errors) {
 	if( 0 != initialized++ )
 		return sg_global_unlock();
 #endif
+
+	atexit((void (*)(void))sg_destroy_main_globals);
 
 	TRACE_LOG("globals", "Doing sg_comp_init() ...");
 	glob_size = 0;
