@@ -121,11 +121,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 #endif
 
 #if defined(HPUX)
-#if 0
-	if((pagesize=sysconf(_SC_PAGESIZE)) == -1){
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-#endif
 	if (pstat_getdynamic(&pstat_dynamic, sizeof(pstat_dynamic), 1, 0) == -1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_PSTAT, "pstat_dynamic");
 	}
@@ -160,16 +155,20 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
 	}
 
-	mem_stats_buf->total = ((unsigned long long) mem.real_total) * pagesize;
-	mem_stats_buf->free  = ((unsigned long long) mem.real_free)  * pagesize;
-	mem_stats_buf->used  = ((unsigned long long) mem.real_inuse) * pagesize;
-	mem_stats_buf->cache = ((unsigned long long) mem.numperm)    * pagesize;
+	mem_stats_buf->total = (unsigned long long) mem.real_total;
+	mem_stats_buf->total *= pagesize;
+	mem_stats_buf->used  = (unsigned long long) mem.real_inuse;
+	mem_stats_buf->used  *= pagesize;
+	mem_stats_buf->cache = (unsigned long long) mem.numperm;
+	mem_stats_buf->cache *= pagesize;
+	mem_stats_buf->free  = (unsigned long long) mem.real_free;
+	mem_stats_buf->free  *= pagesize;
 #elif defined(SOLARIS)
 	if( ( pagesize=sysconf(_SC_PAGESIZE) ) < 0 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 	}
 
-#ifdef _SC_PHYS_PAGES
+# ifdef _SC_PHYS_PAGES
 	if( ( phystotal = sysconf(_SC_PHYS_PAGES) ) < 0 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PHYS_PAGES");
 	}
@@ -178,9 +177,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	}
 	mem_stats_buf->total = ((unsigned long long)phystotal) * ((unsigned long long)pagesize);
 	mem_stats_buf->free = ((unsigned long long)physav) * ((unsigned long long)pagesize);
-	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
-	mem_stats_buf->cache = 0;
-#else
+# else
 	if( (kc = kstat_open()) == NULL ) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_OPEN, NULL);
 	}
@@ -205,10 +202,9 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	mem_stats_buf->free = ((unsigned long long)kn->value.ul) * ((unsigned long long)pagesize);
 	kstat_close(kc);
-
+# endif
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 	mem_stats_buf->cache = 0;
-#endif
 #elif defined(LINUX) || defined(CYGWIN)
 	if ((f = fopen("/proc/meminfo", "r")) == NULL) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_OPEN, "/proc/meminfo");
@@ -229,6 +225,8 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 		else if (strncmp(line_buf, MEM_CACHED_PREFIX, sizeof(MEM_CACHED_PREFIX) - 1) == 0)
 			mem_stats_buf->cache = value;
 	}
+
+	mem_stats_buf->free += mem_stats_buf->cache;
 
 	mem_stats_buf->total *= 1024;
 	mem_stats_buf->free *= 1024;
@@ -251,7 +249,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	mem_stats_buf->total = uvm.npages;
 	mem_stats_buf->cache = uvm.filepages + uvm.execpages;
-	mem_stats_buf->free = uvm.free;
+	mem_stats_buf->free = uvm.free + mem_stats_buf->cache;
 
 	mem_stats_buf->total *= uvm.pagesize;
 	mem_stats_buf->cache *= uvm.pagesize;
@@ -274,7 +272,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 # if defined(HAVE_STRUCT_UVMEXP_EXECPAGES)
 	mem_stats_buf->cache += uvm.execpages;
 # endif
-	mem_stats_buf->free = uvm.free;
+	mem_stats_buf->free = uvm.free + mem_stats_buf->cache;
 
 	mem_stats_buf->total *= uvm.pagesize;
 	mem_stats_buf->cache *= uvm.pagesize;
@@ -349,7 +347,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	mem_stats_buf->cache *= (size_t)pagesize;
 	mem_stats_buf->total = (size_t)total_count;
 	mem_stats_buf->total *= (size_t)pagesize;
-	mem_stats_buf->free = (size_t)free_count + inactive_count;
+	mem_stats_buf->free = (size_t)free_count + inactive_count + cache_count;
 	mem_stats_buf->free *= (size_t)pagesize;
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 #elif defined(WIN32)
