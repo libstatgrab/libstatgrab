@@ -795,9 +795,15 @@ print_kernel_proctitle:
 	mib[2] = KERN_PROC_PROC;
 	mib[3] = 0;
 	i = 4;
-#else
+# elif defined(HAVE_KINFO_PROC_KP_PID)
 	mib[2] = KERN_PROC_ALL;
 	i = 3;
+#else
+	mib[2] = KERN_PROC_ALL;
+	mib[3] = 0;
+	mib[4] = sizeof(*kp_stats);
+	mib[5] = 0;
+	i = 6;
 #endif
 
 	if( NULL == (proctitle = sg_malloc( ARG_MAX * sizeof(*proctitle) ) ) ) {
@@ -816,6 +822,7 @@ again:
 	}
 
 	kp_stats = tmp;
+	mib[5] = nprocs = size / sizeof(*kp_stats);
 	if( -1 == (rc = sysctl(mib, (unsigned)i, kp_stats, &size, NULL, (size_t)0) ) ) {
 		if( errno == ENOMEM ) {
 			goto again;
@@ -824,7 +831,6 @@ again:
 	}
 
 	proc_items = 0;
-	nprocs = size / sizeof(*kp_stats);
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP free(kp_stats); free(proctitle);
@@ -1050,8 +1056,14 @@ again:
 			size = ARG_MAX * sizeof(*proctitle);
 			*proctitle = '\0';
 			mib[0] = CTL_KERN;
-#  if defined(KERN_PROC_ARGS)
-			mib[2] = KERN_PROC;
+#  if defined(KERN_PROC_ARGS) && defined(KERN_PROC_ARGV)
+			mib[1] = KERN_PROC_ARGS;
+			mib[2] = ((int)proc_stats_ptr[i].pid);
+			mib[3] = KERN_PROC_ARGV;
+			rc = 4;
+			p = "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV";
+#  elif defined(KERN_PROC_ARGS) && !defined(KERN_PROC_ARGV)
+			mib[1] = KERN_PROC;
 			mib[2] = KERN_PROC_ARGS;
 			mib[3] = ((int)proc_stats_ptr[i].pid);
 			rc = 4;
@@ -1063,12 +1075,11 @@ again:
 			p = "CTL_KERN.KERN_PROCARGS2";
 #  endif
 			if( -1 == ( rc = sysctl(mib, rc, proctitle, &size, NULL, 0) ) ) {
-				long failing_pid = (long)proc_stats_ptr[i].pid;
 #  if defined(KERN_PROCARGS2)
 				if( EINVAL == errno )
 					goto print_kernel_proctitle;
 #  endif
-				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=%ld", p, failing_pid);
+				RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=" FMT_PID_T, p, proc_stats_ptr[i].pid);
 			}
 
 			if( size > 1 ) {
