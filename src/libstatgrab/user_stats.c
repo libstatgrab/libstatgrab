@@ -240,7 +240,7 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, ut->ut_host ) )
 #  endif
 #  if defined(HAVE_UTMP_ID)
-	     || ( SG_ERROR_NONE != sg_update_mem( &user_ptr[num_users].record_id, ut->ut_id, sizeof(ut->ut_id) ) )
+	     || ( SG_ERROR_NONE != sg_update_mem( (void **)(&user_ptr[num_users].record_id), ut->ut_id, sizeof(ut->ut_id) ) )
 #  endif
 	    ) {
 			VECTOR_UPDATE_ERROR_CLEANUP
