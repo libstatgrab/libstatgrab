@@ -25,15 +25,17 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents_of</function></funcdef>
         <paramdef>sg_cpu_percent_source <parameter>cps</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents_r</function></funcdef>
         <paramdef>const sg_cpu_stats *<parameter>whereof</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>void <function>sg_free_cpu_percents</function></funcdef>
@@ -41,19 +43,20 @@
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_r</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff_between</function></funcdef>
         <paramdef>const sg_cpu_stats *<parameter>cpu_now</parameter>, const sg_cpu_stats *<parameter>cpu_last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_error <function>sg_free_cpu_stats</function></funcdef>

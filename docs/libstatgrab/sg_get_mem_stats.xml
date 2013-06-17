@@ -23,11 +23,11 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_mem_stats *<function>sg_get_mem_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_mem_stats *<function>sg_get_mem_stats_r</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_error <function>sg_free_mem_stats</function></funcdef>
@@ -36,11 +36,11 @@
 
       <funcprototype>
         <funcdef>sg_swap_stats *<function>sg_get_swap_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_swap_stats *<function>sg_get_swap_stats_r</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_error <function>sg_free_swap_stats</function></funcdef>

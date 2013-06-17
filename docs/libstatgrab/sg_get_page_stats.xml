@@ -22,20 +22,21 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_page_stats *<function>sg_get_page_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_page_stats *<function>sg_get_page_stats_r</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_page_stats *<function>sg_get_page_stats_diff</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_page_stats *<function>sg_get_page_stats_diff_between</function></funcdef>
         <paramdef>const sg_page_stats *<parameter>cur</parameter></paramdef>
         <paramdef>const sg_page_stats *<parameter>last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_error <function>sg_free_page_stats</function></funcdef>

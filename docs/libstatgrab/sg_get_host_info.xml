@@ -20,11 +20,11 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_host_info *<function>sg_get_host_info</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_host_info *<function>sg_get_host_info_r</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_error <function>sg_free_host_info</function></funcdef>
