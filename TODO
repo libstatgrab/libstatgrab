@@ -8,27 +8,7 @@
 3) configure.ac - xpg\d vs. their funcs
    * ac_check_funcs ...
 
-4) DragonflyBSD & NetBSD testing
-   Dragonfly 3.4 - no network traffic showing
-   Dragonfly 3.4 - no user list
-   NetBSD - all ok?
-
-5) FreeBSD memory stats; totals don't add up
-   should we include cache in free memory?
-   so: free=free+inactive+cache, used=total-free ?
-
 6) define __NEED_SG_GET_SYS_PAGE_SIZE only when needed
 
 7) review code and cleanup common uses of same code
    ==> see what can be moved to init_comp ...
-
-8) OpenBSD 5.3 - process stats missing
-   Failed to get process snapshot: sysctl failed (Invalid argument: CTL_KERN.KERN_PROC.KERN_PROC_ALL)
-
-9) Should sg_destroy_globals be wrapped inside one of the thread-related
-   #ifdefs in globals.c?
-   Some testing should be done with threads disabled and warnings
-   turned on to see what other things crop up.
-   globals.c:447:1: warning: 'sg_destroy_globals' defined but not used [-Wunused-function]
-
-10) Update manual pages to reflect recent API changes.
