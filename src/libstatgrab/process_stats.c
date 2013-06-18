@@ -244,12 +244,15 @@ scan_proc_dir( const char *path_to_proc_dir ) {
 
 #if defined(KERN_PROC_ARGS) || defined(KERN_PROC_ARGV) || defined(KERN_PROCARGS2) || defined(AIX) || defined(LINUX)
 static char *
-adjust_procname_cmndline( char *proctitle, size_t len ) {
+adjust_procname_cmndline(char *proctitle, size_t len) {
 
 	char *p, *pt;
 
 	/* XXX OpenBSD prepends char *[] adressing the several embedded argv items */
-	memcpy(&p, proctitle, sizeof(pt)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
+#if defined(DARWIN)
+	pt = p = proctitle + sizeof(int);;
+#else
+	memcpy(&p, proctitle, sizeof(p)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
 	if( len && ((size_t)(p - proctitle) <= len) ) {
 		pt = p;
 		len -= p - proctitle;
@@ -257,6 +260,7 @@ adjust_procname_cmndline( char *proctitle, size_t len ) {
 	else {
 		pt = p = proctitle;
 	}
+#endif
 
 	while( ( len && ( p < (pt + len) ) ) || !len ) {
 		if( *(p+1) == '\0' )
@@ -804,7 +808,7 @@ print_kernel_proctitle:
 	mib[2] = KERN_PROC_PROC;
 	mib[3] = 0;
 	i = 4;
-# elif defined(HAVE_KINFO_PROC_KP_PID)
+# elif defined(HAVE_KINFO_PROC_KP_PID) || defined(HAVE_KINFO_PROC_KP_EPROC)
 	mib[2] = KERN_PROC_ALL;
 	i = 3;
 #else
@@ -1093,8 +1097,8 @@ again:
 			}
 
 			if( size > 1 ) {
-				adjust_procname_cmndline( proctitle, size );
-				if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].proctitle, proctitle ) ) {
+				char *pt = adjust_procname_cmndline( proctitle, size );
+				if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].proctitle, pt ) ) {
 					VECTOR_UPDATE_ERROR_CLEANUP;
 					RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 				}
@@ -1306,7 +1310,7 @@ print_kernel_proctitle:
 				if( getargs(pi, sizeof(*pi), cmndline, ARG_MAX) < 0 )
 					cmndline = NULL;
 				else {
-					adjust_procname_cmndline( cmndline, 0 );
+					cmndline = adjust_procname_cmndline( cmndline, 0 );
 				}
 			}
 
