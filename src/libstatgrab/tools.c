@@ -114,7 +114,8 @@ read_dir(char *disk_path){
 		dsk_dir = "/dev/dsk";
 		snprintf(current_dir, sizeof current_dir, "%s", dsk_dir);
 		if ((dirp = opendir(current_dir)) == NULL){
-			SET_ERROR_WITH_ERRNO( "tools", SG_ERROR_OPENDIR, "open_dir(dsk_dir = %s) in read_dir(disk_path = %s)", dsk_dir ? dsk_dir : "<NULL>", disk_path ? disk_path : "<NULL>" );
+			SET_ERROR_WITH_ERRNO( "tools", SG_ERROR_OPENDIR, "open_dir(dsk_dir = %s) in read_dir(disk_path = %s)",
+					      dsk_dir ? dsk_dir : "<NULL>", disk_path ? disk_path : "<NULL>" );
 			return NULL;
 		}
 	}
@@ -190,13 +191,13 @@ get_alias(char *alias){
 #define BIG_ENOUGH 512
 static int
 build_mapping(void) {
-	char device_name[BIG_ENOUGH];
-	int x;
+	char device_name[MAXPATHLEN];
+	size_t x;
 	kstat_ctl_t *kc;
 	kstat_t *ksp;
 	kstat_io_t kios;
 
-	char driver_list[BIG_ENOUGH][BIG_ENOUGH];
+	char driver_list[BIG_ENOUGH][MAXPATHLEN];
 	int list_entries = 0;
 	int found;
 
@@ -204,41 +205,49 @@ build_mapping(void) {
 		return -1;
 	}
 
-	for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
-		if (!strcmp(ksp->ks_class, "disk")) {
-			if(ksp->ks_type != KSTAT_TYPE_IO) continue;
+	for(ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+		if( !strcmp(ksp->ks_class, "disk") ) {
+			if(ksp->ks_type != KSTAT_TYPE_IO)
+				continue;
+
 			/* We dont want metadevices appearing as num_diskio */
-			if(strcmp(ksp->ks_module, "md")==0) continue;
-			if((kstat_read(kc, ksp, &kios))==-1) continue;
+			if(strcmp(ksp->ks_module, "md") == 0)
+				continue;
+			if((kstat_read(kc, ksp, &kios))==-1)
+				continue;
+
 			strncpy(device_name, ksp->ks_name, sizeof device_name);
-			for(x=0;x<(int)(sizeof device_name);x++){
-				if( isdigit((int)device_name[x]) ) break;
+			for( x = 0; x < sizeof(device_name); ++x) {
+				if( isdigit((int)(device_name[x])) )
+					break;
 			}
-			if(x == sizeof device_name) x--;
+			if(x == sizeof(device_name))
+				--x;
 			device_name[x] = '\0';
 
 			/* Check if we've not already looked it up */
 			found = 0;
-			for(x=0;x<list_entries;x++){
-				if (x>=BIG_ENOUGH){
+			for( x = 0; x < list_entries; ++x ) {
+				if( x >= lengthof(driver_list) ){
 					/* We've got bigger than we thought was massive */
 					/* If we hit this.. Make big enough bigger */
 					kstat_close(kc);
 					return -1;
 				}
-				if( !strncmp(driver_list[x], device_name, BIG_ENOUGH)){
+				if( !strncmp(driver_list[x], device_name, sizeof(driver_list[x])) ) {
 					found = 1;
 					break;
 				}
 			}
 
-			if(!found){
-				if((get_alias(device_name)) != 0){
+			if(!found) {
+				if((get_alias(device_name)) != 0) {
 					kstat_close(kc);
 					return -1;
 				}
-				strncpy(driver_list[x], device_name, BIG_ENOUGH);
-				list_entries++;
+
+				strncpy(driver_list[x], device_name, sizeof(driver_list[x]));
+				++list_entries;
 			}
 		}
 	}
