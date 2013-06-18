@@ -1625,8 +1625,9 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 		}
 		free(dinfo);
 		if(pstat_diskinfo[num - 1].psd_idx >= INT_MAX) {
+			RETURN_WITH_SET_ERROR("disk", SG_ERROR_PSTAT, "pstat_getdisk(idx=%ld >= INT_MAX)", pstat_diskinfo[num - 1].psd_idx);
 		}
-		diskidx = (int)(pstat_diskinfo[num - 1].psd_idx + 1);
+		diskidx = (int)((pstat_diskinfo[num - 1].psd_idx + 1) % INT_MAX);
 	}
 #elif defined(HAVE_STRUCT_IO_SYSCTL) || defined(HAVE_STRUCT_DISKSTATS) || defined(HAVE_STRUCT_DISK_SYSCTL)
 
