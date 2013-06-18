@@ -1272,7 +1272,8 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 	struct pst_diskinfo pstat_diskinfo[DISK_BATCH];
 	char fullpathbuf[1024] = {0};
 	dev_t diskid;
-	DIR *dh = NULL;
+	struct dirent *dinfo;
+	size_t dinfo_size = sizeof(*dinfo) - sizeof(dinfo->d_name) + PATH_MAX + 1;
 	int diskidx = 0;
 	int num, i;
 	size_t n;
@@ -1556,6 +1557,10 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 		}
 
 		VECTOR_UPDATE(disk_io_stats_vector_ptr, num_diskio + enabled_disks, disk_io_stats, sg_disk_io_stats);
+		dinfo = calloc(1, dinfo_size);
+		if( NULL == dinfo ) {
+			RETURN_WITH_SET_ERROR_WITH_ERRNO("disk", SG_ERROR_MALLOC, "calloc for readdir_r()");
+		}
 
 		for( i = 0; i < num; ++i ) {
 			struct pst_diskinfo *di = &pstat_diskinfo[i];
@@ -1586,25 +1591,27 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 			 * code below. */
 			diskid = (di->psd_dev.psd_major << 24) | di->psd_dev.psd_minor;
 			for( n = 0; n < lengthof(disk_devs_in); ++n ) {
-				struct dirent dinfo, *result = NULL;
-				dh = opendir(disk_devs_in[n]);
+				struct dirent *result = NULL;
+				DIR *dh = opendir(disk_devs_in[n]);
+
 				if( dh == NULL ) {
 					continue;
 				}
 
-				while( ( 0 == (readdir_r(dh, &dinfo, &result)) ) && ( result != NULL ) ) {
-					snprintf(fullpathbuf, sizeof(fullpathbuf), "%s/%s", disk_devs_in[n], dinfo.d_name);
+				while( ( 0 == (readdir_r(dh, dinfo, &result)) ) && ( result != NULL ) ) {
+					snprintf(fullpathbuf, sizeof(fullpathbuf), "%s/%s", disk_devs_in[n], dinfo->d_name);
 					if( lstat(fullpathbuf, &lstatinfo) < 0 ) {
 						continue;
 					}
 
 					if( lstatinfo.st_rdev == diskid ) {
-						if( sg_update_string(&disk_io_stats[num_diskio].disk_name, dinfo.d_name) != SG_ERROR_NONE ) {
+						if( sg_update_string(&disk_io_stats[num_diskio].disk_name, dinfo->d_name) != SG_ERROR_NONE ) {
 							RETURN_FROM_PREVIOUS_ERROR( "disk", sg_get_error() );
 						}
 						break;
 					}
 				}
+
 				closedir(dh);
 			}
 
@@ -1616,7 +1623,10 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 
 			++num_diskio;
 		}
-		diskidx = pstat_diskinfo[num - 1].psd_idx + 1;
+		free(dinfo);
+		if(pstat_diskinfo[num - 1].psd_idx >= INT_MAX) {
+		}
+		diskidx = (int)(pstat_diskinfo[num - 1].psd_idx + 1);
 	}
 #elif defined(HAVE_STRUCT_IO_SYSCTL) || defined(HAVE_STRUCT_DISKSTATS) || defined(HAVE_STRUCT_DISK_SYSCTL)
 
