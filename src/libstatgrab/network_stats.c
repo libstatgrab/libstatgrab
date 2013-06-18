@@ -22,6 +22,9 @@
  * $Id$
  */
 
+#ifdef _AIX
+#define __NEED_SG_GET_SYS_PAGE_SIZE
+#endif
 #include "tools.h"
 
 static void
@@ -146,6 +149,9 @@ static regex_t network_io_rx;
 
 static sg_error
 sg_network_init_comp(unsigned id) {
+#ifdef __NEED_SG_GET_SYS_PAGE_SIZE
+	ssize_t pagesize;
+#endif
 	GLOBAL_SET_ID(network,id);
 
 #ifdef LINUX
@@ -165,6 +171,12 @@ sg_network_init_comp(unsigned id) {
 				    "[0-9]+[[:space:]]+" \
 				    "([0-9]+)", REG_EXTENDED)!=0) {
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_PARSE, "regcomp");
+	}
+#endif
+
+#ifdef __NEED_SG_GET_SYS_PAGE_SIZE
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 	}
 #endif
 
@@ -718,7 +730,6 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 	char buf[5];
 #elif defined(AIX)
 	int fd, n;
-	ssize_t pagesize;
 	struct ifreq *ifr, *lifr, iff;
 	struct ifconf ifc;
 #elif defined(HPUX)
@@ -789,7 +800,7 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 		switch(IFM_TYPE(ifmed.ifm_active)) {
 		case IFM_ETHER:
 			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
-#ifdef IFM_HPNA_1
+#if defined(IFM_HPNA_1) && ((!defined(IFM_10G_LR)) || (IFM_10G_LR != IFM_HPNA_1))
 				/* HomePNA 1.0 (1Mb/s) */
 				case(IFM_HPNA_1):
 					network_iface_stat[ifaces].speed = 1;
@@ -837,12 +848,25 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 # ifdef IFM_10G_CX4
 				case(IFM_10G_CX4):
 # endif
+# ifdef IFM_10G_TWINAX
+				case(IFM_10G_TWINAX):
+# endif
+# ifdef IFM_10G_TWINAX_LONG
+				case(IFM_10G_TWINAX_LONG):
+# endif
 # ifdef IFM_10G_T
 				case(IFM_10G_T):
 # endif
-					network_iface_stat[ifaces].speed = 1000;
+					network_iface_stat[ifaces].speed = 10000;
 					break;
 #endif
+#if defined(IFM_2500_SX)
+# ifdef IFM_2500_SX
+				case(IFM_2500_SX):
+# endif
+					network_iface_stat[ifaces].speed = 2500;
+					break;
+#endif /* any 2.5GBit stuff ...*/
 				/* We don't know what it is */
 				default:
 					network_iface_stat[ifaces].speed = 0;
@@ -850,6 +874,7 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 			}
 			break;
 
+#ifdef IFM_TOKEN
 		case IFM_TOKEN:
 			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
 				case IFM_TOK_STP4: /* Shielded twisted pair 4m - DB9 */
@@ -861,11 +886,16 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 				case IFM_TOK_UTP16: /* Unshielded twisted pair 16m - RJ45 */
 					network_iface_stat[ifaces].speed = 16;
 					break;
-
+#if defined(IFM_TOK_STP100) || defined(IFM_TOK_UTP100)
+# ifdef IFM_TOK_STP100
 				case IFM_TOK_STP100: /* Shielded twisted pair 100m - DB9 */
+# endif
+# ifdef IFM_TOK_UTP100
 				case IFM_TOK_UTP100: /* Unshielded twisted pair 100m - RJ45 */
+# endif
 					network_iface_stat[ifaces].speed = 100;
 					break;
+#endif
 
 				/* We don't know what it is */
 				default:
@@ -873,7 +903,9 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 					break;
 			}
 			break;
+#endif
 
+#ifdef IFM_FDDI
 		case IFM_FDDI:
 			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
 				/* We don't know what it is */
@@ -882,6 +914,7 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 					break;
 			}
 			break;
+#endif
 
 		case IFM_IEEE80211:
 			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
@@ -947,40 +980,36 @@ skip:
 	: sizeof(struct ifreq))
 #endif
 
-	if( (pagesize = sysconf(_SC_PAGESIZE)) == -1 ) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 	if( (fd = socket (PF_INET, SOCK_DGRAM, 0)) == -1 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_SOCKET, NULL);
 	}
 
 	n = 2;
-	ifr = (struct ifreq *)malloc( n*pagesize );
+	ifr = (struct ifreq *)malloc( n * sys_page_size );
 	if( NULL == ifr ) {
 		close (fd);
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_MALLOC, NULL);
 	}
 	bzero(&ifc, sizeof(ifc));
 	ifc.ifc_req = ifr;
-	ifc.ifc_len = n * pagesize;
+	ifc.ifc_len = n * sys_page_size;
 	while( ( ioctl( fd, SIOCGIFCONF, &ifc ) == -1 ) ||
-	       ( ((ssize_t)ifc.ifc_len) >= ( (n-1) * pagesize)) )
+	       ( ((ssize_t)ifc.ifc_len) >= ( (n-1) * sys_page_size)) )
 	{
 		n *= 2;
-		if( (n * pagesize) > INT_MAX ) {
+		if( (n * sys_page_size) > INT_MAX ) {
 			free( ifc.ifc_req );
 			close (fd);
 			RETURN_WITH_SET_ERROR_WITH_ERRNO_CODE("network", SG_ERROR_MALLOC, ERANGE, "SIOCGIFCONF");
 		}
-		ifr = (struct ifreq *)realloc( ifr, n*pagesize );
+		ifr = (struct ifreq *)realloc( ifr, n * sys_page_size );
 		if( NULL == ifr ) {
 			free( ifc.ifc_req );
 			close (fd);
 			RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_MALLOC, NULL);
 		}
 		ifc.ifc_req = ifr;
-		ifc.ifc_len = n * pagesize;
+		ifc.ifc_len = n * sys_page_size;
 	}
 
 	lifr = (struct ifreq *)&ifc.ifc_buf[ifc.ifc_len];
@@ -1252,6 +1281,7 @@ skip:
 
 		err = ioctl(sock, SIOCETHTOOL, &ifr);
 		if (err == 0) {
+#if 0
 			switch(ethcmd.speed) {
 			case SPEED_10:
 				network_iface_stat[ifaces].speed = 10;
@@ -1268,6 +1298,9 @@ skip:
 				network_iface_stat[ifaces].speed = 0;
 				break;
 			}
+#else
+			network_iface_stat[ifaces].speed = ethtool_cmd_speed(&ethcmd);
+#endif
 			network_iface_stat[ifaces].factor = 1000U * 1000U;
 
 			switch (ethcmd.duplex) {

@@ -210,7 +210,7 @@ sg_vector_resize(struct sg_vector *vector, size_t new_count) {
 
 size_t
 sg_get_nelements(const void *data){
-    const sg_vector *vector = VECTOR_ADDRESS(data);
+    const sg_vector *vector = VECTOR_ADDRESS_CONST(data);
     return vector ? vector->used_count : 0;
 }
 
@@ -222,7 +222,8 @@ sg_vector_clone_into_int(sg_vector **dest, const sg_vector *src){
 	sg_vector *tmp   = ((*dest)->used_count == src->used_count)
 			 ? *dest
 			 : sg_vector_resize(*dest, src->used_count);
-	char *src_data   = VECTOR_DATA(src), *dest_data = VECTOR_DATA(tmp);
+	char const *src_data   = VECTOR_DATA_CONST(src);
+	char *dest_data = VECTOR_DATA(tmp);
 	size_t item_size = src->info.item_size;
 
 	assert(src->info.copy_fn);
@@ -232,7 +233,7 @@ sg_vector_clone_into_int(sg_vector **dest, const sg_vector *src){
 	}
 
 	for( i = 0; i < src->used_count; ++i ) {
-		sg_error rc = src->info.copy_fn( dest_data + i * item_size, src_data + i * item_size );
+		sg_error rc = src->info.copy_fn( src_data + i * item_size, dest_data + i * item_size );
 		if( SG_ERROR_NONE != rc ) {
 			sg_vector_free( tmp );
 			*dest = NULL;
@@ -343,8 +344,8 @@ sg_vector_compute_diff(sg_vector **dest_vector_ptr, const sg_vector *cur_vector,
 			size_t i, item_size = last_vector->info.item_size;
 			unsigned matched[(cur_vector->used_count / (8 * sizeof(unsigned))) + 1];
 
-			char *diff = VECTOR_DATA(*dest_vector_ptr),
-			     *last = VECTOR_DATA(last_vector);
+			char const *diff = VECTOR_DATA_CONST(*dest_vector_ptr);
+			char *last = VECTOR_DATA(last_vector);
 
 			memset( matched, 0, sizeof(matched) );
 

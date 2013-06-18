@@ -25,18 +25,27 @@
 #define __NEED_SG_GET_SYS_PAGE_SIZE
 #include "tools.h"
 
-#if defined(HAVE_STRUCT_XSWDEV)
 EXTENDED_COMP_SETUP(swap,1,NULL);
 
+#if defined(HAVE_STRUCT_XSWDEV)
 static int swapinfo_mib[2];
 static bool swapinfo_array = false;
 static char *swapinfo_sysctl_name;
+#endif
 
 sg_error
 sg_swap_init_comp(unsigned id) {
+	ssize_t pagesize;
+#if defined(HAVE_STRUCT_XSWDEV)
 	size_t len = lengthof(swapinfo_mib);
+#endif
 	GLOBAL_SET_ID(swap,id);
 
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
+
+#if defined(HAVE_STRUCT_XSWDEV)
 	if( sysctlnametomib("vm.swap_info", swapinfo_mib, &len) < 0 ) {
 		if( sysctlnametomib("vm.swap_info_array", swapinfo_mib, &len) < 0 ) {
 			RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLNAMETOMIB, "vm.swap_info + vm.swap_info_array");
@@ -50,15 +59,13 @@ sg_swap_init_comp(unsigned id) {
 		swapinfo_array = false;
 		swapinfo_sysctl_name = "vm.swap_info";
 	}
+#endif
 
 	return SG_ERROR_NONE;
 }
 
 EASY_COMP_DESTROY_FN(swap)
 EASY_COMP_CLEANUP_FN(swap,1)
-#else
-EASY_COMP_SETUP(swap,1,NULL);
-#endif
 
 static sg_error
 sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
@@ -75,7 +82,6 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 # elif defined(HAVE_STRUCT_ANONINFO)
 	struct anoninfo ai;
 # endif
-	int pagesize;
 #elif defined(LINUX) || defined(CYGWIN)
 	FILE *f;
 #define LINE_BUF_SIZE 256
@@ -83,7 +89,6 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 	unsigned long long value;
 	unsigned matches = 0;
 #elif defined(HAVE_STRUCT_XSWDEV)
-	ssize_t pagesize;
 	struct xswdev xsw;
 	struct xswdev *xswbuf = NULL, *xswptr = NULL;
 	int n;
@@ -103,12 +108,10 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 	size_t size = sizeof(uvm);
 #elif defined(ALLBSD)
 	/* fallback if no reasonable API is supported */
-	int pagesize;
 	struct kvm_swap swapinfo;
 	kvm_t *kvmd;
 #elif defined(AIX)
 	perfstat_memory_total_t mem;
-	long long pagesize;
 #elif defined(WIN32)
 	MEMORYSTATUSEX memstats;
 #endif
@@ -149,23 +152,15 @@ sg_get_swap_stats_int(sg_swap_stats *swap_stats_buf) {
 		swapidx = pstat_swapinfo[num - 1].pss_idx + 1;
 	}
 #elif defined(AIX)
-	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 	/* return code is number of structures returned */
 	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
 	}
 
-	swap_stats_buf->total = ((long long)mem.pgsp_total) * pagesize;
-	swap_stats_buf->free  = ((long long)mem.pgsp_free)  * pagesize;
+	swap_stats_buf->total = ((long long)mem.pgsp_total) * sys_page_size;
+	swap_stats_buf->free  = ((long long)mem.pgsp_free)  * sys_page_size;
 	swap_stats_buf->used  = swap_stats_buf->total - swap_stats_buf->free;
 #elif defined(SOLARIS)
-	if( -1 == ( pagesize = sg_get_sys_page_size() ) ) {
-		RETURN_FROM_PREVIOUS_ERROR( "swap", sg_get_error() );
-	}
-
 # if defined(HAVE_STRUCT_SWAPTABLE)
 again:
 	if( ( nswap = swapctl(SC_GETNSWP, 0) ) == -1 ) {
@@ -206,8 +201,8 @@ again:
 		}
 		free( swtbl );
 		free( buf );
-		swap_stats_buf->total *= pagesize;
-		swap_stats_buf->free *= pagesize;
+		swap_stats_buf->total *= sys_page_size;
+		swap_stats_buf->free *= sys_page_size;
 		swap_stats_buf->used = swap_stats_buf->total - swap_stats_buf->free;
 	}
 # elif defined(HAVE_STRUCT_ANONINFO)
@@ -216,9 +211,9 @@ again:
 	}
 
 	swap_stats_buf->total = ai.ani_max;
-	swap_stats_buf->total *= pagesize;
+	swap_stats_buf->total *= sys_page_size;
 	swap_stats_buf->used = ai.ani_resv;
-	swap_stats_buf->used *= pagesize;
+	swap_stats_buf->used *= sys_page_size;
 	swap_stats_buf->free = swap_stats_buf->total - swap_stats_buf->used;
 # else
 	RETURN_WITH_SET_ERROR("swap", SG_ERROR_UNSUPPORTED, OS_TYPE);
@@ -251,10 +246,6 @@ again:
 
 	swap_stats_buf->used = swap_stats_buf->total - swap_stats_buf->free;
 #elif defined(HAVE_STRUCT_XSWDEV)
-	if((pagesize = sg_get_sys_page_size()) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("swap", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 	mibsize = 2;
 	if( swapinfo_array ) {
 		size = 0;
@@ -312,12 +303,12 @@ again:
 
 	free( xswbuf );
 
-	swap_stats_buf->total *= (size_t)pagesize;
-	swap_stats_buf->used *= (size_t)pagesize;
+	swap_stats_buf->total *= (size_t)sys_page_size;
+	swap_stats_buf->used *= (size_t)sys_page_size;
 	if( 0 == swap_stats_buf->free )
 		swap_stats_buf->free = swap_stats_buf->total - swap_stats_buf->used;
 	else
-		swap_stats_buf->free *= (size_t)pagesize;
+		swap_stats_buf->free *= (size_t)sys_page_size;
 
 #elif defined(HAVE_STRUCT_XSW_USAGE)
 
@@ -360,8 +351,8 @@ again:
 	swap_stats_buf->used = (long long)swapinfo.ksw_used;
 	kvm_close( kvmd );
 
-	swap_stats_buf->total *= pagesize;
-	swap_stats_buf->used *= pagesize;
+	swap_stats_buf->total *= sys_page_size;
+	swap_stats_buf->used *= sys_page_size;
 	swap_stats_buf->free = swap_stats_buf->total - swap_stats_buf->used;
 #elif defined(WIN32)
 	memstats.dwLength = sizeof(memstats);

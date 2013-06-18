@@ -115,7 +115,22 @@ VECTOR_INIT_INFO_EMPTY_INIT(sg_process_count);
 
 /* kvm_openfiles() cann succeed at any later point when the admin adjust
  * permissions of accessed files - no reason to die in init() */
-EASY_COMP_SETUP(process,SG_PROC_IDX_COUNT,NULL);
+EXTENDED_COMP_SETUP(process,SG_PROC_IDX_COUNT,NULL);
+
+sg_error
+sg_process_init_comp(unsigned id) {
+	ssize_t pagesize;
+	GLOBAL_SET_ID(process,id);
+
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
+
+	return SG_ERROR_NONE;
+}
+
+EASY_COMP_DESTROY_FN(process)
+EASY_COMP_CLEANUP_FN(process,SG_PROC_IDX_COUNT)
 
 #ifdef HAVE_PROCFS
 struct pids_in_proc_dir_t {
@@ -126,18 +141,13 @@ struct pids_in_proc_dir_t {
 
 static struct pids_in_proc_dir_t *
 alloc_pids_in_proc_dir(void) {
-	ssize_t pagesize = sg_get_sys_page_size();
-	if( -1 != pagesize ) {
-		struct pids_in_proc_dir_t *pipd = malloc( pagesize );
-		if( pipd != NULL ) {
-			pipd->nitems = 0;
-			pipd->next = NULL;
-		}
-
-		return pipd;
+	struct pids_in_proc_dir_t *pipd = malloc( sys_page_size );
+	if( pipd != NULL ) {
+		pipd->nitems = 0;
+		pipd->next = NULL;
 	}
 
-	return NULL;
+	return pipd;
 }
 
 /**
@@ -170,7 +180,7 @@ add_pid_to_pids_in_proc_dir( pid_t pid, struct pids_in_proc_dir_t *pipd ) {
 	assert( pipd != NULL );
 	assert( NULL == pipd->next );
 
-	if( PIPD_IS_FULL( pipd, sg_get_sys_page_size() ) ) {
+	if( PIPD_IS_FULL( pipd, sys_page_size ) ) {
 		pipd->next = alloc_pids_in_proc_dir();
 		if( NULL == pipd->next )
 			return NULL;
@@ -304,11 +314,9 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 #define PROCESS_BATCH 50
 	struct pst_status *pstat_procinfo = NULL;
 	long procidx = 0;
-	long long pagesize;
 	int num, i;
 #elif defined(AIX)
 	struct procentry64 *procs = NULL;
-	long long pagesize;
 	ssize_t fetched = 0, ncpus;
 	pid_t index = 0;
 	time_t utime, stime;
@@ -474,7 +482,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			   &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
 			   &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
 		/* +3 because man page says "Resident  Set Size: number of pages the process has in real memory, minus 3 for administrative purposes." */
-		proc_stats_ptr[proc_items].proc_resident = (proc_stats_ptr[proc_items].proc_resident + 3) * sg_get_sys_page_size();
+		proc_stats_ptr[proc_items].proc_resident = (proc_stats_ptr[proc_items].proc_resident + 3) * sys_page_size;
 		switch (s) {
 		case 'S':
 			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_SLEEPING;
@@ -668,8 +676,8 @@ again:
 		proc_stats_ptr[i].involuntary_context_switches = kp_stats[i].p_uru_nivcsw;
 		proc_stats_ptr[i].context_switches = proc_stats_ptr[i].voluntary_context_switches + proc_stats_ptr[i].involuntary_context_switches;
 		proc_stats_ptr[i].proc_size = ((unsigned long long)kp_stats[i].p_vm_dsize) + kp_stats[i].p_vm_ssize;
-		proc_stats_ptr[i].proc_size *= sg_get_sys_page_size();
-		proc_stats_ptr[i].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * sg_get_sys_page_size();
+		proc_stats_ptr[i].proc_size *= sys_page_size;
+		proc_stats_ptr[i].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * sys_page_size;
 		proc_stats_ptr[i].start_time = kp_stats[i].p_ustart_sec;
 		proc_stats_ptr[i].time_spent = ((unsigned long long)kp_stats[i].p_uutime_sec) + kp_stats[i].p_ustime_sec;
 		proc_stats_ptr[i].cpu_percent = ((double)kp_stats[i].p_cpticks / FSCALE) * 100.0; /* XXX CTL_KERN.KERN_FSCALE */
@@ -973,19 +981,19 @@ again:
 # if defined(HAVE_KINFO_PROC_KI_STAT)
 		proc_stats_ptr[proc_items].proc_size = kp_stats[i].ki_size;
 		/* This is in pages */
-		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].ki_rssize) * getpagesize();
+		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].ki_rssize) * sys_page_size;
 # elif defined(HAVE_KINFO_PROC_KP_PID)
 		proc_stats_ptr[proc_items].proc_size = kp_stats[i].kp_vm_map_size;
-		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].kp_vm_rssize) * getpagesize();
+		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].kp_vm_rssize) * sys_page_size;
 # elif defined(HAVE_KINFO_PROC_P_VM_MAP_SIZE)
 		proc_stats_ptr[proc_items].proc_size = kp_stats[i].p_vm_map_size;
-		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * getpagesize();
+		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * sys_page_size;
 # else
 #if 0
 		/* This is in microseconds */
 		proc_stats_ptr[proc_items].proc_size = kp_stats[i].kp_eproc.e_vm.vm_map.size;
 		/* This is in pages */
-		proc_stats_ptr[proc_items].proc_resident = kp_stats[i].kp_eproc.e_vm.vm_rssize * getpagesize();
+		proc_stats_ptr[proc_items].proc_resident = kp_stats[i].kp_eproc.e_vm.vm_rssize * sys_page_size;
 #endif
 		proc_stats_ptr[proc_items].nice = kp_stats[i].kp_proc.p_nice;
 # endif
@@ -1113,10 +1121,6 @@ print_kernel_proctitle:
 #elif defined(HPUX)
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP free(pstat_procinfo);
-	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 	pstat_procinfo = malloc( PROCESS_BATCH * sizeof(pstat_procinfo[0]) );
 	if( NULL == pstat_procinfo ) {
 		RETURN_WITH_SET_ERROR( "process", SG_ERROR_MALLOC, "sg_get_process_stats" );
@@ -1150,8 +1154,8 @@ print_kernel_proctitle:
 			proc_stats_ptr[proc_items].context_switches = pi->pst_nvcsw + pi->pst_nivcsw;
 			proc_stats_ptr[proc_items].voluntary_context_switches = pi->pst_nvcsw;
 			proc_stats_ptr[proc_items].involuntary_context_switches = pi->pst_nivcsw;
-			proc_stats_ptr[proc_items].proc_size = (pi->pst_dsize + pi->pst_tsize + pi->pst_ssize) * pagesize;
-			proc_stats_ptr[proc_items].proc_resident = pi->pst_rssize * pagesize;
+			proc_stats_ptr[proc_items].proc_size = (pi->pst_dsize + pi->pst_tsize + pi->pst_ssize) * sys_page_size;
+			proc_stats_ptr[proc_items].proc_resident = pi->pst_rssize * sys_page_size;
 			proc_stats_ptr[proc_items].start_time = pi->pst_start;
 			proc_stats_ptr[proc_items].time_spent = pi->pst_time;
 			proc_stats_ptr[proc_items].cpu_percent = (pi->pst_pctcpu * 100.0) / 0x8000;
@@ -1195,10 +1199,6 @@ print_kernel_proctitle:
 	ncpus = sysconf(_SC_NPROCESSORS_ONLN);
 	if( -1 == ncpus )
 		ncpus = 1; /* sysconf error - assume 1 */
-
-	if ((pagesize = sysconf(_SC_PAGESIZE)) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
 
 	procs = /* (struct procentry64 *) */ malloc(sizeof(*procs) * PROCS_TO_FETCH);
 	if(NULL == procs) {
@@ -1395,7 +1395,7 @@ int sg_process_compare_time(const void *va, const void *vb) {
 
 static sg_error
 sg_get_process_count_int(sg_process_count *process_count_buf, const sg_vector *process_stats_vector) {
-	const sg_process_stats *ps = VECTOR_DATA(process_stats_vector);
+	const sg_process_stats *ps = VECTOR_DATA_CONST(process_stats_vector);
 	size_t proc_count = process_stats_vector->used_count;
 
 	process_count_buf->total = 0;
@@ -1499,7 +1499,7 @@ sg_get_process_count_r(sg_process_stats const * whereof) {
 
 	sg_vector *process_count_result_vector;
 	sg_process_count *process_count;
-	sg_vector *process_stats_vector = VECTOR_DATA(whereof);
+	sg_vector const *process_stats_vector = VECTOR_DATA_CONST(whereof);
 
 	TRACE_LOG("process", "entering sg_get_process_count_r");
 

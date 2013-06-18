@@ -106,10 +106,13 @@ __sg_private void sg_vector_free(struct sg_vector *vector);
 #define VECTOR_SIZE ((size_t)(((struct sg_vector *)0) + ((size_t)1)))
 #define VECTOR_DATA(vector) \
 	(vector ? (void *)&((vector)[1]) : NULL)
+#define VECTOR_DATA_CONST(vector) \
+	(vector ? (void const *)&((vector)[1]) : NULL)
+
 #define VECTOR_ADDR_ARITH(ptr) \
 	&(((struct sg_vector *)ptr)[-1])
-#define VECTOR_ADDRESS(ptr) \
-	(ptr ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_ADDR_ARITH(ptr)) ? VECTOR_ADDR_ARITH(ptr) : NULL ) : NULL)
+#define VECTOR_CONST_ADDR_ARITH(ptr) \
+	&(((struct sg_vector const *)ptr)[-1])
 #else
 struct sg_vector_size_helper {
 	struct sg_vector v;
@@ -121,13 +124,20 @@ struct sg_vector_size_helper {
 /* Return the data ptr of a vector */
 #define VECTOR_DATA(vector) \
 	(vector ? (void *)(((char *)vector)+VECTOR_SIZE) : NULL)
+#define VECTOR_DATA_CONST(vector) \
+	(vector ? (void const *)(((char *)vector)+VECTOR_SIZE) : NULL)
 
 #define VECTOR_ADDR_ARITH(ptr) \
 	(sg_vector *)(((char *)(ptr))-VECTOR_SIZE)
+#define VECTOR_CONST_ADDR_ARITH(ptr) \
+	(struct sg_vector const *)(((char const *)(ptr))-VECTOR_SIZE)
+#endif
+
 /* Return the vector for a data */
 #define VECTOR_ADDRESS(ptr) \
-	((ptr) ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_ADDR_ARITH(ptr)) ? VECTOR_ADDR_ARITH(ptr) : NULL ) : NULL)
-#endif
+	(ptr ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_ADDR_ARITH(ptr)) ? VECTOR_ADDR_ARITH(ptr) : NULL ) : NULL)
+#define VECTOR_ADDRESS_CONST(ptr) \
+	(ptr ? (SG_ERROR_NONE == sg_prove_vector(VECTOR_CONST_ADDR_ARITH(ptr)) ? VECTOR_CONST_ADDR_ARITH(ptr) : NULL ) : NULL)
 
 /* Return the current size of a vector. */
 #define VECTOR_ITEM_COUNT(vector) \

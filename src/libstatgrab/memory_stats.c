@@ -25,31 +25,52 @@
 #define __NEED_SG_GET_SYS_PAGE_SIZE
 #include "tools.h"
 
+EXTENDED_COMP_SETUP(mem,1,NULL);
+
 #if defined(HAVE_STRUCT_VMTOTAL) && \
     !(defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)) && \
     !(defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP)) && \
     !defined(DARWIN)
-EXTENDED_COMP_SETUP(mem,1,NULL);
-
 static int vmtotal_mib[2];
+#endif
+
+#if defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
+static mach_port_t self_host_port;
+#endif
 
 sg_error
 sg_mem_init_comp(unsigned id) {
+	ssize_t pagesize;
+#if defined(HAVE_STRUCT_VMTOTAL) && \
+    !(defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)) && \
+    !(defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP)) && \
+    !defined(DARWIN)
 	size_t len = lengthof(vmtotal_mib);
+#endif
 	GLOBAL_SET_ID(mem,id);
 
+#if defined(HAVE_STRUCT_VMTOTAL) && \
+    !(defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)) && \
+    !(defined(HAVE_STRUCT_UVMEXP) && defined(VM_UVMEXP)) && \
+    !defined(DARWIN)
 	if( -1 == sysctlnametomib( "vm.vmtotal", vmtotal_mib, &len ) ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLNAMETOMIB, "vm.vmtotal");
 	}
+#endif
+
+	if((pagesize = sg_get_sys_page_size()) == -1) {
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
+	}
+
+#if defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
+	self_host_port = mach_host_self();
+#endif
 
 	return SG_ERROR_NONE;
 }
 
 EASY_COMP_DESTROY_FN(mem)
 EASY_COMP_CLEANUP_FN(mem,1)
-#else
-EASY_COMP_SETUP(mem,1,NULL);
-#endif
 
 static sg_error
 sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
@@ -57,9 +78,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 #ifdef HPUX
 	struct pst_static pstat_static;
 	struct pst_dynamic pstat_dynamic;
-#if 0
-	long long pagesize;
-#endif
 #elif defined(SOLARIS)
 # ifdef _SC_PHYS_PAGES
 	long phystotal;
@@ -69,7 +87,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	kstat_t *ksp;
 	kstat_named_t *kn;
 # endif
-	ssize_t pagesize;
 #elif defined(LINUX) || defined(CYGWIN)
 #define LINE_BUF_SIZE 256
 	char *line_ptr, line_buf[LINE_BUF_SIZE];
@@ -82,8 +99,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	struct vm_statistics vm_stats;
 # endif
 	mach_msg_type_number_t count;
-	mach_port_t self_host_port;
-	ssize_t pagesize;
 	kern_return_t rc;
 #elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
 	int mib[2];
@@ -99,11 +114,9 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	unsigned int free_count;
 	unsigned int cache_count;
 	unsigned int inactive_count;
-	ssize_t pagesize;
 #elif defined(HAVE_STRUCT_VMTOTAL)
 	struct vmtotal vmtotal;
 	size_t size;
-	ssize_t pagesize;
 #if defined(HW_PHYSMEM) || defined(HW_USERMEM)
 	int mib[2];
 # if defined(HW_PHYSMEM)
@@ -115,7 +128,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 #endif
 #elif defined(AIX)
 	perfstat_memory_total_t mem;
-	ssize_t pagesize;
 #elif defined(WIN32)
 	MEMORYSTATUSEX memstats;
 #endif
@@ -146,28 +158,20 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	mem_stats_buf->free = ((long long) pstat_dynamic.psd_free) * pstat_static.page_size;
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 #elif defined(AIX)
-	if((pagesize = sg_get_sys_page_size()) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 	/* return code is number of structures returned */
 	if(perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) != 1) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "perfstat_memory_total");
 	}
 
 	mem_stats_buf->total = (unsigned long long) mem.real_total;
-	mem_stats_buf->total *= pagesize;
+	mem_stats_buf->total *= sys_page_size;
 	mem_stats_buf->used  = (unsigned long long) mem.real_inuse;
-	mem_stats_buf->used  *= pagesize;
+	mem_stats_buf->used  *= sys_page_size;
 	mem_stats_buf->cache = (unsigned long long) mem.numperm;
-	mem_stats_buf->cache *= pagesize;
+	mem_stats_buf->cache *= sys_page_size;
 	mem_stats_buf->free  = (unsigned long long) mem.real_free;
-	mem_stats_buf->free  *= pagesize;
+	mem_stats_buf->free  *= sys_page_size;
 #elif defined(SOLARIS)
-	if( ( pagesize=sysconf(_SC_PAGESIZE) ) < 0 ) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 # ifdef _SC_PHYS_PAGES
 	if( ( phystotal = sysconf(_SC_PHYS_PAGES) ) < 0 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PHYS_PAGES");
@@ -175,8 +179,8 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	if( ( physav = sysconf(_SC_AVPHYS_PAGES) ) < 0 ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_AVPHYS_PAGES");
 	}
-	mem_stats_buf->total = ((unsigned long long)phystotal) * ((unsigned long long)pagesize);
-	mem_stats_buf->free = ((unsigned long long)physav) * ((unsigned long long)pagesize);
+	mem_stats_buf->total = ((unsigned long long)phystotal) * ((unsigned long long)sys_page_size);
+	mem_stats_buf->free = ((unsigned long long)physav) * ((unsigned long long)sys_page_size);
 # else
 	if( (kc = kstat_open()) == NULL ) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_OPEN, NULL);
@@ -194,13 +198,13 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_DATA_LOOKUP, "physmem");
 	}
 
-	mem_stats_buf->total = ((unsigned long long)kn->value.ul) * ((unsigned long long)pagesize);
+	mem_stats_buf->total = ((unsigned long long)kn->value.ul) * ((unsigned long long)sys_page_size);
 
 	if((kn=kstat_data_lookup(ksp, "freemem")) == NULL) {
 		RETURN_WITH_SET_ERROR("mem", SG_ERROR_KSTAT_DATA_LOOKUP, "freemem");
 	}
 
-	mem_stats_buf->free = ((unsigned long long)kn->value.ul) * ((unsigned long long)pagesize);
+	mem_stats_buf->free = ((unsigned long long)kn->value.ul) * ((unsigned long long)sys_page_size);
 	kstat_close(kc);
 # endif
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
@@ -280,15 +284,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 #elif defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
-	/* Because all the vm_stats returns pages, I need to get the page size.
-	 * After that I then need to multiple the anything that used vm.stats to
-	 * get the system statistics by pagesize
-	 */
-	if((pagesize = sg_get_sys_page_size()) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
-	self_host_port = mach_host_self();
 # if defined(HAVE_HOST_STATISTICS64)
 	count = HOST_VM_INFO64_COUNT;
 	rc = host_statistics64(self_host_port, HOST_VM_INFO64, (host_info64_t)(&vm_stats), &count);
@@ -304,20 +299,13 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	 * XXX check host_info(host_basic_info) ... for memory_size */
 	mem_stats_buf->free = vm_stats.free_count - vm_stats.speculative_count;
 	mem_stats_buf->free += vm_stats.inactive_count;
-	mem_stats_buf->free *= (size_t)pagesize;
+	mem_stats_buf->free *= (size_t)sys_page_size;
 	mem_stats_buf->total = vm_stats.active_count + vm_stats.wire_count +
 			       vm_stats.inactive_count + vm_stats.free_count;
-	mem_stats_buf->total *= (size_t)pagesize;
+	mem_stats_buf->total *= (size_t)sys_page_size;
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 	mem_stats_buf->cache = 0;
 #elif defined(FREEBSD) || defined(DFBSD)
-	/* Because all the vm.stats returns pages, I need to get the page size.
-	 * After that I then need to multiple the anything that used vm.stats to
-	 * get the system statistics by pagesize
-	 */
-	if((pagesize = sg_get_sys_page_size()) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
 	/*returns pages*/
 	size = sizeof(total_count);
 	if (sysctlbyname("vm.stats.vm.v_page_count", &total_count, &size, NULL, 0) < 0) {
@@ -344,11 +332,11 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	 * deal with too. So I'm going to add them to free memory :)
 	 */
 	mem_stats_buf->cache = (size_t)cache_count;
-	mem_stats_buf->cache *= (size_t)pagesize;
+	mem_stats_buf->cache *= (size_t)sys_page_size;
 	mem_stats_buf->total = (size_t)total_count;
-	mem_stats_buf->total *= (size_t)pagesize;
+	mem_stats_buf->total *= (size_t)sys_page_size;
 	mem_stats_buf->free = (size_t)free_count + inactive_count + cache_count;
-	mem_stats_buf->free *= (size_t)pagesize;
+	mem_stats_buf->free *= (size_t)sys_page_size;
 	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 #elif defined(WIN32)
 	memstats.dwLength = sizeof(memstats);
@@ -369,15 +357,6 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	 * For fun, and like OpenBSD top, we will do the multiplication
 	 * converting the memory stats in pages to bytes in base 2.
 	 */
-
-	/* All memory stats in OpenBSD are returned as the number of pages.
-	 * To convert this into the number of bytes we need to know the
-	 * page size on this system.
-	 */
-	if((pagesize = sg_get_sys_page_size()) == -1) {
-		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
-	}
-
 	size = sizeof(vmtotal);
 	if (sysctl(vmtotal_mib, 2, &vmtotal, &size, NULL, 0) < 0) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("mem", SG_ERROR_SYSCTLBYNAME, "vm.vmtotal");
@@ -386,11 +365,11 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 	/* Convert the raw stats to bytes, and return these to the caller
 	 */
 	mem_stats_buf->used = (unsigned long long)vmtotal.t_rm;   /* total real mem in use */
-	mem_stats_buf->used *= pagesize;
+	mem_stats_buf->used *= sys_page_size;
 	/* XXX scan top source to look how it determines cache size */
 	mem_stats_buf->cache = 0;				  /* no cache stats */
 	mem_stats_buf->free = (unsigned long long)vmtotal.t_free; /* free memory pages */
-	mem_stats_buf->free *= pagesize;
+	mem_stats_buf->free *= sys_page_size;
 # ifdef HW_PHYSMEM
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM;

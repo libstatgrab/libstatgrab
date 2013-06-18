@@ -24,6 +24,10 @@
 
 #include "tools.h"
 
+#if defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
+static mach_port_t self_host_port;
+#endif
+
 static sg_error
 sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 #ifdef SOLARIS
@@ -41,8 +45,6 @@ sg_get_page_stats_int(sg_page_stats *page_stats_buf){
 	struct vm_statistics vm_stats;
 # endif
 	mach_msg_type_number_t count;
-	mach_port_t self_host_port;
-	ssize_t pagesize;
 	kern_return_t rc;
 #elif defined(HAVE_STRUCT_UVMEXP_SYSCTL) && defined(VM_UVMEXP2)
 	int mib[2];
@@ -214,11 +216,27 @@ sg_get_page_stats_diff_int(sg_page_stats *tgt, const sg_page_stats *now, const s
 	return SG_ERROR_NONE;
 }
 
+#if defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
+EXTENDED_COMP_SETUP(page,2,NULL);
+
+sg_error
+sg_page_init_comp(unsigned id) {
+	GLOBAL_SET_ID(page,id);
+
+	self_host_port = mach_host_self();
+
+	return SG_ERROR_NONE;
+}
+
+EASY_COMP_DESTROY_FN(page)
+EASY_COMP_CLEANUP_FN(page,2)
+#else
 EASY_COMP_SETUP(page,2,NULL);
+#endif
 
 VECTOR_INIT_INFO_EMPTY_INIT(sg_page_stats);
 
-#define SG_PAGE_CUR_IDX	 0
+#define SG_PAGE_CUR_IDX 	0
 #define SG_PAGE_DIFF_IDX	1
 
 EASY_COMP_ACCESS(sg_get_page_stats,page,page,SG_PAGE_CUR_IDX)

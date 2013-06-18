@@ -421,7 +421,7 @@ void *sg_comp_get_tls(unsigned id);
 		TRACE_LOG(#comp, "entering " #fn "_between"); \
 		name##_diff_vector = VECTOR_CREATE(sg_##name##_stats, 1); \
 		if(name##_diff_vector){			\
-			rc = sg_vector_compute_diff(&name##_diff_vector, VECTOR_ADDRESS(cur), VECTOR_ADDRESS(last)); \
+			rc = sg_vector_compute_diff(&name##_diff_vector, VECTOR_ADDRESS_CONST(cur), VECTOR_ADDRESS_CONST(last)); \
 							\
 			if( SG_ERROR_NONE == rc ) {	\
 				TRACE_LOG(#comp, #fn "_between succeded"); \

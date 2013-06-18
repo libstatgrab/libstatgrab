@@ -1,14 +1,2 @@
-1) HP-UX stability
-   ==> disk_io_stats: malloc(dirent)
-
-2) MacOS X disk_io, page and general stats
-   ==> mach_port_self() like sg_get_sys_pagesize()
-   ==> all to init_comp?
-
 3) configure.ac - xpg\d vs. their funcs
    * ac_check_funcs ...
-
-6) define __NEED_SG_GET_SYS_PAGE_SIZE only when needed
-
-7) review code and cleanup common uses of same code
-   ==> see what can be moved to init_comp ...

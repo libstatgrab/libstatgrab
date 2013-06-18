@@ -24,8 +24,6 @@
 
 #include "tools.h"
 
-ssize_t sys_page_size = 0;
-
 #if defined(SOLARIS) && defined(HAVE_LIBDEVINFO_H)
 struct map{
 	char *bsd;
