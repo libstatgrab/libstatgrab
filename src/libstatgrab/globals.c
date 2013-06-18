@@ -246,7 +246,7 @@ sg_destroy_main_globals(void)
 
 sg_error
 sg_comp_init(int ignore_init_errors) {
-	unsigned i;
+	size_t i;
 	sg_error errc = SG_ERROR_NONE;
 
 	TRACE_LOG("globals", "Entering sg_comp_init() ...");
@@ -382,7 +382,7 @@ sg_comp_init(int ignore_init_errors) {
 sg_error
 sg_comp_destroy(void) {
 
-	unsigned i;
+	size_t i = lengthof(comp_info);
 
 #ifdef ENABLE_THREADS
 	sg_global_lock();
@@ -391,8 +391,7 @@ sg_comp_destroy(void) {
 #endif
 
 	glob_size = 0;
-
-	for( i = lengthof(comp_info) - 1; i < lengthof(comp_info) /*overflow!*/; --i ) {
+	while(i--) {
 		if( NULL != comp_info[i].init_comp->destroy_fn)
 			comp_info[i].init_comp->destroy_fn();
 	}
