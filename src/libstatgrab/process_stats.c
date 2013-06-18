@@ -239,9 +239,10 @@ adjust_procname_cmndline( char *proctitle, size_t len ) {
 	char *p, *pt;
 
 	/* XXX OpenBSD prepends char *[] adressing the several embedded argv items */
-	if( len && ( (size_t)((((char **)(proctitle))[0]) - proctitle) <= len ) ) {
-		pt = p = ((char **)(proctitle))[0];
-		len -= pt - proctitle;
+	memcpy(&p, proctitle, sizeof(pt)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
+	if( len && ((size_t)(p - proctitle) <= len) ) {
+		pt = p;
+		len -= p - proctitle;
 	}
 	else {
 		pt = p = proctitle;
@@ -1052,6 +1053,7 @@ again:
 # if defined(KERN_PROC_ARGS) || defined(KERN_PROCARGS2)
 		if( 0 != proc_stats_ptr[proc_items].pid ) {
 			char *p;
+			unsigned miblen;
 
 			size = ARG_MAX * sizeof(*proctitle);
 			*proctitle = '\0';
@@ -1060,21 +1062,21 @@ again:
 			mib[1] = KERN_PROC_ARGS;
 			mib[2] = ((int)proc_stats_ptr[i].pid);
 			mib[3] = KERN_PROC_ARGV;
-			rc = 4;
+			miblen = 4;
 			p = "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV";
 #  elif defined(KERN_PROC_ARGS) && !defined(KERN_PROC_ARGV)
 			mib[1] = KERN_PROC;
 			mib[2] = KERN_PROC_ARGS;
 			mib[3] = ((int)proc_stats_ptr[i].pid);
-			rc = 4;
+			miblen = 4;
 			p = "CTL_KERN.KERN_PROC.KERN_PROC_ARGS";
 #  elif defined(KERN_PROCARGS2)
 			mib[1] = KERN_PROCARGS2;
 			mib[2] = ((int)proc_stats_ptr[i].pid);
-			rc = 3;
+			miblen = 3;
 			p = "CTL_KERN.KERN_PROCARGS2";
 #  endif
-			if( -1 == ( rc = sysctl(mib, rc, proctitle, &size, NULL, 0) ) ) {
+			if( -1 == ( rc = sysctl(mib, miblen, proctitle, &size, NULL, 0) ) ) {
 #  if defined(KERN_PROCARGS2)
 				if( EINVAL == errno )
 					goto print_kernel_proctitle;
