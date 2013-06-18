@@ -369,16 +369,16 @@ sg_strlcpy(char *dst, const char *src, size_t siz){
 	size_t n = siz;
 
 	/* Copy as many bytes as will fit */
-	if (n != 0) {
-		while (--n != 0) {
+	if (n) {
+		while (--n) {
 			if ((*d++ = *s++) == '\0')
 				break;
 		}
 	}
 
 	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0) {
-		if (siz != 0)
+	if (n == 0U) {
+		if (siz != 0U)
 			*d = '\0';	      /* NUL-terminate dst */
 		while (*s++)
 			;
@@ -422,15 +422,15 @@ sg_strlcat(char *dst, const char *src, size_t siz){
 	size_t dlen;
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
-	while (n-- != 0 && *d != '\0')
+	while (n-- && *d != '\0')
 		d++;
 	dlen = d - dst;
 	n = siz - dlen;
 
-	if (n == 0)
+	if (n == 0U)
 		return(dlen + strlen(s));
 	while (*s != '\0') {
-		if (n != 1) {
+		if (n != 1U) {
 			*d++ = *s;
 			n--;
 		}
@@ -599,7 +599,7 @@ sg_error sg_drop_privileges() {
 
 void *
 sg_realloc(void *ptr, size_t size) {
-	if( 0 == size ) {
+	if( 0U == size ) {
 		free(ptr);
 		return NULL;
 	}

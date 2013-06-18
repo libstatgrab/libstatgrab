@@ -345,7 +345,7 @@ sg_comp_init(int ignore_init_errors) {
 	}
 
 #if defined(ENABLE_THREADS) && defined(HAVE_PTHREAD)
-	if( 0 != num_required_locks )
+	if( 0U != num_required_locks )
 	{
 		pthread_mutexattr_t attr;
 		int rc;
@@ -390,7 +390,7 @@ sg_comp_destroy(void) {
 		return sg_global_unlock();
 #endif
 
-	glob_size = 0;
+	glob_size = 0U;
 	while(i--) {
 		if( NULL != comp_info[i].init_comp->destroy_fn)
 			comp_info[i].init_comp->destroy_fn();
@@ -423,7 +423,7 @@ sg_alloc_globals(void) {
 	TRACE_LOG_FMT("globals", "allocating globals for thread %u", GetCurrentThreadId() );
 # endif
 #endif
-	if( 0 != glob_size) {
+	if(0U != glob_size) {
 # if defined(HAVE_PTHREAD)
 		int rc;
 #endif

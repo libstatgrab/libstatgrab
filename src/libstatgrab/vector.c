@@ -175,7 +175,7 @@ sg_vector_resize(struct sg_vector *vector, size_t new_count) {
 
 	TRACE_LOG_FMT("vector", "resizing vector(%p) using %lu items to fit %lu items", vector, vector->used_count, new_count);
 
-	if( 0 == new_count ){
+	if( 0U == new_count ){
 		sg_vector_free(vector);
 		sg_clear_error();
 		return NULL;
@@ -191,10 +191,9 @@ sg_vector_resize(struct sg_vector *vector, size_t new_count) {
 		sg_vector *new_vector;
 
 		new_vector = sg_realloc(vector, VECTOR_SIZE + round_count * vector->info.item_size);
-		if (new_vector == NULL && round_count != 0) {
+		if (new_vector == NULL && round_count != 0U) {
 			/* Out of memory -- free the contents of the vector. */
 			sg_vector_free(vector);
-			sg_clear_error();
 			return NULL;
 		}
 
