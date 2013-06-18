@@ -245,7 +245,7 @@ typedef struct {
 	size_t record_id_size;
 	char *device;
 	char *hostname;
-	pid_t pid;
+	pid_t pid; /* XXX sugesting to ad a uid here, too (padding + lookup-cache?) */
 	time_t login_time;
 	time_t systime;
 } sg_user_stats;
@@ -279,7 +279,7 @@ typedef struct {
 	char *device_name;
 	char *fs_type;
 	char *mnt_point;
-	sg_fs_device_type device_type;
+	sg_fs_device_type device_type; /* XXX this isn't an enum, it's a bit-mask */
 	unsigned long long size;
 	unsigned long long used;
 	unsigned long long free;
@@ -349,11 +349,17 @@ typedef enum {
 	SG_IFACE_DUPLEX_UNKNOWN
 } sg_iface_duplex;
 
+typedef enum {
+	SG_IFACE_DOWN = 0,
+	SG_IFACE_UP
+} sg_iface_updown;
+
 typedef struct {
 	char *interface_name;
-	int speed;	/* In megabits/sec */
+	unsigned long long speed;	/* In factor/sec */
+	unsigned long long factor;
 	sg_iface_duplex duplex;
-	int up;
+	sg_iface_updown up;
 	time_t systime;
 } sg_network_iface_stats;
 

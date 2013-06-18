@@ -95,8 +95,10 @@ static void
 sg_network_iface_stats_item_init(sg_network_iface_stats *d) {
 	d->interface_name = NULL;
 	d->speed = 0;
+	d->factor = 0;
 	d->duplex = SG_IFACE_DUPLEX_UNKNOWN;
-	d->up = 0;
+	d->up = SG_IFACE_DOWN;
+	d->systime = 0;
 }
 
 static sg_error
@@ -107,8 +109,10 @@ sg_network_iface_stats_item_copy(sg_network_iface_stats *d, const sg_network_ifa
 	}
 
 	d->speed = s->speed;
+	d->factor = s->factor;
 	d->duplex = s->duplex;
 	d->up = s->up;
+	d->systime = s->systime;
 
 	return SG_ERROR_NONE;
 }
@@ -354,7 +358,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 			RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_PARSE, "DL_GET_STATISTICS_ACK ppa %u", ppa_lan_number);
 		}
 
-		mib_ptr = (mib_ifEntry *) (((u_char*) ctrl_area) + (size_t)(get_statistics_ack->dl_stat_offset));
+		mib_ptr = (mib_ifEntry *) (void *)(((u_char*) ctrl_area) + (size_t)(get_statistics_ack->dl_stat_offset));
 		if (0 == (mib_ptr->ifOper & 1))
 			continue;
 
@@ -756,7 +760,7 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 		if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0)
 			continue;
 
-		network_iface_stat[ifaces].up = ((ifr.ifr_flags & IFF_UP) != 0) ? 1 : 0;
+		network_iface_stat[ifaces].up = ((ifr.ifr_flags & IFF_UP) != 0) ? SG_IFACE_UP : SG_IFACE_DOWN;
 
 		if (sg_update_string(&network_iface_stat[ifaces].interface_name,
 				     net_ptr->ifa_name) != SG_ERROR_NONE ) {
@@ -764,7 +768,7 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 			RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
 		}
 
-		network_iface_stat[ifaces].speed = 0;
+		network_iface_stat[ifaces].speed = network_iface_stat[ifaces].factor = 0;
 		network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 
 		network_iface_stat[ifaces].systime = now;
@@ -821,6 +825,7 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 				network_iface_stat[ifaces].speed = 0;
 				break;
 		}
+		network_iface_stat[ifaces].factor = 1000U * 1000U;
 
 		if( (ifmed.ifm_active | IFM_FDX) == ifmed.ifm_active ) {
 			network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_FULL;
@@ -918,7 +923,7 @@ skip:
 		if (ioctl(fd, SIOCGIFFLAGS, &iff) < 0)
 			continue;
 
-		network_iface_stat[ifaces].up = ((iff.ifr_flags & IFF_UP) != 0) ? 1 : 0;
+		network_iface_stat[ifaces].up = ((iff.ifr_flags & IFF_UP) != 0) ? SG_IFACE_UP : SG_IFACE_DOWN;
 		if (sg_update_string(&network_iface_stat[ifaces].interface_name,
 				     ifr->ifr_name) != SG_ERROR_NONE ) {
 			close (fd);
@@ -927,6 +932,7 @@ skip:
 		}
 
 		network_iface_stat[ifaces].speed = 0;
+		network_iface_stat[ifaces].factor = 0;
 		/* XXX */
 		network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		network_iface_stat[ifaces].systime = now;
@@ -979,10 +985,10 @@ skip:
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP close(fd); free(ifc.ifc_req);
 
-	lifr = (struct ifreq *)&ifc.ifc_buf[ifc.ifc_len];
+	lifr = (struct ifreq *)((void *)(&ifc.ifc_buf[ifc.ifc_len]));
 	for ( ifr = ifc.ifc_req;
 	      ifr < lifr;
-	      ifr = (struct ifreq *)(((char *)ifr) + _SIZEOF_ADDR_IFREQ(*ifr)) )
+	      ifr = (struct ifreq *)((void *)(((char *)ifr) + _SIZEOF_ADDR_IFREQ(*ifr))) )
 	{
 		VECTOR_UPDATE(network_iface_vector_ptr, ifaces + 1, network_iface_stat, sg_network_iface_stats);
 
@@ -993,7 +999,7 @@ skip:
 			continue;
 		}
 
-		network_iface_stat[ifaces].up = ((iff.ifr_flags & IFF_UP) != 0) ? 1 : 0;
+		network_iface_stat[ifaces].up = ((iff.ifr_flags & IFF_UP) != 0) ? SG_IFACE_UP : SG_IFACE_DOWN;
 		if (sg_update_string(&network_iface_stat[ifaces].interface_name,
 				     ifr->ifr_name) != SG_ERROR_NONE ) {
 			close (fd);
@@ -1006,6 +1012,7 @@ skip:
 		 * but for monitoring we don't care
 		 */
 		network_iface_stat[ifaces].speed = 0;
+		network_iface_stat[ifaces].factor = 0;
 		network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		network_iface_stat[ifaces].systime = now;
 		++ifaces;
@@ -1050,27 +1057,23 @@ skip:
 				if ((knp = kstat_data_lookup(ksp, "link_up")) != NULL) {
 					/* take in to account if link
 					 * is up as well as interface */
-					if (knp->value.ui32 != 0u) {
-						network_iface_stat[ifaces].up = 1;
-					}
-					else {
-						network_iface_stat[ifaces].up = 0;
-					}
+					network_iface_stat[ifaces].up = (knp->value.ui32 != 0u) ? SG_IFACE_UP : SG_IFACE_DOWN;
 				}
 				else {
 					/* maintain compatibility */
-					network_iface_stat[ifaces].up = 1;
+					network_iface_stat[ifaces].up = SG_IFACE_UP;
 				}
 			}
 			else {
-				network_iface_stat[ifaces].up = 0;
+				network_iface_stat[ifaces].up = SG_IFACE_DOWN;
 			}
 
 			if ((knp = kstat_data_lookup(ksp, "ifspeed")) != NULL) {
-				network_iface_stat[ifaces].speed = knp->value.ui64 / (1000 * 1000);
+				network_iface_stat[ifaces].factor = 1000U * 1000U;
+				network_iface_stat[ifaces].speed = knp->value.ui64 / network_iface_stat[ifaces].factor;
 			}
 			else {
-				network_iface_stat[ifaces].speed = 0;
+				network_iface_stat[ifaces].speed = network_iface_stat[ifaces].factor = 0;
 			}
 
 			network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
@@ -1148,7 +1151,7 @@ skip:
 			VECTOR_UPDATE_ERROR_CLEANUP
 			RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
 		}
-		network_iface_stat[ifaces].up = ((ifr.ifr_flags & IFF_UP) != 0) ? 1 : 0;
+		network_iface_stat[ifaces].up = ((ifr.ifr_flags & IFF_UP) != 0) ? SG_IFACE_UP : SG_IFACE_DOWN;
 
 		memset(&ethcmd, 0, sizeof ethcmd);
 		ethcmd.cmd = ETHTOOL_GSET;
@@ -1156,7 +1159,19 @@ skip:
 
 		err = ioctl(sock, SIOCETHTOOL, &ifr);
 		if (err == 0) {
-			network_iface_stat[ifaces].speed = ethcmd.speed;
+			switch(ethcmd.speed) {
+			case SPEED_10:
+				network_iface_stat[ifaces].speed = 10;
+			case SPEED_100:
+				network_iface_stat[ifaces].speed = 100;
+			case SPEED_1000:
+				network_iface_stat[ifaces].speed = 1000;
+			case SPEED_2500:
+				network_iface_stat[ifaces].speed = 2500;
+			case SPEED_10000:
+				network_iface_stat[ifaces].speed = 10000;
+			}
+			network_iface_stat[ifaces].factor = 1000U * 1000U;
 
 			switch (ethcmd.duplex) {
 			case DUPLEX_FULL:
@@ -1172,6 +1187,7 @@ skip:
 		else {
 			/* Not all interfaces support the ethtool ioctl. */
 			network_iface_stat[ifaces].speed = 0;
+			network_iface_stat[ifaces].factor = 0;
 			network_iface_stat[ifaces].duplex = SG_IFACE_DUPLEX_UNKNOWN;
 		}
 
@@ -1199,15 +1215,16 @@ skip:
 			VECTOR_UPDATE_ERROR_CLEANUP
 			RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
 		}
-		network_iface_stat[i].speed = if_row.dwSpeed /1000000;
+		network_iface_stat[ifaces].factor = 1000U * 1000U;
+		network_iface_stat[i].speed = if_row.dwSpeed / network_iface_stat[ifaces].factor;
 
 		if( ( if_row.dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED ||
 		      if_row.dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL ) &&
 		    if_row.dwAdminStatus == 1 ) {
-			network_iface_stat[i].up = 1;
+			network_iface_stat[i].up = SG_IFACE_UP;
 		}
 		else {
-			network_iface_stat[i].up = 0;
+			network_iface_stat[i].up = SG_IFACE_DOWN;
 		}
 
 		network_iface_stat[i].systime = now;

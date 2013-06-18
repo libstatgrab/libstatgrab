@@ -553,7 +553,7 @@ populate_net(void) {
 				 	"net", name, "interface_name", NULL);
 			}
 
-			add_stat(INT, &iface[i].speed,
+			add_stat(UNSIGNED_LONG_LONG, &iface[i].speed,
 				 "net", name, "speed", NULL);
 			add_stat(BOOL, &iface[i].up,
 				 "net", name, "up", NULL);

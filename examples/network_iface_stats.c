@@ -66,7 +66,7 @@ int main(int argc, char **argv){
 
 	printf("Name\tSpeed\tDuplex\n");
 	for(i = 0; i < iface_count; i++) {
-		printf("%s\t%d\t", network_iface_stats->interface_name, network_iface_stats->speed);
+		printf("%s\t%llu\t", network_iface_stats->interface_name, network_iface_stats->speed);
 		switch (network_iface_stats->duplex) {
 		case SG_IFACE_DUPLEX_FULL:
 			printf("full\n");
