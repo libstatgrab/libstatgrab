@@ -706,7 +706,6 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 	struct ifaddrs *net, *net_ptr;
 	struct ifreq ifr;
 	int sock;
-	int x;
 #elif defined(LINUX)
 	FILE *f;
 	/* Horrible big enough, but it should be easily big enough */
@@ -787,43 +786,137 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 		}
 
 		/* Assuming only ETHER devices */
-		x = IFM_SUBTYPE(ifmed.ifm_active);
-		switch(x){
-			/* 10 Mbit connections. Speedy :) */
-			case(IFM_10_T):
-			case(IFM_10_2):
-			case(IFM_10_5):
-			case(IFM_10_STP):
-			case(IFM_10_FL):
-				network_iface_stat[ifaces].speed = 10;
-				break;
-			/* 100 Mbit connections */
-			case(IFM_100_TX):
-			case(IFM_100_FX):
-			case(IFM_100_T4):
-			case(IFM_100_VG):
-			case(IFM_100_T2):
-				network_iface_stat[ifaces].speed = 100;
-				break;
-			/* 1000 Mbit connections */
-			case(IFM_1000_SX):
-			case(IFM_1000_LX):
-			case(IFM_1000_CX):
+		switch(IFM_TYPE(ifmed.ifm_active)) {
+		case IFM_ETHER:
+			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
+#ifdef IFM_HPNA_1
+				/* HomePNA 1.0 (1Mb/s) */
+				case(IFM_HPNA_1):
+					network_iface_stat[ifaces].speed = 1;
+					break;
+#endif
+				/* 10 Mbit connections. Speedy :) */
+				case(IFM_10_T): /* 10BaseT - RJ45 */
+				case(IFM_10_2): /* 10Base2 - Thinnet */
+				case(IFM_10_5): /* 10Base5 - AUI */
+				case(IFM_10_STP): /* 10BaseT over shielded TP */
+				case(IFM_10_FL): /* 10baseFL - Fiber */
+					network_iface_stat[ifaces].speed = 10;
+					break;
+				/* 100 Mbit connections */
+				case(IFM_100_TX): /* 100BaseTX - RJ45 */
+				case(IFM_100_FX): /* 100BaseFX - Fiber */
+				case(IFM_100_T4): /* 100BaseT4 - 4 pair cat 3 */
+				case(IFM_100_VG): /* 100VG-AnyLAN */
+				case(IFM_100_T2): /* 100BaseT2 */
+					network_iface_stat[ifaces].speed = 100;
+					break;
+				/* 1000 Mbit connections */
+				case(IFM_1000_SX): /* 1000BaseSX - multi-mode fiber */
+				case(IFM_1000_LX): /* 1000baseLX - single-mode fiber */
+				case(IFM_1000_CX): /* 1000baseCX - 150ohm STP */
 #if defined(IFM_1000_TX) && !defined(OPENBSD)
-			case(IFM_1000_TX): /* FreeBSD 4 and others (but NOT OpenBSD)? */
+				/* FreeBSD 4 and others (but NOT OpenBSD)? */
+				case(IFM_1000_TX):
 #endif
 #ifdef IFM_1000_FX
-			case(IFM_1000_FX): /* FreeBSD 4 */
+				case(IFM_1000_FX):
 #endif
 #ifdef IFM_1000_T
-			case(IFM_1000_T): /* FreeBSD 5 */
+				case(IFM_1000_T):
 #endif
-				network_iface_stat[ifaces].speed = 1000;
-				break;
-			/* We don't know what it is */
-			default:
-				network_iface_stat[ifaces].speed = 0;
-				break;
+					network_iface_stat[ifaces].speed = 1000;
+					break;
+#if defined(IFM_10G_SR) || defined(IFM_10G_LR) || defined(IFM_10G_CX4) || defined(IFM_10G_T)
+# ifdef IFM_10G_SR
+				case(IFM_10G_SR):
+# endif
+# ifdef IFM_10G_LR
+				case(IFM_10G_LR):
+# endif
+# ifdef IFM_10G_CX4
+				case(IFM_10G_CX4):
+# endif
+# ifdef IFM_10G_T
+				case(IFM_10G_T):
+# endif
+					network_iface_stat[ifaces].speed = 1000;
+					break;
+#endif
+				/* We don't know what it is */
+				default:
+					network_iface_stat[ifaces].speed = 0;
+					break;
+			}
+			break;
+
+		case IFM_TOKEN:
+			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
+				case IFM_TOK_STP4: /* Shielded twisted pair 4m - DB9 */
+				case IFM_TOK_UTP4: /* Unshielded twisted pair 4m - RJ45 */
+					network_iface_stat[ifaces].speed = 4;
+					break;
+
+				case IFM_TOK_STP16: /* Shielded twisted pair 16m - DB9 */
+				case IFM_TOK_UTP16: /* Unshielded twisted pair 16m - RJ45 */
+					network_iface_stat[ifaces].speed = 16;
+					break;
+
+				case IFM_TOK_STP100: /* Shielded twisted pair 100m - DB9 */
+				case IFM_TOK_UTP100: /* Unshielded twisted pair 100m - RJ45 */
+					network_iface_stat[ifaces].speed = 100;
+					break;
+
+				/* We don't know what it is */
+				default:
+					network_iface_stat[ifaces].speed = 0;
+					break;
+			}
+			break;
+
+		case IFM_FDDI:
+			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
+				/* We don't know what it is */
+				default:
+					network_iface_stat[ifaces].speed = 0;
+					break;
+			}
+			break;
+
+		case IFM_IEEE80211:
+			switch(IFM_SUBTYPE(ifmed.ifm_active)) {
+				case IFM_IEEE80211_FH1: /* Frequency Hopping 1Mbps */
+				case IFM_IEEE80211_DS1: /* Direct Sequence 1Mbps */
+					network_iface_stat[ifaces].speed = 1;
+					break;
+
+				case IFM_IEEE80211_FH2: /* Frequency Hopping 2Mbps */
+				case IFM_IEEE80211_DS2: /* Direct Sequence 2Mbps */
+					network_iface_stat[ifaces].speed = 2;
+					break;
+
+				case IFM_IEEE80211_DS5: /* Direct Sequence 5Mbps*/
+					network_iface_stat[ifaces].speed = 5;
+					break;
+
+				case IFM_IEEE80211_DS11: /* Direct Sequence 11Mbps*/
+					network_iface_stat[ifaces].speed = 11;
+					break;
+
+				case IFM_IEEE80211_DS22: /* Direct Sequence 22Mbps */
+					network_iface_stat[ifaces].speed = 22;
+					break;
+
+				/* We don't know what it is */
+				default:
+					network_iface_stat[ifaces].speed = 0;
+					break;
+			}
+			break;
+
+		default:
+			network_iface_stat[ifaces].speed = 0;
+			break;
 		}
 		network_iface_stat[ifaces].factor = 1000U * 1000U;
 
@@ -1170,6 +1263,10 @@ skip:
 				network_iface_stat[ifaces].speed = 2500;
 			case SPEED_10000:
 				network_iface_stat[ifaces].speed = 10000;
+			/* We don't know what it is */
+			default:
+				network_iface_stat[ifaces].speed = 0;
+				break;
 			}
 			network_iface_stat[ifaces].factor = 1000U * 1000U;
 
