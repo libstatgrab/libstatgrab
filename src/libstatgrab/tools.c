@@ -196,7 +196,7 @@ build_mapping(void) {
 	kstat_io_t kios;
 
 	char driver_list[BIG_ENOUGH][MAXPATHLEN];
-	int list_entries = 0;
+	size_t list_entries = 0;
 	int found;
 
 	if ((kc = kstat_open()) == NULL) {

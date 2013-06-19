@@ -38,7 +38,7 @@ static int vmtotal_mib[2];
 static mach_port_t self_host_port;
 #endif
 
-sg_error
+static sg_error
 sg_mem_init_comp(unsigned id) {
 	ssize_t pagesize;
 #if defined(HAVE_STRUCT_VMTOTAL) && \

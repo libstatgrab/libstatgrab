@@ -219,7 +219,7 @@ sg_get_page_stats_diff_int(sg_page_stats *tgt, const sg_page_stats *now, const s
 #if defined(HAVE_HOST_STATISTICS) || defined(HAVE_HOST_STATISTICS64)
 EXTENDED_COMP_SETUP(page,2,NULL);
 
-sg_error
+static sg_error
 sg_page_init_comp(unsigned id) {
 	GLOBAL_SET_ID(page,id);
 

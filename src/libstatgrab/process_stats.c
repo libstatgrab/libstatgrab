@@ -117,7 +117,7 @@ VECTOR_INIT_INFO_EMPTY_INIT(sg_process_count);
  * permissions of accessed files - no reason to die in init() */
 EXTENDED_COMP_SETUP(process,SG_PROC_IDX_COUNT,NULL);
 
-sg_error
+static sg_error
 sg_process_init_comp(unsigned id) {
 	ssize_t pagesize;
 	GLOBAL_SET_ID(process,id);

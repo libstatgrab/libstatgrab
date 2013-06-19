@@ -33,7 +33,7 @@ static bool swapinfo_array = false;
 static char *swapinfo_sysctl_name;
 #endif
 
-sg_error
+static sg_error
 sg_swap_init_comp(unsigned id) {
 	ssize_t pagesize;
 #if defined(HAVE_STRUCT_XSWDEV)
