@@ -1608,47 +1608,61 @@ AS_IF(	[test "x${ENABLE_THREADS}" != "xno"],
 	]
 ) # endif : --enable-threads
 
-AX_CHECK_WITH_LIB([log4cplus],[check])
-
 AM_CONDITIONAL(WITH_LIBLOG4CPLUS, false)
-WITH_LIBLOG4CPLUS=0
-AX_CHECK_LIB_FLAGS([log4cplus], [stdc++,stdc++ unwind], [log4cplus_basic_configure();], [
-AC_INCLUDES_DEFAULT
-#include <log4cplus/clogger.h>
-  ], [log4cplus >= 1.0.5], [
-    AM_CONDITIONAL(WITH_LIBLOG4CPLUS, true)
-    WITH_LIBLOG4CPLUS=1
-    AX_APPEND_TO_VAR([LINKFLAGS], ${LIBS_LOG4CPLUS})
-    AX_APPEND_TO_VAR([CLIBFLAGS], ${INC_LOG4CPLUS})
-    AC_DEFINE([WITH_LIBLOG4CPLUS], 1, [Define this when tracing shall be done using log4cplus])
-    AC_MSG_NOTICE([compiling in support for liblog4cplus (LIBS="$LIBS_LOG4CPLUS}")])
-  ]
-)
+AM_CONDITIONAL(WITH_FULL_CONSOLE_LOGGER, false)
 
-AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
-  AC_LANG_PUSH([C++])
-  AC_MSG_CHECKING([if liblog4cplus is built with thread support])
-  ax_cppflags_safe="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS $CLIBFLAGS"
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-  AC_INCLUDES_DEFAULT
+AC_ARG_ENABLE(logging,
+	[  --enable-logging        enable logging in library (force console printf,
+                          if no logging library is found)
+  --disable-logging       disable logging in library], [ENABLE_LOGGING="$enableval"], [ENABLE_LOGGING="check"])
+
+AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
+    AX_CHECK_WITH_LIB([log4cplus],[check])
+
+    WITH_LIBLOG4CPLUS=0
+    AX_CHECK_LIB_FLAGS([log4cplus], [stdc++,stdc++ unwind], [log4cplus_basic_configure();], [
+    AC_INCLUDES_DEFAULT
+#include <log4cplus/clogger.h>
+      ], [log4cplus >= 1.0.5], [
+	AM_CONDITIONAL(WITH_LIBLOG4CPLUS, true)
+	WITH_LIBLOG4CPLUS=1
+	AX_APPEND_TO_VAR([LINKFLAGS], ${LIBS_LOG4CPLUS})
+	AX_APPEND_TO_VAR([CLIBFLAGS], ${INC_LOG4CPLUS})
+	AC_DEFINE([WITH_LIBLOG4CPLUS], 1, [Define this when tracing shall be done using log4cplus])
+	AC_MSG_NOTICE([compiling in support for liblog4cplus (LIBS="$LIBS_LOG4CPLUS}")])
+      ]
+    )
+
+    AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
+      AC_LANG_PUSH([C++])
+      AC_MSG_CHECKING([if liblog4cplus is built with thread support])
+      ax_cppflags_safe="$CPPFLAGS"
+      CPPFLAGS="$CPPFLAGS $CLIBFLAGS"
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+      AC_INCLUDES_DEFAULT
 
 #include <log4cplus/config.hxx>
 #if defined(LOG4CPLUS_SINGLE_THREADED)
 #error no threads
 #endif
 
-  int main() { return 0; }
-    ])], [
-      AC_MSG_RESULT([yes])
-      ax_liblog4cplus_threads=yes
-    ], [
-      AC_MSG_RESULT([no])
-      ax_liblog4cplus_threads=no
-    ]
-  )
-  CPPFLAGS="$ax_cppflags_safe"
-  AC_LANG_POP([C++])
+      int main() { return 0; }
+	])], [
+	  AC_MSG_RESULT([yes])
+	  ax_liblog4cplus_threads=yes
+	], [
+	  AC_MSG_RESULT([no])
+	  ax_liblog4cplus_threads=no
+	]
+      )
+      CPPFLAGS="$ax_cppflags_safe"
+      AC_LANG_POP([C++])
+    ])
+
+    AS_IF([test "x$ENABLE_LOGGING" = "xyes" -a "x$WITH_LIBLOG4CPLUS" != "x1"],
+    [AM_CONDITIONAL(WITH_FULL_CONSOLE_LOGGER, false)
+     AC_DEFINE([WITH_FULL_CONSOLE_LOGGER], 1, [Define this when tracing shall be done using fprintf(stderr, ...)])
+     WITH_FULL_CONSOLE_LOGGER="1"])
 ])
 
 dnl Libtool setup.

@@ -543,7 +543,7 @@ use_builtin_fs:
 		if( cvfs && strlen(cvfs) ) {
 			if( SG_ERROR_NONE != ( errc = sg_update_string( &valid_file_systems[i], cvfs ) ) ) {
 				CLEANUP_INIT_VALID_FS
-				WARN_LOG_FMT("disk", "couldn't update index %d for list of valid file systems", i);
+				WARN_LOG_FMT("disk", "couldn't update index %zu for list of valid file systems", i);
 				RETURN_FROM_PREVIOUS_ERROR( "disk", errc );
 			}
 		}
@@ -605,7 +605,7 @@ sg_set_valid_filesystems(const char *valid_fs[]) {
 		while( tmp-- ) {
 			sg_error errc;
 			if( SG_ERROR_NONE != ( errc = sg_update_string( &new_valid_fs[tmp], valid_fs[tmp] ) ) ) {
-				WARN_LOG_FMT("disk", "couldn't update index %d for list of valid file systems", tmp);
+				WARN_LOG_FMT("disk", "couldn't update index %zu for list of valid file systems", tmp);
 				while( valid_fs[tmp] ) {
 				       free(new_valid_fs[tmp]);
 				       ++tmp;

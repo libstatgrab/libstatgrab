@@ -51,7 +51,7 @@
                 TWOORMORE, TWOORMORE, TWOORMORE, TWOORMORE, ONE, throwaway)
 #define SELECT_10TH(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ...) a10
 
-#ifdef WITH_LIBLOG4CPLUS
+#if defined(WITH_LIBLOG4CPLUS)
 #include <log4cplus/clogger.h>
 #define LOGMSG(module, ll, msg) log4cplus_logger_log(LOG4CPLUS_TEXT("statgrab." module), ll, msg)
 #define LOGMSG_FMT(module, ll, ...) log4cplus_logger_log(LOG4CPLUS_TEXT("statgrab." module), ll, __VA_ARGS__ )
@@ -99,12 +99,33 @@
 #define TRACE_LOG_FMT(module, ...) do { \
 	log4cplus_logger_log(LOG4CPLUS_TEXT("statgrab." module), L4CP_TRACE_LOG_LEVEL, FIRST(__VA_ARGS__) " (at %s:%d)" REST(__VA_ARGS__), __FILE__, __LINE__); \
 } while(0)
+#elif defined(WITH_FULL_CONSOLE_LOGGER)
+#define LOGMSG(module, ll, msg) fprintf(stderr, "log%d: " msg " in statgrab." module " at %s:%d\n", ll, __FILE__, __LINE__)
+#define LOGMSG_FMT(module, ll, ...) fprintf(stderr, "log%d: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n", ll REST(__VA_ARGS__), __FILE__, __LINE__)
+
+#define PANIC_LOG(module, msg) do { fprintf( stderr, "panic condition: " msg " in statgrab." module " at %s:%d", __FILE__, __LINE__); exit(255); } while(0)
+#define PANIC_LOG_FMT(module, ...) do { fprintf( stderr, "panic condition: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d" REST(__VA_ARGS__), __FILE__, __LINE__); exit(255); } while(0)
+
+#define ERROR_LOG(module, msg) fprintf(stderr, "error: " msg " in statgrab." module " at %s:%d\n", __FILE__, __LINE__)
+#define ERROR_LOG_FMT(module, ...) fprintf(stderr, "error: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n" REST(__VA_ARGS__), __FILE__, __LINE__)
+
+#define WARN_LOG(module, msg) fprintf(stderr, "warning: " msg " in statgrab." module " at %s:%d\n", __FILE__, __LINE__)
+#define WARN_LOG_FMT(module, ...) fprintf(stderr, "warning: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n" REST(__VA_ARGS__), __FILE__, __LINE__)
+
+#define INFO_LOG(module, msg) fprintf(stderr, "info: " msg " in statgrab." module " at %s:%d\n", __FILE__, __LINE__)
+#define INFO_LOG_FMT(module, ...) fprintf(stderr, "info: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n" REST(__VA_ARGS__), __FILE__, __LINE__)
+
+#define DEBUG_LOG(module, msg) fprintf(stderr, "debug: " msg " in statgrab." module " at %s:%d\n", __FILE__, __LINE__)
+#define DEBUG_LOG_FMT(module, ...) fprintf(stderr, "debug: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n" REST(__VA_ARGS__), __FILE__, __LINE__)
+
+#define TRACE_LOG(module, msg) fprintf(stderr, "trace: " msg " in statgrab." module " at %s:%d\n", __FILE__, __LINE__)
+#define TRACE_LOG_FMT(module, ...) fprintf(stderr, "trace: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n" REST(__VA_ARGS__), __FILE__, __LINE__)
 #else
 #define LOGMSG(module, ll, msg) ((void)0)
 #define LOGMSG_FMT(module, ll, ...) ((void)0)
 
-#define PANIC_LOG(module, msg) do { fprintf( stderr, "panic condition: " msg " in %s at %s:%d", module, __FILE__, __LINE__); exit(255); } while(0)
-#define PANIC_LOG_FMT(module, ...) do { fprintf( stderr, "panic condition: " FIRST(__VA_ARGS__) " in %s at %s:%d" REST(__VA_ARGS__), module, __FILE__, __LINE__); exit(255); } while(0)
+#define PANIC_LOG(module, msg) do { fprintf( stderr, "panic condition: " msg " in statgrab." module " at %s:%d", __FILE__, __LINE__); exit(255); } while(0)
+#define PANIC_LOG_FMT(module, ...) do { fprintf( stderr, "panic condition: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d" REST(__VA_ARGS__), __FILE__, __LINE__); exit(255); } while(0)
 
 #define ERROR_LOG(module, msg) ((void)0)
 #define ERROR_LOG_FMT(module, ...) ((void)0)
