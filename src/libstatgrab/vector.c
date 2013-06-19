@@ -344,8 +344,8 @@ sg_vector_compute_diff(sg_vector **dest_vector_ptr, const sg_vector *cur_vector,
 			size_t i, item_size = last_vector->info.item_size;
 			unsigned matched[(cur_vector->used_count / (8 * sizeof(unsigned))) + 1];
 
-			char const *diff = VECTOR_DATA_CONST(*dest_vector_ptr);
-			char *last = VECTOR_DATA(last_vector);
+			char *diff = VECTOR_DATA(*dest_vector_ptr);
+			char const *last = VECTOR_DATA_CONST(last_vector);
 
 			memset( matched, 0, sizeof(matched) );
 
@@ -355,7 +355,7 @@ sg_vector_compute_diff(sg_vector **dest_vector_ptr, const sg_vector *cur_vector,
 					if( BIT_ISSET(matched, j) ) /* already matched? */
 						continue;
 
-					if (last_vector->info.compare_fn(diff + i * item_size, last + j * item_size) == 0) {
+					if (last_vector->info.compare_fn(last + j * item_size, diff + i * item_size) == 0) {
 						BIT_SET(matched, j);
 						last_vector->info.compute_diff_fn(last + j * item_size, diff + i * item_size);
 					}

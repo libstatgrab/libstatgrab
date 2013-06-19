@@ -29,7 +29,7 @@
 
 typedef void (*vector_init_function)(void *item);
 typedef sg_error (*vector_copy_function)(const void *src, void *dst);
-typedef sg_error (*vector_compute_diff_function)(void *dst, const void *src);
+typedef sg_error (*vector_compute_diff_function)(const void *src, void *dst);
 typedef int (*vector_compare_function)(const void *a, const void *b);
 typedef void (*vector_destroy_function)(void *item);
 

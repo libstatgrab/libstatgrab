@@ -33,7 +33,7 @@ sg_network_io_stats_item_init(sg_network_io_stats *d) {
 }
 
 static sg_error
-sg_network_io_stats_item_copy(sg_network_io_stats *d, const sg_network_io_stats *s) {
+sg_network_io_stats_item_copy(const sg_network_io_stats *s, sg_network_io_stats *d) {
 
 	if( SG_ERROR_NONE != sg_update_string(&d->interface_name, s->interface_name) ) {
 		RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
@@ -85,13 +85,13 @@ sg_network_io_stats_item_compute_diff(const sg_network_io_stats *s, sg_network_i
 
 static int
 sg_network_io_stats_item_compare(const sg_network_io_stats *a, const sg_network_io_stats *b) {
-
 	return strcmp( a->interface_name, b->interface_name );
 }
 
 static void
 sg_network_io_stats_item_destroy(sg_network_io_stats *d) {
 	free(d->interface_name);
+	d->interface_name = NULL;
 }
 
 static void

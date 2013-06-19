@@ -121,7 +121,7 @@ sg_fs_stats_item_init(sg_fs_stats *d) {
 }
 
 static sg_error
-sg_fs_stats_item_copy(sg_fs_stats *d, const sg_fs_stats *s) {
+sg_fs_stats_item_copy(const sg_fs_stats *s, sg_fs_stats *d) {
 
 	if( SG_ERROR_NONE != sg_update_string(&d->device_name, s->device_name) ||
 	    SG_ERROR_NONE != sg_update_string(&d->fs_type, s->fs_type) ||
@@ -201,7 +201,7 @@ static void sg_disk_io_stats_item_init(sg_disk_io_stats *d) {
 }
 
 static sg_error
-sg_disk_io_stats_item_copy(sg_disk_io_stats *d, const sg_disk_io_stats *s) {
+sg_disk_io_stats_item_copy(const sg_disk_io_stats *s, sg_disk_io_stats *d) {
 
 	if( SG_ERROR_NONE != sg_update_string(&d->disk_name, s->disk_name) ) {
 		RETURN_FROM_PREVIOUS_ERROR( "disk", sg_get_error() );
@@ -232,6 +232,7 @@ sg_disk_io_stats_item_compare(const sg_disk_io_stats *a, const sg_disk_io_stats 
 static void
 sg_disk_io_stats_item_destroy(sg_disk_io_stats *d) {
 	free(d->disk_name);
+	d->disk_name = NULL;
 }
 
 VECTOR_INIT_INFO_FULL_INIT(sg_fs_stats);
@@ -1221,7 +1222,7 @@ sg_get_fs_stats_int(sg_vector **fs_stats_vector_ptr){
 		BIT_SCAN_FWD(valid, i);
 		if( i >= VECTOR_ITEM_COUNT(tmp) ) /* shouldn't happen ?! */
 			break;
-		sg_fs_stats_item_copy(items+j, item+i);
+		sg_fs_stats_item_copy(item+i, items+j);
 	}
 
 	/* XXX shouldn't fail !? */
@@ -1383,10 +1384,11 @@ sg_get_disk_io_stats_int( sg_vector **disk_io_stats_vector_ptr ) {
 		disk_io_stats[num_diskio].systime = now;
 
 		if( disk_io_stats[num_diskio].disk_name == NULL ) {
-			int i;
+			unsigned i;
 			for( i = 0; i < IDENTIFIER_LENGTH; ++i ) {
 				char *s = dskperf[num_diskio].name + i;
-				if( !(isalpha(*s) || isdigit(*s) ||
+				int ch = (unsigned)(*s);
+				if( !(isalpha(ch) || isdigit(ch) ||
 				      *s == '-' || *s == '_' || *s == ' ') ) {
 					*s = 0;
 					break;

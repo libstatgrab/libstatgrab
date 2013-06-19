@@ -47,7 +47,7 @@ static void sg_process_stats_item_init(sg_process_stats *d) {
 }
 
 #if 0
-static sg_error sg_process_stats_item_copy(sg_process_stats *d, const sg_process_stats *s) {
+static sg_error sg_process_stats_item_copy(const sg_process_stats *s, sg_process_stats *d) {
 
 	if( SG_ERROR_NONE != sg_update_string(&d->process_name, s->process_name) ||
 	    SG_ERROR_NONE != sg_update_string(&d->proctitle, s->proctitle) ) {
