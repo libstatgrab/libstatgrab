@@ -681,10 +681,11 @@ getdrvent(LPTSTR vol, unsigned check_mask, struct sg_win32_drvent *buf) {
  * setup code
  */
 
-#define SG_FS_STAT_IDX		0
-#define SG_DISK_IO_NOW_IDX	1
-#define SG_DISK_IO_DIFF_IDX	2
-#define SG_DISK_IDX_COUNT       3
+#define SG_FS_STAT_NOW_IDX	0
+#define SG_FS_STAT_DIFF_IDX	1
+#define SG_DISK_IO_NOW_IDX	2
+#define SG_DISK_IO_DIFF_IDX	3
+#define SG_DISK_IDX_COUNT       4
 
 EXTENDED_COMP_SETUP(disk,SG_DISK_IDX_COUNT,NULL);
 
@@ -1233,7 +1234,8 @@ sg_get_fs_stats_int(sg_vector **fs_stats_vector_ptr){
 	return err;
 }
 
-MULTI_COMP_ACCESS(sg_get_fs_stats,disk,fs,SG_FS_STAT_IDX)
+MULTI_COMP_ACCESS(sg_get_fs_stats,disk,fs,SG_FS_STAT_NOW_IDX)
+MULTI_COMP_DIFF(sg_get_fs_stats_diff,sg_get_fs_stats,disk,fs,SG_FS_STAT_DIFF_IDX,SG_FS_STAT_NOW_IDX)
 
 int
 sg_fs_compare_device_name(const void *va, const void *vb) {

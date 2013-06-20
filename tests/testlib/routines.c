@@ -42,7 +42,7 @@ static struct statgrab_testfuncs statgrab_test_funcs[] =
 	SG_EASY_FUNC(load_stats, sg_get_load_stats),
 	SG_EASY_FUNC(user_stats, sg_get_user_stats),
 	SG_EASY_FUNC(swap_stats, sg_get_swap_stats),
-	SG_EASY_FUNC(fs_stats, sg_get_fs_stats), /* COMPLEX is probably just a define away */
+	SG_COMPLEX_FUNC(fs_stats, sg_get_fs_stats, sg_get_fs_stats_diff),
 	SG_COMPLEX_FUNC(disk_io_stats, sg_get_disk_io_stats,sg_get_disk_io_stats_diff),
 	SG_EASY_FUNC(network_iface_stats, sg_get_network_iface_stats),
 	SG_COMPLEX_FUNC(network_io_stats, sg_get_network_io_stats, sg_get_network_io_stats_diff),

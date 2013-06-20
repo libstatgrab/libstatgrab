@@ -302,6 +302,8 @@ __sg_public sg_error sg_set_valid_filesystems(const char *valid_fs[]);
 
 __sg_public sg_fs_stats *sg_get_fs_stats(size_t *entries);
 __sg_public sg_fs_stats *sg_get_fs_stats_r(size_t *entries);
+__sg_public sg_fs_stats *sg_get_fs_stats_diff(size_t *entries);
+__sg_public sg_fs_stats *sg_get_fs_stats_diff_between(const sg_fs_stats *cur, const sg_fs_stats *last, size_t *entries);
 #define sg_free_fs_stats(data) sg_free_stats_buf(data);
 
 __sg_public int sg_fs_compare_device_name(const void *va, const void *vb);
