@@ -119,6 +119,7 @@ sub run_tests(\@;\@) {
 		note('"' . join('" "', @exec_args) . '"');
 		my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf) = IPC::Cmd::run(
 			command => \@exec_args, verbose => 0, timeout => 60 );
+		defined $success or $success = 0;
 		if( "ARRAY" eq ref($stdout_buf) and 0 != scalar(@{$stdout_buf}) ) {
 			foreach my $line (@{$stdout_buf}) {
 				note($line);
@@ -129,7 +130,6 @@ sub run_tests(\@;\@) {
 				diag($line);
 			}
 		}
-		defined $success or $success = 0;
 		cmp_ok( $success, '==', 1, $test_variant );
 	}
 

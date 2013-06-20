@@ -35,14 +35,15 @@ struct statgrab_testfuncs
 	char *fn_name;
 	statgrab_multi_fn fn;
 	unsigned needed;
+	unsigned succeeded;
 	unsigned done;
 };
 
 struct statgrab_testfuncs *get_testable_functions(size_t *entries);
 size_t funcnames_to_indices(const char *name_list, size_t **indices);
 void mark_func(size_t func_index);
-void run_func(size_t func_index);
-void done_func(size_t func_index);
+int run_func(size_t func_index);
+void done_func(size_t func_index, int succeeded);
 
 /* err.c */
 int sg_warn(const char *prefix);

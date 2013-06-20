@@ -52,6 +52,7 @@ int
 main(int argc, char **argv) {
 	log_init( argc, argv );
 	sg_init(1);
+	int errors = 0;
 
 	if( 0 != get_params( opt_def, argc, argv ) ) {
 		help(argv[0]);
@@ -85,7 +86,8 @@ main(int argc, char **argv) {
 			size_t func_rel_idx;
 
 			for( func_rel_idx = 0; func_rel_idx < entries; ++func_rel_idx ) {
-				run_func( test_routines[func_rel_idx] );
+				if( !run_func( test_routines[func_rel_idx] ) )
+					++errors;
 			}
 		}
 	}
@@ -94,5 +96,5 @@ main(int argc, char **argv) {
 		return 1;
 	}
 
-	return 0;
+	return errors;
 }

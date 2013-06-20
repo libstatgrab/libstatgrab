@@ -24,7 +24,7 @@
 #include <tools.h>
 #include "testlib.h"
 
-#define SG_TEST_FUNC(name) { #name, (statgrab_multi_fn)(&name), 0, 0 }
+#define SG_TEST_FUNC(name) { #name, (statgrab_multi_fn)(&name), 0, 0, 0 }
 
 static struct statgrab_testfuncs statgrab_tests[] =
 {
@@ -109,9 +109,10 @@ mark_func(size_t func_index) {
 	++statgrab_tests[func_index].needed;
 }
 
-void
+int
 run_func(size_t func_index) {
 	size_t entries;
+	void *stats;
 
 	if( func_index >= lengthof(statgrab_tests) ) {
 		fprintf( stderr, "run_func: index out of range: %lu\n", (unsigned long int)(func_index) );
@@ -119,16 +120,20 @@ run_func(size_t func_index) {
 	}
 
 	INFO_LOG_FMT( "testlib", "Calling %s...", statgrab_tests[func_index].fn_name );
-	statgrab_tests[func_index].fn(&entries);
-	INFO_LOG_FMT( "testlib", "%s - entries = %lu", statgrab_tests[func_index].fn_name, entries );
+	stats = statgrab_tests[func_index].fn(&entries);
+	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", statgrab_tests[func_index].fn_name, stats, entries );
+
+	return stats != 0;
 }
 
 void
-done_func(size_t func_index) {
+done_func(size_t func_index, int succeeded) {
 	if( func_index >= lengthof(statgrab_tests) ) {
 		fprintf( stderr, "done_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
 	++statgrab_tests[func_index].done;
+	if(succeeded)
+		++statgrab_tests[func_index].succeeded;
 }

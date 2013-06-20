@@ -61,7 +61,7 @@ struct opt_def opt_def[] = {
 void *
 threadfunc(void *parm)
 {
-	int rc;
+	int rc, success;
 	size_t func_idx = *((size_t *)parm);
 
 	rc = pthread_mutex_lock(&mutex);
@@ -80,14 +80,14 @@ threadfunc(void *parm)
 		prove_libcall("pthread_mutex_unlock", rc);
 	}
 
-	run_func( func_idx );
+	success = run_func( func_idx );
 
 	if( !opt_def[OPT_SEQ].optarg.b ) {
 		rc = pthread_mutex_lock(&mutex);
 		prove_libcall("pthread_mutex_lock", rc);
 	}
 
-	done_func(func_idx);
+	done_func(func_idx, success);
 
 	rc = pthread_mutex_unlock(&mutex);
 	prove_libcall("pthread_mutex_unlock", rc);
@@ -140,7 +140,7 @@ main(int argc, char **argv) {
 		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&nfuncs);
 		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines);
 		pthread_t *threadid = NULL;
-		int rc;
+		int rc, errors = 0;
 
 		if( 0 == entries ) {
 			die( ESRCH, "no functions to test" );
@@ -207,9 +207,10 @@ main(int argc, char **argv) {
 			ok = 0;
 			for( i = 0; i < nfuncs; ++i ) {
 				if(0 != sg_testfuncs[i].needed)
-					printf( "%s - needed: %d, done: %d\n",
+					printf( "%s - needed: %d, succeeded: %d, done: %d\n",
 						sg_testfuncs[i].fn_name,
 						sg_testfuncs[i].needed,
+						sg_testfuncs[i].succeeded,
 						sg_testfuncs[i].done );
 				if( sg_testfuncs[i].needed == sg_testfuncs[i].done ) {
 					++ok;
@@ -231,12 +232,14 @@ main(int argc, char **argv) {
 		pthread_cond_destroy(&cond);
 		pthread_mutex_destroy(&mutex);
 
+		for( i = 0; i < nfuncs; ++i )
+			errors += sg_testfuncs[i].needed - sg_testfuncs[i].succeeded;
+
 		TRACE_LOG_FMT( "multi_threaded", "Main completed with test_counter = %d", test_counter );
-	}
-	else {
-		help(argv[0]);
-		return 1;
+
+		return errors;
 	}
 
-	return 0;
+	help(argv[0]);
+	return 1;
 }
