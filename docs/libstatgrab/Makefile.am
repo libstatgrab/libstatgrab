@@ -25,7 +25,9 @@ sg_disk_MANS =	sg_get_disk_io_stats.3 sg_get_disk_io_stats_r.3 \
 sg_error_MANS =	sg_get_error.3 sg_get_error_arg.3 sg_get_error_errno.3 \
 		sg_get_error_details.3 sg_strperror.3 sg_str_error.3
 
-sg_fs_MANS =	sg_get_fs_stats.3 sg_get_fs_stats_r.3 sg_free_fs_stats.3 \
+sg_fs_MANS =	sg_get_fs_stats.3 sg_get_fs_stats_r.3 \
+		sg_get_fs_stats_diff.3 sg_get_fs_stats_diff_between.3 \
+		sg_free_fs_stats.3 \
 		sg_get_valid_filesystems.3 sg_set_valid_filesystems.3 \
 		sg_fs_compare_device_name.3 sg_fs_compare_mnt_point.3
 

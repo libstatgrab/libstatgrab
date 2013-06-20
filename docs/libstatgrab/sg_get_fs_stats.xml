@@ -11,6 +11,8 @@
   <refnamediv>
     <refname>sg_get_fs_stats</refname>
     <refname>sg_get_fs_stats_r</refname>
+    <refname>sg_get_fs_stats_diff</refname>
+    <refname>sg_get_fs_stats_diff_between</refname>
     <refname>sg_free_fs_stats</refname>
     <refname>sg_get_valid_filesystems</refname>
     <refname>sg_set_valid_filesystems</refname>
@@ -28,6 +30,16 @@
       </funcprototype>
       <funcprototype>
         <funcdef>sg_fs_stats *<function>sg_get_fs_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_fs_stats *<function>sg_get_fs_stats_diff</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_fs_stats *<function>sg_get_fs_stats_diff_between</function></funcdef>
+        <paramdef>const sg_fs_stats *<parameter>cur</parameter></paramdef>
+        <paramdef>const sg_fs_stats *<parameter>last</parameter></paramdef>
         <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
@@ -68,7 +80,12 @@
     <para>
       The <function>sg_get_fs_stats</function>() and
       <function>sg_get_fs_stats_r</function>() functions deliver the
-      file system statistics of the moment the function is called.
+      file system statistics of the moment the function is called. The
+      <function>sg_get_fs_stats_diff</function>() and
+      <function>sg_get_fs_stats_diff_between</function>() deliver
+      the difference between two calls of
+      <function>sg_get_fs_stats</function>() or
+      <function>sg_get_fs_stats_r</function>(), respectively.
     </para>
     <para>
       <table frame='all'><title>API Shortcut</title>
@@ -95,6 +112,16 @@
         <entry>caller</entry>
       </row>
       <row>
+        <entry>sg_get_fs_stats_diff</entry>
+        <entry><structname>sg_fs_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_fs_stats_diff_between</entry>
+        <entry><structname>sg_fs_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
         <entry>sg_get_valid_filesystems</entry>
         <entry>char **</entry>
         <entry>libstatgrab (global)</entry>
@@ -105,9 +132,10 @@
     </para>
     <para>
       The <structname>sg_fs_stats</structname> vectors received from
-      <function>sg_get_fs_stats_r</function>() must be freed using
-      <function>sg_free_fs_stats</function>() when not needed anymore. The
-      caller is responsible for doing it.
+      <function>sg_get_fs_stats_r</function>() or
+      <function>sg_get_fs_stats_diff_between</function>() must be
+      freed using <function>sg_free_fs_stats</function>() when not
+      needed anymore. The caller is responsible for doing it.
     </para>
     <para>
       The statgrab library comes with a built-in list of valid file system
