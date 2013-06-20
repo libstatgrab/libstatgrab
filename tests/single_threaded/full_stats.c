@@ -80,11 +80,18 @@ main(int argc, char **argv) {
 			size_t func_rel_idx;
 
 			for( func_rel_idx = 0; func_rel_idx < entries; ++func_rel_idx ) {
-				if( !run_func( test_routines[func_rel_idx], 1 ) )
+				mark_func(test_routines[func_rel_idx]);
+				if( !run_func( test_routines[func_rel_idx], 1 ) ) {
+					done_func(test_routines[func_rel_idx], 0);
 					++errors;
+				}
+				else {
+					done_func(test_routines[func_rel_idx], 1);
+				}
 			}
 		}
 
+		(void)report_testable_functions(1);
 		free(test_routines);
 
 		return errors;
