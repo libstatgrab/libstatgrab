@@ -106,7 +106,7 @@ funcnames_to_indices(const char *name_list, size_t **indices, int full) {
 			}
 			(*indices)[i++] = idx;
 			name_start = name_list + 1;
-			DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_test_funcs[idx].fn_name );
+			DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", full ? statgrab_test_funcs[i].full_name : statgrab_test_funcs[i].diff_name );
 		}
 	}
 
@@ -120,7 +120,7 @@ funcnames_to_indices(const char *name_list, size_t **indices, int full) {
 		}
 		(*indices)[i++] = idx;
 		name_start = name_list + 1;
-		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_test_funcs[idx].fn_name );
+		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", full ? statgrab_test_funcs[i].full_name : statgrab_test_funcs[i].diff_name );
 	}
 
 	return i;
@@ -177,11 +177,11 @@ run_func(size_t func_index, int full) {
 		exit(1);
 	}
 
-	INFO_LOG_FMT( "testlib", "Calling %s...", statgrab_test_funcs[func_index].fn_name );
+	INFO_LOG_FMT( "testlib", "Calling %s...", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name );
 	stats = full
 	      ? statgrab_test_funcs[func_index].full_fn(&entries)
 	      : statgrab_test_funcs[func_index].diff_fn(&entries);
-	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", statgrab_test_funcs[func_index].fn_name, stats, entries );
+	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name, stats, entries );
 
 	return stats != 0;
 }

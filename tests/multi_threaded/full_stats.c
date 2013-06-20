@@ -159,7 +159,7 @@ main(int argc, char **argv) {
 		rc = pthread_mutex_lock(&mutex);
 		prove_libcall("pthread_mutex_lock", rc);
 
-		TRACE_LOG_FMT( "multi_threaded", "create %d threads", numthreads );
+		TRACE_LOG_FMT( "multi_threaded", "create %zu threads", numthreads );
 		for( i = 0; i < numthreads; ++i ) {
 			mark_func(test_routines[i % entries]);
 			rc = pthread_create( &threadid[i], NULL, threadfunc, &test_routines[i % entries] );
@@ -218,7 +218,7 @@ main(int argc, char **argv) {
 		for( i = 0; i < nfuncs; ++i )
 			errors += sg_testfuncs[i].needed - sg_testfuncs[i].succeeded;
 
-		TRACE_LOG_FMT( "multi_threaded", "Main completed with test_counter = %d", test_counter );
+		TRACE_LOG_FMT( "multi_threaded", "Main completed with test_counter = %zu", test_counter );
 
 		return errors;
 	}
