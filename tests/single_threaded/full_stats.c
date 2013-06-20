@@ -52,7 +52,6 @@ int
 main(int argc, char **argv) {
 	log_init( argc, argv );
 	sg_init(1);
-	int errors = 0;
 
 	if( 0 != get_params( opt_def, argc, argv ) ) {
 		help(argv[0]);
@@ -64,18 +63,13 @@ main(int argc, char **argv) {
 		return 0;
 	}
 	else if( opt_def[OPT_LIST].optarg.b ) {
-		size_t entries = 0, i;
-		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&entries);
-
-		for( i = 0; i < entries; ++i ) {
-			printf( "%s\n", sg_testfuncs[i].fn_name );
-		}
-
+		print_testable_functions(1);
 		return 0;
 	}
 	else if( opt_def[OPT_RUN].optarg.str ) {
 		size_t *test_routines = NULL;
-		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines);
+		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines, 1);
+		int errors = 0;
 
 		if( 0 == entries ) {
 			die( ESRCH, "no functions to test" );
@@ -86,15 +80,16 @@ main(int argc, char **argv) {
 			size_t func_rel_idx;
 
 			for( func_rel_idx = 0; func_rel_idx < entries; ++func_rel_idx ) {
-				if( !run_func( test_routines[func_rel_idx] ) )
+				if( !run_func( test_routines[func_rel_idx], 1 ) )
 					++errors;
 			}
 		}
-	}
-	else {
-		help(argv[0]);
-		return 1;
+
+		free(test_routines);
+
+		return errors;
 	}
 
-	return errors;
+	help(argv[0]);
+	return 1;
 }

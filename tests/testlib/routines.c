@@ -24,37 +24,60 @@
 #include <tools.h>
 #include "testlib.h"
 
-#define SG_TEST_FUNC(name) { #name, (statgrab_multi_fn)(&name), 0, 0, 0 }
+#define SG_EASY_FUNC(stat,full) { #stat, \
+                                       #full, (statgrab_stat_fn)(&full), \
+				       NULL, NULL, \
+				       0, 0, 0 }
 
-static struct statgrab_testfuncs statgrab_tests[] =
+#define SG_COMPLEX_FUNC(stat,full,diff) { #stat, \
+                                       #full, (statgrab_stat_fn)(&full), \
+				       #diff, (statgrab_stat_fn)(&diff), \
+				       0, 0, 0 }
+
+static struct statgrab_testfuncs statgrab_test_funcs[] =
 {
-	SG_TEST_FUNC(sg_get_host_info),
-	SG_TEST_FUNC(sg_get_cpu_stats),
-	SG_TEST_FUNC(sg_get_mem_stats),
-	SG_TEST_FUNC(sg_get_load_stats),
-	SG_TEST_FUNC(sg_get_user_stats),
-	SG_TEST_FUNC(sg_get_swap_stats),
-	SG_TEST_FUNC(sg_get_fs_stats),
-	SG_TEST_FUNC(sg_get_disk_io_stats),
-	SG_TEST_FUNC(sg_get_network_io_stats),
-	SG_TEST_FUNC(sg_get_page_stats),
-	SG_TEST_FUNC(sg_get_process_stats)
+	SG_EASY_FUNC(host_info, sg_get_host_info),
+	SG_COMPLEX_FUNC(cpu_stats, sg_get_cpu_stats, sg_get_cpu_stats_diff), /* XXX cpu_percent */
+	SG_EASY_FUNC(mem_stats, sg_get_mem_stats),
+	SG_EASY_FUNC(load_stats, sg_get_load_stats),
+	SG_EASY_FUNC(user_stats, sg_get_user_stats),
+	SG_EASY_FUNC(swap_stats, sg_get_swap_stats),
+	SG_EASY_FUNC(fs_stats, sg_get_fs_stats), /* COMPLEX is probably just a define away */
+	SG_COMPLEX_FUNC(disk_io_stats, sg_get_disk_io_stats,sg_get_disk_io_stats_diff),
+	SG_EASY_FUNC(network_iface_stats, sg_get_network_iface_stats),
+	SG_COMPLEX_FUNC(network_io_stats, sg_get_network_io_stats, sg_get_network_io_stats_diff),
+	SG_COMPLEX_FUNC(page_stats, sg_get_page_stats, sg_get_page_stats_diff),
+	SG_EASY_FUNC(process_stats, sg_get_process_stats) /* XXX process count */
 };
 
 struct statgrab_testfuncs *
 get_testable_functions(size_t *entries) {
 	if(entries)
-		*entries = lengthof(statgrab_tests);
+		*entries = lengthof(statgrab_test_funcs);
 
-	return statgrab_tests;
+	return statgrab_test_funcs;
 }
 
 static size_t
-find_func(const char *func_name, size_t namelen) {
+find_full_func(const char *func_name, size_t namelen) {
 	size_t idx;
 
-	for( idx = 0; idx < lengthof(statgrab_tests); ++idx ) {
-		if( 0 == strncmp( func_name, statgrab_tests[idx].fn_name, namelen ) ) /* XXX memcmp? */
+	for( idx = 0; idx < lengthof(statgrab_test_funcs); ++idx ) {
+		if( 0 == strncmp( func_name, statgrab_test_funcs[idx].full_name, namelen ) ) /* XXX memcmp? */
+			break;
+	}
+
+	return idx;
+}
+
+static size_t
+find_diff_func(const char *func_name, size_t namelen) {
+	size_t idx;
+
+	for( idx = 0; idx < lengthof(statgrab_test_funcs); ++idx ) {
+		if( NULL == statgrab_test_funcs[idx].diff_name )
+			continue;
+		if( 0 == strncmp( func_name, statgrab_test_funcs[idx].diff_name, namelen ) ) /* XXX memcmp? */
 			break;
 	}
 
@@ -62,78 +85,115 @@ find_func(const char *func_name, size_t namelen) {
 }
 
 size_t
-funcnames_to_indices(const char *name_list, size_t **indices) {
+funcnames_to_indices(const char *name_list, size_t **indices, int full) {
 	size_t i = 0;
 	const char *name_start;
 
 	if( ( indices == NULL ) || ( *indices != NULL ) )
 		return 0;
-	*indices = calloc( lengthof(statgrab_tests), sizeof(indices[0]) );
+	*indices = calloc( lengthof(statgrab_test_funcs), sizeof(indices[0]) );
 	if( *indices == NULL )
 		return 0;
 
 	for( name_start = name_list; *name_list; ++name_list ) {
 		if( ',' == *name_list ) {
-			size_t idx = find_func( name_start, name_list - name_start );
-			if( idx >= lengthof(statgrab_tests) ) {
+			size_t idx = full
+			             ? find_full_func( name_start, name_list - name_start )
+			             : find_diff_func( name_start, name_list - name_start );
+			if( idx >= lengthof(statgrab_test_funcs) ) {
 				fprintf( stderr, "invalid function name for testing: %s\n", name_start );
 				exit(255);
 			}
 			(*indices)[i++] = idx;
 			name_start = name_list + 1;
-			DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_tests[idx].fn_name );
+			DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_test_funcs[idx].fn_name );
 		}
 	}
 
 	if( name_start < name_list ) {
-		size_t idx = find_func( name_start, name_list - name_start );
-		if( idx >= lengthof(statgrab_tests) ) {
+		size_t idx = full
+		             ? find_full_func( name_start, name_list - name_start )
+		             : find_diff_func( name_start, name_list - name_start );
+		if( idx >= lengthof(statgrab_test_funcs) ) {
 			fprintf( stderr, "invalid function name for testing: %s\n", name_start );
 			exit(255);
 		}
 		(*indices)[i++] = idx;
 		name_start = name_list + 1;
-		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_tests[idx].fn_name );
+		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", statgrab_test_funcs[idx].fn_name );
 	}
 
 	return i;
 }
 
 void
+print_testable_functions(int full)
+{
+	size_t i;
+
+	for( i = 0; i < lengthof(statgrab_test_funcs); ++i ) {
+		if( !full && NULL == statgrab_test_funcs[i].diff_name )
+			continue;
+		printf( "%s\n", full ? statgrab_test_funcs[i].full_name : statgrab_test_funcs[i].diff_name );
+	}
+}
+
+size_t
+report_testable_functions(int full)
+{
+	size_t i, ok = 0;
+	for( i = 0; i < lengthof(statgrab_test_funcs); ++i ) {
+		if(0 != statgrab_test_funcs[i].needed)
+			printf( "%s (%s) - needed: %d, succeeded: %d, done: %d\n",
+				statgrab_test_funcs[i].stat_name,
+				full ? statgrab_test_funcs[i].full_name : statgrab_test_funcs[i].diff_name,
+				statgrab_test_funcs[i].needed,
+				statgrab_test_funcs[i].succeeded,
+				statgrab_test_funcs[i].done );
+		if( statgrab_test_funcs[i].needed == statgrab_test_funcs[i].done )
+			++ok;
+	}
+
+	return ok;
+}
+
+void
 mark_func(size_t func_index) {
-	if( func_index >= lengthof(statgrab_tests) ) {
+	if( func_index >= lengthof(statgrab_test_funcs) ) {
 		fprintf( stderr, "mark_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
-	++statgrab_tests[func_index].needed;
+	++statgrab_test_funcs[func_index].needed;
 }
 
 int
-run_func(size_t func_index) {
+run_func(size_t func_index, int full) {
 	size_t entries;
 	void *stats;
 
-	if( func_index >= lengthof(statgrab_tests) ) {
+	if( func_index >= lengthof(statgrab_test_funcs) ) {
 		fprintf( stderr, "run_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
-	INFO_LOG_FMT( "testlib", "Calling %s...", statgrab_tests[func_index].fn_name );
-	stats = statgrab_tests[func_index].fn(&entries);
-	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", statgrab_tests[func_index].fn_name, stats, entries );
+	INFO_LOG_FMT( "testlib", "Calling %s...", statgrab_test_funcs[func_index].fn_name );
+	stats = full
+	      ? statgrab_test_funcs[func_index].full_fn(&entries)
+	      : statgrab_test_funcs[func_index].diff_fn(&entries);
+	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", statgrab_test_funcs[func_index].fn_name, stats, entries );
 
 	return stats != 0;
 }
 
 void
 done_func(size_t func_index, int succeeded) {
-	if( func_index >= lengthof(statgrab_tests) ) {
+	if( func_index >= lengthof(statgrab_test_funcs) ) {
 		fprintf( stderr, "done_func: index out of range: %lu\n", (unsigned long int)(func_index) );
 		exit(1);
 	}
 
-	++statgrab_tests[func_index].done;
+	++statgrab_test_funcs[func_index].done;
 	if(succeeded)
-		++statgrab_tests[func_index].succeeded;
+		++statgrab_test_funcs[func_index].succeeded;
 }

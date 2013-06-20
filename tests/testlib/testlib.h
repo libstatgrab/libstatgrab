@@ -28,21 +28,27 @@
 void log_init(int argc, char **argv);
 
 /* routines.c */
-typedef void * (*statgrab_multi_fn)(size_t *entries);
+typedef void * (*statgrab_stat_fn)(size_t *entries);
 
 struct statgrab_testfuncs
 {
-	char *fn_name;
-	statgrab_multi_fn fn;
+	char const *stat_name;
+	char const * full_name;
+	statgrab_stat_fn full_fn;
+	char const * diff_name;
+	statgrab_stat_fn diff_fn;
 	unsigned needed;
 	unsigned succeeded;
 	unsigned done;
 };
 
 struct statgrab_testfuncs *get_testable_functions(size_t *entries);
-size_t funcnames_to_indices(const char *name_list, size_t **indices);
+size_t funcnames_to_indices(const char *name_list, size_t **indices, int full);
+void print_testable_functions(int full);
+size_t report_testable_functions(int full);
+
 void mark_func(size_t func_index);
-int run_func(size_t func_index);
+int run_func(size_t func_index, int full);
 void done_func(size_t func_index, int succeeded);
 
 /* err.c */

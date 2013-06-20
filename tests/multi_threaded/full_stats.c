@@ -80,7 +80,7 @@ threadfunc(void *parm)
 		prove_libcall("pthread_mutex_unlock", rc);
 	}
 
-	success = run_func( func_idx );
+	success = run_func( func_idx, 1 );
 
 	if( !opt_def[OPT_SEQ].optarg.b ) {
 		rc = pthread_mutex_lock(&mutex);
@@ -125,20 +125,14 @@ main(int argc, char **argv) {
 		return 0;
 	}
 	else if( opt_def[OPT_LIST].optarg.b ) {
-		size_t entries = 0, i;
-		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&entries);
-
-		for( i = 0; i < entries; ++i ) {
-			printf( "%s\n", sg_testfuncs[i].fn_name );
-		}
-
+		print_testable_functions(1);
 		return 0;
 	}
 	else if( opt_def[OPT_RUN].optarg.str ) {
 		size_t numthreads, i, nfuncs, ok;
 		size_t *test_routines = NULL;
 		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&nfuncs);
-		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines);
+		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines, 1);
 		pthread_t *threadid = NULL;
 		int rc, errors = 0;
 
@@ -204,18 +198,7 @@ main(int argc, char **argv) {
 			pthread_cond_timedwait(&cond, &mutex, &ts);
 			prove_libcall("pthread_cond_timedwait", rc);
 
-			ok = 0;
-			for( i = 0; i < nfuncs; ++i ) {
-				if(0 != sg_testfuncs[i].needed)
-					printf( "%s - needed: %d, succeeded: %d, done: %d\n",
-						sg_testfuncs[i].fn_name,
-						sg_testfuncs[i].needed,
-						sg_testfuncs[i].succeeded,
-						sg_testfuncs[i].done );
-				if( sg_testfuncs[i].needed == sg_testfuncs[i].done ) {
-					++ok;
-				}
-			}
+			ok = report_testable_functions(1);
 
 			rc = pthread_mutex_unlock(&mutex);
 			prove_libcall("pthread_mutex_unlock", rc);

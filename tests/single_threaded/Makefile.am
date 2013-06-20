@@ -6,7 +6,7 @@ noinst_PROGRAMS = $(test_bin) $(test_script)
 
 EXTRA_DIST = run_tests.synopsis.in libstatgrab-test.properties
 
-test_bin = single_threaded_test
+test_bin = full_stats diff_stats
 
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)\
 	      -I$(top_srcdir)/src -I$(top_builddir)/src\
@@ -17,22 +17,40 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)\
 LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la $(top_builddir)/tests/testlib/libtestlib.a @LINKFLAGS@
 
 if TEST_SCRIPTS
-script_edit=	$(PERL5) $(srcdir)/../testlib/mk_run_tests.pl \
+full_stats_edit=	$(PERL5) $(srcdir)/../testlib/mk_run_tests.pl \
 		-d srcdir="$(srcdir)" \
-		-d test-bin="$(test_bin)" \
-		-d test-name=single-threaded \
+		-d test-bin="full_stats" \
+		-d test-name=full-stats \
 		-d test-dir="$(subdir)" \
 		-f synopsis=$(srcdir)/run_tests.synopsis.in
 
-test_script = run_tests.t
+diff_stats_edit=	$(PERL5) $(srcdir)/../testlib/mk_run_tests.pl \
+		-d srcdir="$(srcdir)" \
+		-d test-bin="diff_stats" \
+		-d test-name=diff-stats \
+		-d test-dir="$(subdir)" \
+		-f synopsis=$(srcdir)/run_tests.synopsis.in
 
-run_tests_t_SOURCES = $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
+test_script = full_stats.t diff_stats.t
 
-run_tests.t: Makefile $(srcdir)/../testlib/mk_run_tests.pl $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
+full_stats_t_SOURCES = $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
+
+full_stats.t: Makefile $(srcdir)/../testlib/mk_run_tests.pl $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
 	rm -f $@ $@.tmp
 	srcdir=''; \
 	  test -f ../testlib/$@.in || srcdir=$(srcdir)/; \
-	  $(script_edit) -i $${srcdir}../testlib/$@.in >$@.tmp
+	  $(full_stats_edit) -i $${srcdir}../testlib/run_tests.t.in >$@.tmp
+	chmod +rx $@.tmp
+	chmod a-w $@.tmp
+	mv $@.tmp $@
+
+diff_stats_t_SOURCES = $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
+
+diff_stats.t: Makefile $(srcdir)/../testlib/mk_run_tests.pl $(srcdir)/../testlib/run_tests.t.in run_tests.synopsis.in
+	rm -f $@ $@.tmp
+	srcdir=''; \
+	  test -f ../testlib/$@.in || srcdir=$(srcdir)/; \
+	  $(diff_stats_edit) -i $${srcdir}../testlib/run_tests.t.in >$@.tmp
 	chmod +rx $@.tmp
 	chmod a-w $@.tmp
 	mv $@.tmp $@
