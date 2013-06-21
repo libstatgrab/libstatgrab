@@ -181,6 +181,26 @@ run_func(size_t func_index, int full) {
 	stats = full
 	      ? statgrab_test_funcs[func_index].full_fn(&entries)
 	      : statgrab_test_funcs[func_index].diff_fn(&entries);
+#if !(defined(WITH_LIBLOG4CPLUS) || defined(WITH_FULL_CONSOLE_LOGGER))
+	if(!stats) {
+		sg_error_details err_det;
+		char *errmsg = NULL;
+		sg_error errc;
+
+		if( SG_ERROR_NONE != ( errc = sg_get_error_details(&err_det) ) ) {
+			fprintf(stderr, "panic: can't get error details (%d, %s)\n", errc, sg_str_error(errc));
+		}
+		else if( NULL == sg_strperror(&errmsg, &err_det) ) {
+			errc = sg_get_error();
+			fprintf(stderr, "panic: can't prepare error message (%d, %s)\n", errc, sg_str_error(errc));
+		}
+		else {
+			fprintf( stderr, "%s: %s\n", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name, errmsg );
+		}
+
+		free( errmsg );
+	}
+#endif
 	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name, stats, entries );
 
 	return stats != 0;
