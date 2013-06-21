@@ -4,3 +4,8 @@
 
 3) configure.ac - xpg\d vs. their funcs
    * ac_check_funcs ...
+
+4) log init for statgrab, saidar & tests
+
+5) fix -lpthread linking on Solaris
+   look at new ax_pthread.m4, maybe it fixes it?
