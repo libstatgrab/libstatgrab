@@ -794,6 +794,7 @@ int main(int argc, char **argv){
 
 	int delay=2;
 
+	sg_log_init("saidar", "SAIDAR_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	sg_init(1);
 	if(sg_drop_privileges() != 0){
 		fprintf(stderr, "Failed to drop setuid/setgid privileges\n");
@@ -825,7 +826,6 @@ int main(int argc, char **argv){
 			default:
 				usage(argv[0]);
 				return 1;
-				break;
 		}
 	}
 

@@ -1610,6 +1610,7 @@ AS_IF(	[test "x${ENABLE_THREADS}" != "xno"],
 
 AM_CONDITIONAL(WITH_LIBLOG4CPLUS, false)
 AM_CONDITIONAL(WITH_FULL_CONSOLE_LOGGER, false)
+WITH_LIBLOG4CPLUS=0
 
 AC_ARG_ENABLE(logging,
 	[  --enable-logging        enable logging in library (force console printf,
@@ -1619,7 +1620,6 @@ AC_ARG_ENABLE(logging,
 AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
     AX_CHECK_WITH_LIB([log4cplus],[check])
 
-    WITH_LIBLOG4CPLUS=0
     AX_CHECK_LIB_FLAGS([log4cplus], [stdc++,stdc++ unwind], [log4cplus_basic_configure();], [
     AC_INCLUDES_DEFAULT
 #include <log4cplus/clogger.h>
@@ -1664,6 +1664,8 @@ AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
      AC_DEFINE([WITH_FULL_CONSOLE_LOGGER], 1, [Define this when tracing shall be done using fprintf(stderr, ...)])
      WITH_FULL_CONSOLE_LOGGER="1"])
 ])
+
+AC_SUBST([WITH_LIBLOG4CPLUS])
 
 dnl Libtool setup.
 dnl must be latest to catch rpath compiled in by changes made during checks before

@@ -672,3 +672,69 @@ endmntent(FILE *f) {
 }
 #  endif
 #endif
+
+#ifdef WITH_LIBLOG4CPLUS
+# ifndef HAVE_STRLCAT
+#  define strlcat sg_strlcat
+# endif
+# ifndef HAVE_STRLCPY
+#  define strlcpy sg_strlcpy
+# endif
+
+static int
+check_path(char *path, size_t path_size, const char *properties_pfx)
+{
+	if(properties_pfx) {
+		strlcat(path, "/", path_size);
+		strlcat(path, properties_pfx, path_size);
+		strlcat(path, ".properties", path_size);
+	}
+	return !access( path, R_OK );
+}
+
+void
+sg_log_init(const char *properties_pfx, const char *env_name, const char *argv0)
+{
+	if(env_name) {
+		char *p;
+
+		if((p = getenv(env_name)) && check_path(p, 0, NULL)) {
+			if( !log4cplus_file_configure(p) )
+				return;
+		}
+		if(p) {
+			char env_dir[PATH_MAX];
+			strlcpy(env_dir, p, PATH_MAX);
+			strlcat(env_dir, "DIR", PATH_MAX);
+			if((p = getenv(env_dir))) {
+				strlcpy(env_dir, p, PATH_MAX);
+				if(check_path(env_dir, PATH_MAX, properties_pfx) &&
+				   !log4cplus_file_configure(env_dir))
+					return;
+			}
+		}
+	}
+
+	if(argv0) {
+		char proppath[PATH_MAX];
+		char *p = proppath + sg_strlcpy( proppath, argv0, PATH_MAX );
+		strncpy( p, ".properties", PATH_MAX - ( p - proppath ) );
+		if(check_path(proppath, 0, NULL) && !log4cplus_file_configure(proppath))
+			return;
+
+		p = dirname(proppath);
+		if(p != proppath)
+			strlcpy(proppath, p, PATH_MAX);
+		if(check_path(proppath, PATH_MAX, properties_pfx) &&
+		   !log4cplus_file_configure(proppath))
+			return;
+
+		getcwd( proppath, sizeof(proppath) );
+		if(check_path(proppath, PATH_MAX, properties_pfx) &&
+		   !log4cplus_file_configure(proppath))
+			return;
+	}
+
+	log4cplus_basic_configure();
+}
+#endif

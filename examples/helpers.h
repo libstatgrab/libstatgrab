@@ -32,6 +32,5 @@ int sg_warn(const char *prefix);
 void sg_die(const char *prefix, int exit_code);
 void die(int error, const char *fmt, ...);
 int inp_wait(int delay);
-void hlp_init(int argc, char **argv);
 
 #endif /* __SG_EXAMPLES_HELPERS_H__ */

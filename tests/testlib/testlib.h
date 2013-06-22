@@ -24,9 +24,6 @@
 #ifndef __SG_TESTLIB_H_INCLUDED__
 #define __SG_TESTLIB_H_INCLUDED__
 
-/* log.c */
-void log_init(int argc, char **argv);
-
 /* routines.c */
 typedef void * (*statgrab_stat_fn)(size_t *entries);
 

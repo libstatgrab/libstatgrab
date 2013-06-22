@@ -1033,6 +1033,7 @@ main(int argc, char **argv) {
 
 	select_interesting(argc - optind, &argv[optind]);
 
+	sg_log_init("statgrab", "STATGRAB_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	/* We don't care if sg_init fails, because we can just display
  	   the statistics that can be read as non-root. */
 	sg_init(1);

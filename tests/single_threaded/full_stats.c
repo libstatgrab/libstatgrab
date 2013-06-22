@@ -50,7 +50,7 @@ help(char *prgname) {
 
 int
 main(int argc, char **argv) {
-	log_init( argc, argv );
+	sg_log_init("libstatgrab-test", "SGTEST_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	sg_init(1);
 
 	if( 0 != get_params( opt_def, argc, argv ) ) {

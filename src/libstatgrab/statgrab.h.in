@@ -462,6 +462,13 @@ __sg_public sg_process_count *sg_get_process_count_r(sg_process_stats const * wh
 #define sg_get_process_count() sg_get_process_count_of(sg_entire_process_count)
 #define sg_free_process_count(data) sg_free_stats_buf(data);
 
+#if @WITH_LIBLOG4CPLUS@
+void sg_log_init(const char *properties_pfx, const char *env_name, const char *argv0);
+#else
+#define sg_log_init(properties_pfx, env_name, argv0) \
+	do { (void)(properties_pfx); (void)(env_name); (void)(argv0); } while(0);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

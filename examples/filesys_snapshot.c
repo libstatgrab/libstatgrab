@@ -37,7 +37,7 @@ int main(int argc, char **argv){
 	size_t fs_size;
 
 	/* Initialise helper - e.g. logging, if any */
-	hlp_init(argc, argv);
+	sg_log_init("libstatgrab-examples", "SGEXAMPLES_LOG_PROPERTIES", argc ? argv[0] : NULL);
 
 	/* Initialise statgrab */
 	sg_init(1);
