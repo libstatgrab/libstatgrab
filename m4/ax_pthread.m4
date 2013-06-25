@@ -187,7 +187,10 @@ case "${host_cpu}-${host_os}" in
         ;;
 esac
 
-ax_pthread_flags="none $ax_pthread_flags"
+case "${host_cpu}-${host_os}" in
+        *solaris*) ;;
+        *) ax_pthread_flags="none $ax_pthread_flags" ;;
+esac
 
 if test x"$ax_pthread_ok" = xno; then
 for flag in $ax_pthread_flags; do
