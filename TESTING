@@ -23,21 +23,25 @@ To test libstatgrab perform the following steps:
 
 Extract and build:
 
+tar -zxvf libstatgrab-0.90-rc1.tar.gz
+cd libstatgrab-0.90-rc1
 ./configure
 make
 make test
 
-If all tests pass run statgrab and saidar (saidar is only available if
-ncurses was available):
+If all the tests pass without problems the next step is to run
+statgrab and saidar (saidar is only built if ncurses was available):
 
 ./src/statgrab/statgrab
 ./src/saidar/saidar
 
 A brief inspection of the output is useful. Saidar is better for this
-because everything is usually visible on one screen. Just check the
-numbers look right.
+because everything is usually visible on one screen, but statgrab
+gives mored detailed information. Just check the numbers look right,
+and everything you'd expect to see listed is present.
 
-If this all went well, it would be useful to do any of the following:
+If this all went well, it would be useful to do any of the following
+that you have time for:
 
 - test with another compiler. clang? gcc? commercial alternative?
 - test a 32-bit build on a 64-bit machine, using -m32 or equivalent
@@ -48,7 +52,7 @@ Finally, report back to us all the successful test cases.
 If you find problems we may need to dig further. A good starting point
 is to send us the output from the tests that fail, along with the
 config.log file, and logging output (compile with --enable-logging if
-log4cplus wasn't available and it'll log to stderr). And of course,
-let us know the operating system version and hardware type.
+log4cplus wasn't available and log output will be sent to stderr). And
+of course, let us know the operating system version and hardware type.
 
 Thank you for testing.
