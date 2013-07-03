@@ -518,7 +518,7 @@ use_builtin_fs:
 		}
 		for( i = 0; i < num_valid_file_systems; ++i ) {
 			if( SG_ERROR_NONE != ( errc = sg_update_string( &valid_file_systems[i], int_valid_fs[i] ) ) ) {
-				WARN_LOG_FMT("disk", "couldn't update index %d for list of valid file systems", i);
+				WARN_LOG_FMT("disk", "couldn't update index %zu for list of valid file systems", i);
 				RETURN_FROM_PREVIOUS_ERROR( "disk", errc );
 			}
 		}
