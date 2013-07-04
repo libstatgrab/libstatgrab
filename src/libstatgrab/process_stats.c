@@ -252,7 +252,10 @@ adjust_procname_cmndline(char *proctitle, size_t len) {
 #if defined(DARWIN)
 	pt = p = proctitle + sizeof(int);;
 #else
-	memcpy(&p, proctitle, sizeof(p)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
+	if(len > sizeof(p))
+		memcpy(&p, proctitle, sizeof(p)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
+	else
+		p = proctitle - len - 1;
 	if( len && ((size_t)(p - proctitle) <= len) ) {
 		pt = p;
 		len -= p - proctitle;
