@@ -470,7 +470,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + 1, proc_stats_ptr, sg_process_stats);
 
-		fscanf(f, FMT_PID_T "%4096s %c " FMT_PID_T " " FMT_PID_T " %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n",
+		fscanf(f, FMT_PID_T "%4095s %c " FMT_PID_T " " FMT_PID_T " %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d\n",
 			   &proc_stats_ptr[proc_items].pid, read_buf, &s, &proc_stats_ptr[proc_items].parent,
 			   &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
 			   &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
