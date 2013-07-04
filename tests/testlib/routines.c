@@ -84,6 +84,8 @@ find_diff_func(const char *func_name, size_t namelen) {
 	return idx;
 }
 
+#define NAME_OF(a,full) full ? (a).full_name : (a).diff_name
+
 size_t
 funcnames_to_indices(const char *name_list, size_t **indices, int full) {
 	size_t i = 0;
@@ -104,9 +106,9 @@ funcnames_to_indices(const char *name_list, size_t **indices, int full) {
 				fprintf( stderr, "invalid function name for testing: %s\n", name_start );
 				exit(255);
 			}
+			DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", NAME_OF(statgrab_test_funcs[i],full) );
 			(*indices)[i++] = idx;
 			name_start = name_list + 1;
-			DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", full ? statgrab_test_funcs[i].full_name : statgrab_test_funcs[i].diff_name );
 		}
 	}
 
@@ -118,9 +120,9 @@ funcnames_to_indices(const char *name_list, size_t **indices, int full) {
 			fprintf( stderr, "invalid function name for testing: %s\n", name_start );
 			exit(255);
 		}
+		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", NAME_OF(statgrab_test_funcs[i],full) );
 		(*indices)[i++] = idx;
 		name_start = name_list + 1;
-		DEBUG_LOG_FMT( "testlib", "funcnames_to_indices: found function %s", full ? statgrab_test_funcs[i].full_name : statgrab_test_funcs[i].diff_name );
 	}
 
 	return i;
@@ -177,7 +179,7 @@ run_func(size_t func_index, int full) {
 		exit(1);
 	}
 
-	INFO_LOG_FMT( "testlib", "Calling %s...", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name );
+	INFO_LOG_FMT( "testlib", "Calling %s...", NAME_OF(statgrab_test_funcs[func_index],full) );
 	stats = full
 	      ? statgrab_test_funcs[func_index].full_fn(&entries)
 	      : statgrab_test_funcs[func_index].diff_fn(&entries);
@@ -195,13 +197,13 @@ run_func(size_t func_index, int full) {
 			fprintf(stderr, "panic: can't prepare error message (%d, %s)\n", errc, sg_str_error(errc));
 		}
 		else {
-			fprintf( stderr, "%s: %s\n", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name, errmsg );
+			fprintf( stderr, "%s: %s\n", NAME_OF(statgrab_test_funcs[func_index],full), errmsg );
 		}
 
 		free( errmsg );
 	}
 #endif
-	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", full ? statgrab_test_funcs[func_index].full_name  : statgrab_test_funcs[func_index].diff_name, stats, entries );
+	INFO_LOG_FMT( "testlib", "%s - stats = %p, entries = %lu", NAME_OF(statgrab_test_funcs[func_index],full), stats, entries );
 
 	return stats != 0;
 }
