@@ -30,6 +30,8 @@ else
 	@echo Not built
 endif
 
+check: test
+
 EXTRA_DIST = libstatgrab.pc.in PLATFORMS COPYING COPYING.LGPL
 
 pkgconfigdir = $(libdir)/pkgconfig
