@@ -1491,23 +1491,32 @@ AS_IF(	[test "x$ENABLE_TESTS" != "xno"],
 	]
 )
 
-# Check if the user wants to turn off setgid binaries
+# Check if the user wants to turn on setgid binaries
+# If they specify nothing disable them
 AC_ARG_ENABLE(setgid-binaries,
-	[  --disable-setgid-binaries     disable binaries being setgid],
+	[  --enable-setgid-binaries      enable binaries being setgid when needed],
 	[
 		if test "x$enableval" = "xno" ; then
 			AM_CONDITIONAL(SETGIDBINS, false)
 		fi
+	],
+	[
+		AM_CONDITIONAL(SETGIDBINS, false)
 	]
+
 )
 
-# Check if the user wants to turn off setuid binaries
+# Check if the user wants to turn on setuid binaries
+# If they specify nothing disable them
 AC_ARG_ENABLE(setuid-binaries,
-	[  --disable-setuid-binaries     disable binaries being setuid],
+	[  --enable-setuid-binaries      enable binaries being setuid when needed],
 	[
 		if test "x$enableval" = "xno" ; then
 			AM_CONDITIONAL(SETUIDBINS, false)
 		fi
+	],
+	[
+		AM_CONDITIONAL(SETUIDBINS, false)
 	]
 )
 
