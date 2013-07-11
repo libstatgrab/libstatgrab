@@ -9,7 +9,7 @@ endif
 EXTRA_DIST = $(man_MANS)
 
 if BUILD_MANPAGES
-CLEANFILES= $(man_MANS)
+MAINTAINERCLEANFILES= $(man_MANS)
 
 .xml.1:
 	$(DOCBOOK2MAN) -N --symlinks --string-param \

@@ -82,7 +82,7 @@ sg_tools_MANS =	sg_update_string.3
 EXTRA_DIST = $(man_MANS)
 
 if BUILD_MANPAGES
-CLEANFILES= $(man_MANS)
+MAINTAINERCLEANFILES= $(man_MANS)
 
 .xml.3:
 	$(DOCBOOK2MAN) -N --symlinks --string-param \
