@@ -3,7 +3,9 @@ Makefile
 .deps
 *.swp
 autom4te.cache/
-config.*
+config.h*
+config.log
+config.status
 m4/[b-z]*.m4
 aclocal.m4
 ar-lib
