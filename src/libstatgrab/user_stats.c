@@ -154,6 +154,11 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 		NetApiBufferFree(buf);
 #elif defined(CAN_USE_UTMPX) || defined(CAN_USE_UTMP)
 
+#define SG_LUPDATE_IF(tgt,obj,memb) \
+	(((void *)(&(obj->memb))) == ((void *)(&(obj->memb[0])))) \
+	? sg_lupdate_string(tgt, obj->memb, sizeof(obj->memb)+1)\
+	: sg_update_string(tgt, obj->memb)
+
 #define UTMP_MUTEX_NAME "utmp"
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP
@@ -179,15 +184,15 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 
 		VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
 
-		if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, utx->ut_user ) ) ||
+		if( ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].login_name, utx, ut_user ) ) ||
 #  if defined(HAVE_UTMPX_HOST)
 #   if defined(HAVE_UTMPX_SYSLEN)
 		    ( SG_ERROR_NONE != sg_lupdate_string( &user_ptr[num_users].hostname, utx->ut_host, utx->ut_syslen + 1 ) ) ||
 #   else
-		    ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, utx->ut_host ) ) ||
+		    ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].hostname, utx, ut_host ) ) ||
 #   endif
 #  endif
-		    ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, utx->ut_line ) ) ||
+		    ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].device, utx, ut_line ) ) ||
 		    ( SG_ERROR_NONE != sg_update_mem( (void *)(&user_ptr[num_users].record_id), utx->ut_id, sizeof(utx->ut_id) ) ) ) {
 			    VECTOR_UPDATE_ERROR_CLEANUP
 			    RETURN_FROM_PREVIOUS_ERROR( "user", sg_get_error() );
@@ -230,14 +235,14 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 
 	    VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
 
-	    if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, ut->ut_line ) )
+	    if( ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].device, ut, ut_line ) )
 #  if defined(HAVE_UTMP_USER)
-	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->ut_user ) )
+	     || ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].login_name, ut, ut_user ) )
 #  elif defined(HAVE_UTMP_NAME)
-	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, ut->ut_name ) )
+	     || ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].login_name, ut, ut_name ) )
 #  endif
 #  if defined(HAVE_UTMP_HOST)
-	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, ut->ut_host ) )
+	     || ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].hostname, ut, ut_host ) )
 #  endif
 #  if defined(HAVE_UTMP_ID)
 	     || ( SG_ERROR_NONE != sg_update_mem( (void **)(&user_ptr[num_users].record_id), ut->ut_id, sizeof(ut->ut_id) ) )
@@ -279,6 +284,15 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 	    RETURN_WITH_SET_ERROR_WITH_ERRNO("user", SG_ERROR_OPEN, _PATH_UTMP);
     }
 
+#ifdef SG_LUPDATE_IF
+#undef SG_LUPDATE_IF
+#endif
+
+#define SG_LUPDATE_IF(tgt,obj,memb) \
+	(((void *)(&(obj.memb))) == ((void *)(&(obj.memb[0])))) \
+	? sg_lupdate_string(tgt, obj.memb, sizeof(obj.memb)+1)\
+	: sg_update_string(tgt, obj.memb)
+
 #undef VECTOR_UPDATE_ERROR_CLEANUP
 #define VECTOR_UPDATE_ERROR_CLEANUP fclose(f);
 
@@ -296,14 +310,14 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 
 	    VECTOR_UPDATE(user_stats_vector_ptr, num_users + 1, user_ptr, sg_user_stats);
 
-	    if( ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].device, entry.ut_line ) )
+	    if( ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].device, entry, ut_line ) )
 #if defined(HAVE_UTMP_USER)
-	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, entry.ut_user ) )
+	     || ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].login_name, entry, ut_user ) )
 #elif defined(HAVE_UTMP_NAME)
-	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].login_name, entry.ut_name ) )
+	     || ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].login_name, entry, ut_name ) )
 #endif
 #if defined(HAVE_UTMP_HOST)
-	     || ( SG_ERROR_NONE != sg_update_string( &user_ptr[num_users].hostname, entry.ut_host ) )
+	     || ( SG_ERROR_NONE != SG_LUPDATE_IF( &user_ptr[num_users].hostname, entry, ut_host ) )
 #endif
 #if defined(HAVE_UTMP_ID)
 	     || ( SG_ERROR_NONE != sg_update_mem( &user_ptr[num_users].record_id, entry.ut_id, sizeof(entry.ut_id) ) )
