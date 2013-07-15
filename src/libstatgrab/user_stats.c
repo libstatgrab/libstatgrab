@@ -156,7 +156,7 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 
 #define SG_LUPDATE_IF(tgt,obj,memb) \
 	(((void *)(&(obj->memb))) == ((void *)(&(obj->memb[0])))) \
-	? sg_lupdate_string(tgt, obj->memb, sizeof(obj->memb)+1)\
+	? sg_lupdate_string(tgt, obj->memb, sizeof(obj->memb))\
 	: sg_update_string(tgt, obj->memb)
 
 #define UTMP_MUTEX_NAME "utmp"
@@ -290,7 +290,7 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 
 #define SG_LUPDATE_IF(tgt,obj,memb) \
 	(((void *)(&(obj.memb))) == ((void *)(&(obj.memb[0])))) \
-	? sg_lupdate_string(tgt, obj.memb, sizeof(obj.memb)+1)\
+	? sg_lupdate_string(tgt, obj.memb, sizeof(obj.memb))\
 	: sg_update_string(tgt, obj.memb)
 
 #undef VECTOR_UPDATE_ERROR_CLEANUP

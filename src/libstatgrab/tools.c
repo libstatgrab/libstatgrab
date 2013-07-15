@@ -492,7 +492,7 @@ sg_lupdate_string(char **dest, const char *src, size_t maxlen) {
 		return SG_ERROR_NONE;
 	}
 
-	newlen = sg_strnlen(src, maxlen) + 1;
+	newlen = sg_strnlen(src, maxlen) + 1; /* room for trailing 0 */
 	new = sg_realloc(*dest, newlen);
 	if (new == NULL) {
 		RETURN_FROM_PREVIOUS_ERROR( "tools", sg_get_error() );
