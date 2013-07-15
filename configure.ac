@@ -22,7 +22,8 @@ AM_MAINTAINER_MODE([disable])
 AC_REVISION($Revision$)
 
 dnl
-dnl Get cannonical host
+dnl Get cannonical host - the only one of build/host/target we care about
+dnl build is where we build, host the the machine we build for
 dnl
 AC_CANONICAL_HOST
 dnl and store it for generic error message instead of lots of ifdef's
