@@ -440,6 +440,25 @@ sg_strlcat(char *dst, const char *src, size_t siz){
 }
 #endif
 
+
+#if !(defined(HAVE_STRNLEN) || (defined(HAVE_XOPEN_SOURCE) && (HAVE_XOPEN_SOURCE>=700)))
+size_t
+sg_strnlen(char const *s, size_t maxlen)
+{
+	size_t n = 0;
+	if(!maxlen)
+		return maxlen;
+
+	while(*s != '\0') {
+		if(maxlen == n)
+			break;
+		++s;
+		++n;
+	}
+	return n;
+}
+#endif
+
 sg_error
 sg_update_string(char **dest, const char *src) {
 	char *new;
@@ -464,7 +483,7 @@ sg_update_string(char **dest, const char *src) {
 sg_error
 sg_lupdate_string(char **dest, const char *src, size_t maxlen) {
 	char *new;
-	size_t srclen, newlen;
+	size_t newlen;
 
 	if (src == NULL) {
 		/* We're being told to set it to NULL. */
@@ -473,8 +492,7 @@ sg_lupdate_string(char **dest, const char *src, size_t maxlen) {
 		return SG_ERROR_NONE;
 	}
 
-	srclen = strlen(src) + 1;
-	newlen = MIN(srclen,maxlen);
+	newlen = sg_strnlen(src, maxlen) + 1;
 	new = sg_realloc(*dest, newlen);
 	if (new == NULL) {
 		RETURN_FROM_PREVIOUS_ERROR( "tools", sg_get_error() );

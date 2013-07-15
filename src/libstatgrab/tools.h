@@ -504,6 +504,12 @@ __sg_export size_t sg_strlcpy(char *dst, const char *src, size_t siz);
 #define sg_strlcpy strlcpy
 #endif
 
+#if defined(HAVE_STRNLEN) || (defined(HAVE_XOPEN_SOURCE) && (HAVE_XOPEN_SOURCE>=700))
+#define sg_strnlen strnlen
+#else
+__sg_export size_t sg_strnlen(char const *s, size_t maxlen);
+#endif
+
 #include "error.h"
 #include "vector.h"
 #include "globals.h"
