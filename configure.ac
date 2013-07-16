@@ -573,6 +573,38 @@ AC_INCLUDES_DEFAULT
 		BIN_PERM="4755"
 		AC_DEFINE(HAVE_PROCFS, 1, [Define to signal that procfs is available])
 		AC_CHECK_HEADERS([linux/ethtool.h linux/sockios.h])
+		AS_IF([test "x$ac_cv_header_linux_ethtool_h" != "xyes"], [
+		    unset ac_cv_header_linux_ethtool_h
+		    ac_safe_cppflags="$CPPFLAGS"
+		    CPPFLAGS="-D__u8=uint8_t -D__u16=uint16_t -D__u32=uint32_t -D__u64=uint64_t $CPPFLAGS"
+		    AC_CHECK_HEADER([linux/ethtool.h])
+		    CPPFLAGS="$ac_safe_cppflags"
+		    AS_IF([test "x$ac_cv_header_linux_ethtool_h" = "xyes"],
+		          [AC_DEFINE(LINUX_BROKEN_ETHTOOL_TYPES, 1, [define when linux/ethtool.h has broken types])])
+		])
+		AS_IF([test "x$ac_cv_header_linux_ethtool_h" = "xyes"], [
+		    AC_CHECK_MEMBER(struct ethtool_cmd.speed_hi,
+				    [AC_DEFINE(HAVE_ETHTOOL_CMD_SPEED_HI, 1, [struct ethtool_cmd.speed_hi available])],
+				    [],
+				    [AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#ifdef LINUX_BROKEN_ETHTOOL_TYPES
+# define __u8 uint8_t
+# define __u16 uint16_t
+# define __u32 uint32_t
+# define __u64 uint64_t
+# include <linux/ethtool.h>
+# undef __u8
+# undef __u16
+# undef __u32
+# undef __u64
+#endif
+#ifdef HAVE_LINUX_ETHTOOL_H
+# include <linux/ethtool.h>
+#endif
+				    ]
+		    )])
+		])
 	],
 	[cygwin], [
 		AC_DEFINE(CYGWIN, , [Building on Cygwin])

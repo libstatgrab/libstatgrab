@@ -1281,7 +1281,9 @@ skip:
 
 		err = ioctl(sock, SIOCETHTOOL, &ifr);
 		if (err == 0) {
-#if 0
+#ifdef HAVE_ETHTOOL_CMD_SPEED_HI
+			network_iface_stat[ifaces].speed = ethtool_cmd_speed(&ethcmd);
+#else
 			switch(ethcmd.speed) {
 			case SPEED_10:
 				network_iface_stat[ifaces].speed = 10;
@@ -1298,8 +1300,6 @@ skip:
 				network_iface_stat[ifaces].speed = 0;
 				break;
 			}
-#else
-			network_iface_stat[ifaces].speed = ethtool_cmd_speed(&ethcmd);
 #endif
 			network_iface_stat[ifaces].factor = 1000U * 1000U;
 

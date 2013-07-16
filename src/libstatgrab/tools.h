@@ -364,6 +364,17 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 #ifdef HAVE_SYS_SOCKIO_H
 # include <sys/sockio.h>
 #endif
+#ifdef LINUX_BROKEN_ETHTOOL_TYPES
+# define __u8 uint8_t
+# define __u16 uint16_t
+# define __u32 uint32_t
+# define __u64 uint64_t
+# include <linux/ethtool.h>
+# undef __u8
+# undef __u16
+# undef __u32
+# undef __u64
+#endif
 #ifdef HAVE_LINUX_ETHTOOL_H
 # include <linux/ethtool.h>
 #endif
