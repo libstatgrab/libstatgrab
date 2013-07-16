@@ -216,6 +216,42 @@ struct sg_vector {
 #endif
 ])
 
+AC_CACHE_CHECK([for unspecified array size for last struct member], ac_cv_unspecified_size_last_struct_member, [
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+
+struct foobar {
+    char *nm;
+    unsigned nums[[]];
+};
+
+int main(void) {
+	struct foobar *fbs;
+	return 0;
+}])], [ac_cv_unspecified_size_last_struct_member="yes"],
+      [ac_cv_unspecified_size_last_struct_member="no"])
+])
+AS_IF([test "x$ac_cv_unspecified_size_last_struct_member" == "xyes"],
+      [AC_DEFINE([HAVE_OPEN_ARRAY_AT_STRUCT_END], 1, [define this when array at struct end might be open])])
+
+AC_CACHE_CHECK([for array length of 0], ac_cv_zero_array_size, [
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+
+struct foobar {
+    char *nm;
+    unsigned nums[[0]];
+};
+
+int main(void) {
+	struct foobar *fbs;
+	return 0;
+}])], [ac_cv_zero_array_size="yes"],
+      [ac_cv_zero_array_size="no"])
+])
+AS_IF([test "x$ac_cv_zero_array_size" == "xyes"],
+      [AC_DEFINE([HAVE_ZERO_SIZED_ARRAY], 1, [define this when array can have zero length])])
+
 AC_CHECK_TYPES([struct statvfs], , , [
 AC_INCLUDES_DEFAULT
 #include <sys/statvfs.h>

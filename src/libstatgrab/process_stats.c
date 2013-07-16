@@ -136,7 +136,13 @@ EASY_COMP_CLEANUP_FN(process,SG_PROC_IDX_COUNT)
 struct pids_in_proc_dir_t {
 	size_t nitems;
 	struct pids_in_proc_dir_t *next;
+#if defined(HAVE_OPEN_ARRAY_AT_STRUCT_END)
 	pid_t items[];
+#elif defined(HAVE_ZERO_SIZED_ARRAY)
+	pid_t items[0];
+#else
+	pid_t items[1];
+#endif
 };
 
 static struct pids_in_proc_dir_t *
