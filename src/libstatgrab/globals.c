@@ -289,8 +289,9 @@ sg_comp_init(int ignore_init_errors) {
 #endif
 
 		if( comp_info[i].init_comp->init_fn ) {
+			sg_error comp_errc;
 			TRACE_LOG_FMT("globals", "calling init_fn for comp %zu", i);
-			sg_error comp_errc = comp_info[i].init_comp->init_fn(i + GLOB_MASK);
+			comp_errc = comp_info[i].init_comp->init_fn(i + GLOB_MASK);
 			if( comp_errc != SG_ERROR_NONE ) {
 				if( ignore_init_errors && (NULL != comp_info[i].init_comp->status) ) {
 					char *buf = NULL;

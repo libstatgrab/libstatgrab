@@ -212,9 +212,9 @@ populate_cpu(void) {
 			  : sg_get_cpu_stats(NULL);
 
 	if (use_cpu_percent) {
-		sg_cpu_percent_source cps;
-		cps = use_diffs ? sg_last_diff_cpu_percent
-				: sg_entire_cpu_percent;
+		sg_cpu_percent_source cps = use_diffs
+					  ? sg_last_diff_cpu_percent
+					  : sg_entire_cpu_percent;
 		sg_cpu_percents *cpu_p = sg_get_cpu_percents_of(cps, NULL);
 
 		if (cpu_p != NULL) {
