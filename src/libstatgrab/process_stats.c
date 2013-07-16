@@ -1069,19 +1069,19 @@ again:
 			mib[0] = CTL_KERN;
 #  if defined(KERN_PROC_ARGS) && defined(KERN_PROC_ARGV)
 			mib[1] = KERN_PROC_ARGS;
-			mib[2] = ((int)proc_stats_ptr[i].pid);
+			mib[2] = ((int)proc_stats_ptr[proc_items].pid);
 			mib[3] = KERN_PROC_ARGV;
 			miblen = 4;
 			p = "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV";
 #  elif defined(KERN_PROC_ARGS) && !defined(KERN_PROC_ARGV)
 			mib[1] = KERN_PROC;
 			mib[2] = KERN_PROC_ARGS;
-			mib[3] = ((int)proc_stats_ptr[i].pid);
+			mib[3] = ((int)proc_stats_ptr[proc_items].pid);
 			miblen = 4;
 			p = "CTL_KERN.KERN_PROC.KERN_PROC_ARGS";
 #  elif defined(KERN_PROCARGS2)
 			mib[1] = KERN_PROCARGS2;
-			mib[2] = ((int)proc_stats_ptr[i].pid);
+			mib[2] = ((int)proc_stats_ptr[proc_items].pid);
 			miblen = 3;
 			p = "CTL_KERN.KERN_PROCARGS2";
 #  endif
@@ -1090,7 +1090,7 @@ again:
 				if( EINVAL == errno )
 					goto print_kernel_proctitle;
 #  endif
-				SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=" FMT_PID_T, p, proc_stats_ptr[i].pid);
+				SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=" FMT_PID_T, p, proc_stats_ptr[proc_items].pid);
 				continue;
 			}
 
