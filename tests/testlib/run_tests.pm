@@ -119,7 +119,7 @@ sub run_tests(\@;\@) {
 		my ($success, $error_message, $full_buf, $stdout_buf, $stderr_buf) = IPC::Cmd::run(
 			command => \@exec_args, verbose => 0, timeout => 60 );
 		defined $success or $success = 0;
-		my $msg_fn = $success ? \&Test::More::note : \&Test::More::diag;
+		my $msg_fn = $success ? Test::More->can("note") : Test::More->can("diag");
 		&{$msg_fn}('"' . join('" "', @exec_args) . '"');
 		if( "ARRAY" eq ref($stdout_buf) and 0 != scalar(@{$stdout_buf}) ) {
 			foreach my $line (@{$stdout_buf}) {
