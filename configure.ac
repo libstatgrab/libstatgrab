@@ -1057,7 +1057,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_UVM_H
+#ifdef HAVE_UVM_UVM_H
 #include <uvm/uvm.h>
 #endif
 		])])
@@ -1071,7 +1071,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_UVM_H
+#ifdef HAVE_UVM_UVM_H
 #include <uvm/uvm.h>
 #endif
 			])])
@@ -1088,7 +1088,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_UVM_H
+#ifdef HAVE_UVM_UVM_H
 #include <uvm/uvm.h>
 #endif
 						]
@@ -1105,7 +1105,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_UVM_H
+#ifdef HAVE_UVM_UVM_H
 #include <uvm/uvm.h>
 #endif
 						]
@@ -1122,7 +1122,7 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_UVM_H
+#ifdef HAVE_UVM_UVM_H
 #include <uvm/uvm.h>
 #endif
 						]
