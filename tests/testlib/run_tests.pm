@@ -6,6 +6,8 @@ use warnings;
 use mix_tests qw(combine_nk);
 use Test::More;
 use IPC::Cmd ();
+use File::Spec ();
+use File::Temp ();
 
 use Data::Dumper;
 use Config;
@@ -23,6 +25,22 @@ sub get_test_functions {
 	my ($self) = @_;
 	defined($self->{test_functions}) and return $self->{test_functions};
 
+	# prepare logging to temporary file only during tests running
+	my ($logfh, $logfn) = File::Temp::tempfile( TMPDIR => 1, UNLINK => 1,
+		SUFFIX => ".log", TEMPLATE => "$self->{exename}-XXXXXXXX" );
+	close($logfh);
+	my ($propfh, $propfn) = File::Temp::tempfile( TMPDIR => 1, UNLINK => 1,
+		SUFFIX => ".properties", TEMPLATE => "SG_TEST_XXXXXXX" );
+	print $propfh <<EOP;
+log4cplus.logger.statgrab=TRACE, LOGFILE
+
+log4cplus.appender.LOGFILE=log4cplus::FileAppender
+log4cplus.appender.LOGFILE.File=$logfn
+log4cplus.appender.LOGFILE.layout=log4cplus::TTCCLayout
+EOP
+	$propfh->flush();
+
+	$ENV{SGTEST_LOG_PROPERTIES} = $propfn;
 	my $fh;
 
 	open( $fh, "-|", "$self->{exename} -l" ) or die "Can't read from pipe: $!";
@@ -128,10 +146,24 @@ sub run_tests(\@;\@) {
 
 	plan( tests => scalar(@{$variants}) );
 
+	# complain about environment
 	my %versions = get_versions();
 	my $indent = 20;
 	my @versions = map { sprintf "%s = %s", $_, $versions{$_} } sort keys %versions;
 	diag(join(", ", @versions));
+
+	# prepare logging to STDOUT only during tests running
+	my ($propfh, $propfn) = File::Temp::tempfile( TMPDIR => 1, UNLINK => 1,
+		SUFFIX => ".properties", TEMPLATE => "SG_TEST_XXXXXXX" );
+	print $propfh <<EOP;
+log4cplus.logger.statgrab=TRACE, STDOUT
+
+log4cplus.appender.STDOUT=log4cplus::ConsoleAppender
+log4cplus.appender.STDOUT.layout=log4cplus::TTCCLayout
+EOP
+	$propfh->flush();
+
+	$ENV{SGTEST_LOG_PROPERTIES} = $propfn;
 
 	foreach my $variant (@{$variants}) {
 		ref($variant) eq "ARRAY" or die "Invalid element in variant list";
