@@ -7,6 +7,9 @@ use mix_tests qw(combine_nk);
 use Test::More;
 use IPC::Cmd ();
 
+use Data::Dumper;
+use Config;
+
 sub new {
 	my ($class, $exename) = @_;
 	my %instance = (
@@ -105,12 +108,30 @@ sub map_test_variant {
 	return $tests;
 }
 
+sub get_versions {
+	my %versions = (
+		OS   => "$^O ($Config::Config{osvers})",
+		Perl => "$] ($Config::Config{archname})",
+	);
+
+	for my $mod (qw(IPC::Cmd Test::More)) {
+		$versions{$mod} = $mod->VERSION();
+	}
+
+	return %versions;
+}
+
 sub run_tests(\@;\@) {
 	my ($self, $args, $variants) = @_;
 
 	ref($variants) eq "ARRAY" or $variants = [ $self->get_all_test_combinations() ];
 
 	plan( tests => scalar(@{$variants}) );
+
+	my %versions = get_versions();
+	my $indent = 20;
+	my @versions = map { sprintf "%s = %s", $_, $versions{$_} } sort keys %versions;
+	diag(join(", ", @versions));
 
 	foreach my $variant (@{$variants}) {
 		ref($variant) eq "ARRAY" or die "Invalid element in variant list";
