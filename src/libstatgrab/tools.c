@@ -743,6 +743,12 @@ sg_log_init(const char *properties_pfx, const char *env_name, const char *argv0)
 		p = dirname(proppath);
 		if(p != proppath)
 			strlcpy(proppath, p, PATH_MAX);
+		p = proppath + strlen(proppath);
+		if('/' == *p)
+			*(p--) = '\0';
+		p -= strlen("/.libs");
+		if((p > proppath) && (0 == strncmp(p, "/.libs", strlen("/.libs"))))
+			*p = '\0';
 		if(check_path(proppath, PATH_MAX, properties_pfx) &&
 		   !log4cplus_file_configure(proppath))
 			return;
