@@ -8,6 +8,7 @@ use Test::More;
 use IPC::Cmd ();
 use File::Spec ();
 use File::Temp ();
+use File::Basename;
 
 use Data::Dumper;
 use Config;
@@ -24,10 +25,10 @@ sub new {
 sub get_test_functions {
 	my ($self) = @_;
 	defined($self->{test_functions}) and return $self->{test_functions};
-
+	my $exename = basename($self->{exename});
 	# prepare logging to temporary file only during tests running
 	my ($logfh, $logfn) = File::Temp::tempfile( TMPDIR => 1, UNLINK => 1,
-		SUFFIX => ".log", TEMPLATE => "$self->{exename}-XXXXXXXX" );
+		SUFFIX => ".log", TEMPLATE => "$exename-XXXXXXXX" );
 	close($logfh);
 	my ($propfh, $propfn) = File::Temp::tempfile( TMPDIR => 1, UNLINK => 1,
 		SUFFIX => ".properties", TEMPLATE => "SG_TEST_XXXXXXX" );
