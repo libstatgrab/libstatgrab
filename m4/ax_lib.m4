@@ -189,11 +189,11 @@ AC_DEFUN([AX_CHECK_LIB_FLAGS],
                 m4_foreach_w([libnm], libfiles, [
                   define([libfnm],[patsubst(translit(libnm,[./+-], [____]),[_*$])])
                   found_[]libfnm[]_lib=
-                  if test -f "$dir/lib/lib[]libnm[].$ax_linkext_default_shared"; then
+                  if test -f "$dir/lib/lib[]libnm[]$ax_linkext_default_shared"; then
                     found_[]libfnm[]_lib="yes";
-                  elif test -f "$dir/lib/lib[]libnm[].$ax_linkext_default_archive"; then
+                  elif test -f "$dir/lib/lib[]libnm[]$ax_linkext_default_archive"; then
                     found_[]libfnm[]_lib="yes";
-                  elif test -f "$dir/lib/[]libnm[].$ax_linkext_default_objext"; then
+                  elif test -f "$dir/lib/[]libnm[]$ax_linkext_default_objext"; then
                     found_[]libfnm[]_lib="yes";
                   fi
                 ])
