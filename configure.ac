@@ -231,7 +231,7 @@ int main(void) {
 }])], [ac_cv_unspecified_size_last_struct_member="yes"],
       [ac_cv_unspecified_size_last_struct_member="no"])
 ])
-AS_IF([test "x$ac_cv_unspecified_size_last_struct_member" == "xyes"],
+AS_IF([test "x$ac_cv_unspecified_size_last_struct_member" = "xyes"],
       [AC_DEFINE([HAVE_OPEN_ARRAY_AT_STRUCT_END], 1, [define this when array at struct end might be open])])
 
 AC_CACHE_CHECK([for array length of 0], ac_cv_zero_array_size, [
@@ -249,7 +249,7 @@ int main(void) {
 }])], [ac_cv_zero_array_size="yes"],
       [ac_cv_zero_array_size="no"])
 ])
-AS_IF([test "x$ac_cv_zero_array_size" == "xyes"],
+AS_IF([test "x$ac_cv_zero_array_size" = "xyes"],
       [AC_DEFINE([HAVE_ZERO_SIZED_ARRAY], 1, [define this when array can have zero length])])
 
 AC_CHECK_TYPES([struct statvfs], , , [
