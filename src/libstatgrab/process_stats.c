@@ -765,7 +765,7 @@ argv_again:
 				}
 				else {
 					long failing_pid = kp_stats[i].p_pid;
-					SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV for pid=%ld", failing_pid);
+					INFO_LOG_FMT("process", "sysctl(CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV) failed for pid=%ld", failing_pid);
 					continue;
 				}
 			}
@@ -801,20 +801,20 @@ print_kernel_proctitle:
 #elif defined(HAVE_STRUCT_KINFO_PROC) && defined(KERN_PROC)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC;
-#ifdef KERN_PROC_INC_THREAD
+# ifdef KERN_PROC_INC_THREAD
 	mib[2] = KERN_PROC_PROC;
 	mib[3] = 0;
 	i = 4;
 # elif defined(HAVE_KINFO_PROC_KP_PID) || defined(HAVE_KINFO_PROC_KP_EPROC)
 	mib[2] = KERN_PROC_ALL;
 	i = 3;
-#else
+# else
 	mib[2] = KERN_PROC_ALL;
 	mib[3] = 0;
 	mib[4] = sizeof(*kp_stats);
 	mib[5] = 0;
 	i = 6;
-#endif
+# endif
 
 	if( NULL == (proctitle = sg_malloc( ARG_MAX * sizeof(*proctitle) ) ) ) {
 		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
@@ -822,10 +822,11 @@ print_kernel_proctitle:
 
 again:
 	size = 0;
-	if( -1 == ( rc = sysctl(mib, (unsigned)i, NULL, &size, NULL, 0) ) ) {
+	mib[3] = mib[5] = 0;
+	if( -1 == (rc = sysctl(mib, (unsigned)i, NULL, &size, NULL, 0)) ) {
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
 	}
-	if( 0 == ( tmp = sg_realloc( kp_stats, size ) ) ) {
+	if( NULL == (tmp = sg_realloc(kp_stats, size)) ) {
 		free(kp_stats);
 		free(proctitle);
 		RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
@@ -833,7 +834,7 @@ again:
 
 	kp_stats = tmp;
 	mib[5] = nprocs = size / sizeof(*kp_stats);
-	if( -1 == (rc = sysctl(mib, (unsigned)i, kp_stats, &size, NULL, (size_t)0) ) ) {
+	if( -1 == (rc = sysctl(mib, (unsigned)i, kp_stats, &size, NULL, (size_t)0)) ) {
 		if( errno == ENOMEM ) {
 			goto again;
 		}
@@ -1090,7 +1091,7 @@ again:
 				if( EINVAL == errno )
 					goto print_kernel_proctitle;
 #  endif
-				SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "%s for pid=" FMT_PID_T, p, proc_stats_ptr[proc_items].pid);
+				INFO_LOG_FMT("process", "sysctl(%s) for pid=" FMT_PID_T, p, proc_stats_ptr[proc_items].pid);
 				continue;
 			}
 
