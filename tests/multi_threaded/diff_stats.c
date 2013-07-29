@@ -34,7 +34,7 @@ prove_libcall(char *libcall, int err_code)
 /* For safe condition variable usage, must use a boolean predicate and  */
 /* a mutex with the condition.                                          */
 int conditionMet = 0;
-size_t test_counter = 0;
+unsigned long test_counter = 0;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 #ifdef NEED_PTHREAD_MUTEX_INITIALIZER_BRACES
 pthread_mutex_t mutex = { PTHREAD_MUTEX_INITIALIZER };
@@ -62,7 +62,7 @@ void *
 threadfunc(void *parm)
 {
 	int rc, success;
-	size_t func_idx = *((size_t *)parm);
+	unsigned long func_idx = *((unsigned long *)parm);
 
 	rc = pthread_mutex_lock(&mutex);
 	prove_libcall("pthread_mutex_lock", rc);
@@ -129,7 +129,7 @@ main(int argc, char **argv) {
 		return 0;
 	}
 	else if( opt_def[OPT_RUN].optarg.str ) {
-		size_t numthreads, i, nfuncs, ok;
+		unsigned long numthreads, i, nfuncs, ok;
 		size_t *test_routines = NULL;
 		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&nfuncs);
 		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines, 0);
@@ -159,7 +159,7 @@ main(int argc, char **argv) {
 		rc = pthread_mutex_lock(&mutex);
 		prove_libcall("pthread_mutex_lock", rc);
 
-		TRACE_LOG_FMT( "multi_threaded", "create %zu threads", numthreads );
+		TRACE_LOG_FMT( "multi_threaded", "create %lu threads", numthreads );
 		for( i = 0; i < numthreads; ++i ) {
 			mark_func(test_routines[i % entries]);
 			rc = pthread_create( &threadid[i], NULL, threadfunc, &test_routines[i % entries] );
@@ -218,7 +218,7 @@ main(int argc, char **argv) {
 		for( i = 0; i < nfuncs; ++i )
 			errors += sg_testfuncs[i].needed - sg_testfuncs[i].succeeded;
 
-		TRACE_LOG_FMT( "multi_threaded", "Main completed with test_counter = %zu", test_counter );
+		TRACE_LOG_FMT( "multi_threaded", "Main completed with test_counter = %lu", test_counter );
 
 		return errors;
 	}
