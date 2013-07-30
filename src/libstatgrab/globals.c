@@ -264,14 +264,14 @@ sg_comp_init(int ignore_init_errors) {
 	atexit((void (*)(void))sg_destroy_main_globals);
 
 	TRACE_LOG("globals", "Doing sg_comp_init() ...");
-	glob_size = 0;
+	glob_size = 0U;
 
 	for( i = 0; i < lengthof(comp_info); ++i ) {
 		comp_info[i].glob_ofs = glob_size;
 		glob_size += comp_info[i].init_comp->static_buf_size;
 	}
 
-	TRACE_LOG_FMT("globals", "need %lu bytes tls storage for %lu components", glob_size, i);
+	TRACE_LOG_FMT("globals", "need " FMT_SIZE_T " bytes tls storage for " FMT_SIZE_T " components", glob_size, i);
 
 #if defined(ENABLE_THREADS) && defined(HAVE_PTHREAD)
 	required_locks = sg_malloc( sizeof(required_locks[0]) );
@@ -435,7 +435,7 @@ sg_alloc_globals(void) {
 		}
 
 		memset( glob_buf, 0, glob_size );
-		TRACE_LOG_FMT("globals", "allocated globals zeroed from %p .. %p (%lu bytes)",
+		TRACE_LOG_FMT("globals", "allocated globals zeroed from %p .. %p (" FMT_SIZE_T " bytes)",
 			      glob_buf, ((char *)glob_buf) + glob_size, glob_size);
 
 #ifdef ENABLE_THREADS
