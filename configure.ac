@@ -187,6 +187,8 @@ AC_INCLUDES_DEFAULT
 )
 
 AX_CHECK_TYPES_FMT([pid_t uid_t gid_t time_t])
+AX_CHECK_TYPE_FMT([size_t], [%zu])
+AX_CHECK_TYPE_FMT([ssize_t], [%zd])
 
 AX_CHECK_ALIGNOF([struct sg_vector], [AC_INCLUDES_DEFAULT
 struct sg_vector_init_info {

@@ -290,13 +290,13 @@ sg_comp_init(int ignore_init_errors) {
 
 		if( comp_info[i].init_comp->init_fn ) {
 			sg_error comp_errc;
-			TRACE_LOG_FMT("globals", "calling init_fn for comp %zu", i);
+			TRACE_LOG_FMT("globals", "calling init_fn for comp " FMT_SIZE_T, i);
 			comp_errc = comp_info[i].init_comp->init_fn(i + GLOB_MASK);
 			if( comp_errc != SG_ERROR_NONE ) {
 				if( ignore_init_errors && (NULL != comp_info[i].init_comp->status) ) {
 					char *buf = NULL;
 					comp_info[i].init_comp->status->init_error = comp_errc;
-					ERROR_LOG_FMT("globals", "sg_comp_init: comp[%zu].init_fn() fails with '%s'", i, sg_strperror(&buf, NULL));
+					ERROR_LOG_FMT("globals", "sg_comp_init: comp[" FMT_SIZE_T "].init_fn() fails with '%s'", i, sg_strperror(&buf, NULL));
 					free(buf);
 					errc = SG_ERROR_INITIALISATION;
 				}
