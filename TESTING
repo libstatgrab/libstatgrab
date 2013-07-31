@@ -1,12 +1,6 @@
-Testing results:
-
-None yet!
-
-Testing notes:
-
 Grab the latest tarball from here:
 
-http://snapshots.i-scream.org/libstatgrab/libstatgrab-0.90-rc3.tar.gz
+http://snapshots.i-scream.org/libstatgrab/libstatgrab-0.90-rc4.tar.gz
 
 Although not required to build, run and test libstatgrab, it may be
 useful for debugging to have log4cplus installed. It can be found
@@ -23,8 +17,8 @@ To test libstatgrab perform the following steps:
 
 Extract and build:
 
-tar -zxvf libstatgrab-0.90-rc3.tar.gz
-cd libstatgrab-0.90-rc3
+tar -zxvf libstatgrab-0.90-rc4.tar.gz
+cd libstatgrab-0.90-rc4
 ./configure
 make
 make test
