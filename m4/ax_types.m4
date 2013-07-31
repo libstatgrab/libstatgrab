@@ -27,6 +27,15 @@ dnl             process id's and similar
 dnl
 dnl Jens Rehsack <sno@NetBSD.org>
 
+dnl AX_ENABLE_DIECT_TYPE_FMT_SEARCH(DEFAULT-CONTENT)
+dnl enables searching for type format options instead of trying defaults are working
+AC_DEFUN([AX_ENABLE_DIECT_TYPE_FMT_SEARCH], [
+  AC_ARG_ENABLE([direct-format-search], [  --enable-direct-format-search[[=list]]
+                          enables direct searching for printf/scantf format search, skipping default checking
+  --disable-direct-format-search
+                          disables direct format string searching], [ENABLE_DIRECT_TYPE_FMT_SEARCH="$enableval"], [ENABLE_DIRECT_TYPE_FMT_SEARCH="$1"])
+])
+
 dnl _AX_CHECK_TYPE_SIGN_CHECK([check type], [includes])
 AC_DEFUN([_AX_CHECK_TYPE_SIGN_CHECK], [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT([$2])],
 [  /* signed:	-1 / 2 -> 0
@@ -84,10 +93,15 @@ AC_DEFUN([AX_CHECK_TYPE_FMT], [
   define([Name],[translit([$1], [ ], [_])])
   define([NAME],[translit([$1], [ abcdefghijklmnopqrstuvwxyz], [_ABCDEFGHIJKLMNOPQRSTUVWXYZ])])
   AC_REQUIRE([AC_TYPE_][]NAME)dnl
+  ifelse([], [$2], , [AC_REQUIRE([AX_ENABLE_DIECT_TYPE_FMT_SEARCH])])
+  
   AC_CACHE_CHECK([for format string for $1], [ax_cv_type_fmt_]Name, [
     ax_save_[]_AC_LANG_ABBREV[]_werror_flag="$ac_[]_AC_LANG_ABBREV[]_werror_flag"
     AC_LANG_WERROR()
-    m4_foreach_w([AX_Fmt], [$2], [AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [AC_COMPILE_IFELSE([_AX_CHECK_TYPE_FMT([$1], [AX_Fmt], [$3])], [ax_cv_type_fmt_[]Name[]="AX_Fmt"])])])
+    ifelse([], [$2], , [
+    AX_VAR_CONTAINS_ANY_IF_ELSE([ENABLE_DIRECT_TYPE_FMT_SEARCH], [yes $1], , [
+      m4_foreach_w([AX_Fmt], [$2], [AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [AC_COMPILE_IFELSE([_AX_CHECK_TYPE_FMT([$1], [AX_Fmt], [$3])], [ax_cv_type_fmt_[]Name[]="AX_Fmt"])])])
+    ])])
     AS_IF([test ! "$ax_cv_type_fmt_[]Name"], [_AX_SEARCH_TYPE_FMT([$1], [$3])])
     ac_[]_AC_LANG_ABBREV[]_werror_flag="$ax_save_[]_AC_LANG_ABBREV[]_werror_flag"
   ])
