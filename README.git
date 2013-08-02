@@ -1,9 +1,7 @@
-libstatgrab CVS README
+libstatgrab Git README
 http://www.i-scream.org/libstatgrab/
 
-$Id$
-
-Starting from CVS there are a few things that need to be done before
+Starting from Git there are a few things that need to be done before
 the normal build procedure. These require autoconf, automake, and
 libtool to be installed.
 
