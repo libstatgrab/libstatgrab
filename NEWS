@@ -8,11 +8,14 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
-libstatgrab nnn
+libstatgrab 0.90
  * thread safety and reentrant functions
- * complete ports for HP-UX
- * add support for AIX and Darwin/MacOS X
+ * API unification (every stats call is enabled returning multiple entries)
+ * complete rewrite of internal memory management (ease future extensions)
  * add experimental support for tracing using log4cplus
+ * complete ports for AIX, HP-UX and nearly every widely common BSD
+ * complete port for Darwin/MacOS X including basic Mach
+ * clean up FreeBSD and SOlaris implementation
  * remove explicit Linux 2.4 support
 
 libstatgrab 0.17 (21 February 2010)
