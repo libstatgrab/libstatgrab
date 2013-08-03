@@ -507,7 +507,6 @@ sysinfo_again:
 		host_info_buf->bitwidth = get_bitwidth_by_arch_name(arch_name);
 	}
 	else {
-		SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_MACHINE_ARCH" );
 # endif
 # if defined(HW_MACHINE)
 	mib[0] = CTL_HW;
@@ -519,6 +518,8 @@ sysinfo_again:
 	else {
 		SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_MACHINE" );
 	}
+# elif defined(HW_MACHINE_ARCH)
+		SET_ERROR_WITH_ERRNO("os", SG_ERROR_SYSCTL, "CTL_HW.HW_MACHINE_ARCH" );
 # endif
 # if defined(HW_MACHINE_ARCH)
 	}
