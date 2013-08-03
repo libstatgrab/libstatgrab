@@ -304,7 +304,7 @@ void *sg_comp_get_tls(unsigned id);
 		}					\
 							\
 		if(!comp##_glob->comp##_vectors[diffidx]) \
-			comp##_glob->comp##_vectors[diffidx] = VECTOR_CREATE(sg_##name##_stats, 1); \
+			comp##_glob->comp##_vectors[diffidx] = sg_vector_create(1, 1, 1, & VECTOR_INIT_INFO(sg_##name##_stats)); \
 							\
 		if(comp##_glob->comp##_vectors[diffidx]) { \
 			sg_##name##_stats name##_last = *((sg_##name##_stats *)VECTOR_DATA(comp##_glob->comp##_vectors[nowidx])); \
@@ -334,7 +334,7 @@ void *sg_comp_get_tls(unsigned id);
 		sg_vector *name##_diff_vector;		\
 							\
 		TRACE_LOG(#comp, "entering " #fn "_between"); \
-		name##_diff_vector = VECTOR_CREATE(sg_##name##_stats, 1); \
+		name##_diff_vector = sg_vector_create(1, 1, 1, & VECTOR_INIT_INFO(sg_##name##_stats)); \
 		if(name##_diff_vector){			\
 			sg_error rc;			\
 			sg_##name##_stats *name##_diff = (sg_##name##_stats *)VECTOR_DATA(name##_diff_vector); \

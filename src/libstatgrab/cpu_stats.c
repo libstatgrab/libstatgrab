@@ -505,7 +505,7 @@ sg_get_cpu_percents_of(sg_cpu_percent_source cps, size_t *entries) {
 	}
 
 	if( !cpu_glob->cpu_vectors[SG_CPU_PERCENT_IDX] )
-		cpu_glob->cpu_vectors[SG_CPU_PERCENT_IDX] = VECTOR_CREATE(sg_cpu_percents, 1);
+		cpu_glob->cpu_vectors[SG_CPU_PERCENT_IDX] = sg_vector_create(1, 1, 1, & VECTOR_INIT_INFO(sg_cpu_percents));
 
 	if( !cpu_glob->cpu_vectors[SG_CPU_PERCENT_IDX] ) {
 		sg_set_error_fmt(SG_ERROR_MALLOC, "sg_get_cpu_percents_of");
@@ -577,7 +577,7 @@ sg_get_cpu_percents_r(sg_cpu_stats const * whereof, size_t *entries) {
 		return NULL;
 	}
 
-	cpu_percents_result_vector = VECTOR_CREATE(sg_cpu_percents, 1);
+	cpu_percents_result_vector = sg_vector_create(1, 1, 1, & VECTOR_INIT_INFO(sg_cpu_percents));
 	if( NULL == cpu_percents_result_vector ) {
 		ERROR_LOG_FMT("cpu", "sg_get_cpu_percents_r failed with %s", sg_str_error(sg_get_error()));
 		if(entries)
