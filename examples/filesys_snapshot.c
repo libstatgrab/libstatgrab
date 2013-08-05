@@ -1,8 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2010 i-scream
- * Copyright (C) 2010 Jens Rehsack
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,14 +30,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
 int main(int argc, char **argv){
 	sg_fs_stats *fs_stats;
-	int fs_size;
-	int x;
-	char *state = NULL;
+	size_t fs_size;
+
+	/* Initialise helper - e.g. logging, if any */
+	sg_log_init("libstatgrab-examples", "SGEXAMPLES_LOG_PROPERTIES", argc ? argv[0] : NULL);
 
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
 
 	/* Drop setuid/setgid privileges. */
 	if (sg_drop_privileges() != 0) {
@@ -46,11 +49,8 @@ int main(int argc, char **argv){
 	}
 
 	fs_stats = sg_get_fs_stats(&fs_size);
-
-	if(fs_stats == NULL){
-		fprintf(stderr, "Failed to get file systems snapshot\n");
-		exit(1);
-	}
+	if(fs_stats == NULL)
+		sg_die("Failed to get file systems snapshot", 1);
 
 	printf( "%-16s %-24s %-8s %16s %16s %16s %7s %7s %7s %7s %9s %9s %7s %7s %7s %7s\n",
 		"device", "mountpt", "fstype", "size", "used", "avail",
@@ -59,7 +59,7 @@ int main(int argc, char **argv){
 		"b-total", "b-used", "b-free", "b-avail");
 
 	for( ; fs_size > 0 ; --fs_size, ++fs_stats ) {
-		printf( "%-16s %-24s %-8s %16lld %16lld %16lld %7lld %7lld %7lld %7lld %9lld %9lld %7lld %7lld %7lld %7lld\n",
+		printf( "%-16s %-24s %-8s %16llu %16llu %16llu %7llu %7llu %7llu %7llu %9llu %9llu %7llu %7llu %7llu %7llu\n",
 			fs_stats->device_name, fs_stats->mnt_point, fs_stats->fs_type,
 			fs_stats->size, fs_stats->used, fs_stats->avail,
 			fs_stats->total_inodes, fs_stats->used_inodes, fs_stats->free_inodes, fs_stats->avail_inodes,

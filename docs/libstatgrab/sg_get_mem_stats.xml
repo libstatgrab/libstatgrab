@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="sg_get_mem_stats">
-
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
 
   <refmeta>
     <refentrytitle>sg_get_mem_stats</refentrytitle>
@@ -18,7 +10,11 @@
 
   <refnamediv>
     <refname>sg_get_mem_stats</refname>
+    <refname>sg_get_mem_stats_r</refname>
+    <refname>sg_free_mem_stats</refname>
     <refname>sg_get_swap_stats</refname>
+    <refname>sg_get_swap_stats_r</refname>
+    <refname>sg_free_swap_stats</refname>
     <refpurpose>get VM statistics</refpurpose>
   </refnamediv>
 
@@ -27,11 +23,28 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_mem_stats *<function>sg_get_mem_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
+        <funcdef>sg_mem_stats *<function>sg_get_mem_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_mem_stats</function></funcdef>
+        <paramdef>sg_mem_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
         <funcdef>sg_swap_stats *<function>sg_get_swap_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_swap_stats *<function>sg_get_swap_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_swap_stats</function></funcdef>
+        <paramdef>sg_swap_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -40,13 +53,65 @@
     <title>Description</title>
     <para>
       Memory statistics are accessed through the
-      <function>sg_get_mem_stats</function> function. It returns a
-      pointer to a static <structname>sg_mem_stats</structname>.
+      <function>sg_get_mem_stats</function>() function and the
+      <function>sg_get_mem_stats_r</function>() function. Both return a
+      pointer to a <structname>sg_mem_stats</structname> buffer.
+      Note that this statistic doesn't need to map the entire physical
+      memory usage, it represents the real memory usable by the operating
+      system.
     </para>
     <para>
-      The <function>sg_get_swap_stats</function> returns returns swap
-      statistics. It returns a pointer to a static
-      <structname>sg_swap_stats</structname>.
+      Memory statistics are accessed through the
+      <function>sg_get_swap_stats</function>() function and the
+      <function>sg_get_swap_stats_r</function>() function. Both return a
+      pointer to a <structname>sg_swap_stats</structname> buffer.
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_mem_stats</entry>
+        <entry><structname>sg_mem_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_mem_stats_r</entry>
+        <entry><structname>sg_mem_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_swap_stats</entry>
+        <entry><structname>sg_swap_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_swap_stats_r</entry>
+        <entry><structname>sg_swap_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_mem_stats</structname> buffer received from
+      <function>sg_get_mem_stats_r</function>() and the
+      <structname>sg_swap_stats</structname> buffer received from
+      <function>sg_get_swap_stats_r</function>() must be freed using
+      <function>sg_free_mem_stats</function>() or the
+      <function>sg_free_swap_stats</function>(), respectively, when not
+      needed any more. The caller is responsible for doing it.
     </para>
     <para>
       On the FreeBSD operating system elevated privileges are required
@@ -67,11 +132,12 @@
 
     <programlisting>
 typedef struct{
-        long long total;
-        long long free;
-        long long used;
-        long long cache;
-}sg_mem_stats;
+        unsigned long long total;
+        unsigned long long free;
+        unsigned long long used;
+        unsigned long long cache;
+        time_t systime;
+} sg_mem_stats;
     </programlisting>
 
     <variablelist>
@@ -81,7 +147,7 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The total amount of memory in bytes.
+            The total amount of real memory in bytes.
           </para>
         </listitem>
       </varlistentry>
@@ -91,7 +157,7 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The total free memory in bytes.
+            The free amount of real memory in bytes.
           </para>
         </listitem>
       </varlistentry>
@@ -101,7 +167,7 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The total used memory in bytes.
+            The used amount of real memory in bytes.
           </para>
         </listitem>
       </varlistentry>
@@ -111,18 +177,28 @@ typedef struct{
         </term>
         <listitem>
           <para>
-            The amount of cache used in bytes.
+            The amount of real memory in bytes used for caching.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            the timestamp when the above stats where collected in seconds
+            since epoch
           </para>
         </listitem>
       </varlistentry>
     </variablelist>
 
     <programlisting>
-typedef struct{
-        long long total;
-        long long used;
-        long long free;
-}sg_swap_stats;
+typedef struct {
+        unsigned long long total;
+        unsigned long long used;
+        unsigned long long free;
+        time_t systime;
+} sg_swap_stats;
     </programlisting>
 
     <variablelist>
@@ -153,6 +229,15 @@ typedef struct{
         <listitem>
           <para>
             The free swap in bytes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            The timestamp when the above stats where collected in seconds
+            since epoch
           </para>
         </listitem>
       </varlistentry>

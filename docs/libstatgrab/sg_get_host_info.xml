@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="sg_get_host_info">
-
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
 
   <refmeta>
     <refentrytitle>sg_get_host_info</refentrytitle>
@@ -18,6 +10,8 @@
 
   <refnamediv>
     <refname>sg_get_host_info</refname>
+    <refname>sg_get_host_info_r</refname>
+    <refname>sg_free_host_info</refname>
     <refpurpose>get general operating system statistics</refpurpose>
   </refnamediv>
 
@@ -26,7 +20,15 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_host_info *<function>sg_get_host_info</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_host_info *<function>sg_get_host_info_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_host_info</function></funcdef>
+        <paramdef>sg_host_info *<parameter>data</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -34,11 +36,42 @@
   <refsect1>
     <title>Description</title>
     <para>
-      This call returns details on the operating system.
+      These calls return details on the operating system and the machine
+      it's running on.
     </para>
     <para>
-      It returns a pointer to a static buffer of
-      <structname>sg_host_info</structname>.
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_host_info</entry>
+        <entry><structname>sg_host_info</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_host_info_r</entry>
+        <entry><structname>sg_host_info</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_host_info</structname> buffer received from
+      <function>sg_get_host_info_r</function>() must be freed using
+      <function>sg_free_host_info</function>() when not needed any more. The
+      caller is responsible for doing it.
     </para>
   </refsect1>
 
@@ -51,13 +84,28 @@
     </para>
 
     <programlisting>
+typedef enum {
+        sg_unknown_configuration = 0,
+        sg_physical_host,
+        sg_virtual_machine,
+        sg_paravirtual_machine,
+        sg_hardware_virtualized
+} sg_host_state;
+    </programlisting>
+
+    <programlisting>
 typedef struct{
         char *os_name;
         char *os_release;
         char *os_version;
         char *platform;
         char *hostname;
+        unsigned bitwidth;
+        sg_host_state host_state;
+        unsigned ncpus;
+        unsigned maxcpus;
         time_t uptime;
+        time_t systime;
 }sg_host_info;
     </programlisting>
 
@@ -66,7 +114,7 @@ typedef struct{
         <term><structfield>os_name</structfield></term>
         <listitem>
           <para>
-            the operating system name.
+            The operating system name.
             (eg. SunOS or Linux)
           </para>
         </listitem>
@@ -75,7 +123,7 @@ typedef struct{
         <term><structfield>os_release</structfield></term>
         <listitem>
           <para>
-            the operating system release.
+            The operating system release.
             (eg. 5.8 or 5.9 or Solaris)
           </para>
         </listitem>
@@ -84,7 +132,7 @@ typedef struct{
         <term><structfield>os_version</structfield></term>
         <listitem>
           <para>
-            the version level of the OS.
+            The version level of the OS.
           </para>
         </listitem>
       </varlistentry>
@@ -92,7 +140,7 @@ typedef struct{
         <term><structfield>platform</structfield></term>
         <listitem>
           <para>
-            the hardware platform (architecture) the OS runs on.
+            The hardware platform (architecture) the OS runs on.
           </para>
         </listitem>
       </varlistentry>
@@ -100,7 +148,7 @@ typedef struct{
         <term><structfield>hostname</structfield></term>
         <listitem>
           <para>
-            the name of the machine.
+            The name of the machine.
           </para>
         </listitem>
       </varlistentry>
@@ -108,7 +156,16 @@ typedef struct{
         <term><structfield>uptime</structfield></term>
         <listitem>
           <para>
-            the uptime of the machine in seconds.
+            The uptime of the machine in seconds.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            The timestamp when the above stats where collected in seconds
+            since epoch
           </para>
         </listitem>
       </varlistentry>

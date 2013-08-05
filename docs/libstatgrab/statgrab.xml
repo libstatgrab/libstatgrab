@@ -1,23 +1,16 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="statgrab">
 
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
-
   <refmeta>
-    <refentrytitle>statgrab</refentrytitle>
+    <refentrytitle>libstatgrab</refentrytitle>
     <manvolnum>3</manvolnum>
     <refmiscinfo>i-scream</refmiscinfo>
   </refmeta>
 
   <refnamediv>
     <refname>statgrab</refname>
+    <refname>libstatgrab</refname>
     <refpurpose>get system statistics</refpurpose>
   </refnamediv>
 
@@ -26,11 +19,15 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
 
       <funcprototype>
-        <funcdef>int <function>sg_init</function></funcdef>
+        <funcdef>sg_error <function>sg_init</function></funcdef>
+        <paramdef>int <parameter>ignore_init_errors</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_shutdown</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>int <function>sg_drop_privileges</function></funcdef>
+        <funcdef>sg_error <function>sg_drop_privileges</function></funcdef>
         <void/>
       </funcprototype>
 
@@ -43,14 +40,56 @@
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>int<function>sg_get_error_errno</function></funcdef>
+        <funcdef>int <function>sg_get_error_errno</function></funcdef>
         <void/>
       </funcprototype>
       <funcprototype>
         <funcdef>const char *<function>sg_str_error</function></funcdef>
         <paramdef>sg_error <parameter>code</parameter></paramdef>
       </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_get_error_details</function></funcdef>
+        <paramdef>sg_error_details *<parameter>err_details</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>char *<function>sg_strperror</function></funcdef>
+        <paramdef>char **<parameter>buf</parameter></paramdef>
+        <paramdef>const sg_error_details * const <parameter>err_details</parameter></paramdef>
+      </funcprototype>
 
+      <funcprototype>
+        <funcdef>size_t <function>sg_get_nelements</function></funcdef>
+        <paramdef>const void *<parameter>data</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_stats_buf</function></funcdef>
+        <paramdef>void *<parameter>data</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_lock_mutex</function></funcdef>
+        <paramdef>const char *<parameter>mutex_name</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_unlock_mutex</function></funcdef>
+        <paramdef>const char *<parameter>mutex_name</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents_of</function></funcdef>
+        <paramdef>sg_cpu_percent_source <parameter>cps</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents_r</function></funcdef>
+        <paramdef>const sg_cpu_stats *<parameter>whereof</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>void <function>sg_free_cpu_percents</function></funcdef>
+        <paramdef>sg_cpu_percents *<parameter>data</parameter></paramdef>
+      </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats</function></funcdef>
         <void/>
@@ -60,32 +99,86 @@
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents</function></funcdef>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_r</function></funcdef>
         <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff_between</function></funcdef>
+        <paramdef>const sg_cpu_stats *<parameter>cpu_now</parameter>, const sg_cpu_stats *<parameter>cpu_last</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_cpu_stats</function></funcdef>
+        <paramdef>sg_cpu_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
         <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_diff</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_disk_io_stats *<function>sg_get_disk_io_stats_diff_between</function></funcdef>
+        <paramdef>const sg_disk_io_stats *<parameter>cur</parameter></paramdef>
+        <paramdef>const sg_disk_io_stats *<parameter>last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_disk_io_stats</function></funcdef>
+        <paramdef>sg_disk_io_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
         <funcdef>sg_fs_stats *<function>sg_get_fs_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_fs_stats *<function>sg_get_fs_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_fs_stats</function></funcdef>
+        <paramdef>sg_fs_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>const char **<function>sg_get_valid_filesystems</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_set_valid_filesystems</function></funcdef>
+        <paramdef>const char *<parameter>valid_fs</parameter>[]</paramdef>
       </funcprototype>
 
       <funcprototype>
         <funcdef>sg_host_info *<function>sg_get_host_info</function></funcdef>
         <void/>
       </funcprototype>
+      <funcprototype>
+        <funcdef>sg_host_info *<function>sg_get_host_info_r</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_host_info</function></funcdef>
+        <paramdef>sg_host_info *<parameter>data</parameter></paramdef>
+      </funcprototype>
 
       <funcprototype>
         <funcdef>sg_load_stats *<function>sg_get_load_stats</function></funcdef>
         <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_load_stats *<function>sg_get_load_stats</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_load_stats</function></funcdef>
+        <paramdef>sg_load_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
@@ -93,22 +186,61 @@
         <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>sg_swap_stats *<function>sg_get_swap_stats</function></funcdef>
+        <funcdef>sg_mem_stats *<function>sg_get_mem_stats_r</function></funcdef>
         <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_mem_stats</function></funcdef>
+        <paramdef>sg_mem_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
-        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <funcdef>sg_swap_stats *<function>sg_get_swap_stats</function></funcdef>
+        <void/>
       </funcprototype>
       <funcprototype>
-        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_diff</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <funcdef>sg_swap_stats *<function>sg_get_swap_stats_r</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_swap_stats</function></funcdef>
+        <paramdef>sg_swap_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
         <funcdef>sg_network_iface_stats *<function>sg_get_network_iface_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_iface_stats *<function>sg_get_network_iface_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_network_iface_stats</function></funcdef>
+        <paramdef>sg_network_iface_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_diff</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_io_stats *<function>sg_get_network_io_stats_diff_between</function></funcdef>
+        <paramdef>const sg_network_io_stats *<parameter>cur</parameter></paramdef>
+        <paramdef>const sg_network_io_stats *<parameter>last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_network_io_stats</function></funcdef>
+        <paramdef>sg_network_iface_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
@@ -116,73 +248,141 @@
         <void/>
       </funcprototype>
       <funcprototype>
+        <funcdef>sg_page_stats *<function>sg_get_page_stats_r</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
         <funcdef>sg_page_stats *<function>sg_get_page_stats_diff</function></funcdef>
         <void/>
       </funcprototype>
+      <funcprototype>
+        <funcdef>sg_page_stats *<function>sg_get_page_stats_diff_between</function></funcdef>
+        <paramdef>const sg_page_stats *<parameter>cur</parameter></paramdef>
+        <paramdef>const sg_page_stats *<parameter>last</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_page_stats</function></funcdef>
+        <paramdef>sg_page_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
 
       <funcprototype>
-        <funcdef>sg_process_count *<function>sg_get_process_stats</function></funcdef>
+        <funcdef>sg_process_stats *<function>sg_get_process_stats</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_stats *<function>sg_get_process_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_process_stats</function></funcdef>
+        <paramdef>sg_process_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_count *<function>sg_get_process_count</function></funcdef>
         <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_count *<function>sg_get_process_count_of</function></funcdef>
+        <paramdef>sg_process_count_source <parameter>pcs</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_count *<function>sg_get_process_count_r</function></funcdef>
+        <paramdef>sg_process_stats const *<parameter>whereof</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_process_count</function></funcdef>
+        <paramdef>sg_process_count *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
         <funcdef>sg_user_stats *<function>sg_get_user_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
-
+      <funcprototype>
+        <funcdef>sg_user_stats *<function>sg_get_user_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_user_stats</function></funcdef>
+        <paramdef>sg_user_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>Description</title>
     <para>
-      The statgrab library provides a cross-platform interface to getting
-      system statistics. Each of the function calls returns a structure
-      containing statistics. See the manual page for each individual
-      function for more details on usage.
+      The statgrab library provides a cross-platform interface to get
+      several system statistics. System statistics aren't standardised, so
+      the statgrab library tries to choose the most important values over
+      all supported operating systems. This implies that some values might
+      not be available on every OS while some specific values are missing
+      when there are no counterparts on any other OS.
     </para>
     <para>
-      <function>sg_init</function> must be the first
-      function you call before you start to use libstatgrab; it performs all
-      the one-time initialisation operations that need setuid/setgid
-      privileges. For instance, on *BSD it opens a descriptor to be able to
-      read kernel structures later on, and on Solaris it reads the device
-      mappings that in some cases are only accessible by root (machines with
-      a /dev/osa). Once this has run, the other libstatgrab functions no longer 
-      need elevated privileges. It is therefore a good idea to call
-      <function>sg_drop_privileges</function>, which discards
-      setuid and setgid privileges, immediately after you call
-      <function>sg_init</function>, unless your application has
-      another reason for needing setuid or setgid privileges.
-    </para>
-    <para>
-      <function>sg_init</function> and
-      <function>sg_drop_privileges</function> return 0 on success, and
-      non-zero on failure.
-    </para>
-    <para>
-      There are three functions relating to error reporting in libstatgrab.
-      The first, <function>sg_get_error</function> returns an sg_error code
-      which relates to the last error generated by libstatgrab. This can be
-      converted to a string by calling <function>sg_str_error</function>
-      giving the sg_error code as an argument. An optional
-      argument may be set when the error was generated. This can be
-      accessed by calling <function>sg_get_error_arg</function>;
-      <constant>NULL</constant> will be returned if no argument has
-      been set. Some errors will also record the value of the system
-      errno variable when the error occurred; this can be retrieved by
-      calling <function>sg_get_error_errno</function>, which will
-      return <constant>0</constant> if no valid errno has been recorded.
-    </para>
-    <para>
-      It is the intended practice that whenever a libstatgrab function is
-      called and subsequently fails that an appropriate error will be set.
+      The libstatgrab is organised in components, each for interrelated
+      statistics.
+
+      <table frame='all'><!--<title>Components</title>-->
+      <tgroup cols='2' align='left' colsep='1' rowsep='1'>
+        <colspec colname='component'/>
+        <colspec colname='statistics'/>
+      <thead>
+      <row>
+        <entry>component</entry>
+        <entry>statistics</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>cpu</entry>
+        <entry><structname>sg_cpu_stats</structname>, <structname>sg_cpu_percents</structname></entry>
+      </row>
+      <row>
+        <entry>disk</entry>
+        <entry><structname>sg_disk_io_stats</structname>, <structname>sg_fs_stats</structname></entry>
+      </row>
+      <row>
+        <entry>load</entry>
+        <entry><structname>sg_load_stats</structname></entry>
+      </row>
+      <row>
+        <entry>mem</entry>
+        <entry><structname>sg_mem_stats</structname></entry>
+      </row>
+      <row>
+        <entry>network</entry>
+        <entry><structname>sg_network_io_stats</structname>, <structname>sg_network_iface_stats</structname></entry>
+      </row>
+      <row>
+        <entry>os</entry>
+        <entry><structname>sg_host_info</structname></entry>
+      </row>
+      <row>
+        <entry>page</entry>
+        <entry><structname>sg_page_stats</structname></entry>
+      </row>
+      <row>
+        <entry>process</entry>
+        <entry><structname>sg_process_stats</structname>, <structname>sg_process_count</structname></entry>
+      </row>
+      <row>
+        <entry>swap</entry>
+        <entry><structname>sg_swap_stats</structname></entry>
+      </row>
+      <row>
+        <entry>user</entry>
+        <entry><structname>sg_user_stats</structname></entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
     </para>
     <para>
       The library was originally written to support the i-scream
       central monitoring system, but has since become a standalone
       package. It has been ported to work on Linux, NetBSD, FreeBSD,
-      OpenBSD, DragonFly BSD, Solaris, HP-UX and Cygwin.
+      OpenBSD, DragonFly BSD, Solaris, HP-UX, AIX and Cygwin.
     </para>
   </refsect1>
 
@@ -192,7 +392,11 @@
     <simplelist type="inline">
       <member>
         <citerefentry>
-          <refentrytitle>sg_get_cpu_percents</refentrytitle>
+          <refentrytitle>sg_intro</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_cpu_stats</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
@@ -232,7 +436,19 @@
           <manvolnum>3</manvolnum>
         </citerefentry>
         <citerefentry>
+          <refentrytitle>sg_get_swap_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
           <refentrytitle>sg_get_user_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_error</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_internal-intro</refentrytitle>
           <manvolnum>3</manvolnum>
         </citerefentry>
       </member>

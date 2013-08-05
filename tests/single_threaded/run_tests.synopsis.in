@@ -1,0 +1,5 @@
+  # run all functions alone and all 2-tuple in 3 loops
+  $ @test-dir@/run_tests --items 1 --items 2 -- -n 3
+
+  # run all 4-tuple of libstatgrab functions in 2 loops
+  $ @test-dir@/run_tests --items 4 -- -n 2

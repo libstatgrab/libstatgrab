@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+
+<refentry id="sg_get_error">
+
+  <refmeta>
+    <refentrytitle>sg_get_error</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>sg_get_error</refname>
+    <refname>sg_get_error_arg</refname>
+    <refname>sg_get_error_errno</refname>
+    <refname>sg_str_error</refname>
+    <refname>sg_get_error_details</refname>
+    <refname>sg_strperror</refname>
+    <refpurpose>get last error status</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_get_error</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>const char *<function>sg_get_error_arg</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>int <function>sg_get_error_errno</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_get_error_details</function></funcdef>
+        <paramdef>sg_error_details *<parameter>err_details</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>const char *<function>sg_str_error</function></funcdef>
+        <paramdef>sg_error <parameter>code</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>char *<function>sg_strperror</function></funcdef>
+        <paramdef>char **<parameter>buf</parameter></paramdef>
+        <paramdef>const sg_error_details * const <parameter>err_details</parameter></paramdef>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      There are four functions to get information about the last occurred
+      error: <function>sg_get_error</function>,
+      <function>sg_get_error_arg</function>,
+      <function>sg_get_error_errno</function> and
+      <function>sg_get_error_details</function>. The remaining
+      functions are intended to improve the machine-human-interface (e.g.
+      the error log or a message box): <function>sg_str_error</function>
+      delivers a human readable error name and <function>sg_strperror</function>
+      prepares a full blown error message for printing.
+    </para>
+    <para>
+      The error argument (<function>sg_get_error_arg</function>) is stored
+      thread local and is reused every time an error occures. If a later
+      usage is intended, duplicating it is a suitable strategy. Same for
+      the <structfield>error_arg</structfield> of
+      <structname>sg_error_details</structname> delivered by
+      <function>sg_get_error_details</function>.
+    </para>
+    <para>
+      When someone calls the function <function>sg_get_error_details</function>
+      with a NULL pointer, the last error is overridden with a new one
+      describing that <function>sg_get_error_details</function> is called
+      with invalid arguments. Please be careful.
+    </para>
+    <para>
+      The function <function>sg_strperror</function> is allowed to be called
+      with or without (<parameter>err_details</parameter> is NULL) collected
+      error details. In the latter case, the last occurred error of this thread
+      is used to prepare the error message. Be aware, the the buffer pointer
+      must be non-NULL (points to an existing <type>char *</type> lvalue),
+      but the <type>char *</type> lvalue it points to, must be NULL.
+      When invoked correctly, there are only two possible error conditions
+      let <function>sg_strperror</function> fail: <errorcode>ENOMEM</errorcode>
+      (out of memory) and <errorcode>EINVAL</errorcode> (invalid error code).
+      <example>
+        <title>Example</title>
+        <programlisting>
+if( NULL == sg_get_cpu_stats() ) {
+    char *buf = NULL;
+    if( NULL != sg_strperror( &amp;buf, NULL ) ) {
+        fprintf( stderr, "error getting CPU stats: %s\n", buf );
+        free(buf);
+        exit(255);
+    }
+    else {
+        fprintf( stderr, "error getting CPU stats and error information\n" );
+        exit(255);
+    }
+}
+        </programlisting>
+      </example>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Return Values</title>
+
+    <para>
+      The error details contains following information:
+    </para>
+
+    <programlisting>
+typedef struct sg_error_details {
+        sg_error error;
+        int errno_value;
+        const char *error_arg;
+} sg_error_details;
+    </programlisting>
+
+    <variablelist>
+      <varlistentry>
+        <term>
+          <structfield>error</structfield>
+        </term>
+        <listitem>
+          <para>
+            The statgrab library error code.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>errno_value</structfield>
+        </term>
+        <listitem>
+          <para>
+            The operating system error code.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>error_arg</structfield>
+        </term>
+        <listitem>
+          <para>
+            Additional information set when the error was reported.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

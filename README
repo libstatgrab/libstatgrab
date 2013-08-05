@@ -1,8 +1,6 @@
 libstatgrab README
 http://www.i-scream.org/libstatgrab/
 
-$Id$
-
 Description
 -----------
 
@@ -33,8 +31,29 @@ There are, of course, the usual GNU-style configure options;
 
   --prefix=PREFIX
 
-For more documentation on the installation process, please read the
-INSTALL document.
+For detailed documentation on the generic installation process, please
+read the INSTALL document.
+
+Enhancements of the general configuration process can be seen in the
+sections "Optional Features" and "Optional Packages" of the output of
+
+  ./configure --help
+
+Prerequisites
+-------------
+
+While libstatgrab will run without additional prerequisites, there are
+several options to improve it.
+
+* Having a recent (1.1.0+) version of log4cplus will enable tracing
+  functionalities. log4cplus can be found on its homepage here;
+  http://log4cplus.sourceforge.net/
+  Note that libstatgrab doesn't enable its logging automatically,
+  the using applications must do it.
+* Manpages can be built automatically when docbook2x is installed.
+  See http://docbook2x.sourceforge.net/
+* On Linux it might be necessary to install the ncurses-dev (or
+  equivalent) package to build saidar.
 
 Platform Specific Notes
 -----------------------
@@ -45,9 +64,9 @@ notes on using libstatgrab on those platforms.
 Problems?
 ---------
 
-Please let us know if you have any problems - support@i-scream.org.
+If you have any problems or find a bug, please let us know. We have
+information on how to do that on our website:
 
-If you find a bug, help us to fix it by sending details to
-bugs@i-scream.org. If you have a patch, please send it too.
+http://www.i-scream.org/support.xhtml
 
-Thank-you for using i-scream software.
+Thank you for using libstatgrab.

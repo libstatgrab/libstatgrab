@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,26 +26,26 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
 int main(int argc, char **argv){
 
 	sg_network_iface_stats *network_iface_stats;
-	int iface_count, i;
+	size_t iface_count, i;
+
+	/* Initialise helper - e.g. logging, if any */
+	sg_log_init("libstatgrab-examples", "SGEXAMPLES_LOG_PROPERTIES", argc ? argv[0] : NULL);
 
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
 
 	/* Drop setuid/setgid privileges. */
-	if (sg_drop_privileges() != 0) {
-		perror("Error. Failed to drop privileges");
-		return 1;
-	}
+	if (sg_drop_privileges() != SG_ERROR_NONE)
+		sg_die("Error. Failed to drop privileges", 1);
 
 	network_iface_stats = sg_get_network_iface_stats(&iface_count);
-
-	if(network_iface_stats == NULL){
-		fprintf(stderr, "Failed to get network interface stats\n");
-		exit(1);
-	}
+	if(network_iface_stats == NULL)
+		sg_die("Failed to get network interface stats", 1);
 
 	if (argc != 1) {
 		/* If an argument is given, use bsearch to find just that
@@ -65,7 +66,7 @@ int main(int argc, char **argv){
 
 	printf("Name\tSpeed\tDuplex\n");
 	for(i = 0; i < iface_count; i++) {
-		printf("%s\t%d\t", network_iface_stats->interface_name, network_iface_stats->speed);
+		printf("%s\t%llu\t", network_iface_stats->interface_name, network_iface_stats->speed);
 		switch (network_iface_stats->duplex) {
 		case SG_IFACE_DUPLEX_FULL:
 			printf("full\n");

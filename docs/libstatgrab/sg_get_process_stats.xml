@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="sg_get_process_stats">
-
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
 
   <refmeta>
     <refentrytitle>sg_get_process_stats</refentrytitle>
@@ -18,7 +10,11 @@
 
   <refnamediv>
     <refname>sg_get_process_stats</refname>
+    <refname>sg_get_process_stats_r</refname>
     <refname>sg_get_process_count</refname>
+    <refname>sg_get_process_count_of</refname>
+    <refname>sg_get_process_count_r</refname>
+    <refname>sg_free_process_count</refname>
     <refname>sg_process_compare_name</refname>
     <refname>sg_process_compare_pid</refname>
     <refname>sg_process_compare_uid</refname>
@@ -35,11 +31,32 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_process_stats *<function>sg_get_process_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_stats *<function>sg_get_process_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_process_stats</function></funcdef>
+        <paramdef>sg_process_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
       <funcprototype>
         <funcdef>sg_process_count *<function>sg_get_process_count</function></funcdef>
         <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_count *<function>sg_get_process_count_of</function></funcdef>
+        <paramdef>sg_process_count_source <parameter>pcs</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_process_count *<function>sg_get_process_count_r</function></funcdef>
+        <paramdef>sg_process_stats const *<parameter>whereof</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_process_count</function></funcdef>
+        <paramdef>sg_process_count *<parameter>data</parameter></paramdef>
       </funcprototype>
 
       <funcprototype>
@@ -89,6 +106,74 @@
   <refsect1>
     <title>Description</title>
     <para>
+      The <function>sg_get_process_stats</function> functions provide
+      statistics about the currently running processes. Both functions,
+      <function>sg_get_process_stats</function>() and
+      <function>sg_get_process_stats_r</function>(), take an optional
+      <parameter>entries</parameter> parameter, which points
+      (when given) to a size_t to take the number of returned vector
+      entries.
+    </para>
+    <para>
+      The functions <function>sg_get_process_count_of</function>() and
+      <function>sg_get_process_count_r</function>() provide an aggregated
+      view of the process table - they deliver the amount of processes
+      per process state. The <function>sg_get_process_count</function>()
+      is in fact a preprocessor macro for backward compatibility and calls
+      <function>sg_get_process_count_of</function>() with the parameter
+      <parameter>pcs</parameter> of sg_entire_process_count to emulate
+      the behavior until 0.17.
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_process_stats</entry>
+        <entry><structname>sg_process_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_process_stats_r</entry>
+        <entry><structname>sg_process_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_process_count_of</entry>
+        <entry><structname>sg_process_count</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_process_count_r</entry>
+        <entry><structname>sg_process_count</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_process_stats</structname> vectors received from
+      <function>sg_get_process_stats_r</function>() or the
+      <structname>sg_process_count</structname> summaries received from
+      <function>sg_get_process_count_r</function> must be
+      freed using <function>sg_free_process_stats</function>() or
+      <function>sg_free_process_count</function>(), respectively.
+      The caller is responsible for doing it when the data isn't needed
+      any more.
+    </para>
+    <!--
+    <para>
       The <function>sg_get_process_stats</function> takes a pointer to
       an int, <parameter>entries</parameter>, which is filled with the
       number of processes the snapshot contains. The return value is a
@@ -106,6 +191,7 @@
       on the system. In the first case lots of detail is provided, and
       in the second case a summary of the states of the current processes.
     </para>
+    -->
     <para>
       <simplelist type="vert">
         <member><function>sg_process_compare_name</function></member>
@@ -119,15 +205,22 @@
       </simplelist>
     </para>
     <para>
-      These functions compare two sg_process_stats entries, and return an 
+      These functions compare two sg_process_stats entries, and return an
       int to represent which one is greater. The main use of these functions
       is to be passed to qsort to sort the sg_process_stats by the given type.
-    </para>
-    <para> 
-      For example: 
-    </para>
-    <para>
-        <function>qsort</function>(<structname>sg_process_stats</structname> ps, int ps_size, sizeof *ps, sg_process_compare_pid);
+      <example>
+        <title>Example</title>
+        <programlisting>
+size_t entries;
+sg_process_stats *proc_stats = NULL;
+while( NULL != ( proc_stats = sg_get_process_stats_r(&amp;entries) ) ) {
+    /* order entries by comparing the process identifier */
+    qsort( proc_stats, entries, sizeof(proc_stats[0]), &amp;sg_process_compare_pid );
+    show_proc_stats( proc_stats );
+    sg_free_process_stats( proc_stats );
+}
+        </programlisting>
+      </example>
     </para>
 
   </refsect1>
@@ -145,21 +238,28 @@ typedef struct {
         char *process_name;
         char *proctitle;
 
-        pid_t pid;
+        pid_t pid;    /* process identifier */
         pid_t parent; /* Parent pid */
         pid_t pgid;   /* process id of process group leader */
+        pid_t sessid; /* session id of the session the process belongs to */
 
         uid_t uid;
         uid_t euid;
         gid_t gid;
         gid_t egid;
 
+        unsigned long long context_switches;
+        unsigned long long voluntary_context_switches;
+        unsigned long long involuntary_context_switches;
         unsigned long long proc_size; /* in bytes */
         unsigned long long proc_resident; /* in bytes */
+        time_t start_time; /* When was the process started */
         time_t time_spent; /* time running in seconds */
         double cpu_percent;
         int nice;
         sg_process_state state;
+
+        time_t systime;
 } sg_process_stats;
     </programlisting>
 
@@ -178,7 +278,15 @@ typedef enum {
         <term><structfield>process_name</structfield></term>
         <listitem>
           <para>
-            The name of the command that was run.
+            The name of the command that was run. The content of this
+            field heavily depends on the underlying operating system,
+            some store the basename the executable passes to
+            the <function>exec</function>(2) system call, some the entire
+            path. Most OS restrict the size of this field - some like
+            the *BSD family to a very low value of 15 bytes.
+          </para>
+          <para>
+            This field is usually immutable for userland processes.
           </para>
         </listitem>
       </varlistentry>
@@ -217,10 +325,18 @@ typedef enum {
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><structfield>sessid</structfield></term>
+        <listitem>
+          <para>
+            Session id of the session the process belongs to.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term><structfield>uid</structfield></term>
         <listitem>
           <para>
-            The UID the process is running as.
+            The ID of the user the process is running as.
           </para>
         </listitem>
       </varlistentry>
@@ -228,7 +344,7 @@ typedef enum {
         <term><structfield>euid</structfield></term>
         <listitem>
           <para>
-            The effective UID the process is running as.
+            The ID of the effective user the process is running as.
           </para>
         </listitem>
       </varlistentry>
@@ -236,7 +352,7 @@ typedef enum {
         <term><structfield>gid</structfield></term>
         <listitem>
           <para>
-            The GID the process is running as.
+            The ID of the group the process is running as.
           </para>
         </listitem>
       </varlistentry>
@@ -244,7 +360,33 @@ typedef enum {
         <term><structfield>egid</structfield></term>
         <listitem>
           <para>
-            The effective GID the process is running as.
+            The ID of the effective group the process is running as.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>context_switches</structfield></term>
+        <listitem>
+          <para>
+            The number of context switches of this process (voluntary and involuntary).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>voluntary_context_switches</structfield></term>
+        <listitem>
+          <para>
+            The number of voluntary context switches of this process (eg.
+            by calling <function>sched_yield</function>() or <function>sleep</function>()).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>involuntary_context_switches</structfield></term>
+        <listitem>
+          <para>
+            The number of involuntary context switches of this process (eg.
+            time slice exhausted or signal sent).
           </para>
         </listitem>
       </varlistentry>
@@ -252,7 +394,7 @@ typedef enum {
         <term><structfield>proc_size</structfield></term>
         <listitem>
           <para>
-            The size of the process in bytes.
+            The virtual memory size of the process in bytes.
           </para>
         </listitem>
       </varlistentry>
@@ -265,10 +407,20 @@ typedef enum {
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><structfield>start_time</structfield></term>
+        <listitem>
+          <para>
+            The time when the process has been started in seconds since
+            epoch.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term><structfield>time_spent</structfield></term>
         <listitem>
           <para>
-            The number of seconds the process has been running.
+            The number of seconds the process has been running (user+system
+            time, without time spent by child processes).
           </para>
         </listitem>
       </varlistentry>
@@ -297,20 +449,43 @@ typedef enum {
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            The time in seconds since epoch of the moment where the present
+            statistic has been created. This might be (but doesn't have to
+            be) the same moment for all returned entries, regardless whether
+            they're fetched with one snapshot or puzzled from some kind of
+            procfs.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
 
     <para>
-      The structure returned by sg_get_process_count is of type
+      The structure returned by sg_get_process_count_of and
+      sg_get_process_count_r is of type
       <structname>sg_process_count</structname>.
     </para>
 
     <programlisting>
+typedef enum sg_process_count_source {
+        sg_entire_process_count,
+        sg_last_process_count
+} sg_process_count_source;
+    </programlisting>
+
+    <programlisting>
 typedef struct{
-        int total;
-        int running;
-        int sleeping;
-        int stopped;
-        int zombie;
+        unsigned long long total;
+        unsigned long long running;
+        unsigned long long sleeping;
+        unsigned long long stopped;
+        unsigned long long zombie;
+        unsigned long long unknown;
+
+        time_t systime;
 }sg_process_count;
     </programlisting>
 
@@ -355,7 +530,41 @@ typedef struct{
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term><structfield>unknown</structfield></term>
+        <listitem>
+          <para>
+            The number of processes not matching any of above named categories.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            The time in seconds since epoch of the moment where the present
+            statistic has been created.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Bugs</title>
+    <para>
+      The very first call of
+      <function>sg_get_process_count_of</function>(sg_last_process_count)
+      will return the same as
+      <function>sg_get_process_count_of</function>(sg_entire_process_count).
+    </para>
+    <para>
+      The compare functions exist rather for backward compatibility than
+      for functionality enhancements. Limited flexibility (e.g. reverse
+      order) and lack of optimising opportunities for the compiler leads
+      to the recommendation to implement the required compare routines
+      locally.
+    </para>
   </refsect1>
 
   <refsect1>

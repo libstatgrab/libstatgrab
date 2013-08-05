@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,6 +26,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
+static int quit;
+
 int main(int argc, char **argv){
 
 	extern char *optarg;
@@ -41,18 +46,27 @@ int main(int argc, char **argv){
 		}
 	}
 
+	/* Initialise helper - e.g. logging, if any */
+	sg_log_init("libstatgrab-examples", "SGEXAMPLES_LOG_PROPERTIES", argc ? argv[0] : NULL);
+
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
+
+	register_sig_flagger( SIGINT, &quit );
 
 	/* Drop setuid/setgid privileges. */
-	if (sg_drop_privileges() != 0) {
-		perror("Error. Failed to drop privileges");
-		return 1;
-	}
+	if (sg_drop_privileges() != SG_ERROR_NONE)
+		sg_die("Error. Failed to drop privileges", 1);
 
-	while( (load_stat = sg_get_load_stats()) != NULL){
+	if ((load_stat = sg_get_load_stats(NULL)) == NULL)
+		sg_die("Failed to get load stats", 1);
+
+	while( (load_stat = sg_get_load_stats(NULL)) != NULL){
+		int ch;
 		printf("Load 1 : %5.2f\t Load 5 : %5.2f\t Load 15 : %5.2f\n", load_stat->min1, load_stat->min5, load_stat->min15);
-		sleep(delay);
+		ch = inp_wait(delay);
+		if( quit || (ch == 'q') )
+			break;
 	}
 
 	exit(0);

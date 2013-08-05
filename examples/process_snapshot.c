@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,32 +26,32 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int main(){
+#include "helpers.h"
+
+int main(int argc, char **argv){
 	sg_process_stats *ps;
-	int ps_size;
-	int x;
+	size_t ps_size;
+	size_t x;
 	char *state = NULL;
 
+	/* Initialise helper - e.g. logging, if any */
+	sg_log_init("libstatgrab-examples", "SGEXAMPLES_LOG_PROPERTIES", argc ? argv[0] : NULL);
+
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
 
 	/* Drop setuid/setgid privileges. */
-	if (sg_drop_privileges() != 0) {
-		perror("Error. Failed to drop privileges");
-		return 1;
-	}
+	if (sg_drop_privileges() != SG_ERROR_NONE)
+		sg_die("Error. Failed to drop privileges", 1);
 
 	ps = sg_get_process_stats(&ps_size);
-
-	if(ps == NULL){
-		fprintf(stderr, "Failed to get process snapshot\n");
-		exit(1);
-	}
+	if(ps == NULL)
+		sg_die("Failed to get process snapshot", 1);
 
 	qsort(ps, ps_size, sizeof *ps, sg_process_compare_pid);
 
-	printf("%5s %5s %5s %5s %5s %5s %5s %6s %6s %9s %-10s %-4s %-8s %-20s %s\n",
-	 	"pid", "ppid", "pgid", "uid", "euid", "gid", "egid", "size", "res", "time", "cpu", "nice", "state", "name", "title");
+	printf("%5s %5s %5s %5s %5s %5s %5s %6s %6s %9s %-10s %-4s %-8s %-6s %-6s %-20s %s\n",
+		"pid", "ppid", "pgid", "uid", "euid", "gid", "egid", "size", "res", "time", "cpu", "nice", "state", "nvcsw", "nivcsw", "name", "title");
 
 	for(x=0;x<ps_size;x++){
 		switch (ps->state) {
@@ -71,13 +72,15 @@ int main(){
 			state = "UNKNOWN";
 			break;
 		}
-		printf("%5d %5d %5d %5d %5d %5d %5d %5dM %5dM %8ds %10f %4d %-8s %-20s %s\n",
-			(int)ps->pid, (int)ps->parent, (int)ps->pgid, (int)ps->uid,
-			(int)ps->euid, (int)ps->gid, (int)ps->egid,
-			(int)(ps->proc_size / (1024*1024)),
-			(int)(ps->proc_resident / (1024*1024)),
-			(int)ps->time_spent, (float)ps->cpu_percent,
-			(int)ps->nice, state,
+		printf("%5u %5u %5u %5u %5u %5u %5u %5uM %5uM %8ds %10f %4d %-8s %6llu %6llu %-20s %s\n",
+			(unsigned)ps->pid, (unsigned)ps->parent, (unsigned)ps->pgid,
+			(unsigned)ps->uid, (unsigned)ps->euid, (unsigned)ps->gid, (unsigned)ps->egid,
+			(unsigned)(ps->proc_size / (1024*1024)),
+			(unsigned)(ps->proc_resident / (1024*1024)),
+			(unsigned)ps->time_spent, (float)ps->cpu_percent,
+			ps->nice, state,
+			ps->voluntary_context_switches,
+			ps->involuntary_context_switches,
 			ps->process_name, ps->proctitle);
 		ps++;
 	}

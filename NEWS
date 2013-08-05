@@ -1,12 +1,24 @@
 libstatgrab NEWS
 http://www.i-scream.org/libstatgrab/
 
-$Id$
-
 PLANS: We're now working towards a 1.0 release which is where we plan
        to stabilise the API. We'll be doing test releases before hand,
        but as always we'll like to hear about any bugs found in the
        current release.
+
+libstatgrab 0.90
+ * Please note the API in 0.90 has changed, so applications using
+   libstatgrab will need to be updated to support the changes.
+
+ * Thread safety and reentrant functions.
+ * API unification (every stats call is now able to return multiple entries).
+ * Complete rewrite of internal memory management (eases future extensions).
+ * Add experimental support for tracing using log4cplus.
+ * Complete the ports for AIX, HP-UX and most of the widely used
+   BSD-based operating systems.
+ * Complete the port for Darwin/MacOS X including basic Mach.
+ * Clean up the FreeBSD and Solaris implementations.
+ * Remove explicit support for Linux 2.4.
 
 libstatgrab 0.17 (21 February 2010)
  * Provide iowait cpu information on Linux version 2.5.41 or later.

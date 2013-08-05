@@ -3,13 +3,28 @@
 # $Id$
 
 AUTOMAKE_OPTIONS = gnu
+ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src docs examples
+DOCS_SUBDIR = docs
 
-ChangeLog:
-	cvs2cl --stdout --no-wrap -r -t -w -S -g "-d :pserver:anonymous@cvs.i-scream.org:/cvs/i-scream" -g "-q" > ChangeLog
+if TESTS
+TESTS_SUBDIR = tests
+endif
+
+SUBDIRS = src examples $(DOCS_SUBDIR) $(TESTS_SUBDIR)
+
+test:
+if TEST_SCRIPTS
+	cd tests && $(MAKE) test
+else
+	@echo Not built
+endif
+
+check: test
 
 EXTRA_DIST = libstatgrab.pc.in PLATFORMS COPYING COPYING.LGPL
+
+MAINTAINERCLEANFILES = ChangeLog
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libstatgrab.pc

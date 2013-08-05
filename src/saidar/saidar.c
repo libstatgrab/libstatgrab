@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -36,16 +38,22 @@
 #include <limits.h>
 #include <time.h>
 #include <math.h>
-#ifdef AIX
+#ifdef HAVE_TERMIOS_H
 #include <termios.h>
-#else
+#elif defined(HAVE_SYS_TERMIOS_H)
 #include <sys/termios.h>
 #endif
 
 #ifdef HAVE_NCURSES_H
 #define COLOR_SUPPORT
 #endif
-#include CURSES_HEADER_FILE
+#if defined(HAVE_NCURSES_H)
+# include <ncurses.h>
+#elif defined(HAVE_NCURSES_NCURSES_H)
+# include <ncurses/ncurses.h>
+#elif defined(HAVE_CURSES_H)
+# include <curses.h>
+#endif
 
 #define THRESHOLD_LOAD 1.0
 
@@ -63,7 +71,11 @@
 #define THRESHOLD_WARN_DISK 75.0
 #define THRESHOLD_ALERT_DISK 90.0
 
-int sig_winch_flag = 0;
+#ifndef lengthof
+#define lengthof(x) (sizeof(x)/sizeof((x)[0]))
+#endif
+
+static int sig_winch_flag = 0;
 
 typedef struct{
 	sg_cpu_percents *cpu_percents;
@@ -74,23 +86,26 @@ typedef struct{
 	sg_page_stats *page_stats;
 
 	sg_network_io_stats *network_io_stats;
-	int network_io_entries;
+	size_t network_io_entries;
 
 	sg_disk_io_stats *disk_io_stats;
-	int disk_io_entries;
+	size_t disk_io_entries;
 
 	sg_fs_stats *fs_stats;
-	int fs_entries;
+	size_t fs_entries;
 
 	sg_host_info *host_info;
 	sg_user_stats *user_stats;
-}stats_t;
+	size_t user_entries;
+} stats_t;
 
-stats_t stats;
+static stats_t stats;
 
-char *size_conv(long long number){
-	char type[] = {'B', 'K', 'M', 'G', 'T'};
-	int x=0;
+#if 0
+static char *
+isize_conv(long long number){
+	char type[] = {'B', 'K', 'M', 'G', 'T', 'P'};
+	size_t x=0;
 	int sign=1;
 	static char string[10];
 
@@ -99,21 +114,41 @@ char *size_conv(long long number){
 		number=-number;
 	}
 
-	for(;x<5;x++){
+	for(;x<lengthof(type);x++){
 		if( (number/1024) < (100)) {
 			break;
 		}
-		number = (number/1024);
+		number /= 1024;
 	}
 
 	number = number*sign;
 
 	snprintf(string, 10, "%lld%c", number, type[x]);
-	return string;
 
+	return string;
+}
+#endif
+
+static char *
+size_conv(unsigned long long number){
+	char type[] = {'B', 'K', 'M', 'G', 'T', 'P'};
+	size_t x=0;
+	static char string[10];
+
+	for(;x<lengthof(type);x++){
+		if( (number/1024) < (100)) {
+			break;
+		}
+		number /= 1024;
+	}
+
+	snprintf(string, 10, "%llu%c", number, type[x]);
+
+	return string;
 }
 
-char *hr_uptime(time_t time){
+static char *
+hr_uptime(time_t time) {
 	int day = 0, hour = 0, min = 0;
 	static char uptime_str[25];
 	int sec = (int) time;
@@ -125,15 +160,16 @@ char *hr_uptime(time_t time){
 	min = sec / 60;
 	sec = sec % 60;
 
-	if(day){
+	if(day) {
 		snprintf(uptime_str, 25, "%dd %02d:%02d:%02d", day, hour, min, sec);
-	}else{
+	} else {
 		snprintf(uptime_str, 25, "%02d:%02d:%02d", hour, min, sec);
 	}
 	return uptime_str;
 }
 
-void display_headings(){
+static void
+display_headings(void) {
 	int line;
 
 	move(0,0);
@@ -233,13 +269,14 @@ void display_headings(){
 	refresh();
 }
 
-void display_data(int colors){
+static void
+display_data(int colors) {
 	char cur_time[20];
 	struct tm *tm_time;
 	time_t epoc_time;
-	int counter, line;
+	size_t counter, line;
 	long long r,w;
-	long long rt, wt;
+	unsigned long long rt, wt;
 	sg_disk_io_stats *disk_io_stat_ptr;
 	sg_network_io_stats *network_stat_ptr;
 	sg_fs_stats *disk_stat_ptr;
@@ -331,27 +368,27 @@ void display_data(int colors){
 	if (stats.process_count != NULL) {
 		/* Process */
 		move(2, 54);
-		printw("%5d", stats.process_count->running);
+		printw("%5llu", stats.process_count->running);
 		move(2,74);
 		if (colors && stats.process_count->zombie > THRESHOLD_WARN_ZMB) {
 			attron(A_STANDOUT);
 			attron(A_BOLD);
 		}
-		printw("%5d", stats.process_count->zombie);
+		printw("%5llu", stats.process_count->zombie);
 		if(colors) {
 			attroff(A_STANDOUT);
 			attroff(A_BOLD);
 		}
 		move(3, 54);
-		printw("%5d", stats.process_count->sleeping);
+		printw("%5llu", stats.process_count->sleeping);
 		move(3, 74);
-		printw("%5d", stats.process_count->total);
+		printw("%5llu", stats.process_count->total);
 		move(4, 54);
-		printw("%5d", stats.process_count->stopped);
+		printw("%5llu", stats.process_count->stopped);
 	}
 	if (stats.user_stats != NULL) {
 		move(4,74);
-		printw("%5d", stats.user_stats->num_entries);
+		printw("%5lu", stats.user_entries);
 	}
 
 	if(colors) {
@@ -422,9 +459,9 @@ void display_data(int colors){
 	if (stats.page_stats != NULL) {
 		/* Paging */
 		move(6, 74);
-		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
+		printw("%5llu", (stats.page_stats->systime)? (stats.page_stats->pages_pagein / stats.page_stats->systime): stats.page_stats->pages_pagein);
 		move(7, 74);
-		printw("%5d", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
+		printw("%5llu", (stats.page_stats->systime)? (stats.page_stats->pages_pageout / stats.page_stats->systime) : stats.page_stats->pages_pageout);
 	}
 	if (colors) {
 		attroff(COLOR_PAIR(5));
@@ -537,31 +574,66 @@ void display_data(int colors){
 	refresh();
 }
 
-void sig_winch_handler(int dummy){
+static void
+sig_winch_handler(int dummy) {
+	(void)dummy;
 	sig_winch_flag = 1;
 	signal(SIGWINCH, sig_winch_handler);
 }
 
-int get_stats(){
-	stats.cpu_percents = sg_get_cpu_percents();
-	stats.mem_stats = sg_get_mem_stats();
-	stats.swap_stats = sg_get_swap_stats();
-	stats.load_stats = sg_get_load_stats();
+static int
+get_stats(void) {
+	stats.cpu_percents = sg_get_cpu_percents(NULL);
+	stats.mem_stats = sg_get_mem_stats(NULL);
+	stats.swap_stats = sg_get_swap_stats(NULL);
+	stats.load_stats = sg_get_load_stats(NULL);
 	stats.process_count = sg_get_process_count();
-	stats.page_stats = sg_get_page_stats_diff();
+	stats.page_stats = sg_get_page_stats_diff(NULL);
 	stats.network_io_stats = sg_get_network_io_stats_diff(&(stats.network_io_entries));
 	stats.disk_io_stats = sg_get_disk_io_stats_diff(&(stats.disk_io_entries));
 	stats.fs_stats = sg_get_fs_stats(&(stats.fs_entries));
-	stats.host_info = sg_get_host_info();
-	stats.user_stats = sg_get_user_stats();
+	stats.host_info = sg_get_host_info(NULL);
+	stats.user_stats = sg_get_user_stats(&stats.user_entries);
 
 	return 1;
 }
 
-void version_num(char *progname){
+static void
+version_num(char const *progname) {
 	fprintf(stderr, "%s version %s\n", progname, PACKAGE_VERSION);
 	fprintf(stderr, "\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
 	exit(1);
+}
+
+static void
+die(const char *s) {
+	fprintf(stderr, "fatal: %s\n", s);
+	exit(1);
+}
+
+static void
+sg_die(const char *prefix, int exit_code)
+{
+	sg_error_details err_det;
+	char *errmsg = NULL;
+	sg_error errc;
+
+	if( SG_ERROR_NONE != ( errc = sg_get_error_details(&err_det) ) ) {
+		fprintf(stderr, "panic: can't get error details (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	if( NULL == sg_strperror(&errmsg, &err_det) ) {
+		errc = sg_get_error();
+		fprintf(stderr, "panic: can't prepare error message (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	fprintf( stderr, "%s: %s\n", prefix, errmsg );
+
+	free( errmsg );
+
+	exit(exit_code);
 }
 
 void usage(char *progname){
@@ -580,29 +652,159 @@ void usage(char *progname){
 	exit(1);
 }
 
+#ifndef HAVE_STRNDUP
+static char *
+strndup(char const *s, size_t n)
+{
+	char *r = malloc(n + 1);
+	char *d = r;
+
+	if(!r)
+		return r;
+	while((n-- != 0) && *s)
+		*d++ = *s++;
+	*d = 0;
+	return r;
+}
+#endif
+
+#define STACK_UNIT 4
+
+static char const **
+push_item(char const **stack, char const *item, size_t items) {
+	char const **s = stack;
+	size_t stack_size = items;
+	size_t desired = (items / STACK_UNIT) * STACK_UNIT;
+
+	if (desired < ++items) {
+		desired = ((items / STACK_UNIT) + 1) * STACK_UNIT;
+		if (desired >= stack_size) {
+			s = realloc(stack, desired * sizeof(stack[0]));
+			if(NULL == s)
+				die("Out of memory");
+		}
+	}
+
+	s[stack_size] = item;
+
+	return s;
+}
+
+static int
+sg_is_spc(char ch)
+{
+    unsigned char uch = (unsigned char)ch;
+    int i = (int)((unsigned)uch);
+    return isspace(i);
+}
+
+static char const **
+split_list(char const *list) {
+	char const *l = list;
+	char const **sp = NULL;
+	size_t items = 0;
+
+	for(l = list; *l; ) {
+		while(*l && !(sg_is_spc(*l) || (',' == *l)))
+			++l;
+		sp = push_item(sp, strndup(list, l-list), items++);
+		while(*l && (sg_is_spc(*l) || (',' == *l)))
+			++l;
+		list = l;
+	}
+
+	sp = push_item(sp, NULL, items);
+
+	return sp;
+}
+
+static int
+fsnmcmp(const void *va, const void *vb) {
+	const char *a = * (char * const *)va;
+	const char *b = * (char * const *)vb;
+
+	if( a && b )
+		return strcasecmp(a, b);
+	/* force NULL sorted at end */
+	if( a && !b )
+		return -1;
+	if( !a && b )
+		return 1;
+	return 0;
+}
+
+static sg_error
+set_valid_filesystems(char const *fslist) {
+	char const **newfs;
+	char const **given_fs;
+
+	while(sg_is_spc(*fslist))
+		++fslist;
+	if('!' == *fslist) {
+		size_t new_items = 0, given_items = 0;
+		const char **old_valid_fs = sg_get_valid_filesystems(0);
+
+		if( NULL == old_valid_fs )
+			sg_die("sg_get_valid_filesystems()", 1);
+
+		++fslist;
+		while(*fslist && sg_is_spc(*fslist))
+			++fslist;
+
+		given_fs = split_list(fslist);
+		for(newfs = given_fs; *newfs; ++newfs) {
+			++given_items;
+		}
+		qsort(given_fs, given_items, sizeof(given_fs[0]), fsnmcmp);
+
+		newfs = NULL;
+		new_items = 0;
+
+		while(*old_valid_fs) {
+			if (NULL == bsearch(old_valid_fs, given_fs, given_items, sizeof(given_fs[0]), fsnmcmp)) {
+				newfs = push_item(newfs, *old_valid_fs, new_items++);
+			}
+			++old_valid_fs;
+		}
+		newfs = push_item(newfs, NULL, new_items);
+	}
+	else {
+		newfs = given_fs = split_list(fslist);
+	}
+
+        if( SG_ERROR_NONE != sg_set_valid_filesystems( newfs ) )
+		sg_die("sg_set_valid_filesystems() failed", 1);
+
+	for(newfs = given_fs; *newfs; ++newfs) {
+		free((void *)(*newfs));
+	}
+
+	return SG_ERROR_NONE;
+}
+
 int main(int argc, char **argv){
-	extern char *optarg;
 	int c;
 	int colouron = 0;
 
-	time_t last_update = 0;
+	char *fslist = NULL;
 
-	WINDOW *window;
+	time_t last_update = 0;
 
 	extern int errno;
 
 	int delay=2;
 
-	sg_init();
+	sg_log_init("saidar", "SAIDAR_LOG_PROPERTIES", argc ? argv[0] : NULL);
+	sg_init(1);
 	if(sg_drop_privileges() != 0){
 		fprintf(stderr, "Failed to drop setuid/setgid privileges\n");
 		return 1;
 	}
 
 #ifdef COLOR_SUPPORT
-	while ((c = getopt(argc, argv, "d:cvh")) != -1){
+	while ((c = getopt(argc, argv, "d:F:cvh")) != -1){
 #else
-	while ((c = getopt(argc, argv, "d:vh")) != -1){
+	while ((c = getopt(argc, argv, "d:F:vh")) != -1){
 #endif
 		switch (c){
 			case 'd':
@@ -624,8 +826,19 @@ int main(int argc, char **argv){
 			default:
 				usage(argv[0]);
 				return 1;
-				break;
 		}
+	}
+
+	if (fslist) {
+		sg_error rc = set_valid_filesystems(fslist);
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
+		free(fslist);
+	}
+	else {
+		sg_error rc = set_valid_filesystems("!nfs, nfs3, nfs4, cifs, smbfs, samba, autofs");
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
 	}
 
 	signal(SIGWINCH, sig_winch_handler);
@@ -653,7 +866,7 @@ int main(int argc, char **argv){
 	cbreak();
 	noecho();
 	timeout(delay * 1000);
-	window=newwin(0, 0, 0, 0);
+	newwin(0, 0, 0, 0);
 	clear();
 
 	if(!get_stats()){
@@ -691,5 +904,6 @@ int main(int argc, char **argv){
 	}
 
 	endwin();
+	sg_shutdown();
 	return 0;
 }

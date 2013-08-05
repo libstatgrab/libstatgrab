@@ -1,7 +1,8 @@
 /*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,13 +26,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "helpers.h"
+
 int main(int argc, char **argv){
 
-	extern char *optarg;
-	int c;
-
-	int delay = 1;
+	size_t nusers, x;
 	sg_user_stats *users;
+
+#if 0
+	int c;
+	int delay = 1;
 
 	while ((c = getopt(argc, argv, "d:")) != -1){
 		switch (c){
@@ -40,19 +44,30 @@ int main(int argc, char **argv){
 				break;
 		}
 	}
+#endif
+	/* Initialise helper - e.g. logging, if any */
+	sg_log_init("libstatgrab-examples", "SGEXAMPLES_LOG_PROPERTIES", argc ? argv[0] : NULL);
 
 	/* Initialise statgrab */
-	sg_init();
+	sg_init(1);
 
 	/* Drop setuid/setgid privileges. */
-	if (sg_drop_privileges() != 0) {
-		perror("Error. Failed to drop privileges");
-		return 1;
-	}
+	if (sg_drop_privileges() != SG_ERROR_NONE)
+		sg_die("Error. Failed to drop privileges", 1);
 
-	if( (users = sg_get_user_stats()) != NULL){
-		printf("Users : %s\n", users->name_list);
-		printf("Number of users : %d\n", users->num_entries);
+	users = sg_get_user_stats(&nusers);
+	if( users == NULL )
+		sg_die("Failed to get logged on users", 1);
+
+	printf( "%16s %16s %24s %8s %24s\n", "login name", "device", "hostname", "pid", "login time" );
+
+	for( x = 0; x < nusers; ++x ) {
+		char ltbuf[256];
+		struct tm *tm;
+
+		tm = localtime(&users[x].login_time);
+		strftime(ltbuf, sizeof(ltbuf), "%c", tm);
+		printf( "%16s %16s %24s %8d %24s\n", users[x].login_name, users[x].device, users[x].hostname, (int) users[x].pid, ltbuf );
 	}
 
 	exit(0);

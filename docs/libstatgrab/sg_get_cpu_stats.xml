@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="sg_get_cpu_stats">
-
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
 
   <refmeta>
     <refentrytitle>sg_get_cpu_stats</refentrytitle>
@@ -18,8 +10,13 @@
 
   <refnamediv>
     <refname>sg_get_cpu_stats</refname>
+    <refname>sg_get_cpu_stats_r</refname>
     <refname>sg_get_cpu_stats_diff</refname>
+    <refname>sg_get_cpu_stats_diff_between</refname>
     <refname>sg_get_cpu_percents</refname>
+    <refname>sg_get_cpu_percents_of</refname>
+    <refname>sg_get_cpu_percents_r</refname>
+    <refname>sg_free_cpu_stats</refname>
     <refpurpose>get cpu usage</refpurpose>
   </refnamediv>
 
@@ -28,15 +25,42 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents_of</function></funcdef>
+        <paramdef>sg_cpu_percent_source <parameter>cps</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_percents *<function>sg_get_cpu_percents_r</function></funcdef>
+        <paramdef>const sg_cpu_stats *<parameter>whereof</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>void <function>sg_free_cpu_percents</function></funcdef>
+        <paramdef>sg_cpu_percents *<parameter>data</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
       </funcprototype>
       <funcprototype>
         <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_cpu_stats *<function>sg_get_cpu_stats_diff_between</function></funcdef>
+        <paramdef>const sg_cpu_stats *<parameter>cpu_now</parameter>, const sg_cpu_stats *<parameter>cpu_last</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_cpu_stats</function></funcdef>
+        <paramdef>sg_cpu_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -44,12 +68,99 @@
   <refsect1>
     <title>Description</title>
     <para>
+      These are the categories of data delivered by the cpu stats module:
+      <function>sg_get_cpu_stats</function>() and
+      <function>sg_get_cpu_stats_r</function>() deliver native cpu
+      counters since the machine has been started,
+      <function>sg_get_cpu_stats_diff</function>() and
+      <function>sg_get_cpu_stats_diff_between</function>() deliver native
+      cpu counters between two <function>sg_get_cpu_stats</function>()
+      calls and <function>sg_get_cpu_percents_of</function>() and
+      <function>sg_get_cpu_percents_r</function>() deliver correlated relative
+      cpu counters (where total is 100%).
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_cpu_stats</entry>
+        <entry><structname>sg_cpu_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_cpu_stats_r</entry>
+        <entry><structname>sg_cpu_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_cpu_stats_diff</entry>
+        <entry><structname>sg_cpu_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_cpu_stats_diff_between</entry>
+        <entry><structname>sg_cpu_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      <row>
+        <entry>sg_get_cpu_percents_of</entry>
+        <entry><structname>sg_cpu_percents</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_cpu_percents_r</entry>
+        <entry><structname>sg_cpu_percents</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_cpu_stats</structname> buffer received from
+      <function>sg_get_cpu_stats_r</function>() and the
+      <function>sg_get_cpu_stats_diff_between</function>() as well as the
+      <structname>sg_cpu_percents</structname> buffer received from
+      <function>sg_get_cpu_percents_r</function>() must be freed using
+      <function>sg_free_cpu_stats</function>() or the
+      <function>sg_free_cpu_percents</function>(), respectively, when not
+      needed any more. The caller is responsible for doing it.
+    </para>
+    <para>
+      The value stored (the "ticks") will vary between operating
+      systems.  For example Solaris has a total of 100 per second,
+      while Linux has substantially more.  Also, different operating
+      systems store different information - you won't find nice cpu on
+      Solaris for example.
+    </para>
+    <para>
+      Modern systems shall provide information about the clock tick
+      resolution by invoking <code>sysconf(_SC_CLK_TCK)</code>.
+    </para>
+    <!--
+    <para>
       <function>sg_get_cpu_stats()</function> and
-      <function>sg_get_cpu_stats_diff()</function> both return static pointers
-      of type <structname>sg_cpu_stats</structname>.
-      <function>sg_get_cpu_stats()</function> returns the total amount of
+      <function>sg_get_cpu_stats_diff()</function> both return thread local
+      pointers of type <structname>sg_cpu_stats</structname>.
+      <function>sg_get_cpu_stats_r()</function> and
+      <function>sg_get_cpu_stats_diff_between()</function> both return
+      newly allocated pointers of type <structname>sg_cpu_stats</structname>.
+      <function>sg_get_cpu_stats()</function> and
+      <function>sg_get_cpu_stats_r()</function> returns the total amount of
       "ticks" the operating system has spent in each of the different
-      states. <function>sg_get_cpu_stats_diff()</function> returns the
+      states. <function>sg_get_cpu_stats_diff()</function> and
+      <function>sg_get_cpu_stats_diff_between()</function> returns the
       difference in "ticks" for each of the states since last time
       <function>sg_get_cpu_stats_diff()</function> or
       <function>sg_get_cpu_stats()</function> was called. If it has never
@@ -77,6 +188,7 @@
       will be the systems total ever since its uptime. (Unless the
       counters have cycled)
     </para>
+    -->
   </refsect1>
 
   <refsect1>
@@ -88,28 +200,36 @@
     </para>
 
     <programlisting>
-typedef struct{
-        long long user;
-        long long kernel;
-        long long idle;
-        long long iowait;
-        long long swap;
-        long long nice;
-        long long total;
+typedef struct {
+        unsigned long long user;
+        unsigned long long kernel;
+        unsigned long long idle;
+        unsigned long long iowait;
+        unsigned long long swap;
+        unsigned long long nice;
+        unsigned long long total;
+
+        unsigned long long context_switches;
+        unsigned long long voluntary_context_switches;
+        unsigned long long involuntary_context_switches;
+        unsigned long long syscalls;
+        unsigned long long interrupts;
+        unsigned long long soft_interrupts;
+
         time_t systime;
-}sg_cpu_stats;
+} sg_cpu_stats;
     </programlisting>
 
     <programlisting>
-typedef struct{
-        float user;
-        float kernel;
-        float idle;
-        float iowait;
-        float swap;
-        float nice;
+typedef struct {
+        double user;
+        double kernel;
+        double idle;
+        double iowait;
+        double swap;
+        double nice;
         time_t time_taken;
-}sg_cpu_percents;
+} sg_cpu_percents;
     </programlisting>
 
     <variablelist>
@@ -121,10 +241,26 @@ typedef struct{
           <structfield>iowait</structfield>
           <structfield>swap</structfield>
           <structfield>nice</structfield>
+          <structfield>total</structfield>
         </term>
         <listitem>
           <para>
             The different CPU states.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
+          <structfield>context_switches</structfield>
+          <structfield>voluntary_context_switches</structfield>
+          <structfield>involuntary_context_switches</structfield>
+          <structfield>syscalls</structfield>
+          <structfield>interrupts</structfield>
+          <structfield>soft_interrupts</structfield>
+        </term>
+        <listitem>
+          <para>
+            The different program actions on CPU.
           </para>
         </listitem>
       </varlistentry>

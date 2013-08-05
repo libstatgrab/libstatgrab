@@ -1,7 +1,8 @@
-/* 
+/*
  * i-scream libstatgrab
  * http://www.i-scream.org
- * Copyright (C) 2000-2004 i-scream
+ * Copyright (C) 2000-2013 i-scream
+ * Copyright (C) 2010-2013 Jens Rehsack
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,9 +21,7 @@
  * $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "tools.h"
 
 #include <statgrab.h>
 #include <string.h>
@@ -33,12 +32,14 @@
 
 typedef enum {
 	LONG_LONG = 0,
+	UNSIGNED_LONG_LONG,
 	BYTES,
 	TIME_T,
 	FLOAT,
 	DOUBLE,
 	STRING,
 	INT,
+	UNSIGNED,
 	BOOL,
 	DUPLEX
 } stat_type;
@@ -80,13 +81,40 @@ long float_scale_factor = 0;
 long long bytes_scale_factor = 0;
 
 /* Exit with an error message. */
-void die(const char *s) {
+static void
+die(const char *s) {
 	fprintf(stderr, "fatal: %s\n", s);
 	exit(1);
 }
 
+static void
+sg_die(const char *prefix, int exit_code)
+{
+	sg_error_details err_det;
+	char *errmsg = NULL;
+	sg_error errc;
+
+	if( SG_ERROR_NONE != ( errc = sg_get_error_details(&err_det) ) ) {
+		fprintf(stderr, "panic: can't get error details (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	if( NULL == sg_strperror(&errmsg, &err_det) ) {
+		errc = sg_get_error();
+		fprintf(stderr, "panic: can't prepare error message (%d, %s)\n", errc, sg_str_error(errc));
+		exit(exit_code);
+	}
+
+	fprintf( stderr, "%s: %s\n", prefix, errmsg );
+
+	free( errmsg );
+
+	exit(exit_code);
+}
+
 /* Remove all the recorded stats. */
-void clear_stats() {
+static void
+clear_stats(void) {
 	int i;
 
 	for (i = 0; i < num_stats; i++)
@@ -96,7 +124,8 @@ void clear_stats() {
 
 /* Add a stat. The varargs make up the name, joined with dots; the name is
    terminated with a NULL. */
-void add_stat(stat_type type, void *stat, ...) {
+static void
+add_stat(stat_type type, void *stat, ...) {
 	va_list ap;
 	int len = 0;
 	char *name, *p;
@@ -153,73 +182,97 @@ void add_stat(stat_type type, void *stat, ...) {
 }
 
 /* Compare two stats by name for qsort and bsearch. */
-int stats_compare(const void *a, const void *b) {
+static int
+stats_compare(const void *a, const void *b) {
 	return strcmp(((stat_item *)a)->name, ((stat_item *)b)->name);
 }
 
 /* Compare up to the length of the key for bsearch. */
-int stats_compare_prefix(const void *key, const void *item) {
+static int
+stats_compare_prefix(const void *key, const void *item) {
 	const char *kn = ((stat_item *)key)->name;
 	const char *in = ((stat_item *)item)->name;
 
 	return strncmp(kn, in, strlen(kn));
 }
 
-void populate_const() {
+static void
+populate_const(void) {
 	static int zero = 0;
 
 	/* Constants, for use with MRTG mode. */
 	add_stat(INT, &zero, "const", "0", NULL);
 }
 
-void populate_cpu() {
+static void
+populate_cpu(void) {
+	sg_cpu_stats *cpu_s;
+
+	cpu_s = use_diffs ? sg_get_cpu_stats_diff(NULL)
+			  : sg_get_cpu_stats(NULL);
+
 	if (use_cpu_percent) {
-		sg_cpu_percents *cpu_p = sg_get_cpu_percents();
+		sg_cpu_percent_source cps = use_diffs
+					  ? sg_last_diff_cpu_percent
+					  : sg_entire_cpu_percent;
+		sg_cpu_percents *cpu_p = sg_get_cpu_percents_of(cps, NULL);
 
 		if (cpu_p != NULL) {
-			add_stat(FLOAT, &cpu_p->user,
+			add_stat(DOUBLE, &cpu_p->user,
 				 "cpu", "user", NULL);
-			add_stat(FLOAT, &cpu_p->kernel,
+			add_stat(DOUBLE, &cpu_p->kernel,
 				 "cpu", "kernel", NULL);
-			add_stat(FLOAT, &cpu_p->idle,
+			add_stat(DOUBLE, &cpu_p->idle,
 				 "cpu", "idle", NULL);
-			add_stat(FLOAT, &cpu_p->iowait,
+			add_stat(DOUBLE, &cpu_p->iowait,
 				 "cpu", "iowait", NULL);
-			add_stat(FLOAT, &cpu_p->swap,
+			add_stat(DOUBLE, &cpu_p->swap,
 				 "cpu", "swap", NULL);
-			add_stat(FLOAT, &cpu_p->nice,
+			add_stat(DOUBLE, &cpu_p->nice,
 				 "cpu", "nice", NULL);
 			add_stat(TIME_T, &cpu_p->time_taken,
 				 "cpu", "time_taken", NULL);
 		}
 	} else {
-		sg_cpu_stats *cpu_s;
-
-		cpu_s = use_diffs ? sg_get_cpu_stats_diff()
-				  : sg_get_cpu_stats();
 		if (cpu_s != NULL) {
-			add_stat(LONG_LONG, &cpu_s->user,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->user,
 				 "cpu", "user", NULL);
-			add_stat(LONG_LONG, &cpu_s->kernel,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->kernel,
 				 "cpu", "kernel", NULL);
-			add_stat(LONG_LONG, &cpu_s->idle,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->idle,
 				 "cpu", "idle", NULL);
-			add_stat(LONG_LONG, &cpu_s->iowait,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->iowait,
 				 "cpu", "iowait", NULL);
-			add_stat(LONG_LONG, &cpu_s->swap,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->swap,
 				 "cpu", "swap", NULL);
-			add_stat(LONG_LONG, &cpu_s->nice,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->nice,
 				 "cpu", "nice", NULL);
-			add_stat(LONG_LONG, &cpu_s->total,
+			add_stat(UNSIGNED_LONG_LONG, &cpu_s->total,
 				 "cpu", "total", NULL);
 			add_stat(TIME_T, &cpu_s->systime,
 				 "cpu", "systime", NULL);
 		}
 	}
+
+	if (cpu_s != NULL) {
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->context_switches,
+			 "cpu", "ctxsw", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->voluntary_context_switches,
+			 "cpu", "vctxsw", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->involuntary_context_switches,
+			 "cpu", "nvctxsw", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->syscalls,
+			 "cpu", "syscalls", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->interrupts,
+			 "cpu", "intrs", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &cpu_s->soft_interrupts,
+			 "cpu", "softintrs", NULL);
+	}
 }
 
-void populate_mem() {
-	sg_mem_stats *mem = sg_get_mem_stats();
+static void
+populate_mem(void) {
+	sg_mem_stats *mem = sg_get_mem_stats(NULL);
 
 	if (mem != NULL) {
 		add_stat(BYTES, &mem->total, "mem", "total", NULL);
@@ -229,8 +282,9 @@ void populate_mem() {
 	}
 }
 
-void populate_load() {
-	sg_load_stats *load = sg_get_load_stats();
+static void
+populate_load(void) {
+	sg_load_stats *load = sg_get_load_stats(NULL);
 
 	if (load != NULL) {
 		add_stat(DOUBLE, &load->min1, "load", "min1", NULL);
@@ -239,17 +293,56 @@ void populate_load() {
 	}
 }
 
-void populate_user() {
-	sg_user_stats *user = sg_get_user_stats();
+static void
+populate_user(void) {
+	static size_t entries;
+	static char *name_list = NULL;
+	size_t name_list_length = 0, pos = 0;
 
-	if (user != NULL) {
-		add_stat(INT, &user->num_entries, "user", "num", NULL);
-		add_stat(STRING, &user->name_list, "user", "names", NULL);
+	sg_user_stats *users = sg_get_user_stats(&entries);
+
+	if (users != NULL) {
+		size_t i;
+		for (i = 0; i < entries; i++) {
+			const char *name = users[i].login_name;
+			const char *tty = users[i].device;
+
+			name_list_length += strlen(name) + 1;
+
+			add_stat(STRING, &users[i].login_name,
+				 "user", tty, "login_name", NULL);
+			add_stat(STRING, &users[i].device,
+				 "user", tty, "tty", NULL);
+			add_stat(STRING, &users[i].hostname,
+				 "user", tty, "from", NULL);
+			add_stat(TIME_T, &users[i].login_time,
+				 "user", tty, "login_time", NULL);
+		}
+
+		name_list = realloc(name_list, name_list_length + 1);
+
+		for (i = 0; i < entries; i++) {
+			const char *name = users[i].login_name;
+
+			strncpy(name_list + pos, name, strlen(name));
+			pos += strlen(name);
+			name_list[pos] = ' ';
+			pos ++;
+		}
+
+		if (entries != 0) {
+			pos--;
+		}
+		name_list[pos] = '\0';
+
+		add_stat(INT, &entries, "user", "num", NULL);
+		add_stat(STRING, &name_list, "user", "names", NULL);
 	}
 }
 
-void populate_swap() {
-	sg_swap_stats *swap = sg_get_swap_stats();
+static void
+populate_swap(void) {
+	sg_swap_stats *swap = sg_get_swap_stats(NULL);
 
 	if (swap != NULL) {
 		add_stat(BYTES, &swap->total, "swap", "total", NULL);
@@ -258,9 +351,22 @@ void populate_swap() {
 	}
 }
 
-void populate_general() {
+#ifndef lengthof
+#define lengthof(x) (sizeof(x)/sizeof((x)[0]))
+#endif
+
+static const char *host_states[] = {
+	"unknown", "physical host",
+	"virtual machine (full virtualized)",
+	"virtual machine (paravirtualized)",
+	"hardware virtualization"
+};
+static const char *unexpected_host_state = "unexpected state (libstatgrab too new)";
+
+static void
+populate_general(void) {
 	/* FIXME this should be renamed to host. */
-	sg_host_info *host = sg_get_host_info();
+	sg_host_info *host = sg_get_host_info(NULL);
 
 	if (host != NULL) {
 		add_stat(STRING, &host->os_name,
@@ -271,12 +377,19 @@ void populate_general() {
 			 "general", "os_version", NULL);
 		add_stat(STRING, &host->platform, "general", "platform", NULL);
 		add_stat(STRING, &host->hostname, "general", "hostname", NULL);
+		add_stat(UNSIGNED, &host->ncpus, "general", "ncpus", NULL);
+		add_stat(UNSIGNED, &host->maxcpus, "general", "ncpus_cfg", NULL);
+		add_stat(UNSIGNED, &host->bitwidth, "general", "bitwidth", NULL);
+		add_stat(STRING, ((size_t)host->host_state) > (lengthof(host_states) - 1)
+		                 ? &unexpected_host_state
+		                 : &host_states[host->host_state], "general", "hoststate", NULL);
 		add_stat(TIME_T, &host->uptime, "general", "uptime", NULL);
 	}
 }
 
-void populate_fs() {
-	int n, i;
+static void
+populate_fs(void) {
+	size_t n, i;
 	sg_fs_stats *disk = sg_get_fs_stats(&n);
 
 	if (disk != NULL) {
@@ -312,25 +425,25 @@ void populate_fs() {
 				 "fs", name, "used", NULL);
 			add_stat(BYTES, &disk[i].avail,
 				 "fs", name, "avail", NULL);
-			add_stat(LONG_LONG, &disk[i].total_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].total_inodes,
 				 "fs", name, "total_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].used_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].used_inodes,
 				 "fs", name, "used_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].free_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].free_inodes,
 				 "fs", name, "free_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].avail_inodes,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].avail_inodes,
 				 "fs", name, "avail_inodes", NULL);
-			add_stat(LONG_LONG, &disk[i].io_size,
+			add_stat(BYTES, &disk[i].io_size,
 				 "fs", name, "io_size", NULL);
-			add_stat(LONG_LONG, &disk[i].block_size,
+			add_stat(BYTES, &disk[i].block_size,
 				 "fs", name, "block_size", NULL);
-			add_stat(LONG_LONG, &disk[i].total_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].total_blocks,
 				 "fs", name, "total_blocks", NULL);
-			add_stat(LONG_LONG, &disk[i].free_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].free_blocks,
 				 "fs", name, "free_blocks", NULL);
-			add_stat(LONG_LONG, &disk[i].avail_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].avail_blocks,
 				 "fs", name, "avail_blocks", NULL);
-			add_stat(LONG_LONG, &disk[i].used_blocks,
+			add_stat(UNSIGNED_LONG_LONG, &disk[i].used_blocks,
 				 "fs", name, "used_blocks", NULL);
 
 			free(buf);
@@ -338,8 +451,9 @@ void populate_fs() {
 	}
 }
 
-void populate_disk() {
-	int n, i;
+static void
+populate_disk(void) {
+	size_t n, i;
 	sg_disk_io_stats *diskio;
 
 	diskio = use_diffs ? sg_get_disk_io_stats_diff(&n)
@@ -347,7 +461,7 @@ void populate_disk() {
 	if (diskio != NULL) {
 		for (i = 0; i < n; i++) {
 			const char *name = diskio[i].disk_name;
-	
+
 			add_stat(STRING, &diskio[i].disk_name,
 				 "disk", name, "disk_name", NULL);
 			add_stat(BYTES, &diskio[i].read_bytes,
@@ -360,21 +474,32 @@ void populate_disk() {
 	}
 }
 
-void populate_proc() {
+static void
+populate_proc(void) {
 	/* FIXME expose individual process info too */
 	sg_process_count *proc = sg_get_process_count();
 
 	if (proc != NULL) {
-		add_stat(INT, &proc->total, "proc", "total", NULL);
-		add_stat(INT, &proc->running, "proc", "running", NULL);
-		add_stat(INT, &proc->sleeping, "proc", "sleeping", NULL);
-		add_stat(INT, &proc->stopped, "proc", "stopped", NULL);
-		add_stat(INT, &proc->zombie, "proc", "zombie", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->total, "proc", "total", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->running, "proc", "running", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->sleeping, "proc", "sleeping", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->stopped, "proc", "stopped", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &proc->zombie, "proc", "zombie", NULL);
+	}
+	else {
+		char *errbuf;
+		sg_error_details errdet;
+		if( SG_ERROR_NONE != sg_get_error_details(&errdet) )
+			return;
+		if( NULL == sg_strperror( &errbuf, &errdet ) )
+			return;
+		fprintf( stderr, "%s\n", errbuf );
 	}
 }
 
-void populate_net() {
-	int num_io, num_iface, i;
+static void
+populate_net(void) {
+	size_t num_io, num_iface, i;
 	sg_network_io_stats *io;
 	sg_network_iface_stats *iface;
 
@@ -383,22 +508,22 @@ void populate_net() {
 	if (io != NULL) {
 		for (i = 0; i < num_io; i++) {
 			const char *name = io[i].interface_name;
-	
+
 			add_stat(STRING, &io[i].interface_name,
 				 "net", name, "interface_name", NULL);
 			add_stat(BYTES, &io[i].tx,
 				 "net", name, "tx", NULL);
 			add_stat(BYTES, &io[i].rx,
 				 "net", name, "rx", NULL);
-			add_stat(LONG_LONG, &io[i].ipackets,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].ipackets,
 				 "net", name, "ipackets", NULL);
-			add_stat(LONG_LONG, &io[i].opackets,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].opackets,
 				 "net", name, "opackets", NULL);
-			add_stat(LONG_LONG, &io[i].ierrors,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].ierrors,
 				 "net", name, "ierrors", NULL);
-			add_stat(LONG_LONG, &io[i].oerrors,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].oerrors,
 				 "net", name, "oerrors", NULL);
-			add_stat(LONG_LONG, &io[i].collisions,
+			add_stat(UNSIGNED_LONG_LONG, &io[i].collisions,
 				 "net", name, "collisions", NULL);
 			add_stat(TIME_T, &io[i].systime,
 				 "net", name, "systime", NULL);
@@ -409,7 +534,8 @@ void populate_net() {
 	if (iface != NULL) {
 		for (i = 0; i < num_iface; i++) {
 			const char *name = iface[i].interface_name;
-			int had_io = 0, j;
+			int had_io = 0;
+			size_t j;
 
 			/* If there wasn't a corresponding io stat,
 			   add interface_name from here. */
@@ -427,7 +553,7 @@ void populate_net() {
 				 	"net", name, "interface_name", NULL);
 			}
 
-			add_stat(INT, &iface[i].speed,
+			add_stat(UNSIGNED_LONG_LONG, &iface[i].speed,
 				 "net", name, "speed", NULL);
 			add_stat(BOOL, &iface[i].up,
 				 "net", name, "up", NULL);
@@ -437,13 +563,14 @@ void populate_net() {
 	}
 }
 
-void populate_page() {
+static void
+populate_page(void) {
 	sg_page_stats *page;
 
-	page = use_diffs ? sg_get_page_stats_diff() : sg_get_page_stats();
+	page = use_diffs ? sg_get_page_stats_diff(NULL) : sg_get_page_stats(NULL);
 	if (page != NULL) {
-		add_stat(LONG_LONG, &page->pages_pagein, "page", "in", NULL);
-		add_stat(LONG_LONG, &page->pages_pageout, "page", "out", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &page->pages_pagein, "page", "in", NULL);
+		add_stat(UNSIGNED_LONG_LONG, &page->pages_pageout, "page", "out", NULL);
 		add_stat(TIME_T, &page->systime, "page", "systime", NULL);
 	}
 }
@@ -471,7 +598,8 @@ toplevel toplevels[] = {
 
 /* Set the "interesting" flag on the sections that we actually need to
    fetch. */
-void select_interesting(int argc, char **argv) {
+static void
+select_interesting(int argc, char **argv) {
 	toplevel *t;
 
 	if (argc == 0) {
@@ -493,7 +621,8 @@ void select_interesting(int argc, char **argv) {
 }
 
 /* Clear and rebuild the stat_items array. */
-void get_stats() {
+static void
+get_stats(void) {
 	toplevel *t;
 
 	clear_stats();
@@ -508,61 +637,80 @@ void get_stats() {
 }
 
 /* Print the value of a stat_item. */
-void print_stat_value(const stat_item *s) {
-	void *v = s->stat;
-	double fv;
-	long lv;
-	long long llv;
+static void
+print_stat_value(const stat_item *s) {
+	void *pv = s->stat;
+	union {
+		double f;
+		long l;
+		unsigned long ul;
+		long long ll;
+		unsigned long long ull;
+	} v;
 
 	switch (s->type) {
 	case LONG_LONG:
 #ifdef WIN32 /* Windows printf does not understand %lld, so use %I64d instead */
-		printf("%I64d", *(long long *)v);
+		printf("%I64d", *(long long *)pv);
 #else
-		printf("%lld", *(long long *)v);
+		printf("%lld", *(long long *)pv);
+#endif
+		break;
+	case UNSIGNED_LONG_LONG:
+#ifdef WIN32 /* Windows printf does not understand %llu, so use %I64u instead */
+		printf("%I64u", *(unsigned long long *)pv);
+#else
+		printf("%llu", *(unsigned long long *)pv);
 #endif
 		break;
 	case BYTES:
-		llv = *(long long *)v;
+		v.ull = *(unsigned long long *)pv;
 		if (bytes_scale_factor != 0) {
-			llv /= bytes_scale_factor;
+			v.ull >>= (bytes_scale_factor-1);
+			++v.ull;
+			v.ull >>= 1;
 		}
 #ifdef WIN32
-		printf("%I64d", llv);
+		printf("%I64u", v.ull);
 #else
-		printf("%lld", llv);
+		printf("%llu", v.ull);
 #endif
 		break;
 	case TIME_T:
 		/* FIXME option for formatted time? */
-		lv = *(time_t *)v;
-		printf("%ld", lv);
+		v.l = *(time_t *)pv;
+		printf("%ld", v.l);
 		break;
 	case FLOAT:
 	case DOUBLE:
 		if (s->type == FLOAT) {
-			fv = *(float *)v;
-		} else {
-			fv = *(double *)v;
+			v.f = *(float *)pv;
+		}
+		else {
+			v.f = *(double *)pv;
 		}
 		if (float_scale_factor != 0) {
-			printf("%ld", (long)(float_scale_factor * fv));
-		} else {
-			printf("%f", fv);
+			printf("%ld", (long)(float_scale_factor * v.f));
+		}
+		else {
+			printf("%f", v.f);
 		}
 		break;
 	case STRING:
 		/* FIXME escaping? */
-		printf("%s", *(char **)v);
+		printf("%s", *(char **)pv);
 		break;
 	case INT:
-		printf("%d", *(int *)v);
+		printf("%d", *(int *)pv);
+		break;
+	case UNSIGNED:
+		printf("%u", *(unsigned *)pv);
 		break;
 	case BOOL:
-		printf("%s", *(int *)v ? "true" : "false");
+		printf("%s", *(int *)pv ? "true" : "false");
 		break;
 	case DUPLEX:
-		switch (*(sg_iface_duplex *) v) {
+		switch (*(sg_iface_duplex *) pv) {
 		case SG_IFACE_DUPLEX_FULL:
 			printf("full");
 			break;
@@ -578,7 +726,8 @@ void print_stat_value(const stat_item *s) {
 }
 
 /* Print the name and value of a stat. */
-void print_stat(const stat_item *s) {
+static void
+print_stat(const stat_item *s) {
 	switch (display_mode) {
 	case DISPLAY_LINUX:
 		printf("%s = ", s->name);
@@ -595,7 +744,8 @@ void print_stat(const stat_item *s) {
 }
 
 /* Print stats as specified on the provided command line. */
-void print_stats(int argc, char **argv) {
+static void
+print_stats(int argc, char **argv) {
 	int i;
 
 	if (argc == optind) {
@@ -626,7 +776,7 @@ void print_stats(int argc, char **argv) {
 			}
 
 			if (s == NULL) {
-				printf("Unknown stat %s\n", name);
+				fprintf(stderr, "Unknown stat %s\n", name);
 				continue;
 			}
 
@@ -649,7 +799,8 @@ void print_stats(int argc, char **argv) {
 	}
 }
 
-void usage() {
+static void
+usage(void) {
 	printf("Usage: statgrab [OPTION]... [STAT]...\n"
 	       "Display system statistics.\n"
 	       "\n"
@@ -667,6 +818,7 @@ void usage() {
 	       "  -p         Display CPU usage differences as percentages rather than\n"
 	       "             absolute values\n"
 	       "  -f FACTOR  Display floating-point values as integers scaled by FACTOR\n"
+	       "  -F fs-list List of file systems (!) to show\n"
 	       "  -K         Display byte counts in kibibytes\n"
 	       "  -M         Display byte counts in mebibytes\n"
 	       "  -G         Display byte counts in gibibytes\n"
@@ -676,10 +828,143 @@ void usage() {
 	exit(1);
 }
 
-int main(int argc, char **argv) {
+#ifndef HAVE_STRNDUP
+static char *
+strndup(char const *s, size_t n)
+{
+	char *r = malloc(n + 1);
+	char *d = r;
+
+	if(!r)
+		return r;
+	while((n-- != 0) && *s)
+		*d++ = *s++;
+	*d = 0;
+	return r;
+}
+#endif
+
+#define STACK_UNIT 4
+
+static char const **
+push_item(char const **stack, char const *item, size_t items) {
+	char const **s = stack;
+	size_t stack_size = items;
+	size_t desired = (items / STACK_UNIT) * STACK_UNIT;
+
+	if (desired < ++items) {
+		desired = ((items / STACK_UNIT) + 1) * STACK_UNIT;
+		if (desired >= stack_size) {
+			s = realloc(stack, desired * sizeof(stack[0]));
+			if(NULL == s)
+				die("Out of memory");
+		}
+	}
+
+	s[stack_size] = item;
+
+	return s;
+}
+
+static int
+sg_is_spc(char ch)
+{
+    unsigned char uch = (unsigned char)ch;
+    int i = (int)((unsigned)uch);
+    return isspace(i);
+}
+
+static char const **
+split_list(char const *list) {
+	char const *l = list;
+	char const **sp = NULL;
+	size_t items = 0;
+
+	for(l = list; *l; ) {
+		while(*l && !(sg_is_spc(*l) || (',' == *l)))
+			++l;
+		sp = push_item(sp, strndup(list, l-list), items++);
+		while(*l && (sg_is_spc(*l) || (',' == *l)))
+			++l;
+		list = l;
+	}
+
+	sp = push_item(sp, NULL, items);
+
+	return sp;
+}
+
+static int
+fsnmcmp(const void *va, const void *vb) {
+	const char *a = * (char * const *)va;
+	const char *b = * (char * const *)vb;
+
+	if( a && b )
+		return strcasecmp(a, b);
+	/* force NULL sorted at end */
+	if( a && !b )
+		return -1;
+	if( !a && b )
+		return 1;
+	return 0;
+}
+
+static sg_error
+set_valid_filesystems(char const *fslist) {
+	char const **newfs;
+	char const **given_fs;
+
+	while(sg_is_spc(*fslist))
+		++fslist;
+	if('!' == *fslist) {
+		size_t new_items = 0, given_items = 0;
+		const char **old_valid_fs = sg_get_valid_filesystems(0);
+
+		if( NULL == old_valid_fs )
+			sg_die("sg_get_valid_filesystems()", 1);
+
+		++fslist;
+		while(*fslist && sg_is_spc(*fslist))
+			++fslist;
+
+		given_fs = split_list(fslist);
+		for(newfs = given_fs; *newfs; ++newfs) {
+			++given_items;
+		}
+		qsort(given_fs, given_items, sizeof(given_fs[0]), fsnmcmp);
+
+		newfs = NULL;
+		new_items = 0;
+
+		while(*old_valid_fs) {
+			if (NULL == bsearch(old_valid_fs, given_fs, given_items, sizeof(given_fs[0]), fsnmcmp)) {
+				newfs = push_item(newfs, *old_valid_fs, new_items++);
+			}
+			++old_valid_fs;
+		}
+		newfs = push_item(newfs, NULL, new_items);
+	}
+	else {
+		newfs = given_fs = split_list(fslist);
+	}
+
+	if( SG_ERROR_NONE != sg_set_valid_filesystems( newfs ) )
+		sg_die("sg_set_valid_filesystems() failed", 1);
+
+	for(newfs = given_fs; *newfs; ++newfs) {
+		free((void *)(*newfs));
+	}
+
+	return SG_ERROR_NONE;
+}
+
+int
+main(int argc, char **argv) {
+	char *fslist = NULL;
+
 	opterr = 0;
 	while (1) {
-		int c = getopt(argc, argv, "lbmunsot:pf:KMG");
+		int c = getopt(argc, argv, "lbmunsot:pf:F:KMG");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -713,14 +998,18 @@ int main(int argc, char **argv) {
 		case 'f':
 			float_scale_factor = atol(optarg);
 			break;
+		case 'F':
+			free(fslist);
+			fslist = strdup(optarg);
+			break;
 		case 'K':
-			bytes_scale_factor = 1024;
+			bytes_scale_factor = 10;
 			break;
 		case 'M':
-			bytes_scale_factor = 1024 * 1024;
+			bytes_scale_factor = 20;
 			break;
 		case 'G':
-			bytes_scale_factor = 1024 * 1024 * 1024;
+			bytes_scale_factor = 30;
 			break;
 		default:
 			usage();
@@ -733,10 +1022,10 @@ int main(int argc, char **argv) {
 		if (repeat_mode == REPEAT_FOREVER)
 			die("mrtg mode: cannot repeat display");
 	}
-
+/*
 	if (use_cpu_percent && repeat_mode == REPEAT_NONE)
 		die("CPU percentage usage display requires stat differences");
-
+*/
 	if (repeat_mode == REPEAT_NONE)
 		use_diffs = 0;
 	else
@@ -744,12 +1033,25 @@ int main(int argc, char **argv) {
 
 	select_interesting(argc - optind, &argv[optind]);
 
+	sg_log_init("statgrab", "STATGRAB_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	/* We don't care if sg_init fails, because we can just display
  	   the statistics that can be read as non-root. */
-	sg_init();
+	sg_init(1);
 	sg_snapshot();
 	if (sg_drop_privileges() != 0)
 		die("Failed to drop setuid/setgid privileges");
+
+	if (fslist) {
+		sg_error rc = set_valid_filesystems(fslist);
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
+		free(fslist);
+	}
+	else {
+		sg_error rc = set_valid_filesystems("!nfs, nfs3, nfs4, cifs, smbfs, samba, autofs");
+		if(rc != SG_ERROR_NONE)
+			die(sg_str_error(rc));
+	}
 
 	switch (repeat_mode) {
 	case REPEAT_NONE:
@@ -782,4 +1084,3 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
-

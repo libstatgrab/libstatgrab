@@ -1,29 +1,32 @@
 libstatgrab PLATFORMS
 http://www.i-scream.org/libstatgrab/
 
-$Id$
-
 Supported Platforms
 ===================
 
-libstatgrab has been tested to work on the following platforms:
+libstatgrab-0.90 has been tested to work on the following platforms:
 
-Cygwin ?.?
-DragonFly BSD 1.x
-FreeBSD 4.x
-FreeBSD 5.x
+DragonFly BSD 3.4
+FreeBSD 7
+FreeBSD 8 (i386, amd64)
+FreeBSD 9 (i386, amd64, sparc64, ia64)
+FreeBSD 10-CURRENT (i386, amd64, sparc64, ia64)
 HP-UX 11.11 (parisc)
-Linux 2.2
-Linux 2.4
-Linux 2.6
-NetBSD 1.x
-NetBSD 2.x
-OpenBSD 3.x
-Solaris 6
-Solaris 7
+HP-UX 11.23 (parisc)
+HP-UX 11.23 (ia64)
+HP-UX 11.31 (ia64)
+Linux 2.6 (Ubuntu 10.04, SLES 9-11, Redhat 6, CentOS 6)
+Linux 3.X (Ubuntu 12.04)
+NetBSD 5.1
+NetBSD 6.1
+OpenBSD 4.9
+OpenBSD 5.3
 Solaris 8 (sparc & x86)
 Solaris 9 (sparc & x86)
-Solaris 10 (sparc)
+Solaris 10 (sparc & x86)
+AIX 5.2
+AIX 5.3
+AIX 6.1
 
 Platform Specific Notes
 =======================
@@ -34,39 +37,9 @@ any of the platforms above without any elevated privileges.
 Linux
 -----
 
-On Linux root privileges are required to get the statistics returned
-by the get_network_iface_stats function. Not having these privileges
-results in NULL being returned.
+On older Linux kernels root privileges are required to get the
+statistics returned by the get_network_iface_stats function. Not
+having these privileges results in NULL being returned.
 
 Also note that this cannot be solved by calling sg_init and then
 sg_drop_privileges at this stage.
-
-FreeBSD 4
----------
-
-On FreeBSD 4 (not on 5) programs need to be setgid kmem to get swap
-statistics. It is sufficient to give a program these privileges, call
-sg_init, and then drop the privileges using sg_drop_privileges.
-
-The sg_get_swap_stats function will return NULL if this hasn't been done.
-
-Solaris 2.6/2.7
----------------
-
-On Solaris 2.6 and 2.7 root privileges are required to build the drive
-mapping list (eg. mapping ssd0 on to c0t0d0s0). If these privileges
-aren't available the names will be left as ssd0, for example.
-
-It is sufficient to use sg_init and sg_drop_privileges.
-
-Cygwin
-------
-
-Full support for libstatgrab isn't yet provided on cygwin - there are
-some stats which we just can't get. In these cases the functions will
-return NULL to indicate failure.
-
-If you have installed libncurses-devel but the configure script can't
-find ncurses.h, you've most likely hit a bug in the cygwin package. To
-fix this run: /etc/postinstall/libncurses-devel.sh.done
-

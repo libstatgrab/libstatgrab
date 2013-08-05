@@ -1,0 +1,9 @@
+  # run all functions alone and all 2-tuple, each in 3 threads
+  $ @test-dir@/run_tests --items 1 --items 2 -- -m 3
+
+  # run all 4-tuple of libstatgrab functions, use at least 40 threads
+  $ @test-dir@/run_tests --items 4 -- -n 40
+
+  # run all 7-tuple of libstatgrab functions, each in 5 threads but
+  # sequencial function execution
+  $ @test-dir@/run_tests --items 4 -- -m 5 -s 1

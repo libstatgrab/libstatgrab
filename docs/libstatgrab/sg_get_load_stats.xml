@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="sg_get_load_stats">
-
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
 
   <refmeta>
     <refentrytitle>sg_get_load_stats</refentrytitle>
@@ -18,6 +10,8 @@
 
   <refnamediv>
     <refname>sg_get_load_stats</refname>
+    <refname>sg_get_load_stats_r</refname>
+    <refname>sg_free_load_stats</refname>
     <refpurpose>get system load</refpurpose>
   </refnamediv>
 
@@ -26,7 +20,15 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_load_stats *<function>sg_get_load_stats</function></funcdef>
-        <void/>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_load_stats *<function>sg_get_load_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_load_stats</function></funcdef>
+        <paramdef>sg_load_stats *<parameter>data</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -34,8 +36,42 @@
   <refsect1>
     <title>Description</title>
     <para>
-      This call returns a pointer to a static buffer of
-      <structname>sg_load_stats</structname>.
+      These calls returns a pointer to a buffer containing information
+      about cumulated machine load.
+    </para>
+    <para>
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_load_stats</entry>
+        <entry><structname>sg_load_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_load_stats_r</entry>
+        <entry><structname>sg_load_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_load_stats</structname> buffer received from
+      <function>sg_get_load_stats_r</function>() must be freed using
+      <function>sg_free_load_stats</function>() when not needed any more. The
+      caller is responsible for doing it.
     </para>
     <para>
       On most systems this function is just a wrapper to the
@@ -56,6 +92,7 @@ typedef struct{
         double min1;
         double min5;
         double min15;
+        time_t systime;
 }sg_load_stats;
     </programlisting>
 
@@ -81,6 +118,15 @@ typedef struct{
         <listitem>
           <para>
             The load average over 15 minutes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            The timestamp when the above stats where collected in seconds
+            since epoch
           </para>
         </listitem>
       </varlistentry>

@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
 <refentry id="sg_get_network_iface_stats">
-
-  <refentryinfo>
-    <date>$Date$</date>
-    <releaseinfo>$Id$</releaseinfo>
-  </refentryinfo>
 
   <refmeta>
     <refentrytitle>sg_get_network_iface_stats</refentrytitle>
@@ -18,6 +10,9 @@
 
   <refnamediv>
     <refname>sg_get_network_iface_stats</refname>
+    <refname>sg_get_network_iface_stats_r</refname>
+    <refname>sg_free_network_iface_stats</refname>
+    <refname>sg_network_iface_compare_name</refname>
     <refpurpose>get network interface statistics</refpurpose>
   </refnamediv>
 
@@ -26,7 +21,21 @@
       <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
       <funcprototype>
         <funcdef>sg_network_iface_stats *<function>sg_get_network_iface_stats</function></funcdef>
-        <paramdef>int *<parameter>entries</parameter></paramdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_network_iface_stats *<function>sg_get_network_iface_stats_r</function></funcdef>
+        <paramdef>size_t *<parameter>entries</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_free_network_iface_stats</function></funcdef>
+        <paramdef>sg_network_iface_stats *<parameter>data</parameter></paramdef>
+      </funcprototype>
+
+      <funcprototype>
+        <funcdef>int <function>sg_network_iface_compare_name</function></funcdef>
+        <paramdef>const void *<parameter>va</parameter></paramdef>
+        <paramdef>const void *<parameter>vb</parameter></paramdef>
       </funcprototype>
     </funcsynopsis>
   </refsynopsisdiv>
@@ -34,19 +43,63 @@
   <refsect1>
     <title>Description</title>
     <para>
-      The <function>sg_get_network_iface_stats</function> function
-      takes a pointer to an int, <parameter>entries</parameter>,
-      which is filled with the number of network interfaces the
-      machine has. This is needed to know how many
-      <structname>sg_network_iface_stats</structname> structures have
-      been returned. A pointer is returned to the first
-      <structname>sg_network_iface_stats</structname>.
+      The functions <function>sg_get_network_iface_stats</function>() and
+      <function>sg_get_network_iface_stats_r</function>() return statistics
+      about the network interfaces in the machine. Specifically, they return
+      the speed of the interface, the duplex state, and whether it is
+      currently up.  Both functions take an optional
+      <parameter>entries</parameter> parameter, which points (when given)
+      to a size_t to take the number of returned vector entries.
     </para>
     <para>
-      <function>sg_get_network_iface_stats</function> returns statistics
-      about the network interfaces in the machine. Specifically,
-      it returns the speed of the interface, the duplex state, and
-      whether it is currently up.
+      <table frame='all'><title>API Shortcut</title>
+      <tgroup cols='3' align='left' colsep='1' rowsep='1'>
+        <colspec colname='function'/>
+        <colspec colname='returns'/>
+        <colspec colname='data owner'/>
+      <thead>
+      <row>
+        <entry>function</entry>
+        <entry>returns</entry>
+        <entry>data owner</entry>
+      </row>
+      </thead>
+      <tbody>
+      <row>
+        <entry>sg_get_network_iface_stats</entry>
+        <entry><structname>sg_network_iface_stats</structname> *</entry>
+        <entry>libstatgrab (thread local)</entry>
+      </row>
+      <row>
+        <entry>sg_get_network_iface_stats_r</entry>
+        <entry><structname>sg_network_iface_stats</structname> *</entry>
+        <entry>caller</entry>
+      </row>
+      </tbody>
+      </tgroup>
+      </table>
+    </para>
+    <para>
+      The <structname>sg_network_iface_stats</structname> vectors received from
+      <function>sg_get_network_iface_stats_r</function>() must be freed using
+      <function>sg_free_network_iface_stats</function>() when not needed
+      any more. The caller is responsible for doing it.
+    </para>
+    <para>
+      Additionally a support function for <function>qsort</function>(3)
+      in available: <function>sg_network_iface_compare_name</function>().
+      <example>
+        <title>Sort Example</title>
+        <programlisting>
+size_t entries;
+sg_network_iface_stats *network_iface_stats = NULL;
+while( NULL != ( network_iface_stats = sg_get_network_iface_stats(&amp;entries) ) ) {
+    /* order entries alphabetically using the mountpoint */
+    qsort( network_iface_stats, entries, sizeof(network_iface_stats[0]), &amp;sg_network_iface_compare_name );
+    show_network_iface_stats( network_iface_stats );
+}
+        </programlisting>
+      </example>
     </para>
   </refsect1>
 
@@ -73,12 +126,13 @@ typedef enum{
     </para>
 
     <programlisting>
-typedef struct{
+typedef struct {
         char *interface_name;
         int speed;
         sg_iface_duplex duplex;
         int up;
-}sg_network_iface_stats;
+        time_t systime;
+} sg_network_iface_stats;
     </programlisting>
 
     <variablelist>
@@ -124,7 +178,31 @@ typedef struct{
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term><structfield>systime</structfield></term>
+        <listitem>
+          <para>
+            The timestamp when the above stats where collected in seconds
+            since epoch
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Bugs</title>
+    <para>
+      Getting specific details may require elevated privileges, eg. on Linux
+      the interface speed isn't visible to non-privileged processes.
+    </para>
+    <para>
+      The compare functions exist rather for backward compatibility than
+      for functionality enhancements. Limited flexibility (e.g. reverse
+      order) and lack of optimising opportunities for the compiler leads
+      to the recommendation to implement the required compare routines
+      locally.
+    </para>
   </refsect1>
 
   <refsect1>

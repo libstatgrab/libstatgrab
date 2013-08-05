@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+
+<refentry id="sg_init">
+
+  <refmeta>
+    <refentrytitle>sg_init</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>sg_init</refname>
+    <refname>sg_snapshot</refname>
+    <refname>sg_shutdown</refname>
+    <refname>sg_drop_privileges</refname>
+    <refpurpose>initialise libstatgrab</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_init</function></funcdef>
+        <paramdef>int <parameter>ignore_init_errors</parameter></paramdef>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_snapshot</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_shutdown</function></funcdef>
+        <void/>
+      </funcprototype>
+      <funcprototype>
+        <funcdef>sg_error <function>sg_drop_privileges</function></funcdef>
+        <void/>
+      </funcprototype>
+    </funcsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <function>sg_init</function>() either initialises the statgrab
+      library and sets the initialisation counter to 1, if not already done,
+      or increases the initialisation counter.
+      If called for the first time (in fact: if called when the initialisation
+      counter is 0), the constructor (initialisation routine) of each
+      registered component is invoked, some global variables are
+      initialised, requested mutual exclusion semaphores are initialised
+      and so on.
+      <function>sg_init</function>() is protected by the mutex named
+      &quot;statgrab&quot;.
+    </para>
+    <para>
+      <function>sg_snapshot</function>() is Win32 only and will probably disappear.
+    </para>
+    <para>
+      <function>sg_shutdown</function>() decrements the initialisation
+      counter. If the counter reaches zero, components' destructors are
+      called, mutual exclusion semaphores (exept &quot;statgrab&quot;) are
+      destroyed etc.
+      <function>sg_shutdown</function>() is protected by the mutex named
+      &quot;statgrab&quot;.
+    </para>
+    <para>
+      <function>sg_drop_privileges</function>() drops elevated privileges.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Return values</title>
+    <para>
+      All functions return a statgrab error code. Either
+      <errorcode>SG_ERROR_NONE</errorcode> when everything was ok or the
+      appropriate error code from an constructor/destructor.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>statgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

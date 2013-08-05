@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+
+<refentry id="sg_internal-intro">
+
+  <refmeta>
+    <refentrytitle>sg_internal-intro</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>sg_internal-intro</refname>
+    <refpurpose>get system statistics</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &quot;tools.h&quot;</funcsynopsisinfo>
+    </funcsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The statgrab library is organised into components, whereby each
+      component contains interrelated functions. Other components are made
+      known to the globals component by filling a
+      <structname>sg_comp_init</structname> structure and appending it to
+      the list <varname>comp_info</varname> in
+      <filename>src/libstatgrab/globals.c</filename>. See
+      <citerefentry>
+        <refentrytitle>sg_comp_init</refentrytitle>
+        <manvolnum>3</manvolnum>
+      </citerefentry>
+      for details.
+    </para>
+    <para>
+      The error managing component is a mixed one, partially public (getting
+      error status), partially private (modifying error status). The last
+      error is held per thread once error component initialisation is run
+      once.
+    </para>
+    <para>
+      The memory management is done by the vector and tools components. The
+      memory management covers optimised vector management (creating,
+      resizing, freeing, comparing, ...) and dynamic storage management
+      (improved string management).
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>libstatgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_intro</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_set_error</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_comp_init</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_vector_create</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_update_string</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>

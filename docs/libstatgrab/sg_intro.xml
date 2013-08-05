@@ -1,0 +1,207 @@
+<?xml version="1.0"?>
+
+<refentry id="sg_intro">
+
+  <refmeta>
+    <refentrytitle>sg_intro</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>i-scream</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>sg_intro</refname>
+    <refpurpose>get system statistics</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <funcsynopsis>
+      <funcsynopsisinfo>#include &lt;statgrab.h&gt;</funcsynopsisinfo>
+    </funcsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The statgrab library provides a cross-platform interface to getting
+      system statistics. Each of the function calls to grab some statistics
+      returns an array of structures. Functions which return always a fixed
+      number of array entries (typical one) won't take an additional
+      parameter to store the number of array entries, others will. Anyway,
+      if the information isn't available anymore, you can call
+      <function>sg_get_nelements</function>().  See the manual page for each
+      individual function for more details on usage.
+    </para>
+    <para>
+      For each statistic type there are two functions available to fetch the
+      data: <function>sg_get_STATTYPE</function> (e.g.
+      <function>sg_get_cpu_stats</function>) and
+      <function>sg_get_STATTYPE_r</function> (e.g.
+      <function>sg_get_cpu_stats_r</function>).  The difference between both
+      interfaces is the ownership of the returned statistic structures: while
+      the (well known) <function>sg_get_cpu_stats</function> returns a
+      pointer to a memory area owned and controlled by the statgrab library,
+      <function>sg_get_cpu_stats_r</function> will return a pointer to a
+      memory area owned and controlled by the caller.
+      Storage owned by the statgrab library will be reused in follow-up calls
+      to the same statistic grabbing function within the same thread. The
+      memory is freed when the thread ends. This could result in dangling
+      pointers when you exchange those pointers between threads. Storage
+      which is owned by the caller must be freed by the caller when it's
+      not used any more.
+    </para>
+    <para>
+      <function>sg_init</function>() must be the first function you call
+      before you start to use libstatgrab; it performs all the one-time
+      initialisation operations that need setuid/setgid privileges. For
+      instance, on *BSD it opens a descriptor to be able to read kernel
+      structures later on, and on Solaris it reads the device mappings that
+      in some cases are only accessible by root (machines with a /dev/osa).
+      To handle this, each statgrab module has a private initialisation
+      routine called by <function>sg_init</function>().
+      <function>sg_init</function>() takes an argument to tell whether
+      initialisation errors of components shall abort the library
+      initialisation process or not. Regardless of this value, the failing
+      module initialisations will usually lead into (partially) unusable
+      statistics. Once <function>sg_init</function>() has run, most of
+      the other libstatgrab functions no longer need elevated privileges
+      (some Unices require higher privileges to access command line argument
+      of processes owned by other users, Linux doesn't deliver some network
+      card information to unprivileged users, etc.). It is therefore a
+      good idea to call <function>sg_drop_privileges</function>(), which
+      discards setuid and setgid privileges, immediately after you call
+      <function>sg_init</function>(), unless your application has a reason
+      for needing setuid or setgid privileges.
+    </para>
+    <para>
+      <function>sg_shutdown</function>() should be the very last statgrab
+      library function you call. You shouldn't invoke this function when
+      any thread is still existing which had made calls to the statgrab
+      library. If you don't invoke <function>sg_shutdown</function>(), it's
+      done automatically <function>at_exit</function>().
+    </para>
+    <para>
+      Both, <function>sg_init</function>() and
+      <function>sg_shutdown</function>() use a counter to prevent to early
+      destruction of libstatgrab in a process where more than one component
+      uses libstatgrab. This counter is guarded by a mutual exclusion
+      semaphore when thread capabilities are built in.
+    </para>
+    <para>
+      <function>sg_init</function>(), <function>sg_shutdown</function>() and
+      <function>sg_drop_privileges</function>() return
+      <errorcode>SG_ERROR_NONE</errorcode> on success, and any other on
+      failure.
+    </para>
+    <para>
+      For proper thread support, <function>sg_lock_mutex</function>() and
+      <function>sg_unlock_mutex</function>() are available to allow locking
+      system functions which aren't thread safe. While it's generally
+      not the wisest idea to mix calls to the statgrab library and similar
+      calls to the system library, it is possible to protect known unsafe
+      functions. There's currently one system API known to be not
+      thread-safe: accessing <varname>utmp</varname>. The other
+      non-threadsafe functionality used by the statgrab library is the
+      global component management during initialisation (e.g. counting
+      the number of calls to <function>sg_init</function>() to prevent
+      first call to <function>sg_shutdown</function>() leaves the library
+      in an unusable status).
+      <segmentedlist>
+        <title>Available mutexes (by name)</title>
+        <segtitle>Mutex name</segtitle><segtitle>Protects</segtitle>
+        <seglistitem><seg>statgrab</seg><seg>statgrab library globals</seg></seglistitem>
+        <seglistitem><seg>utmp</seg><seg>accessing login records</seg></seglistitem>
+      </segmentedlist>
+      There's currently no way to get a list of used mutex names, so beg
+      that any author which adds more semaphores to guard implementations
+      is fair enough to add them here.
+    </para>
+    <para>
+      It is the intended practice that whenever a libstatgrab function is
+      called and subsequently fails that an appropriate error will be set.
+      Please use <function>sg_get_error</function>() and associates to get
+      informed about the individual circumstances of the error condition.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member>
+        <citerefentry>
+          <refentrytitle>libstatgrab</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_cpu_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_disk_io_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_fs_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_host_info</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_load_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_mem_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_network_io_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_network_iface_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_page_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_process_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_swap_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_user_stats</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_get_error</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+        <citerefentry>
+          <refentrytitle>sg_internal-intro</refentrytitle>
+          <manvolnum>3</manvolnum>
+        </citerefentry>
+      </member>
+    </simplelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Website</title>
+
+    <simplelist type="vert">
+      <member>
+        <ulink url="http://www.i-scream.org/libstatgrab/">
+          http://www.i-scream.org/libstatgrab/
+        </ulink>
+      </member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
