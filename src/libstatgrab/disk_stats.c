@@ -594,7 +594,9 @@ sg_set_valid_filesystems(const char *valid_fs[]) {
 	/* XXX this must be locked - from caller ? */
 	if( valid_fs && *valid_fs ) {
 
-		while( valid_fs[num_new_valid_fs++] ) {} /* Note: post-inc is intensional */
+		while( valid_fs[num_new_valid_fs] ) {
+			num_new_valid_fs++;
+		}
 
 		new_valid_fs = calloc( num_new_valid_fs + 1, sizeof(char *) );
 		if( 0 == new_valid_fs ) {
