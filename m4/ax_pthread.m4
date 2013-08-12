@@ -33,6 +33,10 @@
 #   has a nonstandard name, defines PTHREAD_CREATE_JOINABLE to that name
 #   (e.g. PTHREAD_CREATE_UNDETACHED on AIX).
 #
+#   Also HAVE_PTHREAD_PRIO_INHERIT is defined if pthread is found and the
+#   PTHREAD_PRIO_INHERIT symbol is defined when compiling with
+#   PTHREAD_CFLAGS.
+#
 #   ACTION-IF-FOUND is a list of shell commands to run if a threads library
 #   is found, and ACTION-IF-NOT-FOUND is a list of commands to run it if it
 #   is not found. If ACTION-IF-FOUND is not specified, the default action
@@ -78,9 +82,9 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 12
+#serial 20
 
-AU_ALIAS([AX_PTHREAD], [AX_PTHREAD])
+AU_ALIAS([ACX_PTHREAD], [AX_PTHREAD])
 AC_DEFUN([AX_PTHREAD], [
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_LANG_PUSH([C])
@@ -119,34 +123,30 @@ fi
 # which indicates that we try without any flags at all, and "pthread-config"
 # which is a program returning the flags for the Pth emulation library.
 
-ax_pthread_flags="-Kthread -kthread lthread -pthread -pthreads -mt -mthreads --thread-safe pthread-config pthreads pthread"
+ax_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mthreads pthread --thread-safe -mt pthread-config"
 
 # The ordering *is* (sometimes) important.  Some notes on the
 # individual items follow:
 
+# pthreads: AIX (must check this before -lpthread)
 # none: in case threads are in libc; should be tried before -Kthread and
 #       other compiler flags to prevent continual compiler warnings
-#       none will prepended at OS modifications below
 # -Kthread: Sequent (threads in libc, but -Kthread needed for pthread.h)
 # -kthread: FreeBSD kernel threads (preferred to -pthread since SMP-able)
 # lthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
 # -pthread: Linux/gcc (kernel threads), BSD/gcc (userland threads)
 # -pthreads: Solaris/gcc
+# -mthreads: Mingw32/gcc, Lynx/gcc
 # -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
 #      doesn't hurt to check since this sometimes defines pthreads too;
 #      also defines -D_REENTRANT)
 #      ... -mt is also the pthreads flag for HP/aCC
-# -mthreads: Mingw32/gcc, Lynx/gcc
+# pthread: Linux, etcetera
 # --thread-safe: KAI C++
 # pthread-config: use pthread-config program (for GNU Pth library)
-# pthread: Linux, etcetera
-# pthreads: AIX (very old gcc's on AIX must check this before -lpthread,
-#      handled below)
 
-# In general, linking only is moved at the end of all tests
-
-case "${host_cpu}-${host_os}" in
-        *solaris*)
+case ${host_os} in
+        solaris*)
 
         # On Solaris (at least, for some versions), libc contains stubbed
         # (non-functional) versions of the pthreads routines, so link-based
@@ -156,40 +156,12 @@ case "${host_cpu}-${host_os}" in
         # who knows whether they'll stub that too in a future libc.)  So,
         # we'll just look for -pthreads and -lpthread first:
 
-        ax_pthread_flags="-mt -pthread $ax_pthread_flags"
-	if test x"$GCC" = xyes; then
-            ax_pthread_flags="-pthreads pthread -pthread $ax_pthread_flags"
-        fi
+        ax_pthread_flags="-pthreads pthread -mt -pthread $ax_pthread_flags"
         ;;
 
-        *hp-ux*)
-
-        # On HP-UX compiling with aCC, cc understands -mthreads as '-mt'
-        # '-hreads' ..., the test succeeds but it fails to run.
-        # '-mt' must be checked first
-
-	if test x"$GCC" != xyes; then
-            ax_pthread_flags="-mt $ax_pthread_flags"
-        fi
-        ;;
-
-        *-darwin*)
+        darwin*)
         ax_pthread_flags="-pthread $ax_pthread_flags"
         ;;
-
-        *-aix*)
-        # On AIX (at least, for some gcc-versions), -lpthreads works for C
-        # only, so link-based tests will erroneously succeed from C++ point
-        # of view.  (We need to link with -pthread to use the right runtime
-        # libraries.) But there're old gcc versions known to fail for this
-        # ...  so, we'll just look for -lpthreads first for them:
-        ax_pthread_flags="-pthread pthreads $ax_pthread_flags"
-        ;;
-esac
-
-case "${host_cpu}-${host_os}" in
-        *solaris*) ;;
-        *) ax_pthread_flags="none $ax_pthread_flags" ;;
 esac
 
 if test x"$ax_pthread_ok" = xno; then
@@ -282,35 +254,56 @@ if test "x$ax_pthread_ok" = xyes; then
 
         AC_MSG_CHECKING([if more special flags are required for pthreads])
         flag=no
-        case "${host_cpu}-${host_os}" in
-            *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
-            *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+        case ${host_os} in
+            aix* | freebsd* | darwin*) flag="-D_THREAD_SAFE";;
+            osf* | hpux*) flag="-D_REENTRANT";;
+            solaris*)
+            if test "$GCC" = "yes"; then
+                flag="-D_REENTRANT"
+            else
+                flag="-mt -D_REENTRANT"
+            fi
+            ;;
         esac
         AC_MSG_RESULT(${flag})
         if test "x$flag" != xno; then
             PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
         fi
 
+        AC_CACHE_CHECK([for PTHREAD_PRIO_INHERIT],
+            ax_cv_PTHREAD_PRIO_INHERIT, [
+                AC_LINK_IFELSE([
+                    AC_LANG_PROGRAM([[#include <pthread.h>]], [[int i = PTHREAD_PRIO_INHERIT;]])],
+                    [ax_cv_PTHREAD_PRIO_INHERIT=yes],
+                    [ax_cv_PTHREAD_PRIO_INHERIT=no])
+            ])
+        AS_IF([test "x$ax_cv_PTHREAD_PRIO_INHERIT" = "xyes"],
+            AC_DEFINE([HAVE_PTHREAD_PRIO_INHERIT], 1, [Have PTHREAD_PRIO_INHERIT.]))
+
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
-        # More AIX lossage: must compile with xlc_r or cc_r
-        if test x"$GCC" != xyes; then
-          AC_CHECK_PROGS(PTHREAD_CC, xlc_r cc_r, ${CC})
-          AC_CHECK_PROGS(PTHREAD_CXX, xlC_r CC_r, ${CXX})
-        else
-          PTHREAD_CC="$CC"
-          PTHREAD_CXX="$CXX"
-	fi
-else
-        PTHREAD_CC="$CC"
-        PTHREAD_CXX="$CXX"
+        # More AIX lossage: compile with *_r variant
+        if test "x$GCC" != xyes; then
+            case $host_os in
+                aix*)
+                AS_CASE(["x/$CC"],
+                  [x*/c89|x*/c89_128|x*/c99|x*/c99_128|x*/cc|x*/cc128|x*/xlc|x*/xlc_v6|x*/xlc128|x*/xlc128_v6],
+                  [#handle absolute path differently from PATH based program lookup
+                   AS_CASE(["x$CC"],
+                     [x/*],
+                     [AS_IF([AS_EXECUTABLE_P([${CC}_r])],[PTHREAD_CC="${CC}_r"])],
+                     [AC_CHECK_PROGS([PTHREAD_CC],[${CC}_r],[$CC])])])
+                ;;
+            esac
+        fi
 fi
+
+test -n "$PTHREAD_CC" || PTHREAD_CC="$CC"
 
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_CC)
-AC_SUBST(PTHREAD_CXX)
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$ax_pthread_ok" = xyes; then
@@ -320,5 +313,5 @@ else
         ax_pthread_ok=no
         $2
 fi
-AC_LANG_RESTORE
+AC_LANG_POP
 ])dnl AX_PTHREAD
