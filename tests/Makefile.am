@@ -10,6 +10,6 @@ threaded_tests_dirs = multi_threaded
 endif
 
 if TEST_SCRIPTS
-test:
+test: all
 	$(PERL5) -MApp::Prove -e 'my $$app = App::Prove->new(); $$app->process_args(@ARGV); exit( $$app->run ? 0 : 1 );' $(tests_dirs)
 endif
