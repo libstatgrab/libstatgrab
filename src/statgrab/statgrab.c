@@ -742,6 +742,7 @@ print_stat(const stat_item *s) {
 	}
 	print_stat_value(s);
 	printf("\n");
+	fflush(stdout);
 }
 
 /* Print stats as specified on the provided command line. */
