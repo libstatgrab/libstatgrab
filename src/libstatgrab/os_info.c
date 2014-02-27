@@ -38,6 +38,7 @@ static const char *isa64[] = { "alpha", "amd64", "hppa64", "ia64", "mips64", "mi
 #endif
 
 #ifdef WIN32
+#include <lm.h>
 #define WINDOWS2000 "Windows 2000"
 #define WINDOWSXP "Windows XP"
 #define WINDOWS2003 "Windows Server 2003"
@@ -57,7 +58,7 @@ home_or_pro(const OSVERSIONINFOEX osinfo, char **name)
 }
 
 static char *
-get_os_name(const OSVERSIONINFOEX osinfo)
+get_os_name(const OSVERSIONINFOEX osinfo, SYSTEM_INFO sysinfo)
 {
 	char *name;
 	char tmp[10];
@@ -145,8 +146,7 @@ get_os_name(const OSVERSIONINFOEX osinfo)
 
 out:
 	/* strdup failed */
-	sg_set_error_with_errno(SG_ERROR_MALLOC, NULL);
-	ERROR_LOG("os", "get_os_name: strdup() failed");
+	SET_ERROR_WITH_ERRNO("os", SG_ERROR_MALLOC, "get_os_name: strdup() failed");
 	return NULL;
 }
 #endif
@@ -270,14 +270,13 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 	if(!GetVersionEx(&osinfo)) {
 		RETURN_WITH_SET_ERROR("os", SG_ERROR_HOST, "GetVersionEx");
 	}
+	GetSystemInfo(&sysinfo);
 
 	/* Release - single number */
 	if(snprintf(tmp, sizeof(tmp), "%ld", osinfo.dwBuildNumber) == -1) {
-		free(tmp);
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("os", SG_ERROR_SPRINTF, NULL);
 	}
 	if(SG_ERROR_NONE != sg_update_string(&host_info_buf->os_release, tmp)) {
-		free(tmp);
 		RETURN_FROM_PREVIOUS_ERROR( "os", sg_get_error() );
 	}
 
@@ -285,16 +284,14 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 	/* usually a single digit . single digit, eg 5.0 */
 	if(snprintf(tmp, sizeof(tmp), "%ld.%ld", osinfo.dwMajorVersion,
 				osinfo.dwMinorVersion) == -1) {
-		free(tmp);
 		RETURN_FROM_PREVIOUS_ERROR( "os", sg_get_error() );
 	}
 	if(SG_ERROR_NONE != sg_update_string(&host_info_buf->os_version, tmp)) {
-		free(tmp);
 		RETURN_FROM_PREVIOUS_ERROR( "os", sg_get_error() );
 	}
 
 	/* OS name */
-	tmp_name = get_os_name(osinfo);
+	tmp_name = get_os_name(osinfo, sysinfo);
 	if(tmp_name == NULL) {
 		RETURN_FROM_PREVIOUS_ERROR( "os", sg_get_error() );
 	}
@@ -306,7 +303,6 @@ sg_get_host_info_int(sg_host_info *host_info_buf) {
 	free(tmp_name);
 
 	/* Platform */
-	GetSystemInfo(&sysinfo);
 	switch(sysinfo.wProcessorArchitecture) {
 		case PROCESSOR_ARCHITECTURE_INTEL:
 			if(SG_ERROR_NONE != sg_update_string(&host_info_buf->platform,
