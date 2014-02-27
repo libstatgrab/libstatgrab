@@ -231,7 +231,7 @@ sg_destroy_main_globals(void)
 # elif defined(WIN32)
 	glob_buf = TlsGetValue(glob_tls_idx);
 	if((NULL == glob_buf) && (ERROR_SUCCESS != GetLastError())){
-		RETURN_WITH_SET_ERROR("globals", SG_ERROR_MEMSTATUS, NULL);
+		SET_ERROR("globals", SG_ERROR_MEMSTATUS, NULL);
 	}
 	if(glob_buf)
 		sg_destroy_globals(glob_buf);
