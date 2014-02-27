@@ -346,7 +346,7 @@ sg_get_mem_stats_int(sg_mem_stats *mem_stats_buf) {
 
 	mem_stats_buf->free = memstats.ullAvailPhys;
 	mem_stats_buf->total = memstats.ullTotalPhys;
-	mem_stats_buf->used = mem_stat.total - mem_stat.free;
+	mem_stats_buf->used = mem_stats_buf->total - mem_stats_buf->free;
 	if(read_counter_large(SG_WIN32_MEM_CACHE, &mem_stats_buf->cache))
 		mem_stats_buf->cache = 0;
 #elif defined(HAVE_STRUCT_VMTOTAL)
