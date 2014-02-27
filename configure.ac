@@ -656,7 +656,7 @@ AC_INCLUDES_DEFAULT
 	],
 	[mingw32], [
 		AC_DEFINE(MINGW, , [Building on MinGW])
-		AC_DEFINE(WINVER, 0x0500, [Building for Windows 2000])
+		AC_DEFINE(WINVER, 0x0502, [Building for Windows 2003])
 		AM_CONDITIONAL(MINGW, true)
 		LINKFLAGS="-lpdh -liphlpapi -lpsapi -lnetapi32"
 	],
