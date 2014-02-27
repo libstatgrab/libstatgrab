@@ -8,7 +8,7 @@ man_MANS =	$(statgrab_MANS) $(sg_cpu_MANS) $(sg_disk_MANS) $(sg_error_MANS) \
 		$(sg_user_MANS) $(sg_vect_MANS) $(sg_init_MANS) $(sg_mutex_MANS) \
 		$(sg_intro_MANS) $(sg_glob_MANS) $(sg_seterr_MANS)
 
-statgrab_MANS =	statgrab.3 libstatgrab.3
+#statgrab_MANS =	statgrab.3 libstatgrab.3
 
 sg_intro_MANS =	sg_intro.3 sg_internal-intro.3
 
