@@ -435,7 +435,7 @@ VECTOR_INIT_INFO_EMPTY_INIT(sg_cpu_percents);
 
 static sg_error
 sg_get_cpu_percents_int(sg_cpu_percents *cpu_percent_buf, const sg_cpu_stats *cpu_stats_buf){
-
+#ifndef WIN32
 	cpu_percent_buf->user =  ((double)cpu_stats_buf->user) / ((double)cpu_stats_buf->total) * 100;
 	cpu_percent_buf->kernel =  ((double)cpu_stats_buf->kernel) / ((double)cpu_stats_buf->total) * 100;
 	cpu_percent_buf->idle = ((double)cpu_stats_buf->idle) / ((double)cpu_stats_buf->total) * 100;
@@ -443,52 +443,45 @@ sg_get_cpu_percents_int(sg_cpu_percents *cpu_percent_buf, const sg_cpu_stats *cp
 	cpu_percent_buf->swap = ((double)cpu_stats_buf->swap) / ((double)cpu_stats_buf->total) * 100;
 	cpu_percent_buf->nice = ((double)cpu_stats_buf->nice) / ((double)cpu_stats_buf->total) * 100;
 	cpu_percent_buf->time_taken = cpu_stats_buf->systime;
+#else
 
-	return SG_ERROR_NONE;
-}
-#if 0
-/* this is nonsense - according to the documentation at
- * http://support.microsoft.com/kb/262938 is it possible for other
- * applications to read the same global counter and reset the the
- * measure points.
- *
- * better take a look to
- * - http://technet.microsoft.com/en-us/library/cc737309%28WS.10%29.aspx
- * - SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION at
- *   http://msdn.microsoft.com/en-us/library/ms724509%28VS.85%29.aspx
- * It's unlikely that this API will be removed before full replacement
- * API is available.
- */
-#ifdef WIN32
+	/* this is nonsense - according to the documentation at
+	 * http://support.microsoft.com/kb/262938 is it possible for other
+	 * applications to read the same global counter and reset the the
+	 * measure points.
+	 *
+	 * better take a look to
+	 * - http://technet.microsoft.com/en-us/library/cc737309%28WS.10%29.aspx
+	 * - SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION at
+	 *   http://msdn.microsoft.com/en-us/library/ms724509%28VS.85%29.aspx
+	 * It's unlikely that this API will be removed before full replacement
+	 * API is available.
+	 */
+
 	double result;
 
 	if(read_counter_double(SG_WIN32_PROC_USER, &result)) {
-		sg_set_error(SG_ERROR_PDHREAD, PDH_USER);
-		return NULL;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("cpu", SG_ERROR_KSTAT_READ, "SG_WIN32_PROC_USER");
 	}
-	cpu_usage->user = (float)result;
+	cpu_percent_buf->user = (float)result;
 	if(read_counter_double(SG_WIN32_PROC_PRIV, &result)) {
-		sg_set_error(SG_ERROR_PDHREAD, PDH_PRIV);
-		return NULL;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("cpu", SG_ERROR_KSTAT_READ, "SG_WIN32_PROC_PRIV");
 	}
-	cpu_usage->kernel = (float)result;
+	cpu_percent_buf->kernel = (float)result;
 	if(read_counter_double(SG_WIN32_PROC_IDLE, &result)) {
-		sg_set_error(SG_ERROR_PDHREAD, PDH_IDLE);
-		return NULL;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("cpu", SG_ERROR_KSTAT_READ, "SG_WIN32_PROC_IDLE");
 	}
 	/* win2000 does not have an idle counter, but does have %activity
 	 * so convert it to idle */
-	cpu_usage->idle = 100 - (float)result;
+	cpu_percent_buf->idle = 100 - (float)result;
 	if(read_counter_double(SG_WIN32_PROC_INT, &result)) {
-		sg_set_error(SG_ERROR_PDHREAD, PDH_INTER);
-		return NULL;
+		RETURN_WITH_SET_ERROR_WITH_ERRNO("cpu", SG_ERROR_KSTAT_READ, "SG_WIN32_PROC_INT");
 	}
-	cpu_usage->iowait = (float)result;
+	cpu_percent_buf->iowait = (float)result;
+#endif
 
 	return SG_ERROR_NONE;
-#endif
-#endif
-
+}
 sg_cpu_percents *
 sg_get_cpu_percents_of(sg_cpu_percent_source cps, size_t *entries) {
 
