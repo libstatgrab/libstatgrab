@@ -1197,18 +1197,22 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
 	[
 		AC_ARG_WITH([mnttab], [
   --with-mnttab[[=/path/to/mtab]]
-                          use (specified) mtab file
+                          use (specified) mtab file unless system defines already
 		], [WITH_MNTTAB="$withval"], [WITH_MNTTAB="check"])
-		AC_CHECK_DECL(
-			[MNT_MNTTAB], ,
+		AS_IF(	[test "$WITH_MNTTAB" = "xcheck" -o "$WITH_MNTTAB" = "xyes"],
 			[
-				AS_IF([test "x$cross_compiling" = "xyes"], , [
-					AC_CHECK_FILE([/etc/mnttab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mnttab", [Configure determined mtab file])], [
-						AC_CHECK_FILE([/etc/mtab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mtab", [Configure determined mtab file])])
-					])
-				])
-			], [AC_LANG_SOURCE([
-AC_INCLUDES_DEFAULT
+				AC_CHECK_DECL(
+					[MNT_MNTTAB], ,
+					[
+						AS_IF([test "x$cross_compiling" = "xyes"], , [
+							AC_CHECK_FILE([/proc/self/mounts], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/proc/self/mounts", [Configure determined mtab file])], [
+								AC_CHECK_FILE([/etc/mnttab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mnttab", [Configure determined mtab file])], [
+									AC_CHECK_FILE([/etc/mtab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mtab", [Configure determined mtab file])])
+								])
+							])
+						])
+					], [AC_LANG_SOURCE([
+		AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
 #endif
@@ -1218,8 +1222,13 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_MNTTAB_H
 # include <sys/mnttab.h>
 #endif
+					]
+				)])
+			], [test "$WITH_MNTTAB" != "xno"],
+			[
+				AC_DEFINE_UNQUOTED([MNT_MNTTAB], "$WITH_MNTTAB", [Configure specified mtab file])
 			]
-		)])
+		)
 
 		AC_CHECK_DECL([setmntent], [AC_DEFINE([HAVE_DECL_SETMNTENT], 1, [define when setmntent() is declared])], ,[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
