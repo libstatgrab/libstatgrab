@@ -583,9 +583,9 @@ AC_INCLUDES_DEFAULT
 	[freebsd4.*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
 	],
-	[freebsd[[5-9]].*|freebsd10.*], [
+	[freebsd[[5-9]].*|freebsd1[[0-9]].*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
+		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5+])
 	],
 	[dragonfly*], [
 		AC_DEFINE(DFBSD, , [Building on DragonFlyBSD])
@@ -593,13 +593,13 @@ AC_INCLUDES_DEFAULT
 	],
 	[kfreebsd*-gnu*], [
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
+		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5+])
 	],
 	[darwin*], [
 		AC_DEFINE(DARWIN, , [Building on Darwin])
 		dnl following 2 are assumed because Darwin was derived from FreeBSD5 - prove it
 		AC_DEFINE(FREEBSD, , [Building on FreeBSD])
-		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5.x - 10.x])
+		AC_DEFINE(FREEBSD5, , [Building on FreeBSD 5+])
 		AX_APPEND_TO_VAR([LINKFLAGS], ["-framework IOKit" "-framework CoreFoundation"])
 		#LINKFLAGS="${LINKFLAGS} -framework IOKit"
 	],
