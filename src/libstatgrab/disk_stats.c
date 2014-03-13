@@ -809,7 +809,7 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 #  endif
 # endif
 # ifndef MNT_MNTTAB
-	static const char *mnttabs[] = { "/etc/mnttab", "/etc/mtab" };
+	static const char *mnttabs[] = { "/proc/self/mounts", "/etc/mnttab", "/etc/mtab" };
 	unsigned i;
 # endif
 #elif defined(WIN32)
