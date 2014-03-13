@@ -1199,7 +1199,7 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
   --with-mnttab[[=/path/to/mtab]]
                           use (specified) mtab file unless system defines already
 		], [WITH_MNTTAB="$withval"], [WITH_MNTTAB="check"])
-		AS_IF(	[test "$WITH_MNTTAB" = "xcheck" -o "$WITH_MNTTAB" = "xyes"],
+		AS_IF(	[test "x$WITH_MNTTAB" = "xcheck" -o "x$WITH_MNTTAB" = "xyes"],
 			[
 				AC_CHECK_DECL(
 					[MNT_MNTTAB], ,
@@ -1224,7 +1224,7 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
 #endif
 					]
 				)])
-			], [test "$WITH_MNTTAB" != "xno"],
+			], [test "x$WITH_MNTTAB" != "xno"],
 			[
 				AC_DEFINE_UNQUOTED([MNT_MNTTAB], "$WITH_MNTTAB", [Configure specified mtab file])
 			]
