@@ -179,7 +179,7 @@ free_pids_in_proc_dir( struct pids_in_proc_dir_t *pipd, bool include_children ) 
 	return next;
 }
 
-#define PIPD_IS_FULL(pipd,size) (((size) - ((offsetof(struct pids_in_proc_dir_t, items)))/sizeof(pid_t)) < ((pipd)->nitems + 1))
+#define PIPD_IS_FULL(pipd,size) (offsetof(struct pids_in_proc_dir_t, items[(pipd)->nitems+1]) > (size))
 
 static struct pids_in_proc_dir_t *
 add_pid_to_pids_in_proc_dir( pid_t pid, struct pids_in_proc_dir_t *pipd ) {
