@@ -1205,7 +1205,7 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
 					[MNT_MNTTAB], ,
 					[
 						AS_IF([test "x$cross_compiling" = "xyes"], , [
-							AC_CHECK_FILE([/proc/self/mounts], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/proc/self/mounts", [Configure determined mtab file])], [
+							AC_CHECK_FILE([/proc/mounts], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/proc/mounts", [Configure determined mtab file])], [
 								AC_CHECK_FILE([/etc/mnttab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mnttab", [Configure determined mtab file])], [
 									AC_CHECK_FILE([/etc/mtab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mtab", [Configure determined mtab file])])
 								])

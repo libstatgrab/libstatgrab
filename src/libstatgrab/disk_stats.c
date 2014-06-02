@@ -809,7 +809,7 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 #  endif
 # endif
 # ifndef MNT_MNTTAB
-	static const char *mnttabs[] = { "/proc/self/mounts", "/etc/mnttab", "/etc/mtab" };
+	static const char *mnttabs[] = { "/proc/mounts", "/etc/mnttab", "/etc/mtab" };
 	unsigned i;
 # endif
 #elif defined(WIN32)
@@ -1007,6 +1007,7 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 	for( SG_FS_LOOP_INIT; SG_FS_LOOP_COND; SG_FS_LOOP_ITER ) {
 
 		sg_error upderr;
+		struct stat statbuf;
 
 #ifdef WIN32
 		if( !mp.volume_serial ) /* skip unformatted disks - XXX recheck this for remote drives ... */
@@ -1017,11 +1018,29 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 		VECTOR_UPDATE(fs_stats_vector_ptr, num_fs + 1, fs_ptr, sg_fs_stats);
 #endif
 
+		DEBUG_LOG_FMT("disk", "adding mount point \"%s\" for device \"%s\"", SG_FS_MOUNTP, SG_FS_DEVNAME);
 		if( ( ( upderr = sg_update_string( &fs_ptr[num_fs].device_name, SG_FS_DEVNAME ) ) != SG_ERROR_NONE ) ||
 		    ( ( upderr = sg_update_string( &fs_ptr[num_fs].fs_type, SG_FS_FSTYPENAME ) ) != SG_ERROR_NONE ) ||
 		    ( ( upderr = sg_update_string( &fs_ptr[num_fs].mnt_point, SG_FS_MOUNTP ) ) != SG_ERROR_NONE ) ) {
 			RETURN_FROM_PREVIOUS_ERROR( "disk", upderr );
 		}
+
+		while( ( -1 != lstat(fs_ptr[num_fs].device_name, &statbuf) ) && S_ISLNK(statbuf.st_mode) ) {
+			char lnktgt[PATH_MAX+1], *p;
+			DEBUG_LOG_FMT("disk", "\"%s\" is symlink - resolving ...", fs_ptr[num_fs].device_name);
+			p = realpath(fs_ptr[num_fs].device_name, lnktgt);
+			if( NULL == p ) {
+				/* XXX throw error?
+				 * fs_ptr[num_fs].device_name might be in undefined state (depends on dirnam behavior) */
+				break;
+			}
+			if( ( upderr = sg_lupdate_string( &fs_ptr[num_fs].device_name, lnktgt, sizeof(lnktgt) ) ) != SG_ERROR_NONE ) {
+				RETURN_FROM_PREVIOUS_ERROR( "disk", upderr );
+			}
+		}
+		DEBUG_LOG_FMT("disk", "\"%s\" is not a symlink", fs_ptr[num_fs].device_name);
+		/* avoid fs. bail out when last entry is no link */
+		errno = 0;
 
 		fs_ptr[num_fs].device_type = SG_FS_DEVTYPE;
 		fs_ptr[num_fs].systime = now;
