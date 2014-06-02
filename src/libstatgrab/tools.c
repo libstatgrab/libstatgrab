@@ -124,7 +124,7 @@ read_dir(char *disk_path){
 		stat(dir_dname,&stbuf);
 
 		if (S_ISBLK(stbuf.st_mode)){
-			x = readlink(dir_dname, file_name, sizeof(file_name));
+			x = readlink(dir_dname, file_name, sizeof(file_name)-1); /* ensure no buffer override */
 			file_name[x] = '\0';
 			if (strcmp(file_name, temp_name) == 0) {
 				if (SG_ERROR_NONE != sg_update_string(&svr_name, dp->d_name) ) {
@@ -753,8 +753,8 @@ sg_log_init(const char *properties_pfx, const char *env_name, const char *argv0)
 		   !log4cplus_file_configure(proppath))
 			return;
 
-		getcwd( proppath, sizeof(proppath) );
-		if(check_path(proppath, PATH_MAX, properties_pfx) &&
+		if((NULL != getcwd(proppath, sizeof(proppath))) &&
+		   check_path(proppath, PATH_MAX, properties_pfx) &&
 		   !log4cplus_file_configure(proppath))
 			return;
 	}
