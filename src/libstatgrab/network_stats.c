@@ -784,7 +784,13 @@ sg_get_network_iface_stats_int(sg_vector **network_iface_vector_ptr){
 		network_iface_stat[ifaces].systime = now;
 
 		memset(&ifmed, 0, sizeof(struct ifmediareq));
-		sg_strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
+#ifdef HAVE_STRLCPY
+		strlcpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name));
+#elif defined(HAVE_STRNCPY)
+		strncpy(ifmed.ifm_name, net_ptr->ifa_name, sizeof(ifmed.ifm_name)-1);
+#else
+		(void)snprintf(ifmed.ifm_name, sizeof(ifmed.ifm_name)-1, "%s", net_ptr->ifa_name);
+#endif
 		if(ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmed) == -1){
 			/* Not all interfaces support the media ioctls. */
 			goto skip;

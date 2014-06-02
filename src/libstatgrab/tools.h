@@ -503,18 +503,6 @@ __sg_private int endmntent(FILE *f);
 #  endif
 #endif
 
-#ifndef HAVE_STRLCAT
-__sg_export size_t sg_strlcat(char *dst, const char *src, size_t siz);
-#else
-#define sg_strlcat strlcat
-#endif
-
-#ifndef HAVE_STRLCPY
-__sg_export size_t sg_strlcpy(char *dst, const char *src, size_t siz);
-#else
-#define sg_strlcpy strlcpy
-#endif
-
 #if defined(HAVE_STRNLEN) || (defined(HAVE_XOPEN_SOURCE) && (HAVE_XOPEN_SOURCE>=700))
 #define sg_strnlen strnlen
 #else

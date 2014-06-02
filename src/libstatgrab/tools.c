@@ -164,12 +164,12 @@ get_alias(char *alias){
 			instance = di_instance(node);
 			phys_path = di_devfs_path(node);
 			minor_name = di_minor_name(minor);
-			/* sg_strlcpy(tmpnode, alias, MAXPATHLEN); */
+			/* strlcpy(tmpnode, alias, MAXPATHLEN); */
 			snprintf(tmpnode, sizeof(tmpnode), "%s%d", alias, instance);
-			sg_strlcpy(file, "/devices", sizeof file);
-			sg_strlcat(file, phys_path, sizeof file);
-			sg_strlcat(file, ":", sizeof file);
-			sg_strlcat(file, minor_name, sizeof file);
+			strlcpy(file, "/devices", sizeof file);
+			strlcat(file, phys_path, sizeof file);
+			strlcat(file, ":", sizeof file);
+			strlcat(file, minor_name, sizeof file);
 			value = read_dir(file);
 			if (value != NULL) {
 				add_mapping(tmpnode, value);
@@ -360,8 +360,8 @@ sg_get_ll_match(char *line, regmatch_t *match){
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t
-sg_strlcpy(char *dst, const char *src, size_t siz){
+static size_t
+strlcpy(char *dst, const char *src, size_t siz){
 	char *d = dst;
 	const char *s = src;
 	size_t n = siz;
@@ -384,6 +384,8 @@ sg_strlcpy(char *dst, const char *src, size_t siz){
 
 	return(s - src - 1);    /* count does not include NUL */
 }
+#elif HAVE_DECL_STRLCPY == 0
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
 #ifndef HAVE_STRLCAT
@@ -412,8 +414,8 @@ sg_strlcpy(char *dst, const char *src, size_t siz){
  * Returns strlen(src) + MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
-size_t
-sg_strlcat(char *dst, const char *src, size_t siz){
+static size_t
+strlcat(char *dst, const char *src, size_t siz){
 	char *d = dst;
 	const char *s = src;
 	size_t n = siz;
@@ -438,6 +440,8 @@ sg_strlcat(char *dst, const char *src, size_t siz){
 
 	return(dlen + (s - src));       /* count does not include NUL */
 }
+#elif HAVE_DECL_STRLCAT == 0
+extern size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 
 
@@ -462,6 +466,7 @@ sg_strnlen(char const *s, size_t maxlen)
 sg_error
 sg_update_string(char **dest, const char *src) {
 	char *new;
+	size_t newlen;
 
 	if (src == NULL) {
 		/* We're being told to set it to NULL. */
@@ -470,12 +475,13 @@ sg_update_string(char **dest, const char *src) {
 		return SG_ERROR_NONE;
 	}
 
-	new = sg_realloc(*dest, strlen(src) + 1);
+	newlen = strlen(src) + 1;
+	new = sg_realloc(*dest, newlen);
 	if (new == NULL) {
 		RETURN_FROM_PREVIOUS_ERROR( "tools", sg_get_error() );
 	}
 
-	sg_strlcpy(new, src, strlen(src) + 1);
+	strlcpy(new, src, newlen);
 	*dest = new;
 	return SG_ERROR_NONE;
 }
@@ -498,7 +504,7 @@ sg_lupdate_string(char **dest, const char *src, size_t maxlen) {
 		RETURN_FROM_PREVIOUS_ERROR( "tools", sg_get_error() );
 	}
 
-	sg_strlcpy(new, src, newlen);
+	strlcpy(new, src, newlen);
 	*dest = new;
 	return SG_ERROR_NONE;
 }
@@ -546,7 +552,7 @@ sg_concat_string(char **dest, const char *src) {
 	}
 
 	*dest = new;
-	sg_strlcat(*dest, src, len);
+	strlcat(*dest, src, len);
 	return SG_ERROR_NONE;
 }
 
@@ -692,12 +698,6 @@ endmntent(FILE *f) {
 #endif
 
 #ifdef WITH_LIBLOG4CPLUS
-# ifndef HAVE_STRLCAT
-#  define strlcat sg_strlcat
-# endif
-# ifndef HAVE_STRLCPY
-#  define strlcpy sg_strlcpy
-# endif
 
 static int
 check_path(char *path, size_t path_size, const char *properties_pfx)
@@ -735,7 +735,7 @@ sg_log_init(const char *properties_pfx, const char *env_name, const char *argv0)
 
 	if(argv0) {
 		char proppath[PATH_MAX];
-		char *p = proppath + sg_strlcpy( proppath, argv0, PATH_MAX );
+		char *p = proppath + strlcpy( proppath, argv0, PATH_MAX );
 		strncpy( p, ".properties", PATH_MAX - ( p - proppath ) );
 		if(check_path(proppath, 0, NULL) && !log4cplus_file_configure(proppath))
 			return;
