@@ -62,7 +62,7 @@ void *
 threadfunc(void *parm)
 {
 	int rc, success;
-	unsigned long func_idx = *((unsigned long *)parm);
+	size_t func_idx = *((size_t *)parm);
 
 	rc = pthread_mutex_lock(&mutex);
 	prove_libcall("pthread_mutex_lock", rc);
@@ -129,8 +129,8 @@ main(int argc, char **argv) {
 		return 0;
 	}
 	else if( opt_def[OPT_RUN].optarg.str ) {
-		unsigned long numthreads, i, nfuncs, ok;
-		size_t *test_routines = NULL;
+		unsigned long numthreads, i;
+		size_t *test_routines = NULL, nfuncs, ok;
 		struct statgrab_testfuncs *sg_testfuncs = get_testable_functions(&nfuncs);
 		size_t entries = funcnames_to_indices(opt_def[OPT_RUN].optarg.str, &test_routines, 1);
 		pthread_t *threadid = NULL;
