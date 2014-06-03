@@ -769,8 +769,7 @@ argv_again:
 					goto argv_again;
 				}
 				else {
-					long failing_pid = kp_stats[i].p_pid;
-					INFO_LOG_FMT("process", "sysctl(CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV) failed for pid=%ld", failing_pid);
+					INFO_LOG_FMT("process", "sysctl(CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV) failed for pid=" FMT_PID_T, kp_stats[i].p_pid);
 					continue;
 				}
 			}
@@ -1067,7 +1066,6 @@ again:
 
 # if defined(KERN_PROC_ARGS) || defined(KERN_PROCARGS2)
 		if( 0 != proc_stats_ptr[proc_items].pid ) {
-			char *p;
 			unsigned miblen;
 
 			size = ARG_MAX * sizeof(*proctitle);
@@ -1078,25 +1076,25 @@ again:
 			mib[2] = ((int)proc_stats_ptr[proc_items].pid);
 			mib[3] = KERN_PROC_ARGV;
 			miblen = 4;
-			p = "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV";
+#define PROC_STATS_SYSCTL_NAME "CTL_KERN.KERN_PROC_ARGS.KERN_PROC_ARGV"
 #  elif defined(KERN_PROC_ARGS) && !defined(KERN_PROC_ARGV)
 			mib[1] = KERN_PROC;
 			mib[2] = KERN_PROC_ARGS;
 			mib[3] = ((int)proc_stats_ptr[proc_items].pid);
 			miblen = 4;
-			p = "CTL_KERN.KERN_PROC.KERN_PROC_ARGS";
+#define PROC_STATS_SYSCTL_NAME "CTL_KERN.KERN_PROC.KERN_PROC_ARGS"
 #  elif defined(KERN_PROCARGS2)
 			mib[1] = KERN_PROCARGS2;
 			mib[2] = ((int)proc_stats_ptr[proc_items].pid);
 			miblen = 3;
-			p = "CTL_KERN.KERN_PROCARGS2";
+#define PROC_STATS_SYSCTL_NAME "CTL_KERN.KERN_PROCARGS2"
 #  endif
 			if( -1 == ( rc = sysctl(mib, miblen, proctitle, &size, NULL, 0) ) ) {
 #  if defined(KERN_PROCARGS2)
 				if( EINVAL == errno )
 					goto print_kernel_proctitle;
 #  endif
-				INFO_LOG_FMT("process", "sysctl(%s) for pid=" FMT_PID_T, p, proc_stats_ptr[proc_items].pid);
+				INFO_LOG_FMT("process", "sysctl(" PROC_STATS_SYSCTL_NAME ") for pid=" FMT_PID_T, proc_stats_ptr[proc_items].pid);
 				continue;
 			}
 

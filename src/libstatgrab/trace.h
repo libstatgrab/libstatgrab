@@ -52,6 +52,7 @@
 #define SELECT_10TH(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ...) a10
 
 #if defined(WITH_LIBLOG4CPLUS)
+#define TRACE_ENABLED
 #include <log4cplus/clogger.h>
 #define LOGMSG(module, ll, msg) log4cplus_logger_log(LOG4CPLUS_TEXT("statgrab." module), ll, msg)
 #define LOGMSG_FMT(module, ll, ...) log4cplus_logger_log(LOG4CPLUS_TEXT("statgrab." module), ll, __VA_ARGS__ )
@@ -100,6 +101,7 @@
 	log4cplus_logger_log(LOG4CPLUS_TEXT("statgrab." module), L4CP_TRACE_LOG_LEVEL, FIRST(__VA_ARGS__) " (at %s:%d)" REST(__VA_ARGS__), __FILE__, __LINE__); \
 } while(0)
 #elif defined(WITH_FULL_CONSOLE_LOGGER)
+#define TRACE_ENABLED
 #define LOGMSG(module, ll, msg) fprintf(stderr, "log%d: " msg " in statgrab." module " at %s:%d\n", ll, __FILE__, __LINE__)
 #define LOGMSG_FMT(module, ll, ...) fprintf(stderr, "log%d: " FIRST(__VA_ARGS__) " in statgrab." module " at %s:%d\n", ll REST(__VA_ARGS__), __FILE__, __LINE__)
 
