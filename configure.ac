@@ -1491,15 +1491,28 @@ AC_ARG_ENABLE(saidar,
 )
 
 # Check if the user would prefer not to build examples
-AM_CONDITIONAL(EXAMPLES, true)
+AC_MSG_CHECKING([whether to build examples])
+AM_CONDITIONAL(EXAMPLES, false)
+ac_cv_enable_examples="no"
 AC_ARG_ENABLE(examples,
-	[  --disable-examples      disable building of examples],
+	[  --enable-examples       enable building of examples],
 	[
-		if test "x$enableval" = "xno" ; then
+		AS_IF([test "x$enableval" = "xyes"], [
+			AM_CONDITIONAL(EXAMPLES, true)
+			ac_cv_enable_examples="yes"
+		], [
 			AM_CONDITIONAL(EXAMPLES, false)
-		fi
+			ac_cv_enable_examples="no"
+		])
+	],
+	[
+		AS_IF([test "x$USE_MAINTAINER_MODE" = "xyes"], [
+			AM_CONDITIONAL(EXAMPLES, true)
+			ac_cv_enable_examples="yes"
+		])
 	]
 )
+AC_MSG_RESULT($ac_cv_enable_examples)
 
 # Check if user wants to make and install manpages
 # XXX split between make and install
