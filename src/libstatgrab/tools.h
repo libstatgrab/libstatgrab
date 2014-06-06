@@ -186,14 +186,10 @@ typedef bool _Bool;
 #  include <process.h>
 # endif
 # include <windows.h>
+#  include <iphlpapi.h>
+#  include <lm.h>
 # ifdef HAVE_PDH_H
 #  include <pdh.h>
-# endif
-# ifdef HAVE_IPHLPAPI_H
-#  include <Iphlpapi.h>
-# endif
-# ifdef HAVE_LM_H
-#  include <lm.h>
 # endif
 # include "win32.h"
 #else
@@ -528,10 +524,25 @@ __sg_private char *sg_f_read_line(FILE *f, char *linebuf, size_t buf_size, const
 #if defined(__NEED_SG_GET_SYS_PAGE_SIZE)
 static ssize_t sys_page_size;
 
+#ifdef _WIN32
+# include <windows.h>
+static inline long getpagesize (void) {
+	static long g_pagesize = 0;
+	if (! g_pagesize) {
+		SYSTEM_INFO system_info;
+		GetSystemInfo (&system_info);
+		g_pagesize = system_info.dwPageSize;
+	}
+	return g_pagesize;
+}
+#else
+#include <sys/mman.h>
+#endif
+
 static inline ssize_t
 sg_get_sys_page_size(void) {
 	if( 0 == sys_page_size ) {
-		if( ( sys_page_size = sysconf(_SC_PAGESIZE) ) == -1 ) {
+		if( ( sys_page_size = getpagesize() ) == -1 ) {
 			SET_ERROR_WITH_ERRNO("tools", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 		}
 	}

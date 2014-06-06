@@ -191,7 +191,7 @@ char *get_diskio(const int no, long long *read, long long *write)
 	result = read_counter_large_int(diskio_rhan[no], read);
 	result = result + read_counter_large_int(diskio_whan[no], write);
 	if (result) {
-		sg_set_error(SG_ERROR_PDHREAD, "diskio");
+		sg_set_error_fmt(SG_ERROR_PDHREAD, "diskio");
 		return NULL;
 	}
 	if (sg_update_string(&name, diskio_names[no]))
@@ -254,7 +254,7 @@ int sg_win32_snapshot()
 
 	pdh_status = PdhCollectQueryData(h_query);
 	if(pdh_status != ERROR_SUCCESS) {
-		sg_set_error(SG_ERROR_PDHCOLLECT, NULL);
+		sg_set_error_fmt(SG_ERROR_PDHCOLLECT, NULL);
 		return -1;
 	}
 #endif
@@ -281,7 +281,7 @@ int sg_win32_start_capture()
 			mess = "Invalid argument o.O";
 		else if(pdh_status == PDH_MEMORY_ALLOCATION_FAILURE)
 			mess = "Memory allocation failure";
-		sg_set_error(SG_ERROR_PDHOPEN, mess);
+		sg_set_error_fmt(SG_ERROR_PDHOPEN, mess);
 		return -1;
 	}
 	if (add_all_monitors() == -1) {

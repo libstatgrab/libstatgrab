@@ -150,7 +150,7 @@ AC_INCLUDES_DEFAULT
 
 AX_WIN32(
 	[
-		AC_CHECK_HEADERS([io.h Iphlpapi.h lm.h pdh.h process.h psapi.h winsock2.h ws2tcpip.h wspiapi.h winsock.h])
+		AC_CHECK_HEADERS([io.h pdh.h process.h winsock2.h ws2tcpip.h wspiapi.h winsock.h])
 		AC_CHECK_FUNCS([strerror_s])
 	],
 	[ dnl else
@@ -655,9 +655,9 @@ AC_INCLUDES_DEFAULT
 	],
 	[mingw32], [
 		AC_DEFINE(MINGW, , [Building on MinGW])
-		AC_DEFINE(WINVER, 0x0500, [Building for Windows 2000])
+		AC_DEFINE(WINVER, 0x0502, [Building for Windows 2003])
 		AM_CONDITIONAL(MINGW, true)
-		LINKFLAGS="-lpdh -lIphlpapi -lpsapi -lnetapi32"
+		LINKFLAGS="-lpdh -liphlpapi -lpsapi -lnetapi32"
 	],
 	[
 		AC_MSG_WARN([Build on unknown OS: $host_os - many functions might be not functional])

@@ -81,6 +81,7 @@ static DWORD glob_tls_idx = TLS_OUT_OF_INDEXES;
 #  error unsupport thread library
 # endif
 
+static unsigned initialized = 0;
 # if defined(HAVE_PTHREAD)
 struct sg_named_mutex {
 	const char *name;
@@ -94,7 +95,6 @@ static struct sg_named_mutex glob_lock = { "statgrab", PTHREAD_MUTEX_INITIALIZER
 #  endif
 static struct sg_named_mutex *required_locks = NULL;
 static size_t num_required_locks = 0;
-static unsigned initialized = 0;
 
 static int
 cmp_named_locks( const void *va, const void *vb ) {
@@ -223,15 +223,15 @@ static char *glob_buf = NULL;
 static void
 sg_destroy_main_globals(void)
 {
+	char *glob_buf;
 #if defined(ENABLE_THREADS)
 # if defined(HAVE_PTHREAD)
-	char *glob_buf;
 	while( NULL != ( glob_buf = pthread_getspecific(glob_key) ) )
 		sg_destroy_globals(glob_buf);
 # elif defined(WIN32)
 	glob_buf = TlsGetValue(glob_tls_idx);
 	if((NULL == glob_buf) && (ERROR_SUCCESS != GetLastError())){
-		RETURN_WITH_SET_ERROR("globals", SG_ERROR_MEMSTATUS, NULL);
+		SET_ERROR("globals", SG_ERROR_MEMSTATUS, NULL);
 	}
 	if(glob_buf)
 		sg_destroy_globals(glob_buf);

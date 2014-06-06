@@ -69,8 +69,8 @@ int __declspec(dllexport) foo() { return 1; }
             ax_visibility_private='__attribute__((visibility("hidden")))'
         ],
         [gcc3], [
-            ax_visibility_export='__attribute__((dllexport))'
-            ax_visibility_import='__attribute__((dllimport))'
+            ax_visibility_export=''
+            ax_visibility_import=''
             ax_visibility_private=''
         ],
         [sunpro], [
@@ -79,8 +79,8 @@ int __declspec(dllexport) foo() { return 1; }
             ax_visibility_private='__hidden'
         ],
         [ms], [
-            ax_visibility_export='__declspec(dllexport)'
-            ax_visibility_import='__declspec(dllimport)'
+            ax_visibility_export=''
+            ax_visibility_import=''
             ax_visibility_private=''
         ], [
             ax_visibility_export=''

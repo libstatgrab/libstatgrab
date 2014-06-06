@@ -121,7 +121,7 @@ sg_get_user_stats_int(sg_vector **user_stats_vector_ptr) {
 			for( i = 0; i < entries_read; ++i ) {
 				/* assert(tmp_buf != NULL); */
 				if( tmp_buf == NULL ) {
-					sg_set_error(SG_ERROR_PERMISSION, "User list");
+					SET_ERROR("user", SG_ERROR_PERMISSION, "User list");
 					ERROR_LOG("user", "Permission denied fetching user details");
 					break; /* XXX break and not return? */
 				}

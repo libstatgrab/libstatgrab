@@ -27,6 +27,10 @@
 #endif
 #include "tools.h"
 
+#ifdef _WIN32
+#include <iphlpapi.h>
+#endif
+
 static void
 sg_network_io_stats_item_init(sg_network_io_stats *d) {
 	memset( d, 0, sizeof(*d) );
@@ -1373,11 +1377,11 @@ skip:
 	for (i=0; i < ifaces; ++i) {
 		int no = 2, j;
 		for(j=i+1; j<ifaces; ++j) {
-			if(strcmp(network_io_ptr[i].interface_name, network_io_ptr[j].interface_name) == 0) {
+			if(strcmp(network_iface_stat[i].interface_name, network_iface_stat[j].interface_name) == 0) {
 				if(snprintf(buf, sizeof(buf), " #%d", no) < 0) {
 					break;
 				}
-				if(sg_concat_string(&network_io_ptr[i].interface_name, buf) != 0) {
+				if(sg_concat_string(&network_iface_stat[i].interface_name, buf) != 0) {
 					RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
 				}
 

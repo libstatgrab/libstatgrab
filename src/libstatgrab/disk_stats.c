@@ -669,10 +669,10 @@ getdrvent(LPTSTR vol, unsigned check_mask, struct sg_win32_drvent *buf) {
 
 	if( check_mask & ( 1 << buf->drive_type ) ) {
 		return GetVolumeInformation( vol,
-					     &buf->volume_name_buf, sizeof(buf->volume_name_buf),
+					     buf->volume_name_buf, sizeof(buf->volume_name_buf),
 					     &buf->volume_serial, &buf->max_component_len,
 					     &buf->fs_flags,
-					     &buf->filesys_name_buf, sizeof(buf->filesys_name_buf) );
+					     buf->filesys_name_buf, sizeof(buf->filesys_name_buf) );
 	}
 
 	return 1;
@@ -973,11 +973,13 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 		RETURN_WITH_SET_ERROR("disk", SG_ERROR_GETMNTINFO, "GetLogicalDriveStrings");
 	}
 
-	if (!(GetLogicalDriveStrings(BUFSIZE-1, lp_buf))) {
+	if (!(GetLogicalDriveStrings(BUFSIZE-1, buf))) {
 		RETURN_WITH_SET_ERROR("disk", SG_ERROR_GETMNTINFO, "GetLogicalDriveStrings");
 	}
 
 	SetLastError(0);
+
+	int rc;
 
 #define NEED_VECTOR_UPDATE
 
@@ -988,9 +990,9 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 #define SG_FS_LOOP_COND '\0' != *p
 #define SG_FS_LOOP_ITER p += strlen(p) + 1, rc = getdrvent(p, (1 << DRIVE_FIXED)|(1<<DRIVE_RAMDISK), &mp )
 
-#define SG_MP_FSTYPENAME	mp.filesys_name_buf
-#define SG_MP_DEVNAME		p
-#define SG_MP_MOUNTP		p
+#define SG_FS_FSTYPENAME	mp.filesys_name_buf
+#define SG_FS_DEVNAME		p
+#define SG_FS_MOUNTP		p
 #define SG_FS_DEVTYPE		sg_fs_unknown
 
 #else
@@ -1189,7 +1191,7 @@ sg_fill_fs_stat_int(sg_fs_stats *fs_stats_ptr) {
 	fs_stats_ptr->total_blocks = fs_stats_ptr->block_size * total_clusters;
 	fs_stats_ptr->free_blocks  = (long long)free_clusters;
 	fs_stats_ptr->avail_blocks =
-	fs_stats_ptr->used_blocks  = fs_stats_ptr->total_block - fs_stats_ptr->free_blocks;
+	fs_stats_ptr->used_blocks  = fs_stats_ptr->total_blocks - fs_stats_ptr->free_blocks;
 #else
 	RETURN_WITH_SET_ERROR("disk", SG_ERROR_UNSUPPORTED, OS_TYPE);
 #define UNSUPPORTED
