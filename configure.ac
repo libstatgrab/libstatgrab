@@ -1537,7 +1537,7 @@ AC_ARG_ENABLE(man-build,
 )
 
 AM_CONDITIONAL(BUILD_MANPAGES, false)
-AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
+AS_IF(	[test "x${ENABLE_BUILD_MANPAGES}" = "xno"],
 	[AM_CONDITIONAL(BUILD_MANPAGES, false)],
 	[
 		dnl check if whether docbook is available
@@ -1553,7 +1553,7 @@ AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
 			ac_cv_path_docbook2man_prog="none"
 		])
 		AC_MSG_RESULT($ac_cv_path_docbook2man_prog)
-		AS_IF(	[test "x$enableval" = "xyes" -a "x$ac_cv_path_docbook2man_prog" = "xnone"],
+		AS_IF(	[test "x${ENABLE_BUILD_MANPAGES}" = "xyes" -a "x$ac_cv_path_docbook2man_prog" = "xnone"],
 			[
 				AC_MSG_ERROR([Want manpages being build but have no docbook2man])
 			],
