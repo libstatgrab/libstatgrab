@@ -48,6 +48,7 @@ typedef enum {
 typedef enum {
 	DISPLAY_LINUX = 0,
 	DISPLAY_BSD,
+	DISPLAY_GRAPHITE,
 	DISPLAY_MRTG,
 	DISPLAY_PLAIN
 } display_mode_type;
@@ -80,6 +81,8 @@ int use_cpu_percent = 0;
 int use_diffs = 0;
 long float_scale_factor = 0;
 long long bytes_scale_factor = 0;
+char *graphite_prefix = NULL;
+time_t graphite_ts = NULL;
 
 /* Exit with an error message. */
 static void
@@ -130,6 +133,16 @@ add_stat(stat_type type, void *stat, ...) {
 	va_list ap;
 	int len = 0;
 	char *name, *p;
+
+	/* Skip non-numeric values if using Graphite-compatible output */
+	if (display_mode == DISPLAY_GRAPHITE) {
+		switch (type) {
+		case BOOL:
+		case STRING:
+		case DUPLEX:
+			return;
+		}
+	}
 
 	/* Figure out how long the name will be, including dots and trailing
 	   \0. */
@@ -553,7 +566,7 @@ populate_net(void) {
 			}
 			if (!had_io) {
 				add_stat(STRING, &iface[i].interface_name,
-				 	"net", name, "interface_name", NULL);
+					"net", name, "interface_name", NULL);
 			}
 
 			add_stat(UNSIGNED_LONG_LONG, &iface[i].speed,
@@ -637,6 +650,9 @@ get_stats(void) {
 
 	if (stat_items != NULL)
 		qsort(stat_items, num_stats, sizeof *stat_items, stats_compare);
+	if (display_mode == DISPLAY_GRAPHITE) {
+		graphite_ts = time(NULL);
+	}
 }
 
 /* Print the value of a stat_item. */
@@ -738,12 +754,23 @@ print_stat(const stat_item *s) {
 	case DISPLAY_BSD:
 		printf("%s: ", s->name);
 		break;
+	case DISPLAY_GRAPHITE:
+		if (graphite_prefix == NULL) {
+			printf("%s ", s->name);
+		} else {
+			printf("%s.%s ", graphite_prefix, s->name);
+		}
+		break;
 	case DISPLAY_MRTG:
 	case DISPLAY_PLAIN:
 		break;
 	}
 	print_stat_value(s);
-	printf("\n");
+	if (display_mode == DISPLAY_GRAPHITE) {
+		printf(" %d\n", graphite_ts);
+	} else {
+		printf("\n");
+	}
 }
 
 /* Print stats as specified on the provided command line. */
@@ -817,6 +844,8 @@ usage(void) {
 	printf("  -l         Linux sysctl-style output (default)\n"
 	       "  -b         BSD sysctl-style output\n"
 	       "  -m         MRTG-compatible output\n"
+	       "  -r         Graphite-compatible output\n"
+	       "  -R PREFIX  Graphite-compatible output with STATs prefixed by 'PREFIX.'\n"
 	       "  -u         Plain output (only show values)\n"
 	       "  -n         Display cumulative stats once (default)\n"
 	       "  -s         Display stat differences repeatedly\n"
@@ -982,7 +1011,7 @@ main(int argc, char **argv) {
 
 	opterr = 0;
 	while (1) {
-		int c = getopt(argc, argv, "lbmunsot:pf:F:KMG");
+		int c = getopt(argc, argv, "lbmrR:unsot:pf:F:KMG");
 		if (c == -1)
 			break;
 		switch (c) {
@@ -994,6 +1023,13 @@ main(int argc, char **argv) {
 			break;
 		case 'm':
 			display_mode = DISPLAY_MRTG;
+			break;
+		case 'r':
+			display_mode = DISPLAY_GRAPHITE;
+			break;
+		case 'R':
+			display_mode = DISPLAY_GRAPHITE;
+			graphite_prefix = optarg;
 			break;
 		case 'u':
 			display_mode = DISPLAY_PLAIN;
