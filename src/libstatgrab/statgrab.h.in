@@ -277,6 +277,7 @@ typedef enum {
 
 typedef struct {
 	char *device_name;
+	char *device_canonical;
 	char *fs_type;
 	char *mnt_point;
 	sg_fs_device_type device_type; /* XXX this isn't an enum, it's a bit-mask */
