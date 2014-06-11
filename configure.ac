@@ -1728,10 +1728,10 @@ AM_CONDITIONAL(WITH_LIBLOG4CPLUS, false)
 AM_CONDITIONAL(WITH_FULL_CONSOLE_LOGGER, false)
 WITH_LIBLOG4CPLUS=0
 
-AC_ARG_ENABLE(logging,
-	[  --enable-logging        enable logging in library (force console printf,
-                          if no logging library is found)
-  --disable-logging       disable logging in library], [ENABLE_LOGGING="$enableval"], [ENABLE_LOGGING="check"])
+AC_ARG_ENABLE(logging, [  --enable-logging=[[yes|check]]
+                          enable logging in library (force console printf, if
+                          neither check is chosen nor logging library is found)],
+  [ENABLE_LOGGING="$enableval"], [ENABLE_LOGGING="no"])
 
 AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
     AX_CHECK_WITH_LIB([log4cplus],[check])
