@@ -416,6 +416,8 @@ populate_fs(void) {
 
 			add_stat(STRING, &disk[i].device_name,
 				 "fs", name, "device_name", NULL);
+			add_stat(STRING, &disk[i].device_canonical,
+				 "fs", name, "device_canonical", NULL);
 			add_stat(STRING, &disk[i].fs_type,
 				 "fs", name, "fs_type", NULL);
 			add_stat(STRING, &disk[i].mnt_point,
