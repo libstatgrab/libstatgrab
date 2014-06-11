@@ -798,6 +798,10 @@ print_stats(int argc, char **argv) {
 			}
 		}
 	}
+
+#if !defined(HAVE_SETVBUF) && !defined(HAVE_SETLINEBUF)
+	fflush(stdout);
+#endif
 }
 
 static void
@@ -962,6 +966,17 @@ set_valid_filesystems(char const *fslist) {
 int
 main(int argc, char **argv) {
 	char *fslist = NULL;
+
+#if defined(HAVE_SETVBUF)
+# ifndef BUFSIZ
+#  define BUFSIZ 256
+# endif
+	int rc = setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
+	if(0 != rc)
+		die(strerror(errno));
+#elif defined(HAVE_SETLINEBUF)
+	setlinebuf(stdout);
+#endif
 
 	opterr = 0;
 	while (1) {
