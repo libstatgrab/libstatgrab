@@ -129,8 +129,9 @@ dnl AC_SEARCH_LIBS(connect, [inet])
 # Checks for library functions
 AC_FUNC_MALLOC
 AC_FUNC_GETMNTENT
-AC_CHECK_FUNCS([atoll bzero fcntl flock getloadavg getmntent getmntent_r seteuid setegid setresuid setresgid statfs statvfs statvfs64 strerror_r strlcat strlcpy strndup strnlen vsprintf vsnprintf])
+AC_CHECK_FUNCS([atoll bzero fcntl flock getloadavg getmntent getmntent_r seteuid setegid setresuid setresgid setvbuf statfs statvfs statvfs64 strerror_r strlcat strlcpy strndup strnlen vsprintf vsnprintf])
 AC_CHECK_DECLS([strlcat, strlcpy], , , [AC_INCLUDES_DEFAULT()])
+AS_IF([test "x${ac_cv_func_setvbuf}" != "xyes"], [AC_CHECK_FUNCS([setlinebuf])])
 
 # Check for some additional headers
 AC_CHECK_HEADERS([fcntl.h inttypes.h libgen.h limits.h netdb.h regex.h sched.h signal.h stdint.h sys/ioctl.h sys/socket.h sys/statvfs.h sys/unistd.h])
