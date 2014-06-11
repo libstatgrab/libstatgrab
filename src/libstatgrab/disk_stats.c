@@ -116,6 +116,7 @@ static void
 sg_fs_stats_item_init(sg_fs_stats *d) {
 
 	d->device_name = NULL;
+	d->device_canonical = NULL;
 	d->fs_type = NULL;
 	d->mnt_point = NULL;
 }
@@ -124,6 +125,7 @@ static sg_error
 sg_fs_stats_item_copy(const sg_fs_stats *s, sg_fs_stats *d) {
 
 	if( SG_ERROR_NONE != sg_update_string(&d->device_name, s->device_name) ||
+	    SG_ERROR_NONE != sg_update_string(&d->device_canonical, s->device_canonical) ||
 	    SG_ERROR_NONE != sg_update_string(&d->fs_type, s->fs_type) ||
 	    SG_ERROR_NONE != sg_update_string(&d->mnt_point, s->mnt_point) ) {
 		RETURN_FROM_PREVIOUS_ERROR( "disk", sg_get_error() );
@@ -178,6 +180,10 @@ sg_fs_stats_item_compare(const sg_fs_stats *a, const sg_fs_stats *b) {
 	if( 0 != rc )
 		return rc;
 
+	rc = strcmp(a->device_canonical, b->device_canonical);
+	if( 0 != rc )
+		return rc;
+
 	rc = strcmp(a->mnt_point, b->mnt_point);
 	if( 0 != rc )
 		return rc;
@@ -192,6 +198,7 @@ sg_fs_stats_item_compare(const sg_fs_stats *a, const sg_fs_stats *b) {
 static void
 sg_fs_stats_item_destroy(sg_fs_stats *d) {
 	free(d->device_name);
+	free(d->device_canonical);
 	free(d->fs_type);
 	free(d->mnt_point);
 }
@@ -1020,29 +1027,28 @@ sg_get_fs_list_int(sg_vector **fs_stats_vector_ptr) {
 
 		TRACE_LOG_FMT("disk", "adding mount point \"%s\" for device \"%s\"", SG_FS_MOUNTP, SG_FS_DEVNAME);
 		if( ( ( upderr = sg_update_string( &fs_ptr[num_fs].device_name, SG_FS_DEVNAME ) ) != SG_ERROR_NONE ) ||
+		    ( ( upderr = sg_update_string( &fs_ptr[num_fs].device_canonical, SG_FS_DEVNAME ) ) != SG_ERROR_NONE ) ||
 		    ( ( upderr = sg_update_string( &fs_ptr[num_fs].fs_type, SG_FS_FSTYPENAME ) ) != SG_ERROR_NONE ) ||
 		    ( ( upderr = sg_update_string( &fs_ptr[num_fs].mnt_point, SG_FS_MOUNTP ) ) != SG_ERROR_NONE ) ) {
 			RETURN_FROM_PREVIOUS_ERROR( "disk", upderr );
 		}
 
-#ifdef RESOLVE_DEV_SYMLINKS
-		while( ( -1 != lstat(fs_ptr[num_fs].device_name, &statbuf) ) && S_ISLNK(statbuf.st_mode) ) {
+		while( ( -1 != lstat(fs_ptr[num_fs].device_canonical, &statbuf) ) && S_ISLNK(statbuf.st_mode) ) {
 			char lnktgt[PATH_MAX+1], *p;
-			TRACE_LOG_FMT("disk", "\"%s\" is symlink - resolving ...", fs_ptr[num_fs].device_name);
-			p = realpath(fs_ptr[num_fs].device_name, lnktgt);
+			TRACE_LOG_FMT("disk", "\"%s\" is symlink - resolving ...", fs_ptr[num_fs].device_canonical);
+			p = realpath(fs_ptr[num_fs].device_canonical, lnktgt);
 			if( NULL == p ) {
 				/* XXX throw error?
-				 * fs_ptr[num_fs].device_name might be in undefined state (depends on dirnam behavior) */
+				 * fs_ptr[num_fs].device_canonical might be in undefined state (depends on dirnam behavior) */
 				break;
 			}
-			if( ( upderr = sg_lupdate_string( &fs_ptr[num_fs].device_name, lnktgt, sizeof(lnktgt) ) ) != SG_ERROR_NONE ) {
+			if( ( upderr = sg_lupdate_string( &fs_ptr[num_fs].device_canonical, lnktgt, sizeof(lnktgt) ) ) != SG_ERROR_NONE ) {
 				RETURN_FROM_PREVIOUS_ERROR( "disk", upderr );
 			}
 		}
-		TRACE_LOG_FMT("disk", "\"%s\" is not a symlink", fs_ptr[num_fs].device_name);
+		TRACE_LOG_FMT("disk", "\"%s\" is not a symlink", fs_ptr[num_fs].device_canonical);
 		/* avoid fs. bail out when last entry is no link */
 		errno = 0;
-#endif
 
 		fs_ptr[num_fs].device_type = SG_FS_DEVTYPE;
 		fs_ptr[num_fs].systime = now;
