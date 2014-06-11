@@ -1194,17 +1194,15 @@ AC_INCLUDES_DEFAULT
 	]
 )
 
+ac_resolve_mnt_dev_symlink="no"
 AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "xyes"],
 	[
-		AC_ARG_WITH([mnttab], [
-  --with-mnttab[[=/path/to/mtab]]
-                          use (specified) mtab file unless system defines already
-		], [WITH_MNTTAB="$withval"], [WITH_MNTTAB="check"])
+		AC_ARG_WITH(	[mnttab], [  --with-mnttab[[=/path/to/mtab]]
+                          use (specified) mtab file unless system defines already],
+				[WITH_MNTTAB="$withval"], [WITH_MNTTAB="check"])
 		AS_IF(	[test "x$WITH_MNTTAB" = "xcheck" -o "x$WITH_MNTTAB" = "xyes"],
 			[
-				AC_CHECK_DECL(
-					[MNT_MNTTAB], ,
-					[
+				AC_CHECK_DECL( [MNT_MNTTAB], , [
 						AS_IF([test "x$cross_compiling" = "xyes"], , [
 							AC_CHECK_FILE([/proc/mounts], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/proc/mounts", [Configure determined mtab file])], [
 								AC_CHECK_FILE([/etc/mnttab], [AC_DEFINE_UNQUOTED([MNT_MNTTAB], "/etc/mnttab", [Configure determined mtab file])], [
@@ -1212,7 +1210,7 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
 								])
 							])
 						])
-					], [AC_LANG_SOURCE([
+				], [AC_LANG_SOURCE([
 		AC_INCLUDES_DEFAULT
 #ifdef HAVE_MNTENT_H
 # include <mntent.h>
@@ -1223,13 +1221,23 @@ AS_IF(	[test "x$ac_cv_func_getmntent" = "xyes" -o "x$ac_cv_func_getmntent_r" = "
 #ifdef HAVE_SYS_MNTTAB_H
 # include <sys/mnttab.h>
 #endif
-					]
-				)])
+				])])
+			AS_IF([test "x$ac_cv_file__proc_mounts" = "xyes"], [ac_resolve_mnt_dev_symlink="yes"])
 			], [test "x$WITH_MNTTAB" != "xno"],
 			[
 				AC_DEFINE_UNQUOTED([MNT_MNTTAB], "$WITH_MNTTAB", [Configure specified mtab file])
+				AS_IF([test -z "`echo 'x$WITH_MNTTAB' | $EGREP '^/proc/'`"], [ac_resolve_mnt_dev_symlink="yes"])
 			]
 		)
+
+		AC_ARG_ENABLE([resolve-device-symlinks], [  --enable-resolve-device-symlinks
+                          enables resolving of symlinks in device names
+  --disable-resolve-device-symlinks
+                          disables resolving of symlinks in device names], [ac_resolve_mnt_dev_symlink="$enableval"])
+		AS_IF([test "x$ac_resolve_mnt_dev_symlink" = "xyes"], [
+			AC_DEFINE([RESOLVE_DEV_SYMLINKS], 1, [define when symlinks of devices shall be resolved])
+			AC_MSG_NOTICE([device symlink resolving is enabled])
+		])
 
 		AC_CHECK_DECL([setmntent], [AC_DEFINE([HAVE_DECL_SETMNTENT], 1, [define when setmntent() is declared])], ,[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
@@ -1491,15 +1499,28 @@ AC_ARG_ENABLE(saidar,
 )
 
 # Check if the user would prefer not to build examples
-AM_CONDITIONAL(EXAMPLES, true)
+AC_MSG_CHECKING([whether to build examples])
+AM_CONDITIONAL(EXAMPLES, false)
+ac_cv_enable_examples="no"
 AC_ARG_ENABLE(examples,
-	[  --disable-examples      disable building of examples],
+	[  --enable-examples       enable building of examples],
 	[
-		if test "x$enableval" = "xno" ; then
+		AS_IF([test "x$enableval" = "xyes"], [
+			AM_CONDITIONAL(EXAMPLES, true)
+			ac_cv_enable_examples="yes"
+		], [
 			AM_CONDITIONAL(EXAMPLES, false)
-		fi
+			ac_cv_enable_examples="no"
+		])
+	],
+	[
+		AS_IF([test "x$USE_MAINTAINER_MODE" = "xyes"], [
+			AM_CONDITIONAL(EXAMPLES, true)
+			ac_cv_enable_examples="yes"
+		])
 	]
 )
+AC_MSG_RESULT($ac_cv_enable_examples)
 
 # Check if user wants to make and install manpages
 # XXX split between make and install
@@ -1516,7 +1537,7 @@ AC_ARG_ENABLE(man-build,
 )
 
 AM_CONDITIONAL(BUILD_MANPAGES, false)
-AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
+AS_IF(	[test "x${ENABLE_BUILD_MANPAGES}" = "xno"],
 	[AM_CONDITIONAL(BUILD_MANPAGES, false)],
 	[
 		dnl check if whether docbook is available
@@ -1532,7 +1553,7 @@ AS_IF(	[test "x${ENABLE_MANPAGES}" = "xno"],
 			ac_cv_path_docbook2man_prog="none"
 		])
 		AC_MSG_RESULT($ac_cv_path_docbook2man_prog)
-		AS_IF(	[test "x$enableval" = "xyes" -a "x$ac_cv_path_docbook2man_prog" = "xnone"],
+		AS_IF(	[test "x${ENABLE_BUILD_MANPAGES}" = "xyes" -a "x$ac_cv_path_docbook2man_prog" = "xnone"],
 			[
 				AC_MSG_ERROR([Want manpages being build but have no docbook2man])
 			],
@@ -1707,10 +1728,10 @@ AM_CONDITIONAL(WITH_LIBLOG4CPLUS, false)
 AM_CONDITIONAL(WITH_FULL_CONSOLE_LOGGER, false)
 WITH_LIBLOG4CPLUS=0
 
-AC_ARG_ENABLE(logging,
-	[  --enable-logging        enable logging in library (force console printf,
-                          if no logging library is found)
-  --disable-logging       disable logging in library], [ENABLE_LOGGING="$enableval"], [ENABLE_LOGGING="check"])
+AC_ARG_ENABLE(logging, [  --enable-logging=[[yes|check]]
+                          enable logging in library (force console printf, if
+                          neither check is chosen nor logging library is found)],
+  [ENABLE_LOGGING="$enableval"], [ENABLE_LOGGING="no"])
 
 AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
     AX_CHECK_WITH_LIB([log4cplus],[check])
