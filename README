@@ -39,6 +39,19 @@ sections "Optional Features" and "Optional Packages" of the output of
 
   ./configure --help
 
+Library RPATH issues on Linux
+-----------------------------
+
+You may find on Linux that after installation the utilities don't know
+where to find the libstatgrab library. This is because RPATH is only
+set when the installation prefix is not in /etc/ld.so.conf.
+
+After installing libstatgrab to a prefix in /etc/ld.so.conf make sure
+to run ldconfig so that the /etc/ld.so.cache file is updated. This
+ensures that the runtime linker can find the library.
+
+If in doubt, just run ldconfig after installation.
+
 Prerequisites
 -------------
 
@@ -60,6 +73,24 @@ Platform Specific Notes
 
 Please see the PLATFORMS file for supported platforms and specific
 notes on using libstatgrab on those platforms.
+
+Notes for packagers - parallel installation
+-------------------------------------------
+
+If you're packaging libstatgrab for an operating system distribution
+you may hit the problem that you need both a 0.90+ API version of
+libstatgrab installed and an older version. Some applications have not
+yet been updated to use the newer API.
+
+We've decided at the moment not to make any changes to libstatgrab to
+allow parallel installation of multiple versions. You can see our
+discussion on that at the page below, including how the problem has
+been worked around on one operating system.
+
+https://github.com/i-scream/libstatgrab/issues/25#issuecomment-45358744
+
+We're not sure how big this problem actually is, so please let us know
+if you're hitting it. This may make us reconsider our position.
 
 Problems?
 ---------

@@ -6,7 +6,38 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
-libstatgrab 0.90
+libstatgrab 0.91 (?? June 2014)
+ * Use /proc/mounts on Linux where available. Note that this
+   potentially results in different data appearing in the filesystem
+   statistics. To override the choice use the --with-mnttab configure
+   flag.
+ * Add a new field named device_canonical to the filesystem statistics.
+   This always holds the real device and is useful in the case where
+   device_name is a symlink.
+ * Fix list miscounting in sg_set_valid_filesystems.
+ * Fix buffer overrun when dealing with a larger number of processes.
+ * Fix divide by zero display problem in saidar.
+ * Building of examples is now disabled by default. Use the
+   --enable-examples configure flag to build them if required.
+ * Logging (log4cplus) is now only enabled if the --enable-logging
+   configure flag is given.
+ * When logging with log4cplus is enabled, properties files are
+   installed in to ${prefix}/etc. Both statgrab and saidar will search
+   this location when starting up. These files can be used to
+   configure the behaviour of log4cplus.
+ * Add Graphite output support in statgrab.
+     (Thanks to John Lyman)
+ * Fix test suite problem when doing a VPATH build.
+ * Install distribution documentation (such as this file) in to
+   ${prefix}/share/doc/libstatgrab.
+ * Various other minor bug fixes identified by compiler warnings.
+ * Update code for the Windows platform. This is incomplete, but we
+   included the changes to give anyone else working in this area a
+   better starting point. We welcome pull requests to further improve
+   this code. The original pull request can be found in #36.
+     (Thanks to Brent Cook)
+
+libstatgrab 0.90 (08 August 2013)
  * Please note the API in 0.90 has changed, so applications using
    libstatgrab will need to be updated to support the changes.
 

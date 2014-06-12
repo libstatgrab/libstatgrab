@@ -10,13 +10,14 @@ DragonFly BSD 3.4
 FreeBSD 7
 FreeBSD 8 (i386, amd64)
 FreeBSD 9 (i386, amd64, sparc64, ia64)
-FreeBSD 10-CURRENT (i386, amd64, sparc64, ia64)
+FreeBSD 10 (i386, amd64, sparc64, ia64)
+FreeBSD 11-CURRENT (i386, amd64, sparc64, ia64)
 HP-UX 11.11 (parisc)
 HP-UX 11.23 (parisc)
 HP-UX 11.23 (ia64)
 HP-UX 11.31 (ia64)
-Linux 2.6 (Ubuntu 10.04, SLES 9-11, Redhat 6, CentOS 6)
-Linux 3.X (Ubuntu 12.04)
+Linux 2.6 (Ubuntu 10.04, SLES 9-11, Red Hat 6, CentOS 6)
+Linux 3.X (Ubuntu 12.04, 14.04)
 NetBSD 5.1
 NetBSD 6.1
 OpenBSD 4.9

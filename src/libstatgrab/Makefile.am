@@ -11,7 +11,7 @@ endif
 include_HEADERS = statgrab.h
 lib_LTLIBRARIES = libstatgrab.la
 
-libstatgrab_la_LDFLAGS = -version-info 9:0:0 @LINKFLAGS@
+libstatgrab_la_LDFLAGS = -version-info 10:0:0 @LINKFLAGS@
 
 if MINGW
 libstatgrab_la_MINGWSOURCES = win32.c
