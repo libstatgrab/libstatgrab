@@ -1717,7 +1717,14 @@ WITH_LIBLOG4CPLUS=0
 AC_ARG_ENABLE(logging, [  --enable-logging=[[yes|check]]
                           enable logging in library (force console printf, if
                           neither check is chosen nor logging library is found)],
-  [ENABLE_LOGGING="$enableval"], [ENABLE_LOGGING="no"])
+	[ENABLE_LOGGING="$enableval"],
+	[
+		AS_IF(	[test "x$USE_MAINTAINER_MODE" = "xyes"],
+			[ENABLE_LOGGING="check"],
+			[ENABLE_LOGGING="no"]
+		)
+	]
+)
 
 AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
     AX_CHECK_WITH_LIB([log4cplus],[check])
