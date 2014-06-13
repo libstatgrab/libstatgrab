@@ -1714,21 +1714,24 @@ AM_CONDITIONAL(WITH_LIBLOG4CPLUS, false)
 AM_CONDITIONAL(WITH_FULL_CONSOLE_LOGGER, false)
 WITH_LIBLOG4CPLUS=0
 
+AX_CHECK_WITH_LIB([log4cplus],[check])
+
 AC_ARG_ENABLE(logging, [  --enable-logging=[[yes|check]]
                           enable logging in library (force console printf, if
                           neither check is chosen nor logging library is found)],
 	[ENABLE_LOGGING="$enableval"],
 	[
-		AS_IF(	[test "x$USE_MAINTAINER_MODE" = "xyes"],
-			[ENABLE_LOGGING="check"],
+		AS_IF(
+			[test "x$ax_with_liblog4cplus" = "xyes"],
+				[ENABLE_LOGGING="yes"],
+			[test "x$USE_MAINTAINER_MODE" = "xyes"],
+				[ENABLE_LOGGING="check"],
 			[ENABLE_LOGGING="no"]
 		)
 	]
 )
 
 AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
-    AX_CHECK_WITH_LIB([log4cplus],[check])
-
     AX_CHECK_LIB_FLAGS([log4cplus], [stdc++,stdc++ unwind], [log4cplus_basic_configure();], [
     AC_INCLUDES_DEFAULT
 #include <log4cplus/clogger.h>
