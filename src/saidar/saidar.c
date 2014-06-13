@@ -555,13 +555,17 @@ display_data(int colors) {
 			}
 			printw("%7s", size_conv(disk_stat_ptr->avail));
 			move(line, 73);
-			if(colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_ALERT_DISK) {
-				attron(A_STANDOUT);
-				attron(A_BOLD);
-			} else if (colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_WARN_DISK) {
-				attron(A_BOLD);
+			if ((disk_stat_ptr->used + disk_stat_ptr->avail) == 0) {
+				printw("%6s", "-");
+			} else {
+				if(colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_ALERT_DISK) {
+					attron(A_STANDOUT);
+					attron(A_BOLD);
+				} else if (colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_WARN_DISK) {
+					attron(A_BOLD);
+				}
+				printw("%6.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
 			}
-			printw("%6.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
 			disk_stat_ptr++;
 			line++;
 			if(colors) {
