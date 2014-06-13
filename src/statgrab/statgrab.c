@@ -82,7 +82,7 @@ int use_diffs = 0;
 long float_scale_factor = 0;
 long long bytes_scale_factor = 0;
 char *graphite_prefix = NULL;
-time_t graphite_ts = NULL;
+time_t graphite_ts = 0;
 
 /* Exit with an error message. */
 static void
@@ -135,13 +135,9 @@ add_stat(stat_type type, void *stat, ...) {
 	char *name, *p;
 
 	/* Skip non-numeric values if using Graphite-compatible output */
-	if (display_mode == DISPLAY_GRAPHITE) {
-		switch (type) {
-		case BOOL:
-		case STRING:
-		case DUPLEX:
-			return;
-		}
+	if (display_mode == DISPLAY_GRAPHITE &&
+	    ((type == BOOL) || (type == STRING) || (type == DUPLEX))) {
+		return;
 	}
 
 	/* Figure out how long the name will be, including dots and trailing
@@ -650,9 +646,8 @@ get_stats(void) {
 
 	if (stat_items != NULL)
 		qsort(stat_items, num_stats, sizeof *stat_items, stats_compare);
-	if (display_mode == DISPLAY_GRAPHITE) {
+	if (display_mode == DISPLAY_GRAPHITE)
 		graphite_ts = time(NULL);
-	}
 }
 
 /* Print the value of a stat_item. */
@@ -766,11 +761,9 @@ print_stat(const stat_item *s) {
 		break;
 	}
 	print_stat_value(s);
-	if (display_mode == DISPLAY_GRAPHITE) {
-		printf(" %d\n", graphite_ts);
-	} else {
-		printf("\n");
-	}
+	if (display_mode == DISPLAY_GRAPHITE)
+		printf(" "FMT_TIME_T, graphite_ts);
+	printf("\n");
 }
 
 /* Print stats as specified on the provided command line. */
