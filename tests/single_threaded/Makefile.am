@@ -21,14 +21,14 @@ $(top_builddir)/src/libstatgrab/libstatgrab.la:
 
 if TEST_SCRIPTS
 full_stats_edit=	$(PERL5) $(srcdir)/../testlib/mk_run_tests.pl \
-		-d srcdir="$(srcdir)" \
+		-d srcdir="$(abs_srcdir)" \
 		-d test-bin="full_stats" \
 		-d test-name=full-stats \
 		-d test-dir="$(subdir)" \
 		-f synopsis=$(srcdir)/run_tests.synopsis.in
 
 diff_stats_edit=	$(PERL5) $(srcdir)/../testlib/mk_run_tests.pl \
-		-d srcdir="$(srcdir)" \
+		-d srcdir="$(abs_srcdir)" \
 		-d test-bin="diff_stats" \
 		-d test-name=diff-stats \
 		-d test-dir="$(subdir)" \
