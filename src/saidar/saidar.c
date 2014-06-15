@@ -545,8 +545,11 @@ display_data(int colors) {
 		disk_stat_ptr = stats.fs_stats;
 		for(counter=0;counter<stats.fs_entries;counter++){
 			char name[20];
+			float used_pct;
+
 			strncpy(name, disk_stat_ptr->mnt_point, sizeof(name));
 			name[sizeof(name)-1] = '\0'; /* strncpy doesn't terminate longer strings */
+
 			move(line, 42);
 			printw("%s", name);
 			move(line, 62);
@@ -555,16 +558,18 @@ display_data(int colors) {
 			}
 			printw("%7s", size_conv(disk_stat_ptr->avail));
 			move(line, 73);
-			if ((disk_stat_ptr->used + disk_stat_ptr->avail) == 0) {
+			used_pct = ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail));
+			if (isnan(used_pct)) {
 				printw("%6s", "-");
 			} else {
-				if(colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_ALERT_DISK) {
+				used_pct *= 100;
+				if(colors && used_pct > THRESHOLD_ALERT_DISK) {
 					attron(A_STANDOUT);
 					attron(A_BOLD);
-				} else if (colors && 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)) > THRESHOLD_WARN_DISK) {
+				} else if (colors && used_pct > THRESHOLD_WARN_DISK) {
 					attron(A_BOLD);
 				}
-				printw("%6.2f%%", 100.00 * ((float) disk_stat_ptr->used / (float) (disk_stat_ptr->used + disk_stat_ptr->avail)));
+				printw("%6.2f%%", used_pct);
 			}
 			disk_stat_ptr++;
 			line++;
