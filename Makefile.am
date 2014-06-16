@@ -22,9 +22,11 @@ endif
 
 check: test
 
-EXTRA_DIST = libstatgrab.pc.in PLATFORMS COPYING COPYING.LGPL
+EXTRA_DIST = libstatgrab.pc.in
 
 MAINTAINERCLEANFILES = ChangeLog
+
+dist_doc_DATA = NEWS PLATFORMS README AUTHORS COPYING COPYING.LGPL
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libstatgrab.pc
