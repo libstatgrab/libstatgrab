@@ -2,7 +2,11 @@
 # http://www.i-scream.org/libstatgrab/
 # $Id$
 
+if WITH_LIBLOG4CPLUS
+AM_CPPFLAGS = $(PTHREAD_CFLAGS) -DBUILD_LIBSTATGRAB -DPROPERTIES_SEARCH_DIR="\"$(sysconfdir)\"" @CLIBFLAGS@
+else
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) -DBUILD_LIBSTATGRAB @CLIBFLAGS@
+endif
 
 include_HEADERS = statgrab.h
 lib_LTLIBRARIES = libstatgrab.la
