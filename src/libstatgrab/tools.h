@@ -535,14 +535,16 @@ static inline long getpagesize (void) {
 	}
 	return g_pagesize;
 }
-#else
-#include <sys/mman.h>
 #endif
 
 static inline ssize_t
 sg_get_sys_page_size(void) {
 	if( 0 == sys_page_size ) {
+#ifdef _WIN32
 		if( ( sys_page_size = getpagesize() ) == -1 ) {
+#else
+		if( ( sys_page_size = sysconf(_SC_PAGESIZE) ) == -1 ) {
+#endif
 			SET_ERROR_WITH_ERRNO("tools", SG_ERROR_SYSCONF, "_SC_PAGESIZE");
 		}
 	}
