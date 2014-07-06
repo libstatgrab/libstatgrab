@@ -1447,12 +1447,8 @@ AC_SUBST(WITH_VISIBILITY_SUPPORT)
 AC_ARG_WITH([curses-prefix],
 	[  --with-curses-prefix=PATH     curses (or ncurses) is in PATH],
 	[
-		if test -d "$withval/lib"; then
-			SAIDARLIBS="-L${withval}/lib ${SAIDARLIBS}"
-		fi
-		if test -d "$withval/include"; then
-			SAIDARCPPFLAGS="-I${withval}/include ${SAIRDARCPPFLAGS}"
-		fi
+		AS_IF([test -d "$withval/lib"], [SAIDARLIBS="-L${withval}/lib ${SAIDARLIBS}"])
+		AS_IF([test -d "$withval/include"], [SAIDARCPPFLAGS="-I${withval}/include ${SAIRDARCPPFLAGS}"])
 	]
 )
 
@@ -1461,9 +1457,7 @@ AM_CONDITIONAL(STATGRAB, true)
 AC_ARG_ENABLE(statgrab,
 	[  --disable-statgrab      disable building of statgrab],
 	[
-		if test "x$enableval" = "xno" ; then
-			AM_CONDITIONAL(STATGRAB, false)
-		fi
+		AS_IF([test "x$enableval" = "xno"], [AM_CONDITIONAL(STATGRAB, false)])
 	]
 )
 
@@ -1472,9 +1466,7 @@ AM_CONDITIONAL(SAIDAR, true)
 AC_ARG_ENABLE(saidar,
 	[  --disable-saidar        disable building of saidar],
 	[
-		if test "x$enableval" = "xno" ; then
-			AM_CONDITIONAL(SAIDAR, false)
-		fi
+		AS_IF([test "x$enableval" = "xno"], [AM_CONDITIONAL(SAIDAR, false)])
 	],
 	[
 		# saidar needs curses
