@@ -522,7 +522,6 @@ AS_CASE([$host_os],
 		BIN_PERM="4755"
 		AC_CHECK_LIB(kstat, kstat_open, [LINKFLAGS="$LINKFLAGS -lkstat"],[AC_MSG_ERROR([need libkstat])])
 		AC_CHECK_LIB(devinfo, di_init, [LINKFLAGS="$LINKFLAGS -ldevinfo"])
-		AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 		dnl check whether procfs is really available
 		AC_DEFINE(HAVE_PROCFS, 1, [Define to signal that procfs is available])
 		AC_CHECK_TYPES([struct swapent, struct swaptable, struct anoninfo], , , [
@@ -545,7 +544,6 @@ AC_INCLUDES_DEFAULT
 				[AC_DEFINE(HAVE_PST_DISKINFO_PSD_DKBYTEWRITE, , [pst_diskinfo.psd_dkbytewrite])],
 				[],
 				[#include <sys/pstat.h>])
-		AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
 	],
 	[aix*], [
 		AC_DEFINE(AIX, , [Building on AIX 5.x - 9.x])
@@ -1454,27 +1452,40 @@ AC_ARG_WITH([curses-prefix],
 
 # Check if user wants to disable statgrab
 AM_CONDITIONAL(STATGRAB, true)
+WITH_STATGRAB="yes"
 AC_ARG_ENABLE(statgrab,
 	[  --disable-statgrab      disable building of statgrab],
 	[
-		AS_IF([test "x$enableval" = "xno"], [AM_CONDITIONAL(STATGRAB, false)])
+		AS_IF([test "x$enableval" = "xno"], [
+		    AM_CONDITIONAL(STATGRAB, false)
+		    WITH_STATGRAB="$enableval"
+		])
 	]
 )
 
+AS_IF([test "x$WITH_STATGRAB" != "xno"], [
+	AC_CHECK_LIB(m, isnan, [STATGRABLIBS="$STATGRABLIBS -lm"])
+])
+
 # Check if user wants to disable saidar
 AM_CONDITIONAL(SAIDAR, true)
+WITH_SAIDAR="yes"
 AC_ARG_ENABLE(saidar,
-	[  --disable-saidar        disable building of saidar],
-	[
-		AS_IF([test "x$enableval" = "xno"], [AM_CONDITIONAL(SAIDAR, false)])
+	[  --disable-saidar        disable building of saidar], [
+		AS_IF([test "x$enableval" = "xno"], [
+		    AM_CONDITIONAL(SAIDAR, false)
+		    WITH_SAIDAR="$enableval"
+		])
 	],
-	[
-		# saidar needs curses
-		# (if we don't find curses we disable saidar)
-		MP_WITH_CURSES
-		AC_CHECK_HEADERS([termios.h sys/termios.h])
-	]
 )
+
+AS_IF([test "x$WITH_SAIDAR" != "xno"], [
+	# saidar needs curses
+	# (if we don't find curses we disable saidar)
+	AC_CHECK_LIB(m, fabs, [SAIDARLIBS="$SAIDARLIBS -lm"])
+	MP_WITH_CURSES
+	AC_CHECK_HEADERS([termios.h sys/termios.h])
+])
 
 # Check if the user would prefer not to build examples
 AC_MSG_CHECKING([whether to build examples])
@@ -1776,6 +1787,10 @@ dnl must be latest to catch rpath compiled in by changes made during checks befo
 
 LT_INIT
 AC_PROG_LIBTOOL
+
+# The LIBS and CPPFLAGS that statgrab needs
+AC_SUBST(STATGRABLIBS)
+AC_SUBST(STATGRABCPPFLAGS)
 
 # The LIBS and CPPFLAGS that saidar needs
 AC_SUBST(SAIDARLIBS)

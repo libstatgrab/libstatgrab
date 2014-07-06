@@ -14,7 +14,7 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) \
               -I$(top_srcdir)/src/libstatgrab -I$(top_builddir)/src/libstatgrab \
               @CLIBFLAGS@
 
-LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la @LINKFLAGS@
+LDADD = $(top_builddir)/src/libstatgrab/libstatgrab.la @STATGRABLIBS@ @LINKFLAGS@
 
 install-exec-local:
 if STATGRAB
