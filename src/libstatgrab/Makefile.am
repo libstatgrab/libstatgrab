@@ -8,7 +8,7 @@ else
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) -DBUILD_LIBSTATGRAB @CLIBFLAGS@
 endif
 
-include_HEADERS = statgrab.h
+nodist_include_HEADERS = statgrab.h
 lib_LTLIBRARIES = libstatgrab.la
 
 libstatgrab_la_LDFLAGS = -version-info 10:0:0 @LINKFLAGS@
