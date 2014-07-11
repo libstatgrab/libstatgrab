@@ -6,7 +6,7 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
-libstatgrab 0.91 (?? June 2014)
+libstatgrab 0.91 (11 July 2014)
  * Use /proc/mounts on Linux where available. Note that this
    potentially results in different data appearing in the filesystem
    statistics. To override the choice use the --with-mnttab configure
