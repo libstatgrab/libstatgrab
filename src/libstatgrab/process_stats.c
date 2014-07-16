@@ -483,6 +483,7 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			/* Read failed.. Process vanished?
 			 * Ah well, move onwards to the next one */
 			++pid_item;
+			fclose(f);
 			continue;
 		}
 		/* +3 because man page says "Resident  Set Size: number of pages the process has in real memory, minus 3 for administrative purposes." */
