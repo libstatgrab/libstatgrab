@@ -11,5 +11,6 @@ bin_perm=@BIN_PERM@
 Name: libstatgrab
 Description: Provides a useful interface to system statistics
 Version: @VERSION@
-Libs: -L${libdir} -lstatgrab @LINKFLAGS@
+Libs: -L${libdir} -lstatgrab
+Libs.private: @LINKFLAGS@
 Cflags: -I${includedir}
