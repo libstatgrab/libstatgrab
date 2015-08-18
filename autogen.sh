@@ -11,4 +11,4 @@ git log --stat --name-only --date=short \
 		-e 's/^\*//' \
 	| tail -n +2 > ChangeLog
 
-autoreconf -i
+autoreconf -fiv
