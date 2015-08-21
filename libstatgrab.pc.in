@@ -4,10 +4,6 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-bin_owner=@BIN_OWNER@
-bin_group=@BIN_GROUP@
-bin_perm=@BIN_PERM@
-
 Name: libstatgrab
 Description: Provides a useful interface to system statistics
 Version: @VERSION@
