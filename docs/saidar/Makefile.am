@@ -2,13 +2,13 @@
 # http://www.i-scream.org/libstatgrab/
 # $Id$
 
+if MANPAGES
 if SAIDAR
 man_MANS = saidar.1
 endif
 
 EXTRA_DIST = $(man_MANS)
 
-if BUILD_MANPAGES
 MAINTAINERCLEANFILES= $(man_MANS)
 
 .xml.1:
