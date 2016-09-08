@@ -2,6 +2,7 @@
 # http://www.i-scream.org/libstatgrab/
 # $Id$
 
+if MANPAGES
 man_MANS =	$(statgrab_MANS) $(sg_cpu_MANS) $(sg_disk_MANS) $(sg_error_MANS) \
 		$(sg_fs_MANS) $(sg_host_MANS) $(sg_load_MANS) $(sg_mem_MANS) \
 		$(sg_netif_MANS) $(sg_netio_MANS) $(sg_page_MANS) $(sg_proc_MANS) \
@@ -81,7 +82,6 @@ sg_tools_MANS =	sg_update_string.3
 
 EXTRA_DIST = $(man_MANS)
 
-if BUILD_MANPAGES
 MAINTAINERCLEANFILES= $(man_MANS)
 
 .NOTPARALLEL :

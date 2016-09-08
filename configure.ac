@@ -1513,9 +1513,9 @@ AC_MSG_RESULT($ac_cv_enable_examples)
 
 # Check if user wants to make and install manpages
 # XXX split between make and install
-AC_ARG_ENABLE(man-build,
-[  --enable-man-build      enable building of manpages (default in maintainer-mode)
-  --disable-man-build     disable building of manpages (default in all other cases)],
+AC_ARG_ENABLE(man,
+[  --enable-man            enable building/installation of manpages (default in maintainer-mode)
+  --disable-man           disable building/installation of manpages (default in all other cases)],
 	[ENABLE_BUILD_MANPAGES="${enableval}"],
 	[
 		AS_IF(	[test "x$USE_MAINTAINER_MODE" = "xyes"],
@@ -1525,9 +1525,9 @@ AC_ARG_ENABLE(man-build,
 	]
 )
 
-AM_CONDITIONAL(BUILD_MANPAGES, false)
+AM_CONDITIONAL(MANPAGES, false)
 AS_IF(	[test "x${ENABLE_BUILD_MANPAGES}" = "xno"],
-	[AM_CONDITIONAL(BUILD_MANPAGES, false)],
+	[AM_CONDITIONAL(MANPAGES, false)],
 	[
 		dnl check if whether docbook is available
 		AC_MSG_CHECKING([for applicable docbook2man])
@@ -1548,7 +1548,7 @@ AS_IF(	[test "x${ENABLE_BUILD_MANPAGES}" = "xno"],
 			],
 			[test "x$ac_cv_path_docbook2man_prog" != "xnone"],
 			[
-				AM_CONDITIONAL(BUILD_MANPAGES, true)
+				AM_CONDITIONAL(MANPAGES, true)
 				DOCBOOK2MAN="$ac_cv_path_docbook2man_prog"
 				AC_SUBST(DOCBOOK2MAN)
 				AC_MSG_NOTICE([enabling build of manpages using $DOCBOOK2MAN])
