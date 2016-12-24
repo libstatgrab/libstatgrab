@@ -765,6 +765,7 @@ print_stat(const stat_item *s) {
 	if (display_mode == DISPLAY_GRAPHITE)
 		printf(" "FMT_TIME_T, graphite_ts);
 	printf("\n");
+	fflush(stdout);
 }
 
 /* Print stats as specified on the provided command line. */
