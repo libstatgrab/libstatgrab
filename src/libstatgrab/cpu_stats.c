@@ -220,6 +220,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 				&cpu_stats_buf->iowait);
 
 			if (proc_stat_cpu < 4 || proc_stat_cpu > 5) {
+				fclose(f);
 				RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "cpu");
 			}
 
@@ -229,6 +230,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 			proc_stat_cpu = sscanf(line, "intr %llu", &cpu_stats_buf->interrupts);
 
 			if (proc_stat_cpu != 1) {
+				fclose(f);
 				RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "intr");
 			}
 
@@ -238,6 +240,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 			proc_stat_cpu = sscanf(line, "ctxt %llu", &cpu_stats_buf->context_switches);
 
 			if (proc_stat_cpu != 1) {
+				fclose(f);
 				RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "ctxt");
 			}
 
@@ -247,6 +250,7 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 			proc_stat_cpu = sscanf(line, "softirq %llu", &cpu_stats_buf->soft_interrupts);
 
 			if (proc_stat_cpu != 1) {
+				fclose(f);
 				RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "softirq");
 			}
 
@@ -255,6 +259,10 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 	}
 
 	fclose(f);
+
+	if( matched < 4 ) {
+		RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "not all from 'cpu', 'intr', 'ctxt', 'softirq' found in '/proc/stat'");
+	}
 
 	cpu_stats_buf->total = cpu_stats_buf->user + cpu_stats_buf->nice + cpu_stats_buf->kernel + cpu_stats_buf->idle;
 #elif defined(ALLBSD)

@@ -605,6 +605,7 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 	/* read the 2 lines.. Its the title, so we dont care :) */
 	if( ( NULL == fgets(line, sizeof(line), f) ) ||
 	    ( NULL == fgets(line, sizeof(line), f) ) ) {
+		fclose(f);
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("network", SG_ERROR_PARSE, "/proc/net/dev");
 	}
 
