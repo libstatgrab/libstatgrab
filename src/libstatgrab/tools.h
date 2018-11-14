@@ -438,6 +438,9 @@ extern "C" strcasecmp(const char *s1, const char *s2);
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
+#ifdef HAVE_LIBPROC_H
+# include <libproc.h>
+#endif
 #ifdef HAVE_SYS_SYSTEMINFO_H
 # include <sys/systeminfo.h>
 #endif
