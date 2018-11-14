@@ -877,6 +877,9 @@ again:
 	size = 0;
 	mib[3] = mib[5] = 0;
 	if( -1 == (rc = sysctl(mib, (unsigned)i, NULL, &size, NULL, 0)) ) {
+		if(kp_stats != NULL)
+			free(kp_stats);
+		free(proctitle);
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
 	}
 	if( NULL == (tmp = sg_realloc(kp_stats, size)) ) {
@@ -891,6 +894,8 @@ again:
 		if( errno == ENOMEM ) {
 			goto again;
 		}
+		free(kp_stats);
+		free(proctitle);
 		RETURN_WITH_SET_ERROR_WITH_ERRNO("process", SG_ERROR_SYSCTL, "CTL_KERN.KERN_PROC.KERN_PROC_ALL");
 	}
 
