@@ -1018,9 +1018,9 @@ AC_INCLUDES_DEFAULT
 			)])
 		])
 
-			AC_CHECK_MEMBER(struct kinfo_proc.kp_pid,
-					[AC_DEFINE(HAVE_KINFO_PROC_KP_PID, 1, [kp_pid member of struct kinfo_proc available])], ,
-					[AC_LANG_SOURCE([
+		AC_CHECK_MEMBER(struct kinfo_proc.kp_pid,
+				[AC_DEFINE(HAVE_KINFO_PROC_KP_PID, 1, [kp_pid member of struct kinfo_proc available])], ,
+				[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -1034,12 +1034,12 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
-					]
-			)])
+				]
+		)])
 
-			AC_CHECK_MEMBER(struct kinfo_proc.p_pid,
-					[AC_DEFINE(HAVE_KINFO_PROC_P_PID, 1, [p_pid member of struct kinfo_proc available])], ,
-					[AC_LANG_SOURCE([
+		AC_CHECK_MEMBER(struct kinfo_proc.p_pid,
+				[AC_DEFINE(HAVE_KINFO_PROC_P_PID, 1, [p_pid member of struct kinfo_proc available])], ,
+				[AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -1053,8 +1053,8 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_KINFO_H
 # include <kinfo.h>
 #endif
-					]
-			)])
+				]
+		)])
 
 		AS_IF(	[test "x$ac_cv_header_libproc_h" = "xyes"], [
 			# macOS proc_taskinfo - used memory etc.
