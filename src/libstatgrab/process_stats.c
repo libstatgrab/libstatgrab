@@ -901,6 +901,15 @@ again:
 	VECTOR_UPDATE(proc_stats_vector_ptr, nprocs, proc_stats_ptr, sg_process_stats);
 	for( i = 0; i < nprocs; ++i ) {
 		const char *name;
+# ifdef HAVE_PROC_PIDINFO
+		ssize_t buf_fill;
+#  ifdef HAVE_STRUCT_PROC_TASKINFO
+		struct proc_taskinfo task_info;
+#  endif
+#  ifdef HAVE_STRUCT_PROC_BSDINFO
+		struct proc_bsdinfo bsd_info;
+#  endif
+# endif
 
 # if defined(HAVE_KINFO_PROC_KI_STAT)
 		if( kp_stats[i].ki_stat == 0 )
@@ -921,6 +930,20 @@ again:
 			 * src/sys/kern/kern_proc.c for more details.) */
 			continue;
 		}
+
+
+# if defined(HAVE_STRUCT_PROC_TASKINFO) && defined(HAVE_PROC_PIDINFO)
+		buf_fill = proc_pidinfo(kp_stats[i].kp_proc.p_pid, PROC_PIDTASKINFO, 0,  &task_info, sizeof(task_info));
+		if( sizeof(task_info) != buf_fill) {
+			bzero(&task_info, sizeof(task_info));
+		}
+# endif
+# if defined(HAVE_STRUCT_PROC_TASKINFO) && defined(HAVE_PROC_PIDINFO)
+		buf_fill = proc_pidinfo(kp_stats[i].kp_proc.p_pid, PROC_PIDTBSDINFO, 0,  &bsd_info, sizeof(bsd_info));
+		if( sizeof(bsd_info) != buf_fill) {
+			bzero(&bsd_info, sizeof(bsd_info));
+		}
+# endif
 
 # if defined(HAVE_KINFO_PROC_KI_STAT)
 		name = kp_stats[proc_items].ki_comm;
@@ -966,9 +989,6 @@ again:
 		proc_stats_ptr[proc_items].euid = kp_stats[i].kp_eproc.e_pcred.p_svuid;
 		proc_stats_ptr[proc_items].gid = kp_stats[i].kp_eproc.e_pcred.p_rgid;
 		proc_stats_ptr[proc_items].egid = kp_stats[i].kp_eproc.e_pcred.p_svgid;
-
-		proc_stats_ptr[proc_items].cpu_percent =
-			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
 #  endif
 # elif defined(HAVE_KINFO_PROC_KP_PID)
 		proc_stats_ptr[proc_items].pid = kp_stats[i].kp_pid;
@@ -980,7 +1000,7 @@ again:
 		proc_stats_ptr[proc_items].euid = kp_stats[i].kp_uid;
 		proc_stats_ptr[proc_items].gid = kp_stats[i].kp_rgid;
 		proc_stats_ptr[proc_items].egid = kp_stats[i].kp_svgid;
-#elif defined(HAVE_KINFO_PROC_P_PID)
+# elif defined(HAVE_KINFO_PROC_P_PID)
 		proc_stats_ptr[proc_items].pid = kp_stats[i].p_pid;
 		proc_stats_ptr[proc_items].parent = kp_stats[i].p_ppid == ((pid_t)-1) ? 0 : kp_stats[i].p_ppid;
 		proc_stats_ptr[proc_items].pgid = kp_stats[i].p__pgid;
@@ -995,11 +1015,6 @@ again:
 		proc_stats_ptr[proc_items].parent = kp_stats[i].kp_eproc.e_ppid;
 		proc_stats_ptr[proc_items].pgid = kp_stats[i].kp_eproc.e_pgid;
 		proc_stats_ptr[proc_items].sessid = 0;
-
-		proc_stats_ptr[proc_items].time_spent =
-			kp_stats[i].kp_proc.p_runtime / 1000000;
-		proc_stats_ptr[proc_items].cpu_percent =
-			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
 # endif
 
 
@@ -1007,6 +1022,15 @@ again:
 		proc_stats_ptr[proc_items].voluntary_context_switches = 0;
 		proc_stats_ptr[proc_items].involuntary_context_switches = 0;
 		proc_stats_ptr[proc_items].start_time = 0;
+
+# ifdef HAVE_STRUCT_PROC_TASKINFO
+		proc_stats_ptr[proc_items].time_spent = (task_info.pti_total_user + task_info.pti_total_system) / 1000000000L;
+		proc_stats_ptr[proc_items].context_switches = task_info.pti_csw;
+# endif
+# ifdef HAVE_STRUCT_PROC_BSDINFO
+		proc_stats_ptr[proc_items].nice = bsd_info.pbi_nice;
+		proc_stats_ptr[proc_items].start_time = (time_t)bsd_info.pbi_start_tvsec;
+# endif
 
 # if defined(HAVE_KINFO_PROC_KI_STAT)
 		/* This is in microseconds */
@@ -1024,6 +1048,14 @@ again:
 			( kp_stats[i].kp_thread.td_uticks +
 			kp_stats[i].kp_thread.td_sticks +
 			kp_stats[i].kp_thread.td_iticks ) / 1000000;
+# elif defined(HAVE_KINFO_PROC_KP_PROC)
+		if(kp_stats[i].kp_proc.p_ru) {
+			proc_stats_ptr[proc_items].voluntary_context_switches = kp_stats[i].kp_proc.p_ru->ru_nvcsw;
+			proc_stats_ptr[proc_items].involuntary_context_switches = kp_stats[i].kp_proc.p_ru->ru_nivcsw;
+		}
+		proc_stats_ptr[proc_items].start_time = kp_stats[i].kp_proc.p_starttime.tv_sec;
+		proc_stats_ptr[proc_items].cpu_percent =
+			((double)kp_stats[i].kp_proc.p_pctcpu / FSCALE) * 100.0;
 # else
 		/* p_cpticks?, p_[usi]ticks? */
 #if 0
@@ -1043,6 +1075,9 @@ again:
 # elif defined(HAVE_KINFO_PROC_P_VM_MAP_SIZE)
 		proc_stats_ptr[proc_items].proc_size = kp_stats[i].p_vm_map_size;
 		proc_stats_ptr[proc_items].proc_resident = ((unsigned long long)kp_stats[i].p_vm_rssize) * sys_page_size;
+# elif defined(HAVE_STRUCT_PROC_TASKINFO) && defined(HAVE_PROC_PIDINFO)
+		proc_stats_ptr[proc_items].proc_size = task_info.pti_virtual_size;
+		proc_stats_ptr[proc_items].proc_resident = task_info.pti_resident_size;
 # else
 #if 0
 		/* This is in microseconds */
@@ -1050,7 +1085,6 @@ again:
 		/* This is in pages */
 		proc_stats_ptr[proc_items].proc_resident = kp_stats[i].kp_eproc.e_vm.vm_rssize * sys_page_size;
 #endif
-		proc_stats_ptr[proc_items].nice = kp_stats[i].kp_proc.p_nice;
 # endif
 
 # if defined(HAVE_KINFO_PROC_KI_STAT)

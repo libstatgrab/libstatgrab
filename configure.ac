@@ -683,7 +683,7 @@ AS_CASE([$host_os],
 		AC_MSG_CHECKING([for BSD specific features])
 		AC_MSG_RESULT([])
 
-		AC_CHECK_HEADERS([ifaddrs.h kinfo.h net/if_media.h sys/dkstat.h sys/disk.h sys/iostat.h sys/resource.h sys/sched.h sys/ucred.h sys/user.h uvm/uvm.h sys/vmmeter.h vm/vm_param.h], , , [AC_LANG_SOURCE([
+		AC_CHECK_HEADERS([ifaddrs.h kinfo.h libproc.h net/if_media.h sys/dkstat.h sys/disk.h sys/iostat.h sys/resource.h sys/sched.h sys/ucred.h sys/user.h uvm/uvm.h sys/vmmeter.h vm/vm_param.h], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -1055,6 +1055,22 @@ AC_INCLUDES_DEFAULT
 #endif
 					]
 			)])
+
+		AS_IF(	[test "x$ac_cv_header_libproc_h" = "xyes"], [
+			# macOS proc_taskinfo - used memory etc.
+			AC_CHECK_FUNCS([proc_pidinfo])
+			AS_IF( [test "x$ac_cv_func_proc_pidinfo" = "xyes"], [
+				AC_CHECK_TYPES([struct proc_taskinfo, struct proc_bsdinfo], , , [AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_LIBPROC_H
+# include <libproc.h>
+#endif
+				])])
+			])
+		])
 
 		AC_CHECK_TYPES([struct uvmexp_sysctl], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
