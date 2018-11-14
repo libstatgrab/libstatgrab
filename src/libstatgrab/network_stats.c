@@ -1187,7 +1187,23 @@ skip:
 			}
 
 			if ((ifr.ifr_flags & IFF_UP) != 0) {
-				if ((knp = kstat_data_lookup(ksp, "link_up")) != NULL) {
+				/* module=ce,  instance=0, name=ce0,  class=net 
+				   module=hme, instance=0, name=hme0, class=net */
+				if ((knp = kstat_data_lookup(ksp, "link_up")) == NULL) {
+					/* module=bge, instance=0, name=mii, class=net */
+					kstat_t *mksp = kstat_lookup(kc,ksp->ks_module,ksp->ks_instance,"mii");
+					if (mksp != NULL) {
+						knp = kstat_data_lookup(mksp,"link_up");
+						if (knp == NULL) {
+							/* module=e1000g, instance=0, name=statistics, class=net */
+							mksp = kstat_lookup(kc,ksp->ks_module,ksp->ks_instance,"statistics");
+							if (mksp != NULL)
+								knp = kstat_data_lookup(mksp,"link_up");
+						}
+					}
+				}
+
+				if (knp != NULL) {
 					/* take in to account if link
 					 * is up as well as interface */
 					network_iface_stat[ifaces].up = (knp->value.ui32 != 0u) ? SG_IFACE_UP : SG_IFACE_DOWN;
