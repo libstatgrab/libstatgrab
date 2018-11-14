@@ -8,8 +8,10 @@ Makefile
 autom4te.cache/
 compile
 config.h*
+config.guess
 config.log
 config.status
+config.sub
 m4/[b-z]*.m4
 aclocal.m4
 ar-lib
