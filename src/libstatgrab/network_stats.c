@@ -553,35 +553,28 @@ sg_get_network_io_stats_int(sg_vector **network_io_stats_vector_ptr){
 			network_io_ptr[interfaces].rx=knp->VALTYPE;
 
 			/* Read tx */
-			if((knp=kstat_data_lookup(ksp, LTX))==NULL)
-				continue;
-			network_io_ptr[interfaces].tx=knp->VALTYPE;
+			if((knp=kstat_data_lookup(ksp, LTX))!=NULL)
+				network_io_ptr[interfaces].tx=knp->VALTYPE;
 
 			/* Read ipackets */
-			if((knp=kstat_data_lookup(ksp, LIPACKETS))==NULL)
-				continue;
-			network_io_ptr[interfaces].ipackets=knp->VALTYPE;
+			if((knp=kstat_data_lookup(ksp, LIPACKETS))!=NULL)
+				network_io_ptr[interfaces].ipackets=knp->VALTYPE;
 
 			/* Read opackets */
-			if((knp=kstat_data_lookup(ksp, LOPACKETS))==NULL)
-				continue;
-			network_io_ptr[interfaces].opackets=knp->VALTYPE;
+			if((knp=kstat_data_lookup(ksp, LOPACKETS))!=NULL)
+				network_io_ptr[interfaces].opackets=knp->VALTYPE;
 
 			/* Read ierrors */
-			if((knp=kstat_data_lookup(ksp, "ierrors"))==NULL)
-				continue;
-			network_io_ptr[interfaces].ierrors=knp->value.ui32;
+			if((knp=kstat_data_lookup(ksp, "ierrors"))!=NULL)
+				network_io_ptr[interfaces].ierrors=knp->value.ui32;
 
 			/* Read oerrors */
-			if((knp=kstat_data_lookup(ksp, "oerrors"))==NULL)
-				continue;
-			network_io_ptr[interfaces].oerrors=knp->value.ui32;
+			if((knp=kstat_data_lookup(ksp, "oerrors"))!=NULL)
+				network_io_ptr[interfaces].oerrors=knp->value.ui32;
 
 			/* Read collisions */
-			if((knp=kstat_data_lookup(ksp, "collisions"))==NULL)
-				continue;
-			network_io_ptr[interfaces].collisions=knp->value.ui32;
-
+			if((knp=kstat_data_lookup(ksp, "collisions"))!=NULL)
+				network_io_ptr[interfaces].collisions=knp->value.ui32;
 
 			/* Store systime */
 			network_io_ptr[interfaces].systime=time(NULL);
