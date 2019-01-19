@@ -1166,6 +1166,22 @@ AC_INCLUDES_DEFAULT
 #endif
 		])])
 
+			AC_CHECK_MEMBER(struct vmmeter.v_cache_count,
+					[AC_DEFINE(HAVE_VMMETER_V_CACHE_COUNT, 1, [v_cache_count member of struct vmmeter available])], ,
+					[AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_VMMETER_H
+# include <sys/vmmeter.h>
+#endif
+					]
+			)])
+
 		AC_CHECK_TYPES([struct xswdev, struct xsw_usage], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
