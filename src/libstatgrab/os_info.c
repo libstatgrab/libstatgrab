@@ -470,7 +470,11 @@ sysinfo_again:
 		host_info_buf->bitwidth = 64;
 	}
 	else {
+#  if defined(_SC_LONG_BIT)
 		host_info_buf->bitwidth = sysconf(_SC_LONG_BIT); // well, maybe 64-bit disabled 128-bit system o.O
+#  else
+		host_info_buf->bitwidth = sysconf(LONG_BIT);
+#  endif
 	}
 	host_info_buf->host_state = sg_unknown_configuration;
 # endif

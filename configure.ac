@@ -608,7 +608,7 @@ AC_INCLUDES_DEFAULT
 	[openbsd*], [
 		AC_DEFINE(OPENBSD, , [Building on OpenBSD])
 	],
-	[linux-gnu*], [
+	[linux-gnu*|linux-musl*], [
 		AC_DEFINE(LINUX, , [Building on GNU/Linux])
 		AM_CONDITIONAL(SETUIDBINS, true)
 		BIN_OWNER="root"
