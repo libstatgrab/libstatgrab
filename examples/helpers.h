@@ -23,6 +23,10 @@
 #ifndef __SG_EXAMPLES_HELPERS_H__
 #define __SG_EXAMPLES_HELPERS_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <signal.h>
 #include <errno.h>
 

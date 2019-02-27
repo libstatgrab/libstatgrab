@@ -604,6 +604,7 @@ AC_INCLUDES_DEFAULT
 	],
 	[netbsd*], [
 		AC_DEFINE(NETBSD, , [Building on NetBSD])
+		AC_CHECK_TYPES([vaddr_t], [], [AC_DEFINE(_KMEMUSER, , [_KMEMUSER needed on NetBSD for vaddr_t]) ])
 	],
 	[openbsd*], [
 		AC_DEFINE(OPENBSD, , [Building on OpenBSD])
