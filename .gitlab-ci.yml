@@ -1,0 +1,617 @@
+# libstatgrab CI
+#
+# The distfile stage builds a tarball that matches a release tarball.
+# This allows subsequent stages to test libstatgrab as end users will
+# receive it. I've also bundled the GitLab SAST (security
+# vulnerability testing) and Code Quality checks in with this stage.
+#
+# The build stage builds libstatgrab from the tarball created above.
+# It does this on a variety of operating systems, mostly built on VMs
+# using the scripts in libstatgrab-ci. We also do some basic tests to
+# ensure all statgrab components are present, and stash the output for
+# later checks.
+#
+# The warnings stage repeats the build with all compiler warnings
+# enabled. These are allowed to fail because these warnings could be
+# bogus, but they still might be worth investigating.
+#
+# The test stage runs the test suite. It is expected that this will
+# pass, although it could take a while to run, and for this reason
+# it's separate to the previous stages.
+#
+# The final regression stage takes the statgrab outputs from the build
+# stage on all the different platforms and compares them to the
+# reference copies from the last build on the master branch. It
+# currently ignores values, since these are likely to have changed, so
+# it's looking for differences in the keys. Changes here will need
+# analysis to determine if they're regressions or the result of new
+# features. Regressions should be fixed before merging to the master
+# branch.
+#
+# Tim Bishop, February 2019.
+
+# TODO would be nice to add other archs like aarch64
+#      and other OSes like MacOSX
+
+stages:
+  - distfile
+  - build
+  - warnings
+  - test
+  - regression
+
+sast:
+  stage: distfile
+  image: docker:stable
+  variables:
+    DOCKER_DRIVER: overlay2
+  allow_failure: true
+  services:
+    - docker:stable-dind
+  script:
+    - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+    - docker run
+        --env SAST_CONFIDENCE_LEVEL="${SAST_CONFIDENCE_LEVEL:-3}"
+        --volume "$PWD:/code"
+        --volume /var/run/docker.sock:/var/run/docker.sock
+        "registry.gitlab.com/gitlab-org/security-products/sast:$SP_VERSION" /app/bin/run /code
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+
+code_quality:
+  stage: distfile
+  image: docker:stable
+  variables:
+    DOCKER_DRIVER: overlay2
+  allow_failure: true
+  services:
+    - docker:stable-dind
+  script:
+    - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+    - docker run
+        --env SOURCE_CODE="$PWD"
+        --volume "$PWD":/code
+        --volume /var/run/docker.sock:/var/run/docker.sock
+        "registry.gitlab.com/gitlab-org/security-products/codequality:$SP_VERSION" /code
+    - cat gl-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+
+distfile:
+  stage: distfile
+  image: ubuntu:18.04
+  script:
+    - apt-get update
+    - apt-get -y install autoconf automake libtool pkg-config git docbook2x libncurses5-dev
+    - ./autogen.sh
+    - ./configure
+    - make distcheck VERSION=$CI_COMMIT_SHORT_SHA
+  artifacts:
+    paths:
+    - libstatgrab-$CI_COMMIT_SHORT_SHA.tar.gz
+    expire_in: '1 month'
+
+.build:
+  stage: build
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - rm -Rf libstatgrab-$CI_COMMIT_SHORT_SHA
+    - tar -zxf libstatgrab-$CI_COMMIT_SHORT_SHA.tar.gz
+    - cd libstatgrab-$CI_COMMIT_SHORT_SHA
+    - ./configure --enable-examples
+    - make
+    - for i in cpu. mem. load. user. swap. general. fs. disk. net. page.; do src/statgrab/statgrab $i; done 2>&1 | tee statgrab.output
+    - if [ X"`grep 'Unknown stat' statgrab.output`" != X ]; then echo "Missing stats - see above."; false; fi
+    - if [ X"`grep 'disabling saidar' config.log`" != X ]; then echo "saidar not built - ncurses missing?"; false; fi
+    - src/statgrab/statgrab > ../statgrab.$CI_JOB_NAME
+  after_script:
+    - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$CI_COMMIT_SHORT_SHA
+  artifacts:
+    paths:
+      - statgrab.$CI_JOB_NAME
+      - build-$CI_JOB_NAME.tar.gz
+    when: always
+    expire_in: '1 month'
+  dependencies:
+    - distfile
+
+.build-warnings:
+  extends: .build
+  stage: warnings
+  variables:
+    CFLAGS: -Wall -Werror
+  allow_failure: true
+  artifacts:
+    paths:
+      - build-$CI_JOB_NAME.tar.gz
+  dependencies:
+    - distfile
+
+.test:
+  stage: test
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - rm -Rf libstatgrab-$CI_COMMIT_SHORT_SHA
+    - tar -zxf libstatgrab-$CI_COMMIT_SHORT_SHA.tar.gz
+    - cd libstatgrab-$CI_COMMIT_SHORT_SHA
+    - ./configure --enable-tests
+    - make check
+  after_script:
+    - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$CI_COMMIT_SHORT_SHA
+  artifacts:
+    paths:
+      - build-$CI_JOB_NAME.tar.gz
+    when: always
+    expire_in: '1 month'
+  dependencies:
+    - distfile
+
+freebsd12:
+  extends: .build
+  tags:
+    - libstatgrab-ci-freebsd12
+freebsd12-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-freebsd12
+freebsd12-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-freebsd12
+
+freebsd12i386:
+  extends: .build
+  tags:
+    - libstatgrab-ci-freebsd12i386
+freebsd12i386-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-freebsd12i386
+freebsd12i386-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-freebsd12i386
+
+freebsd11:
+  extends: .build
+  tags:
+    - libstatgrab-ci-freebsd11
+freebsd11-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-freebsd11
+freebsd11-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-freebsd11
+
+dragonflybsd5:
+  extends: .build
+  tags:
+    - libstatgrab-ci-dragonflybsd5
+  variables:
+    CPPFLAGS: -I/usr/local/include
+    LDFLAGS: -L/usr/local/lib
+dragonflybsd5-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-dragonflybsd5
+  variables:
+    CPPFLAGS: -I/usr/local/include
+    LDFLAGS: -L/usr/local/lib
+dragonflybsd5-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-dragonflybsd5
+  variables:
+    CPPFLAGS: -I/usr/local/include
+    LDFLAGS: -L/usr/local/lib
+
+netbsd8:
+  extends: .build
+  tags:
+    - libstatgrab-ci-netbsd8
+netbsd8-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-netbsd8
+netbsd8-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-netbsd8
+
+openbsd6:
+  extends: .build
+  tags:
+    - libstatgrab-ci-openbsd6
+openbsd6-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-openbsd6
+openbsd6-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-openbsd6
+
+hardenedbsd11:
+  extends: .build
+  tags:
+    - libstatgrab-ci-hardenedbsd11
+hardenedbsd11-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-hardenedbsd11
+hardenedbsd11-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-hardenedbsd11
+
+hardenedbsd12:
+  extends: .build
+  tags:
+    - libstatgrab-ci-hardenedbsd12
+hardenedbsd12-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-hardenedbsd12
+hardenedbsd12-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-hardenedbsd12
+
+ubuntu1604:
+  extends: .build
+  tags:
+    - libstatgrab-ci-ubuntu1604
+ubuntu1604-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-ubuntu1604
+ubuntu1604-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-ubuntu1604
+
+ubuntu1604i386:
+  extends: .build
+  tags:
+    - libstatgrab-ci-ubuntu1604i386
+ubuntu1604i386-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-ubuntu1604i386
+ubuntu1604i386-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-ubuntu1604i386
+
+ubuntu1804:
+  extends: .build
+  tags:
+    - libstatgrab-ci-ubuntu1804
+ubuntu1804-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-ubuntu1804
+ubuntu1804-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-ubuntu1804
+
+debian8:
+  extends: .build
+  tags:
+    - libstatgrab-ci-debian8
+debian8-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-debian8
+debian8-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-debian8
+
+debian9:
+  extends: .build
+  tags:
+    - libstatgrab-ci-debian9
+debian9-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-debian9
+debian9-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-debian9
+
+centos6:
+  extends: .build
+  tags:
+    - libstatgrab-ci-centos6
+centos6-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-centos6
+centos6-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-centos6
+
+centos6i386:
+  extends: .build
+  tags:
+    - libstatgrab-ci-centos6i386
+centos6i386-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-centos6i386
+centos6i386-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-centos6i386
+
+centos7:
+  extends: .build
+  tags:
+    - libstatgrab-ci-centos7
+centos7-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-centos7
+centos7-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-centos7
+
+oracle7:
+  extends: .build
+  tags:
+    - libstatgrab-ci-oracle7
+oracle7-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-oracle7
+oracle7-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-oracle7
+
+fedora28:
+  extends: .build
+  tags:
+    - libstatgrab-ci-fedora28
+fedora28-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-fedora28
+fedora28-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-fedora28
+
+fedora29:
+  extends: .build
+  tags:
+    - libstatgrab-ci-fedora29
+fedora29-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-fedora29
+fedora29-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-fedora29
+
+opensuse42:
+  extends: .build
+  tags:
+    - libstatgrab-ci-opensuse42
+opensuse42-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-opensuse42
+opensuse42-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-opensuse42
+
+arch:
+  extends: .build
+  tags:
+    - libstatgrab-ci-arch
+arch-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-arch
+arch-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-arch
+
+gentoo:
+  extends: .build
+  tags:
+    - libstatgrab-ci-gentoo
+gentoo-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-gentoo
+gentoo-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-gentoo
+
+alpine36:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine36
+alpine36-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine36
+alpine36-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine36
+
+alpine37:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine37
+alpine37-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine37
+alpine37-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine37
+
+alpine38:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine38
+alpine38-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine38
+alpine38-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine38
+
+solaris9sparc-gcc:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris9sparc
+  variables:
+    CC: gcc
+solaris9sparc-gcc-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-solaris9sparc
+  variables:
+    CC: gcc
+solaris9sparc-gcc-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris9sparc
+  variables:
+    CC: gcc
+
+solaris9sparc-sunpro:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris9sparc
+  variables:
+    CC: /opt/SUNWspro/bin/cc
+# can't find equivalent of gcc's -Wall -Werror
+solaris9sparc-sunpro-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris9sparc
+  variables:
+    CC: /opt/SUNWspro/bin/cc
+
+solaris10sparc-gcc:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: gcc45s10
+solaris10sparc-gcc-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: gcc45s10
+solaris10sparc-gcc-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: gcc45s10
+
+solaris10sparc-solarisstudio123:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: /opt/solarisstudio12.3/bin/cc
+# can't find equivalent of gcc's -Wall -Werror
+solaris10sparc-solarisstudio123-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: /opt/solarisstudio12.3/bin/cc
+
+solaris10sparc-developerstudio126:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: /opt/developerstudio12.6/bin/cc
+# can't find equivalent of gcc's -Wall -Werror
+solaris10sparc-developerstudio126-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris10sparc
+  variables:
+    CC: /opt/developerstudio12.6/bin/cc
+
+# Machine appears to be broken (df hangs)
+#hpux:
+#  extends: .build
+#  tags:
+#    - libstatgrab-ci-hpux
+#hpux-warnings:
+#  extends: .build-warnings
+#  tags:
+#    - libstatgrab-ci-hpux
+#hpux-test:
+#  extends: .test
+#  tags:
+#    - libstatgrab-ci-hpux
+
+check-results:
+  stage: regression
+  image: ubuntu:18.04
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - ls -laR
+    - apt-get update
+    - apt-get -y install curl unzip
+    - 'curl --silent --fail --location --output reference.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/jobs/artifacts/master/download?job=check-results-master" && unzip -o -q reference.zip || /bin/true'
+    - mkdir -p reference
+    - 'test -f reference/TIMESTAMP && cat reference/TIMESTAMP'
+    - for i in statgrab.*; do sed -e 's/ =.*$//' -e '/^fs.*:/d' $i | perl -n -e 'unless($_=~/^user\./&&$_!~/^user\.names\s+/&&$_!~/^user\.num\s+/){print}' | sort > $i.$$; if ! cmp -s $i.$$ reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i.$$; echo; REFFAIL=1 export REFFAIL; fi; cp -v $i.$$ reference/$i; fi; done
+    - 'cd reference && for i in statgrab.*; do if [ ! -f ../$i ]; then echo "==> $i output is missing in this build"; REFFAIL=1 export REFFAIL; fi; done'
+    - echo "Reference archived generated at `date` for commit $CI_COMMIT_SHORT_SHA." > TIMESTAMP
+    - if [ X"$REFFAIL" = X1 ]; then echo "==> Some failures detected during reference checks."; /bin/false; fi
+  artifacts:
+    paths:
+      - reference
+    expire_in: '1 month'
+    when: always
+  when: always
+  except:
+    refs:
+      - master
+
+check-results-master:
+  extends: check-results
+  artifacts:
+    paths:
+      - reference
+    expire_in:
+    when: always
+  except:
+  only:
+    refs:
+      - master
