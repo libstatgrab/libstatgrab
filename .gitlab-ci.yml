@@ -107,11 +107,13 @@ distfile:
     - if [ X"`grep 'Unknown stat' statgrab.output`" != X ]; then echo "Missing stats - see above."; false; fi
     - if [ X"`grep 'disabling saidar' config.log`" != X ]; then echo "saidar not built - ncurses missing?"; false; fi
     - src/statgrab/statgrab > ../statgrab.$CI_JOB_NAME
+    - cp config.h ../config.h.$CI_JOB_NAME
   after_script:
     - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$CI_COMMIT_SHORT_SHA
   artifacts:
     paths:
       - statgrab.$CI_JOB_NAME
+      - config.h.$CI_JOB_NAME
       - build-$CI_JOB_NAME.tar.gz
     when: always
     expire_in: '1 month'
@@ -591,7 +593,10 @@ check-results:
     - mkdir -p reference
     - 'test -f reference/TIMESTAMP && cat reference/TIMESTAMP'
     - for i in statgrab.*; do sed -e 's/ =.*$//' -e '/^fs.*:/d' $i | perl -n -e 'unless($_=~/^user\./&&$_!~/^user\.names\s+/&&$_!~/^user\.num\s+/){print}' | sort > $i.$$; if ! cmp -s $i.$$ reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i.$$; echo; REFFAIL=1 export REFFAIL; fi; cp -v $i.$$ reference/$i; fi; done
-    - 'cd reference && for i in statgrab.*; do if [ ! -f ../$i ]; then echo "==> $i output is missing in this build"; REFFAIL=1 export REFFAIL; fi; done'
+    - for i in config.h.*; do if ! cmp -s $i reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i; echo; fi; cp -v $i reference/$i; fi; done
+    - cd reference
+    - for i in statgrab.*; do if [ ! -f ../$i ]; then echo "==> $i output is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
+    - for i in config.h.*; do if [ ! -f ../$i ]; then echo "==> $i is missing in this build"; fi; done
     - echo "Reference archived generated at `date` for commit $CI_COMMIT_SHORT_SHA." > TIMESTAMP
     - if [ X"$REFFAIL" = X1 ]; then echo "==> Some failures detected during reference checks."; /bin/false; fi
   artifacts:
