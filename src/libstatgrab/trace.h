@@ -1,6 +1,6 @@
 /*
- * i-scream libstatgrab
- * http://www.i-scream.org
+ * libstatgrab
+ * https://libstatgrab.org
  * Copyright (C) 2010-2013 Jens Rehsack
  * 
  * This library is free software; you can redistribute it and/or

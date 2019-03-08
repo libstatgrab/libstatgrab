@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/examples
-# http://www.i-scream.org/libstatgrab/
+# https://libstatgrab.org/
 # $Id$
 
 noinst_LIBRARIES = libtestlib.a

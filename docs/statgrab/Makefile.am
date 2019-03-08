@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/docs/statgrab
-# http://www.i-scream.org/libstatgrab/
+# https://libstatgrab.org/
 # $Id$
 
 if MANPAGES

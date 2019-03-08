@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/docs
-# http://www.i-scream.org/libstatgrab/
+# https://libstatgrab.org/
 # $Id$
 
 SUBDIRS = libstatgrab statgrab saidar

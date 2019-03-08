@@ -1,5 +1,5 @@
 # Makefile for libstatgrab/src/saidar
-# http://www.i-scream.org/libstatgrab/
+# https://libstatgrab.org/
 # $Id$
 
 if SAIDAR

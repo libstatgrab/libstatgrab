@@ -5,7 +5,7 @@
   <refmeta>
     <refentrytitle>sg_get_page_stats</refentrytitle>
     <manvolnum>3</manvolnum>
-    <refmiscinfo>i-scream</refmiscinfo>
+    <refmiscinfo>libstatgrab</refmiscinfo>
   </refmeta>
 
   <refnamediv>
@@ -185,8 +185,8 @@ typedef struct{
 
     <simplelist type="vert">
       <member>
-        <ulink url="http://www.i-scream.org/libstatgrab/">
-          http://www.i-scream.org/libstatgrab/
+        <ulink url="https://libstatgrab.org/">
+          https://libstatgrab.org/
         </ulink>
       </member>
     </simplelist>

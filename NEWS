@@ -1,5 +1,5 @@
 libstatgrab NEWS
-http://www.i-scream.org/libstatgrab/
+https://libstatgrab.org/
 
 PLANS: We're now working towards a 1.0 release which is where we plan
        to stabilise the API. We'll be doing test releases before hand,
@@ -180,7 +180,7 @@ libstatgrab 0.10 (20 May 2004)
  * Support added for NetBSD 2.0.
  * Lots of code tidying.
  * Python bindings now exist in a separate package:
-     http://www.i-scream.org/pystatgrab/
+     https://libstatgrab.org/pystatgrab/
 
 libstatgrab 0.9 (10 March 2004)
 

@@ -1,5 +1,5 @@
 libstatgrab Git README
-http://www.i-scream.org/libstatgrab/
+https://libstatgrab.org/
 
 Starting from Git there are a few things that need to be done before
 the normal build procedure. These require autoconf, automake, and

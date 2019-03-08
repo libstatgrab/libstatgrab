@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
-# i-scream libstatgrab
-# http://www.i-scream.org
+# libstatgrab
+# https://libstatgrab.org
 # Copyright (C) 2000-2013 i-scream
 # 
 # This program is free software; you can redistribute it and/or

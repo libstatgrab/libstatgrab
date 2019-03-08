@@ -5,7 +5,7 @@
   <refmeta>
     <refentrytitle>sg_comp_init</refentrytitle>
     <manvolnum>3</manvolnum>
-    <refmiscinfo>i-scream</refmiscinfo>
+    <refmiscinfo>libstatgrab</refmiscinfo>
   </refmeta>
 
   <refnamediv>
@@ -400,8 +400,8 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
 
     <simplelist type="vert">
       <member>
-        <ulink url="http://www.i-scream.org/libstatgrab/">
-          http://www.i-scream.org/libstatgrab/
+        <ulink url="https://libstatgrab.org/">
+          https://libstatgrab.org/
         </ulink>
       </member>
     </simplelist>
