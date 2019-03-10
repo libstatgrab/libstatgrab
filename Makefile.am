@@ -1,6 +1,5 @@
 # Makefile for libstatgrab
 # https://libstatgrab.org/
-# $Id$
 
 AUTOMAKE_OPTIONS = gnu
 ACLOCAL_AMFLAGS = -I m4

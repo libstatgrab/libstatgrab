@@ -1,7 +1,6 @@
 dnl Available from the GNU Autoconf Macro Archive at:
 dnl http://www.gnu.org/software/ac-archive/htmldoc/mp_with_curses.html
 dnl (Hacked by tdb for libstatgrab)
-dnl $Id$
 AC_DEFUN([MP_WITH_CURSES], [
   AC_ARG_WITH(ncurses, [  --without-ncurses       Do not use ncurses],,)
 

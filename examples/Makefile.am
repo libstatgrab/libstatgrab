@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/examples
 # https://libstatgrab.org/
-# $Id$
 
 if EXAMPLES
 noinst_PROGRAMS = network_traffic disk_traffic cpu_usage load_stats \

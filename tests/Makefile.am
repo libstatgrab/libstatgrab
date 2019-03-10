@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/docs
 # https://libstatgrab.org/
-# $Id$
 
 SUBDIRS = testlib $(tests_dirs)
 

@@ -2,7 +2,6 @@
 # Process this file with autoconf to produce a configure script.
 #
 # configure.in for libstatgrab
-# $Id$
 #
 
 # Might work with older autoconfs... but tested on 2.57

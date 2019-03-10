@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/docs/saidar
 # https://libstatgrab.org/
-# $Id$
 
 if MANPAGES
 if SAIDAR

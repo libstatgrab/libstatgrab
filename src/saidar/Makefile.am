@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/src/saidar
 # https://libstatgrab.org/
-# $Id$
 
 if SAIDAR
 bin_PROGRAMS = saidar

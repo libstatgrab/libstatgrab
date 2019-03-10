@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+
 # libstatgrab
 # https://libstatgrab.org
 # Copyright (C) 2000-2013 i-scream
@@ -17,8 +18,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
-#
-# $Id$
 
 use strict;
 use Getopt::Long;

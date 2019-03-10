@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/src/statgrab
 # https://libstatgrab.org/
-# $Id$
 
 if STATGRAB
 bin_PROGRAMS = statgrab

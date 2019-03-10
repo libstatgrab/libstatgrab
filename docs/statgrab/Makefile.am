@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/docs/statgrab
 # https://libstatgrab.org/
-# $Id$
 
 if MANPAGES
 if STATGRAB

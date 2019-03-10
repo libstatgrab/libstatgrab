@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/docs/libstatgrab
 # https://libstatgrab.org/
-# $Id$
 
 if MANPAGES
 man_MANS =	$(statgrab_MANS) $(sg_cpu_MANS) $(sg_disk_MANS) $(sg_error_MANS) \

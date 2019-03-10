@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/src/libstatgrab
 # https://libstatgrab.org/
-# $Id$
 
 if WITH_LIBLOG4CPLUS
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) -DBUILD_LIBSTATGRAB -DPROPERTIES_SEARCH_DIR="\"$(sysconfdir)\"" @CLIBFLAGS@

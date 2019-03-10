@@ -1,6 +1,5 @@
 # Makefile for libstatgrab/examples
 # https://libstatgrab.org/
-# $Id$
 
 noinst_PROGRAMS = $(test_bin) $(test_script)
 
