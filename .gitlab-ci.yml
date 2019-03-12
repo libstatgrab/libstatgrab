@@ -1,5 +1,7 @@
 # libstatgrab CI
 #
+# Copyright (C) 2019 Tim Bishop
+#
 # The distfile stage builds a tarball that matches a release tarball.
 # This allows subsequent stages to test libstatgrab as end users will
 # receive it. I've also bundled the GitLab SAST (security
@@ -27,8 +29,6 @@
 # analysis to determine if they're regressions or the result of new
 # features. Regressions should be fixed before merging to the master
 # branch.
-#
-# Tim Bishop, February 2019.
 
 # TODO would be nice to add other archs like aarch64
 #      and other OSes like MacOSX
@@ -74,7 +74,6 @@ code_quality:
         --volume "$PWD":/code
         --volume /var/run/docker.sock:/var/run/docker.sock
         "registry.gitlab.com/gitlab-org/security-products/codequality:$SP_VERSION" /code
-    - cat gl-code-quality-report.json
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
@@ -566,6 +565,33 @@ solaris10sparc-developerstudio126-test:
   variables:
     CC: /opt/developerstudio12.6/bin/cc
 
+solaris11x86-gcc:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris11x86
+solaris11x86-gcc-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-solaris11x86
+solaris11x86-gcc-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris11x86
+
+solaris11x86-developerstudio126:
+  extends: .build
+  tags:
+    - libstatgrab-ci-solaris11x86
+  variables:
+    CC: /opt/developerstudio12.6/bin/cc
+# can't find equivalent of gcc's -Wall -Werror
+solaris11x86-developerstudio126-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-solaris11x86
+  variables:
+    CC: /opt/developerstudio12.6/bin/cc
+
 # Machine appears to be broken (df hangs)
 #hpux:
 #  extends: .build
@@ -611,6 +637,7 @@ check-results:
 
 check-results-master:
   extends: check-results
+  allow_failure: true
   artifacts:
     paths:
       - reference
