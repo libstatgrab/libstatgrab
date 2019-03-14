@@ -612,17 +612,17 @@ check-results:
   variables:
     GIT_STRATEGY: none
   script:
-    - ls -laR
     - apt-get update
     - apt-get -y install curl unzip
     - 'curl --silent --fail --location --output reference.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/jobs/artifacts/master/download?job=check-results-master" && unzip -o -q reference.zip || /bin/true'
     - mkdir -p reference
+    - ls -laR
     - 'test -f reference/TIMESTAMP && cat reference/TIMESTAMP'
-    - for i in statgrab.*; do sed -e 's/ =.*$//' -e '/^fs.*:/d' $i | perl -n -e 'unless($_=~/^user\./&&$_!~/^user\.names\s+/&&$_!~/^user\.num\s+/){print}' | sort > $i.$$; if ! cmp -s $i.$$ reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i.$$; echo; REFFAIL=1 export REFFAIL; fi; cp -v $i.$$ reference/$i; fi; done
-    - for i in config.h.*; do if ! cmp -s $i reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i; echo; fi; cp -v $i reference/$i; fi; done
+    - for i in statgrab.*; do sed -e 's/ =.*$//' -e '/^fs.*:/d' $i | perl -n -e 'unless($_=~/^user\./&&$_!~/^user\.names\s+/&&$_!~/^user\.num\s+/){print}' | sort > $i.$$; if ! cmp -s $i.$$ reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i.$$ || /bin/true; echo; REFFAIL=1 export REFFAIL; fi; cp -v $i.$$ reference/$i; fi; done
+    - for i in config.h.*; do if ! cmp -s $i reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i || /bin/true; echo; fi; cp -v $i reference/$i; fi; done
     - cd reference
     - for i in statgrab.*; do if [ ! -f ../$i ]; then echo "==> $i output is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
-    - for i in config.h.*; do if [ ! -f ../$i ]; then echo "==> $i is missing in this build"; fi; done
+    - for i in config.h.*; do if [ ! -f ../$i ]; then echo "==> $i is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
     - echo "Reference archived generated at `date` for commit $CI_COMMIT_SHORT_SHA." > TIMESTAMP
     - if [ X"$REFFAIL" = X1 ]; then echo "==> Some failures detected during reference checks."; /bin/false; fi
   artifacts:
