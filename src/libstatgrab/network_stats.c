@@ -1236,10 +1236,11 @@ skip:
 #define VECTOR_UPDATE_ERROR_CLEANUP close(sock); fclose(f);
 
 	/* Ignore first 2 lines.. Just headings */
-	if( ( NULL == fgets(line, sizeof(line), f) ) ||
-	    ( NULL == fgets(line, sizeof(line), f) ) ) {
-		close(sock);
-		fclose(f);
+	if((fgets(line, sizeof(line), f)) == NULL) {
+		VECTOR_UPDATE_ERROR_CLEANUP
+		RETURN_WITH_SET_ERROR("network", SG_ERROR_PARSE, NULL);
+	}
+	if((fgets(line, sizeof(line), f)) == NULL) {
 		VECTOR_UPDATE_ERROR_CLEANUP
 		RETURN_WITH_SET_ERROR("network", SG_ERROR_PARSE, NULL);
 	}
@@ -1271,8 +1272,6 @@ skip:
 		VECTOR_UPDATE(network_iface_vector_ptr, ifaces + 1, network_iface_stat, sg_network_iface_stats);
 
 		if (sg_update_string(&network_iface_stat[ifaces].interface_name, name) != SG_ERROR_NONE ) {
-			close(sock);
-			fclose(f);
 			VECTOR_UPDATE_ERROR_CLEANUP
 			RETURN_FROM_PREVIOUS_ERROR( "network", sg_get_error() );
 		}
