@@ -27,6 +27,10 @@
 #include <config.h>
 #endif
 
+#if defined(WITH_LIBLOG4CPLUS)
+#include <log4cplus/clogger.h>
+#endif
+
 #include <signal.h>
 #include <errno.h>
 

@@ -43,6 +43,16 @@
 
 static int quit;
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+static void *l4cplus_initializer;
+
+static void
+cleanup_logging(void)
+{
+	log4cplus_deinitialize(l4cplus_initializer);
+}
+#endif
+
 int main(int argc, char **argv){
 
 	extern char *optarg;
@@ -55,6 +65,11 @@ int main(int argc, char **argv){
 
 	sg_network_io_stats *network_stats;
 	size_t num_network_stats;
+
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+	l4cplus_initializer = log4cplus_initialize();
+	atexit((void (*)(void))cleanup_logging);
+#endif
 
 	/* Parse command line options */
 	while ((c = getopt(argc, argv, "d:bkm")) != -1){

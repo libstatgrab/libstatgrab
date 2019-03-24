@@ -1782,6 +1782,8 @@ AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
 
     AS_IF([test "x$WITH_LIBLOG4CPLUS" = "x1"], [
       AC_LANG_PUSH([C++])
+      # necessary to avoid empty $CXX
+      AC_PROG_CXX
       AC_MSG_CHECKING([if liblog4cplus is built with thread support])
       ax_cppflags_safe="$CPPFLAGS"
       CPPFLAGS="$CPPFLAGS $CLIBFLAGS"
@@ -1804,6 +1806,11 @@ AS_IF([test "x$ENABLE_LOGGING" != "xno"], [
       )
       CPPFLAGS="$ax_cppflags_safe"
       AC_LANG_POP([C++])
+
+      ax_save_libs="$LIBS"
+      LIBS="$LIBS $LINKFLAGS"
+      AC_CHECK_FUNCS([log4cplus_initialize log4cplus_add_log_level])
+      LIBS="$ax_save_libs"
     ])
 
     AS_IF([test "x$ENABLE_LOGGING" = "xyes" -a "x$WITH_LIBLOG4CPLUS" != "x1"],

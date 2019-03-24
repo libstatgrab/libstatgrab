@@ -20,6 +20,10 @@
  * 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "tools.h"
 
 #include <statgrab.h>
@@ -28,6 +32,10 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#if defined(WITH_LIBLOG4CPLUS)
+#include <log4cplus/clogger.h>
+#endif
 
 typedef enum {
 	STAT_TYPE_LONG_LONG = 0,
@@ -986,6 +994,16 @@ set_valid_filesystems(char const *fslist) {
 	return SG_ERROR_NONE;
 }
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+static void *l4cplus_initializer;
+
+static void
+cleanup_logging(void)
+{
+	log4cplus_deinitialize(l4cplus_initializer);
+}
+#endif
+
 int
 main(int argc, char **argv) {
 	char *fslist = NULL;
@@ -1079,6 +1097,10 @@ main(int argc, char **argv) {
 
 	select_interesting(argc - optind, &argv[optind]);
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+	l4cplus_initializer = log4cplus_initialize();
+	atexit((void (*)(void))cleanup_logging);
+#endif
 	sg_log_init("statgrab", "STATGRAB_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	/* We don't care if sg_init fails, because we can just display
  	   the statistics that can be read as non-root. */

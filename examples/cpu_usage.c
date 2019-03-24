@@ -38,10 +38,25 @@ sig_int(int signo) {
 }
 #endif
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+static void *l4cplus_initializer;
+
+static void
+cleanup_logging(void)
+{
+	log4cplus_deinitialize(l4cplus_initializer);
+}
+#endif
+
 int main(int argc, char **argv){
 
 	extern char *optarg;
 	int c;
+
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+	l4cplus_initializer = log4cplus_initialize();
+	atexit((void (*)(void))cleanup_logging);
+#endif
 
 	int delay = 1;
 	sg_cpu_percents *cpu_percent;

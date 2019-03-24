@@ -23,6 +23,14 @@
 #include <tools.h>
 #include <testlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#if defined(WITH_LIBLOG4CPLUS)
+#include <log4cplus/clogger.h>
+#endif
+
 #define NLOOPS 1
 
 struct opt_def opt_def[] = {
@@ -47,8 +55,23 @@ help(char *prgname) {
 		"\t-n\tnumber of loops to run (must be greater or equal to 1)\n", prgname );
 }
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+static void *l4cplus_initializer;
+
+static void
+cleanup_logging(void)
+{
+	log4cplus_deinitialize(l4cplus_initializer);
+}
+#endif
+
 int
 main(int argc, char **argv) {
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+	l4cplus_initializer = log4cplus_initialize();
+	atexit((void (*)(void))cleanup_logging);
+#endif
+
 	sg_log_init("libstatgrab-test", "SGTEST_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	sg_init(1);
 

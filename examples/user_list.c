@@ -27,10 +27,25 @@
 
 #include "helpers.h"
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+static void *l4cplus_initializer;
+
+static void
+cleanup_logging(void)
+{
+	log4cplus_deinitialize(l4cplus_initializer);
+}
+#endif
+
 int main(int argc, char **argv){
 
 	size_t nusers, x;
 	sg_user_stats *users;
+
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+	l4cplus_initializer = log4cplus_initialize();
+	atexit((void (*)(void))cleanup_logging);
+#endif
 
 #if 0
 	int c;

@@ -43,6 +43,10 @@
 #include <sys/termios.h>
 #endif
 
+#if defined(WITH_LIBLOG4CPLUS)
+#include <log4cplus/clogger.h>
+#endif
+
 #ifdef HAVE_NCURSES_H
 #define COLOR_SUPPORT
 #endif
@@ -790,6 +794,16 @@ set_valid_filesystems(char const *fslist) {
 	return SG_ERROR_NONE;
 }
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+static void *l4cplus_initializer;
+
+static void
+cleanup_logging(void)
+{
+	log4cplus_deinitialize(l4cplus_initializer);
+}
+#endif
+
 int main(int argc, char **argv){
 	int c;
 	int colouron = 0;
@@ -802,6 +816,10 @@ int main(int argc, char **argv){
 
 	int delay=2;
 
+#ifdef HAVE_LOG4CPLUS_INITIALIZE
+	l4cplus_initializer = log4cplus_initialize();
+	atexit((void (*)(void))cleanup_logging);
+#endif
 	sg_log_init("saidar", "SAIDAR_LOG_PROPERTIES", argc ? argv[0] : NULL);
 	sg_init(1);
 	if(sg_drop_privileges() != 0){
@@ -913,5 +931,6 @@ int main(int argc, char **argv){
 
 	endwin();
 	sg_shutdown();
+
 	return 0;
 }
