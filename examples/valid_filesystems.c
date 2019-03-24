@@ -1,8 +1,8 @@
 /*
  * libstatgrab
  * https://libstatgrab.org
- * Copyright (C) 2011-2013 i-scream
- * Copyright (C) 2011-2013 Jens Rehsack
+ * Copyright (C) 2011-2019 i-scream
+ * Copyright (C) 2011-2019 Jens Rehsack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
