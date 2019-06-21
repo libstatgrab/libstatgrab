@@ -379,6 +379,19 @@ fedora29-test:
   tags:
     - libstatgrab-ci-fedora29
 
+fedora30:
+  extends: .build
+  tags:
+    - libstatgrab-ci-fedora30
+fedora30-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-fedora30
+fedora30-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-fedora30
+
 opensuse42:
   extends: .build
   tags:
@@ -418,19 +431,6 @@ gentoo-test:
   tags:
     - libstatgrab-ci-gentoo
 
-alpine36:
-  extends: .build
-  tags:
-    - libstatgrab-ci-alpine36
-alpine36-warnings:
-  extends: .build-warnings
-  tags:
-    - libstatgrab-ci-alpine36
-alpine36-test:
-  extends: .test
-  tags:
-    - libstatgrab-ci-alpine36
-
 alpine37:
   extends: .build
   tags:
@@ -456,6 +456,32 @@ alpine38-test:
   extends: .test
   tags:
     - libstatgrab-ci-alpine38
+
+alpine39:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine39
+alpine39-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine39
+alpine39-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine39
+
+alpine310:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine310
+alpine310-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine310
+alpine310-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine310
 
 solaris9sparc-gcc:
   extends: .build
@@ -593,6 +619,7 @@ check-results:
     - for i in statgrab.*; do sed -e 's/ =.*$//' -e '/^fs.*:/d' $i | perl -n -e 'unless($_=~/^user\./&&$_!~/^user\.names\s+/&&$_!~/^user\.num\s+/){print}' | sort > $i.$$; if ! cmp -s $i.$$ reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i.$$ || /bin/true; echo; REFFAIL=1 export REFFAIL; fi; cp -v $i.$$ reference/$i; fi; done
     - for i in config.h.*; do if ! cmp -s $i reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i || /bin/true; echo; fi; cp -v $i reference/$i; fi; done
     - cd reference
+    - 'rm -f *.alpine36'
     - for i in statgrab.*; do if [ ! -f ../$i ]; then echo "==> $i output is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
     - for i in config.h.*; do if [ ! -f ../$i ]; then echo "==> $i is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
     - echo "Reference archived generated at `date` for commit $CI_COMMIT_SHORT_SHA." > TIMESTAMP
