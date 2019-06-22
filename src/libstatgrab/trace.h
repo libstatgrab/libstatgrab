@@ -1,7 +1,10 @@
 /*
  * libstatgrab
  * https://libstatgrab.org
- * Copyright (C) 2010-2013 Jens Rehsack
+ * Copyright (C) 2003-2004 Peter Saunders
+ * Copyright (C) 2003-2019 Tim Bishop
+ * Copyright (C) 2003-2013 Adam Sampson
+ * Copyright (C) 2012-2019 Jens Rehsack
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
