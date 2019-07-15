@@ -36,6 +36,9 @@
 # TODO would be nice to add other archs like aarch64
 #      and other OSes like MacOSX
 
+variables:
+  LSG_VERSION: $CI_COMMIT_SHORT_SHA
+
 stages:
   - distfile
   - build
@@ -61,10 +64,10 @@ distfile:
     - apt-get -y install autoconf automake libtool pkg-config git docbook2x libncurses5-dev
     - ./autogen.sh
     - ./configure
-    - make distcheck VERSION=$CI_COMMIT_SHORT_SHA
+    - make distcheck VERSION=$LSG_VERSION
   artifacts:
     paths:
-    - libstatgrab-$CI_COMMIT_SHORT_SHA.tar.gz
+    - libstatgrab-$LSG_VERSION.tar.gz
     expire_in: '1 month'
 
 .build:
@@ -72,9 +75,9 @@ distfile:
   variables:
     GIT_STRATEGY: none
   script:
-    - rm -Rf libstatgrab-$CI_COMMIT_SHORT_SHA
-    - tar -zxf libstatgrab-$CI_COMMIT_SHORT_SHA.tar.gz
-    - cd libstatgrab-$CI_COMMIT_SHORT_SHA
+    - rm -Rf libstatgrab-$LSG_VERSION
+    - tar -zxf libstatgrab-$LSG_VERSION.tar.gz
+    - cd libstatgrab-$LSG_VERSION
     - ./configure --enable-examples
     - make
     - for i in cpu. mem. load. user. swap. general. fs. disk. net. page.; do src/statgrab/statgrab $i; done 2>&1 | tee statgrab.output
@@ -83,7 +86,7 @@ distfile:
     - src/statgrab/statgrab > ../statgrab.$CI_JOB_NAME
     - cp config.h ../config.h.$CI_JOB_NAME
   after_script:
-    - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$CI_COMMIT_SHORT_SHA
+    - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$LSG_VERSION
   artifacts:
     paths:
       - statgrab.$CI_JOB_NAME
@@ -111,13 +114,13 @@ distfile:
   variables:
     GIT_STRATEGY: none
   script:
-    - rm -Rf libstatgrab-$CI_COMMIT_SHORT_SHA
-    - tar -zxf libstatgrab-$CI_COMMIT_SHORT_SHA.tar.gz
-    - cd libstatgrab-$CI_COMMIT_SHORT_SHA
+    - rm -Rf libstatgrab-$LSG_VERSION
+    - tar -zxf libstatgrab-$LSG_VERSION.tar.gz
+    - cd libstatgrab-$LSG_VERSION
     - ./configure --enable-tests
     - make check
   after_script:
-    - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$CI_COMMIT_SHORT_SHA
+    - tar -zcf build-$CI_JOB_NAME.tar.gz libstatgrab-$LSG_VERSION
   artifacts:
     paths:
       - build-$CI_JOB_NAME.tar.gz
