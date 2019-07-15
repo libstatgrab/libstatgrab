@@ -2,6 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 #
 # configure.in for libstatgrab
+# https://libstatgrab.org/
+# Copyright (C) 2003-2019 Tim Bishop
+# Copyright (C) 2003 Peter Saunders
+# Copyright (C) 2003-2008 Adam Sampson
+# Copyright (C) 2012-2019 Jens Rehsack
 #
 
 # Might work with older autoconfs... but tested on 2.57
