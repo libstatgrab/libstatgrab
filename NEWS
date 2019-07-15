@@ -6,6 +6,18 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.92 (16 July 2019)
+ * Fix various file descriptor leaks.
+ * On Linux, read process thread name from comm where available (fixes
+   FreeScale ARM BSP).
+ * Add more process stat information on MacOS/Darwin.
+ * Fix build on Alpine Linux and NetBSD 8.
+ * Fix build on FreeBSD 12 without COMPAT_FREEBSD11.
+ * Improve collection of data for non-standard Solaris interfaces.
+ * Improve detection of interface link status on Solaris.
+ * Various configure and build fixes.
+ * Ensure modern log4cplus is used correctly.
+
 libstatgrab 0.91 (11 July 2014)
  * Use /proc/mounts on Linux where available. Note that this
    potentially results in different data appearing in the filesystem
