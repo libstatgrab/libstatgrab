@@ -4,6 +4,25 @@ https://libstatgrab.org/
 Supported Platforms
 ===================
 
+libstatgrab-0.92 has been tested using CI on the following platforms:
+
+Alpine Linux 3.7, 3.8, 3.9 and 3.10
+Arch Linux
+CentOS 6 (i386 and x86_64) and 7
+Debian 8 and 9
+DragonFlyBSD 5
+Fedora 28, 29 and 30
+FreeBSD 11 and 12 (i386 and amd64)
+Gentoo Linux
+HardenedBSD 11 and 12
+NetBSD 8
+OpenBSD 6
+openSUSE 42
+Oracle Linux 7
+Solaris 9 (SPARC), 10 (SPARC) and 11 (x86)
+Ubuntu 16.04 (i386 and x86_64) and 18.04
+MacOS 10.12, 10.13 and 10.14 (manually - no CI, yet)
+
 libstatgrab-0.90 has been tested to work on the following platforms:
 
 DragonFly BSD 3.4
