@@ -80,7 +80,9 @@ sg_seterr_MANS=	sg_set_error.3 sg_set_error_with_errno.3 sg_clear_error.3 \
 sg_tools_MANS =	sg_update_string.3
 
 EXTRA_DIST = $(man_MANS)
+endif
 
+if BUILD_MANPAGES
 MAINTAINERCLEANFILES= $(man_MANS)
 
 .NOTPARALLEL :

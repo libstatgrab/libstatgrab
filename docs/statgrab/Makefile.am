@@ -8,7 +8,9 @@ man_MANS = statgrab.1 statgrab-make-mrtg-config.1 \
 endif
 
 EXTRA_DIST = $(man_MANS)
+endif
 
+if BUILD_MANPAGES
 MAINTAINERCLEANFILES= $(man_MANS)
 
 .xml.1:

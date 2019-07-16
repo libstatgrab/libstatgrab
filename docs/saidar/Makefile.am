@@ -7,7 +7,9 @@ man_MANS = saidar.1
 endif
 
 EXTRA_DIST = $(man_MANS)
+endif
 
+if BUILD_MANPAGES
 MAINTAINERCLEANFILES= $(man_MANS)
 
 .xml.1:
