@@ -72,7 +72,7 @@
     <para>
       <function>sg_shutdown</function>() decrements the initialisation
       counter. If the counter reaches zero, components' destructors are
-      called, mutual exclusion semaphores (exept &quot;statgrab&quot;) are
+      called, mutual exclusion semaphores (except &quot;statgrab&quot;) are
       destroyed etc.
       <function>sg_shutdown</function>() is protected by the mutex named
       &quot;statgrab&quot;.
