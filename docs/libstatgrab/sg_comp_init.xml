@@ -272,7 +272,7 @@ EASY_COMP_CLEANUP_FN(network,SG_NETWORK_MAX_IDX)
         <function>EXTENDED_COMP_SETUP</function>() cares about anything
         to be automatically done for instantiating an component information
         structure for the specified component <parameter>comp</parameter>
-        but the required defintion of the initialisation, destruction and
+        but the required definition of the initialisation, destruction and
         cleanup routines. The created TLS storage structure will hold
         <parameter>nvect</parameter> pointer elements and that's it. After
         the amount of required vector pointers to be stored, the list of
