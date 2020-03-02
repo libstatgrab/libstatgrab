@@ -15,24 +15,25 @@ AC_PREREQ([2.69])
 # Change these to change the package name and version
 AC_INIT([libstatgrab],[0.92],[https://libstatgrab.org/issues],[],[https://libstatgrab.org/])
 AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
-AM_INIT_AUTOMAKE()
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_HEADERS([config.h])
+
+AC_CANONICAL_HOST
+dnl
+dnl Get cannonical target - the only one of build/host/target we care about
+dnl build is where we build, target the the machine we build for
+dnl
+AC_CANONICAL_TARGET
+dnl and store it for generic error message instead of lots of ifdef's
+AC_DEFINE_UNQUOTED([OS_TYPE], "$target_os",
+                   [Define to be the name of the operating system.])
+
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 # The file we use to pass #define's to the source
-AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE([disable])
 
-# Revision number (automatically updated)
-AC_REVISION($Revision$)
-
-dnl
-dnl Get cannonical host - the only one of build/host/target we care about
-dnl build is where we build, host the the machine we build for
-dnl
-AC_CANONICAL_HOST
-dnl and store it for generic error message instead of lots of ifdef's
-AC_DEFINE_UNQUOTED([OS_TYPE], "$host_os",
-                   [Define to be the name of the operating system.])
+dnl # Revision number (automatically updated)
+dnl AC_REVISION($Revision$)
 
 dnl AM_CONFIG_HEADER([config.h])
 
@@ -192,7 +193,7 @@ AC_INCLUDES_DEFAULT
 	]
 )
 
-AS_CASE([$host_os],
+AS_CASE([$target_os],
  	[solaris2.[[7-9]]*], [ENABLE_DIRECT_TYPE_FMT_SEARCH_DEFAULT="size_t ssize_t"],
  	[hpux11.11], [ENABLE_DIRECT_TYPE_FMT_SEARCH_DEFAULT="size_t ssize_t"],
  	[ENABLE_DIRECT_TYPE_FMT_SEARCH_DEFAULT=])
@@ -517,7 +518,7 @@ ENABLE_THREADS_DEFAULT="check"
 # Set things up for different OS's
 # We define the name of the OS so the code can act accordingly
 # We also need to add the right LDFLAGS
-AS_CASE([$host_os],
+AS_CASE([$target_os],
 	[solaris*], [
 		AC_CHECK_HEADERS([kstat.h libdevinfo.h procfs.h sys/sockio.h])
 		AC_DEFINE(SOLARIS, 1, [Building on Solaris])
@@ -664,12 +665,12 @@ AC_INCLUDES_DEFAULT
 		LINKFLAGS="-lpdh -liphlpapi -lpsapi -lnetapi32"
 	],
 	[
-		AC_MSG_WARN([Build on unknown OS: $host_os - many functions might be not functional])
+		AC_MSG_WARN([Build on unknown OS: $target_os - many functions might be not functional])
 	]
 )
 
 dnl check Mach OS's
-AS_CASE([$host_os],
+AS_CASE([$target_os],
 	dnl Darwin, probably OSF/1, Plan9?, ...
 	[darwin*], [
 		AC_CHECK_HEADERS([mach/mach.h])
@@ -682,7 +683,7 @@ AS_CASE([$host_os],
 )
 
 dnl check BSD* OS's
-AS_CASE([$host_os],
+AS_CASE([$target_os],
 	[*bsd*|darwin*|dragonfly*], [
 		AC_DEFINE(ALLBSD, , [Building on some kind of BSD])
 		AC_MSG_CHECKING([for BSD specific features])
