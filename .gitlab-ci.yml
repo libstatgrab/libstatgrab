@@ -58,10 +58,10 @@ code_quality:
 
 distfile:
   stage: distfile
-  image: ubuntu:18.04
+  image: ubuntu:20.04
   script:
     - apt-get update
-    - apt-get -y install autoconf automake libtool pkg-config git docbook2x libncurses5-dev
+    - DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake libtool pkg-config git docbook2x libncurses-dev make
     - ./autogen.sh
     - ./configure
     - make distcheck VERSION=$LSG_VERSION
@@ -203,6 +203,19 @@ netbsd8-test:
   tags:
     - libstatgrab-ci-netbsd8
 
+netbsd9:
+  extends: .build
+  tags:
+    - libstatgrab-ci-netbsd9
+netbsd9-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-netbsd9
+netbsd9-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-netbsd9
+
 openbsd6:
   extends: .build
   tags:
@@ -215,19 +228,6 @@ openbsd6-test:
   extends: .test
   tags:
     - libstatgrab-ci-openbsd6
-
-hardenedbsd11:
-  extends: .build
-  tags:
-    - libstatgrab-ci-hardenedbsd11
-hardenedbsd11-warnings:
-  extends: .build-warnings
-  tags:
-    - libstatgrab-ci-hardenedbsd11
-hardenedbsd11-test:
-  extends: .test
-  tags:
-    - libstatgrab-ci-hardenedbsd11
 
 hardenedbsd12:
   extends: .build
@@ -281,6 +281,19 @@ ubuntu1804-test:
   tags:
     - libstatgrab-ci-ubuntu1804
 
+ubuntu2004:
+  extends: .build
+  tags:
+    - libstatgrab-ci-ubuntu2004
+ubuntu2004-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-ubuntu2004
+ubuntu2004-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-ubuntu2004
+
 debian8:
   extends: .build
   tags:
@@ -306,6 +319,19 @@ debian9-test:
   extends: .test
   tags:
     - libstatgrab-ci-debian9
+
+debian10:
+  extends: .build
+  tags:
+    - libstatgrab-ci-debian10
+debian10-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-debian10
+debian10-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-debian10
 
 centos6:
   extends: .build
@@ -359,32 +385,6 @@ oracle7-test:
   tags:
     - libstatgrab-ci-oracle7
 
-fedora28:
-  extends: .build
-  tags:
-    - libstatgrab-ci-fedora28
-fedora28-warnings:
-  extends: .build-warnings
-  tags:
-    - libstatgrab-ci-fedora28
-fedora28-test:
-  extends: .test
-  tags:
-    - libstatgrab-ci-fedora28
-
-fedora29:
-  extends: .build
-  tags:
-    - libstatgrab-ci-fedora29
-fedora29-warnings:
-  extends: .build-warnings
-  tags:
-    - libstatgrab-ci-fedora29
-fedora29-test:
-  extends: .test
-  tags:
-    - libstatgrab-ci-fedora29
-
 fedora30:
   extends: .build
   tags:
@@ -398,6 +398,32 @@ fedora30-test:
   tags:
     - libstatgrab-ci-fedora30
 
+fedora31:
+  extends: .build
+  tags:
+    - libstatgrab-ci-fedora31
+fedora31-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-fedora31
+fedora31-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-fedora31
+
+fedora32:
+  extends: .build
+  tags:
+    - libstatgrab-ci-fedora32
+fedora32-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-fedora32
+fedora32-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-fedora32
+
 opensuse42:
   extends: .build
   tags:
@@ -410,6 +436,19 @@ opensuse42-test:
   extends: .test
   tags:
     - libstatgrab-ci-opensuse42
+
+opensuse15:
+  extends: .build
+  tags:
+    - libstatgrab-ci-opensuse15
+opensuse15-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-opensuse15
+opensuse15-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-opensuse15
 
 arch:
   extends: .build
@@ -437,32 +476,6 @@ gentoo-test:
   tags:
     - libstatgrab-ci-gentoo
 
-alpine37:
-  extends: .build
-  tags:
-    - libstatgrab-ci-alpine37
-alpine37-warnings:
-  extends: .build-warnings
-  tags:
-    - libstatgrab-ci-alpine37
-alpine37-test:
-  extends: .test
-  tags:
-    - libstatgrab-ci-alpine37
-
-alpine38:
-  extends: .build
-  tags:
-    - libstatgrab-ci-alpine38
-alpine38-warnings:
-  extends: .build-warnings
-  tags:
-    - libstatgrab-ci-alpine38
-alpine38-test:
-  extends: .test
-  tags:
-    - libstatgrab-ci-alpine38
-
 alpine39:
   extends: .build
   tags:
@@ -488,6 +501,32 @@ alpine310-test:
   extends: .test
   tags:
     - libstatgrab-ci-alpine310
+
+alpine311:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine311
+alpine311-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine311
+alpine311-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine311
+
+alpine312:
+  extends: .build
+  tags:
+    - libstatgrab-ci-alpine312
+alpine312-warnings:
+  extends: .build-warnings
+  tags:
+    - libstatgrab-ci-alpine312
+alpine312-test:
+  extends: .test
+  tags:
+    - libstatgrab-ci-alpine312
 
 solaris9sparc-gcc:
   extends: .build
@@ -612,12 +651,12 @@ solaris11x86-developerstudio126-test:
 
 check-results:
   stage: regression
-  image: ubuntu:18.04
+  image: ubuntu:20.04
   variables:
     GIT_STRATEGY: none
   script:
     - apt-get update
-    - apt-get -y install curl unzip
+    - DEBIAN_FRONTEND=noninteractive apt-get -y install curl unzip
     - 'curl --silent --fail --location --output reference.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/jobs/artifacts/master/download?job=check-results-master" && unzip -o -q reference.zip || /bin/true'
     - mkdir -p reference
     - ls -laR
@@ -625,7 +664,7 @@ check-results:
     - for i in statgrab.*; do sed -e 's/ =.*$//' -e '/^fs.*:/d' $i | perl -n -e 'unless($_=~/^user\./&&$_!~/^user\.names\s+/&&$_!~/^user\.num\s+/){print}' | sort > $i.$$; if ! cmp -s $i.$$ reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i.$$ || /bin/true; echo; REFFAIL=1 export REFFAIL; fi; cp -v $i.$$ reference/$i; fi; done
     - for i in config.h.*; do if ! cmp -s $i reference/$i; then if [ -f reference/$i ]; then echo "==> Differences detected for $i:"; diff -u reference/$i $i || /bin/true; echo; fi; cp -v $i reference/$i; fi; done
     - cd reference
-    - 'rm -f *.alpine36'
+    - 'rm -f *.alpine36 *.alpine37 *.alpine38 *.fedora28 *.fedora29 *.hardenedbsd11'
     - for i in statgrab.*; do if [ ! -f ../$i ]; then echo "==> $i output is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
     - for i in config.h.*; do if [ ! -f ../$i ]; then echo "==> $i is missing in this build"; REFFAIL=1 export REFFAIL; fi; done
     - echo "Reference archived generated at `date` for commit $CI_COMMIT_SHORT_SHA." > TIMESTAMP
@@ -646,7 +685,7 @@ check-results-master:
   artifacts:
     paths:
       - reference
-    expire_in:
+    expire_in: never
     when: always
   except:
   only:
