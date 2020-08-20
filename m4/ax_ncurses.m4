@@ -23,12 +23,19 @@ AC_DEFUN([MP_WITH_CURSES], [
           mp_cv_ncurses="ncurses/ncurses.h"
           CURSES_LIB="-lncurses"
         ], [
-          LIBS="$mp_save_LIBS $SAIDARLIBS -lcurses"
+          LIBS="$mp_save_LIBS $SAIDARLIBS -lncurses -ltinfo"
           CPPFLAGS="$mp_save_CPPFLAGS $SAIDARCPPFLAGS"
-          AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <curses.h>], [testcode])], [
-            mp_cv_ncurses="curses.h"
-            CURSES_LIB="-lcurses"
-          ], [mp_cv_ncurses=no])
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <ncurses.h>], [testcode])], [
+            mp_cv_ncurses="ncurses.h"
+            CURSES_LIB="-lncurses -ltinfo"
+          ], [
+            LIBS="$mp_save_LIBS $SAIDARLIBS -lcurses"
+            CPPFLAGS="$mp_save_CPPFLAGS $SAIDARCPPFLAGS"
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <curses.h>], [testcode])], [
+              mp_cv_ncurses="curses.h"
+              CURSES_LIB="-lcurses"
+            ], [mp_cv_ncurses=no])
+          ])
         ])
       ])
     ])
