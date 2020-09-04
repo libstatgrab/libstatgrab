@@ -552,6 +552,8 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 		case 'D':
 			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_STOPPED;
 			break;
+		default:
+			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_UNKNOWN;
 		}
 
 		/* pa_name[0] should = '(' */
