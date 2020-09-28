@@ -260,8 +260,8 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 
 	fclose(f);
 
-	if( matched < 4 ) {
-		RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "not all from 'cpu', 'intr', 'ctxt', 'softirq' found in '/proc/stat'");
+	if( matched == 0 ) {
+		RETURN_WITH_SET_ERROR("cpu", SG_ERROR_PARSE, "all from 'cpu', 'intr', 'ctxt', 'softirq' missing from '/proc/stat'");
 	}
 
 	cpu_stats_buf->total = cpu_stats_buf->user + cpu_stats_buf->nice + cpu_stats_buf->kernel + cpu_stats_buf->idle;
