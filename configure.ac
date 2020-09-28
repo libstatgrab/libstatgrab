@@ -1160,7 +1160,7 @@ AC_INCLUDES_DEFAULT
 			])
 		])
 
-		AC_CHECK_TYPES([struct vmtotal, struct vmmeter], , , [AC_LANG_SOURCE([
+	    AC_CHECK_TYPES([struct vmtotal, struct vmmeter], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -1173,10 +1173,31 @@ AC_INCLUDES_DEFAULT
 #endif
 		])])
 
-			AC_CHECK_MEMBER(struct vmmeter.v_cache_count,
-					[AC_DEFINE(HAVE_VMMETER_V_CACHE_COUNT, 1, [v_cache_count member of struct vmmeter available])], ,
-					[AC_LANG_SOURCE([
+		# when <sys/vmmeter.h> is available but struct vmmeter not found, ask kindly for access via _WANT_VMMETER
+	    AS_IF(	[test "x$ac_cv_header_sys_vmmeter_h" = "xyes" -a "x$ac_cv_type_struct_vmmeter" != "xyes"], [
+		unset ac_cv_type_struct_vmmeter
+		AC_CHECK_TYPES([struct vmmeter], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
+#define _WANT_VMMETER
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_VMMETER_H
+#include <sys/vmmeter.h>
+#endif
+		    ])])
+
+		AS_IF(	[test "x$ac_cv_type_struct_vmmeter" = "xyes"], [AC_DEFINE([_WANT_VMMETER], 1, [struct vmmeter needs to be pleased])], [])
+	    ])
+
+		AC_CHECK_MEMBER(struct vmmeter.v_cache_count,
+				[AC_DEFINE(HAVE_VMMETER_V_CACHE_COUNT, 1, [v_cache_count member of struct vmmeter available])], ,
+				[AC_LANG_SOURCE([
+AC_INCLUDES_DEFAULT
+#define _WANT_VMMETER
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -1186,8 +1207,8 @@ AC_INCLUDES_DEFAULT
 #ifdef HAVE_SYS_VMMETER_H
 # include <sys/vmmeter.h>
 #endif
-					]
-			)])
+				]
+		)])
 
 		AC_CHECK_TYPES([struct xswdev, struct xsw_usage], , , [AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
