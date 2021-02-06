@@ -100,7 +100,8 @@ AC_TYPE_UNSIGNED_LONG_LONG_INT
 
 dnl Check for extra flags to enable some kind of behavior
 AC_CHECK_DECL([_AIX],[ac_cv_need_minus_d_linux_source_compat="yes"; ac_cv_need_minus_d_all_source="yes"])
-AC_CHECK_DECL([__linux],[ac_cv_need_minus_d_gnu_source="yes"]) dnl probably required by kfreebsd, too?
+dnl probably required by kfreebsd, too?
+AC_CHECK_DECL([__linux],[ac_cv_need_minus_d_gnu_source="yes"])
 AC_CHECK_DECL([__sun],[ac_cv_need_minus_d_extensions="yes"; ac_cv_need_minus_d_posix_pthread_semantics="yes"])
 AC_CHECK_DECL([__hpux],[ac_cv_need_minus_d_hpux_source="yes"])
 
