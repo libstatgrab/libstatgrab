@@ -6,6 +6,15 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.92.1 (27 July 2021)
+ * Fix build with autoconf 2.70+.
+ * Fix CPU stats on older Linux kernels.
+ * Make sure to count processes in an unknown state.
+ * Check if -ltinfo is needed when linking ncurses.
+ * Fixes to build when cross-compiling.
+ * Fix build with -DNDEBUG.
+ * Handle vmmeter changes in FreeBSD 12.
+
 libstatgrab 0.92 (16 July 2019)
  * Fix various file descriptor leaks.
  * On Linux, read process thread name from comm where available (fixes

@@ -13,7 +13,7 @@
 AC_PREREQ([2.69])
 
 # Change these to change the package name and version
-AC_INIT([libstatgrab],[0.92],[https://libstatgrab.org/issues],[],[https://libstatgrab.org/])
+AC_INIT([libstatgrab],[0.92.1],[https://libstatgrab.org/issues],[],[https://libstatgrab.org/])
 AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
