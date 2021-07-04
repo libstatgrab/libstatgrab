@@ -18,14 +18,17 @@ AC_CONFIG_SRCDIR([src/libstatgrab/cpu_stats.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 
+dnl Get cannonical host - the only one of build/host/target we care about
+dnl build is where we build, host the the machine we build for
+dnl
+dnl The 'build' machine		is the machine on which the software is built.
+dnl The 'host' machine		is the machine on which the software will run.
+dnl The 'target' machine	is the machine that the software is being
+dnl				configured to operate on, such as a
+dnl				cross-compiler or cross-linker.
 AC_CANONICAL_HOST
-dnl
-dnl Get cannonical target - the only one of build/host/target we care about
-dnl build is where we build, target the the machine we build for
-dnl
-AC_CANONICAL_TARGET
 dnl and store it for generic error message instead of lots of ifdef's
-AC_DEFINE_UNQUOTED([OS_TYPE], "$target_os",
+AC_DEFINE_UNQUOTED([OS_TYPE], "$host_os",
                    [Define to be the name of the operating system.])
 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -194,7 +197,7 @@ AC_INCLUDES_DEFAULT
 	]
 )
 
-AS_CASE([$target_os],
+AS_CASE([$host_os],
  	[solaris2.[[7-9]]*], [ENABLE_DIRECT_TYPE_FMT_SEARCH_DEFAULT="size_t ssize_t"],
  	[hpux11.11], [ENABLE_DIRECT_TYPE_FMT_SEARCH_DEFAULT="size_t ssize_t"],
  	[ENABLE_DIRECT_TYPE_FMT_SEARCH_DEFAULT=])
@@ -519,7 +522,7 @@ ENABLE_THREADS_DEFAULT="check"
 # Set things up for different OS's
 # We define the name of the OS so the code can act accordingly
 # We also need to add the right LDFLAGS
-AS_CASE([$target_os],
+AS_CASE([$host_os],
 	[solaris*], [
 		AC_CHECK_HEADERS([kstat.h libdevinfo.h procfs.h sys/sockio.h])
 		AC_DEFINE(SOLARIS, 1, [Building on Solaris])
@@ -666,12 +669,12 @@ AC_INCLUDES_DEFAULT
 		LINKFLAGS="-lpdh -liphlpapi -lpsapi -lnetapi32"
 	],
 	[
-		AC_MSG_WARN([Build on unknown OS: $target_os - many functions might be not functional])
+		AC_MSG_WARN([Build on unknown OS: $host_os - many functions might be not functional])
 	]
 )
 
 dnl check Mach OS's
-AS_CASE([$target_os],
+AS_CASE([$host_os],
 	dnl Darwin, probably OSF/1, Plan9?, ...
 	[darwin*], [
 		AC_CHECK_HEADERS([mach/mach.h])
@@ -684,7 +687,7 @@ AS_CASE([$target_os],
 )
 
 dnl check BSD* OS's
-AS_CASE([$target_os],
+AS_CASE([$host_os],
 	[*bsd*|darwin*|dragonfly*], [
 		AC_DEFINE(ALLBSD, , [Building on some kind of BSD])
 		AC_MSG_CHECKING([for BSD specific features])
