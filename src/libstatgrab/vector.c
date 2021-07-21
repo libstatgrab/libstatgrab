@@ -69,6 +69,7 @@ sg_vector_init_new(struct sg_vector *vector, size_t new_count){
 		vector->used_count = new_count;
 }
 
+#ifndef NDEBUG
 sg_error
 sg_prove_vector(const sg_vector *vec) {
 	TRACE_LOG_FMT("vector", "sg_prove_vector(%p)", vec);
@@ -76,6 +77,7 @@ sg_prove_vector(const sg_vector *vec) {
 	assert( SG_VECTOR_FINAL_EYE == vec->final_eye );
 	return SG_ERROR_NONE;
 }
+#endif
 
 static sg_error
 sg_prove_vector_compat(const sg_vector *one, const sg_vector *two) {
