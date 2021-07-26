@@ -344,12 +344,12 @@ sg_get_cpu_stats_int(sg_cpu_stats *cpu_stats_buf) {
 	size = sizeof(vmmeter);
 	memset(&vmmeter, 0, sizeof(vmmeter));
 	if( (sysctl( mib, 2, &vmmeter, &size, NULL, 0 ) == 0) && (size == sizeof(vmmeter)) ) {
-		cpu_stats_buf->context_switches = vmmeter.v_swtch;
-		cpu_stats_buf->syscalls = vmmeter.v_syscall;
-		cpu_stats_buf->syscalls += vmmeter.v_trap;
+		cpu_stats_buf->context_switches = (unsigned long long)vmmeter.v_swtch;
+		cpu_stats_buf->syscalls = (unsigned long long)vmmeter.v_syscall;
+		cpu_stats_buf->syscalls += (unsigned long long)vmmeter.v_trap;
 		cpu_stats_buf->voluntary_context_switches = cpu_stats_buf->involuntary_context_switches = 0;
-		cpu_stats_buf->interrupts = vmmeter.v_intr;
-		cpu_stats_buf->soft_interrupts = vmmeter.v_soft;
+		cpu_stats_buf->interrupts = (unsigned long long)vmmeter.v_intr;
+		cpu_stats_buf->soft_interrupts = (unsigned long long)vmmeter.v_soft;
 	}
 	else {
 		cpu_stats_buf->context_switches = 0;
