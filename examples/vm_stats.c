@@ -75,7 +75,7 @@ int main(int argc, char **argv){
 		total = mem_stats->total + swap_stats->total;
 		free = mem_stats->free + swap_stats->free;
 
-		printf("Total VM usage : %5.2f%%\n", 100 - (((float)total/(float)free)));
+		printf("Total VM usage : %5.2f%%\n", 100 - (100*((float)free/(float)total)));
 	}
 	else {
 		sg_die("Unable to get VM stats", 1);
