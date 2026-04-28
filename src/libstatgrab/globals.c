@@ -475,9 +475,13 @@ sg_destroy_globals(void *glob_buf){
 # if defined(HAVE_PTHREAD)
 		int rc;
 # endif
-		size_t i = lengthof(comp_info) - 1;
-		size_t zero_size = comp_info[i].glob_ofs + comp_info[i].init_comp->static_buf_size;
+		size_t i = lengthof(comp_info);
+		size_t last_idx = lengthof(comp_info) - 1;
+		size_t zero_size = comp_info[last_idx].glob_ofs + comp_info[last_idx].init_comp->static_buf_size;
 
+		/* Walk indexes [N-1 .. 0]. The previous form started i at N-1 and
+		 * used post-decrement-in-test, which dropped the last component
+		 * (its cleanup_fn never ran -- sg_user_init's vector leaked). */
 		while(i--) {
 			if(comp_info[i].init_comp->cleanup_fn)
 				comp_info[i].init_comp->cleanup_fn(((char *)glob_buf) + comp_info[i].glob_ofs);
