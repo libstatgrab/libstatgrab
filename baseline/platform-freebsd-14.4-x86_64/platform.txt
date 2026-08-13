@@ -1,0 +1,14 @@
+FreeBSD runnervmg1sw1.local 14.4-RELEASE FreeBSD 14.4-RELEASE releng/14.4-n273675-a456f852d145 GENERIC amd64
+--- /etc/os-release ---
+NAME=FreeBSD
+VERSION="14.4-RELEASE"
+VERSION_ID="14.4"
+ID=freebsd
+ANSI_COLOR="0;31"
+PRETTY_NAME="FreeBSD 14.4-RELEASE"
+CPE_NAME="cpe:/o:freebsd:freebsd:14.4"
+HOME_URL="https://FreeBSD.org/"
+BUG_REPORT_URL="https://bugs.FreeBSD.org/"
+--- freebsd-version ---
+14.4-RELEASE
+14.4-RELEASE

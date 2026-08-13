@@ -1,0 +1,8 @@
+Linux lima-default 6.18.22-0-virt #1-Alpine SMP PREEMPT_DYNAMIC 2026-04-11 15:53:25 x86_64 Linux
+--- /etc/os-release ---
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.23.4
+PRETTY_NAME="Alpine Linux v3.23"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"

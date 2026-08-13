@@ -1,0 +1,21 @@
+Linux lima-default 4.18.0-553.124.4.el8_10.x86_64 #1 SMP Fri May 15 04:14:14 EDT 2026 x86_64 x86_64 x86_64 GNU/Linux
+--- /etc/os-release ---
+NAME="AlmaLinux"
+VERSION="8.10 (Cerulean Leopard)"
+ID="almalinux"
+ID_LIKE="rhel centos fedora"
+VERSION_ID="8.10"
+PLATFORM_ID="platform:el8"
+PRETTY_NAME="AlmaLinux 8.10 (Cerulean Leopard)"
+ANSI_COLOR="0;34"
+LOGO="fedora-logo-icon"
+CPE_NAME="cpe:/o:almalinux:almalinux:8::baseos"
+HOME_URL="https://almalinux.org/"
+DOCUMENTATION_URL="https://wiki.almalinux.org/"
+BUG_REPORT_URL="https://bugs.almalinux.org/"
+
+ALMALINUX_MANTISBT_PROJECT="AlmaLinux-8"
+ALMALINUX_MANTISBT_PROJECT_VERSION="8.10"
+REDHAT_SUPPORT_PRODUCT="AlmaLinux"
+REDHAT_SUPPORT_PRODUCT_VERSION="8.10"
+SUPPORT_END=2029-06-01

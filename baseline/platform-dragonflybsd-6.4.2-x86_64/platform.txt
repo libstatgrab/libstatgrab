@@ -1,0 +1,15 @@
+DragonFly runnervmg1sw1.local 6.4-RELEASE DragonFly v6.4.2-RELEASE #11: Fri May  9 14:08:53 EDT 2025     root@www.shiningsilence.com:/usr/obj/home/justin/release/6_4/sys/X86_64_GENERIC  x86_64
+--- /etc/os-release ---
+NAME=DragonFly
+VERSION=6.4-SYNTH
+VERSION_ID=6.4
+ID=dragonfly
+ANSI_COLOR="0;32"
+PRETTY_NAME="DragonFlyBSD 6.4-SYNTH"
+CPE_NAME="cpe:/o:dragonflybsd:dragonfly:6.4"
+SUPPORT_URL="http://chat.efnet.org:9090/?nick=dflynick&channels=%23dragonflybsd&Login=Login"
+HOME_URL="https://www.dragonflybsd.org/"
+BUG_REPORT_URL="https://bugs.dragonflybsd.org/"
+MACHINE_ARCH=x86_64
+MACHINE=x86_64
+DFLYVERSION=600401

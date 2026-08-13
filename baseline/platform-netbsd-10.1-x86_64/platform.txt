@@ -1,0 +1,1 @@
+NetBSD runnervmg1sw1.local 10.1 NetBSD 10.1 (GENERIC) #0: Mon Dec 16 13:08:11 UTC 2024  mkrepro@mkrepro.NetBSD.org:/usr/src/sys/arch/amd64/compile/GENERIC amd64

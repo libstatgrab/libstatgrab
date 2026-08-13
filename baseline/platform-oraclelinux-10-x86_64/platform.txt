@@ -1,0 +1,20 @@
+Linux lima-default 6.12.0-202.76.4.4.el10uek.x86_64 #1 SMP PREEMPT_DYNAMIC Fri May 22 11:04:25 PDT 2026 x86_64 GNU/Linux
+--- /etc/os-release ---
+NAME="Oracle Linux Server"
+VERSION="10.1"
+ID="ol"
+ID_LIKE="fedora"
+VARIANT="Server"
+VARIANT_ID="server"
+VERSION_ID="10.1"
+PLATFORM_ID="platform:el10"
+PRETTY_NAME="Oracle Linux Server 10.1"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:oracle:linux:10:1:server"
+HOME_URL="https://linux.oracle.com/"
+BUG_REPORT_URL="https://github.com/oracle/oracle-linux"
+
+ORACLE_BUGZILLA_PRODUCT="Oracle Linux 10"
+ORACLE_BUGZILLA_PRODUCT_VERSION=10.1
+ORACLE_SUPPORT_PRODUCT="Oracle Linux"
+ORACLE_SUPPORT_PRODUCT_VERSION=10.1

@@ -1,0 +1,5 @@
+Darwin sjc22-bt152-11a40c12-1cdc-4a3f-a188-f787b6463263-C68D54AB857A.local 25.5.0 Darwin Kernel Version 25.5.0: Tue Jun  9 22:26:00 PDT 2026; root:xnu-12377.121.10~1/RELEASE_ARM64_VMAPPLE arm64
+--- sw_vers ---
+ProductName:		macOS
+ProductVersion:		26.5.2
+BuildVersion:		25F84

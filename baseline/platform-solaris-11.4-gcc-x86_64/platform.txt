@@ -1,0 +1,13 @@
+SunOS solaris 5.11 11.4.90.212.0 i86pc i386 i86pc kvm
+--- /etc/os-release ---
+NAME="Oracle Solaris"
+PRETTY_NAME="Oracle Solaris 11.4"
+CPE_NAME="cpe:/o:oracle:solaris:11:4"
+ID=solaris
+VERSION=11.4
+VERSION_ID=11.4
+BUILD_ID=11.4.90.0.0.212.0
+HOME_URL="https://www.oracle.com/solaris/"
+SUPPORT_URL="https://support.oracle.com/"
+VARIANT_ID=cbe
+VARIANT="11.4.90 Common Build Environment"
