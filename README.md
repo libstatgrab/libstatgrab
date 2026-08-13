@@ -1,7 +1,7 @@
 # libstatgrab
 
-[![pipeline status](https://gitlab.com/libstatgrab/libstatgrab/badges/master/pipeline.svg)](https://gitlab.com/libstatgrab/libstatgrab/commits/master)
-[![coverage report](https://gitlab.com/libstatgrab/libstatgrab/badges/master/coverage.svg)](https://gitlab.com/libstatgrab/libstatgrab/commits/master)
+[![CI](https://github.com/libstatgrab/libstatgrab/actions/workflows/ci.yml/badge.svg)](https://github.com/libstatgrab/libstatgrab/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/libstatgrab/libstatgrab/actions/workflows/codeql.yml/badge.svg)](https://github.com/libstatgrab/libstatgrab/actions/workflows/codeql.yml)
 
 https://libstatgrab.org/
 
@@ -23,9 +23,7 @@ After this the normal build procedure in the [README](README) file can be follow
 
 ## Git master tarball
 
-Our CI builds a tarball every time a commit is pushed to master, and for every pull request. This allows you to grab the [latest tarball for master](https://gitlab.com/libstatgrab/libstatgrab/builds/artifacts/master/browse?job=distfile) which gives you an archive that's built identically to a release.
-
-Or, you can find all the builds on the [pipelines](https://gitlab.com/libstatgrab/libstatgrab/pipelines) page - look for the distfile job at the start of each pipeline for the tarball. This allows you to test out the code on a particular branch or pull request.
+Our CI builds a release-style tarball every time a commit is pushed to master. You can download the [latest master tarball](https://github.com/libstatgrab/libstatgrab/releases/download/master-snapshot/libstatgrab-master.tar.gz), along with its [SHA-256 checksum](https://github.com/libstatgrab/libstatgrab/releases/download/master-snapshot/libstatgrab-master.tar.gz.sha256). This gives you an archive built in the same way as a release, and is useful for testing the latest code without having to generate the distribution tarball yourself.
 
 ## Reporting bugs or issues
 

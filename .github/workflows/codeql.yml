@@ -1,0 +1,45 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '43 3 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+  security-events: write
+
+jobs:
+  analyze-c:
+    name: CodeQL / C
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            autoconf automake libtool pkg-config docbook2x libncurses-dev make
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          build-mode: manual
+
+      - name: Build for CodeQL
+        run: |
+          set -euxo pipefail
+          ./autogen.sh
+          ./configure --enable-examples --enable-tests
+          make -j2
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
