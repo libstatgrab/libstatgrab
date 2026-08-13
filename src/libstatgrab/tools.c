@@ -678,12 +678,14 @@ setmntent(const char *fn, const char *type) {
 		return NULL;
 	}
 
+#if defined(HAVE_FLOCK) || (defined(HAVE_FCNTL) && defined(HAVE_DECL_F_SETLK))
 	if( flock( fileno( f ), LOCK_SH ) != 0 )
 	{
 		SET_ERROR_WITH_ERRNO("tools", SG_ERROR_OPEN, "setmntent: flock(%s)", fn);
 		fclose(f);
 		return NULL;
 	}
+#endif
 
 	return f;
 }
