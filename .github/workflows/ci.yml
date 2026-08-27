@@ -878,7 +878,7 @@ jobs:
           name: distfile
           path: dist
       - name: Build and test in FreeBSD 15.1 RISC-V
-        uses: vmactions/freebsd-vm@v1.5.3
+        uses: vmactions/freebsd-vm@v1.5.4
         with:
           release: '15.1'
           arch: riscv64
@@ -915,7 +915,7 @@ jobs:
           name: distfile
           path: dist
       - name: Run -Wall -Werror build
-        uses: vmactions/freebsd-vm@v1.5.3
+        uses: vmactions/freebsd-vm@v1.5.4
         with:
           release: '15.1'
           arch: riscv64
