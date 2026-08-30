@@ -342,7 +342,8 @@ sg_vector_compute_diff(sg_vector **dest_vector_ptr, const sg_vector *cur_vector,
 		    ( SG_ERROR_NONE == sg_prove_vector(last_vector) ) &&
 		    ( SG_ERROR_NONE == sg_prove_vector_compat(cur_vector, last_vector ) ) ) {
 			size_t i, item_size = last_vector->info.item_size;
-			unsigned matched[(cur_vector->used_count / (8 * sizeof(unsigned))) + 1];
+			/* indexed by j, i.e. over last_vector's items */
+			unsigned matched[(last_vector->used_count / (8 * sizeof(unsigned))) + 1];
 
 			char *diff = VECTOR_DATA(*dest_vector_ptr);
 			char const *last = VECTOR_DATA_CONST(last_vector);
