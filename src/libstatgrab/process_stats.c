@@ -255,12 +255,15 @@ adjust_procname_cmndline(char *proctitle, size_t len) {
 	/* XXX OpenBSD prepends char *[] adressing the several embedded argv items */
 #if defined(DARWIN)
 	pt = p = proctitle + sizeof(int);;
+#elif defined(LINUX)
+	/* Linux cmdline: plain NUL-separated argv, no leading pointer table */
+	pt = p = proctitle;
 #else
 	if(len > sizeof(p))
 		memcpy(&p, proctitle, sizeof(p)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
 	else
 		p = proctitle - len - 1;
-	if( len && ((size_t)(p - proctitle) <= len) ) {
+	if( len && p >= proctitle && ((size_t)(p - proctitle) < len) ) {
 		pt = p;
 		len -= p - proctitle;
 	}
