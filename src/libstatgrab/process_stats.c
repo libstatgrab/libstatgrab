@@ -42,6 +42,7 @@ static void sg_process_stats_item_init(sg_process_stats *d) {
 
 	d->process_name = NULL;
 	d->proctitle = NULL;
+	d->sessid = 0; /* not every backend provides a session id */
 }
 
 #if 0
