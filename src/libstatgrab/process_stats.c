@@ -255,12 +255,20 @@ adjust_procname_cmndline(char *proctitle, size_t len) {
 	/* XXX OpenBSD prepends char *[] adressing the several embedded argv items */
 #if defined(DARWIN)
 	pt = p = proctitle + sizeof(int);;
+#elif defined(LINUX)
+	/* Linux /proc/PID/cmdline is a plain NUL-separated argv buffer with no
+	 * leading char *[] pointer table. Reinterpreting its first bytes as a
+	 * pointer feeds fully caller-controlled data into the walk below; an
+	 * exact "buffer end" value drives it out of bounds. Start at the buffer
+	 * instead - for every real cmdline the pointer branch already fell
+	 * through to this, so behaviour is unchanged for legitimate input. */
+	pt = p = proctitle;
 #else
 	if(len > sizeof(p))
 		memcpy(&p, proctitle, sizeof(p)); /* p = ((char **)(proctitle))[0], but without violating alignment rules */
 	else
 		p = proctitle - len - 1;
-	if( len && ((size_t)(p - proctitle) <= len) ) {
+	if( len && p >= proctitle && ((size_t)(p - proctitle) < len) ) {
 		pt = p;
 		len -= p - proctitle;
 	}
