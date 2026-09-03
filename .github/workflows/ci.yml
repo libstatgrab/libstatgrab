@@ -506,7 +506,7 @@ jobs:
           name: distfile
           path: dist
       - name: Build and test in NetBSD 11.0
-        uses: vmactions/netbsd-vm@v1.4.6
+        uses: vmactions/netbsd-vm@v1.4.8
         with:
           release: '11.0'
           usesh: true
@@ -537,7 +537,7 @@ jobs:
           name: distfile
           path: dist
       - name: Run -Wall -Werror build
-        uses: vmactions/netbsd-vm@v1.4.6
+        uses: vmactions/netbsd-vm@v1.4.8
         with:
           release: '11.0'
           usesh: true
@@ -974,7 +974,7 @@ jobs:
           name: distfile
           path: dist
       - name: Build and test in NetBSD 11.0 ${{ matrix.arch }}
-        uses: vmactions/netbsd-vm@v1.4.6
+        uses: vmactions/netbsd-vm@v1.4.8
         with:
           release: '11.0'
           arch: ${{ matrix.arch }}
@@ -1014,7 +1014,7 @@ jobs:
           name: distfile
           path: dist
       - name: Run -Wall -Werror build
-        uses: vmactions/netbsd-vm@v1.4.6
+        uses: vmactions/netbsd-vm@v1.4.8
         with:
           release: '11.0'
           arch: ${{ matrix.arch }}
