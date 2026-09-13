@@ -868,7 +868,7 @@
 /* #undef OPENBSD */
 
 /* Define to be the name of the operating system. */
-#define OS_TYPE "darwin25.5.0"
+#define OS_TYPE "darwin25.6.0"
 
 /* Name of package */
 #define PACKAGE "libstatgrab"
