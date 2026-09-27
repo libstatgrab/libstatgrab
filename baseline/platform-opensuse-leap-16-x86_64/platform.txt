@@ -1,4 +1,4 @@
-Linux lima-default 6.12.0-160000.35-default #1 SMP PREEMPT_DYNAMIC Wed Jun 10 13:35:47 UTC 2026 (c70d539) x86_64 x86_64 x86_64 GNU/Linux
+Linux lima-default 6.12.0-160000.38-default #1 SMP PREEMPT_DYNAMIC Mon Sep 14 23:00:16 UTC 2026 (1a5df4e) x86_64 x86_64 x86_64 GNU/Linux
 --- /etc/os-release ---
 NAME="openSUSE Leap"
 VERSION="16.0"

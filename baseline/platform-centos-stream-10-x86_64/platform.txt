@@ -1,4 +1,4 @@
-Linux lima-default 6.12.0-267.el10.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Sep 10 11:41:14 UTC 2026 x86_64 GNU/Linux
+Linux lima-default 6.12.0-269.el10.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Sep 17 07:10:15 UTC 2026 x86_64 GNU/Linux
 --- /etc/os-release ---
 NAME="CentOS Stream"
 VERSION="10 (Coughlan)"
