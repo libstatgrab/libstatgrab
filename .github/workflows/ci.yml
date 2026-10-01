@@ -538,7 +538,7 @@ jobs:
           name: distfile
           path: dist
       - name: Build and test in Oracle Solaris 11.4 CBE
-        uses: vmactions/solaris-vm@v1.3.9
+        uses: vmactions/solaris-vm@v1.4.1
         with:
           release: '11.4-gcc'
           usesh: true
@@ -569,7 +569,7 @@ jobs:
           name: distfile
           path: dist
       - name: Run -Wall -Werror build
-        uses: vmactions/solaris-vm@v1.3.9
+        uses: vmactions/solaris-vm@v1.4.1
         with:
           release: '11.4-gcc'
           usesh: true
@@ -983,7 +983,7 @@ jobs:
           name: distfile
           path: dist
       - name: Build and test with Clang in Oracle Solaris 11.4 CBE
-        uses: vmactions/solaris-vm@v1.3.9
+        uses: vmactions/solaris-vm@v1.4.1
         with:
           release: '11.4-clang-19'
           usesh: true
@@ -1015,7 +1015,7 @@ jobs:
           name: distfile
           path: dist
       - name: Run -Wall -Werror build
-        uses: vmactions/solaris-vm@v1.3.9
+        uses: vmactions/solaris-vm@v1.4.1
         with:
           release: '11.4-clang-19'
           usesh: true
