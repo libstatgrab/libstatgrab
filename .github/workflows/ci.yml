@@ -393,7 +393,7 @@ jobs:
           path: dist
 
       - name: Boot ${{ matrix.os }} VM
-        uses: cross-platform-actions/action@v1.5.0
+        uses: cross-platform-actions/action@v1.6.0
         with:
           operating_system: ${{ matrix.os }}
           version: ${{ matrix.version }}
@@ -438,7 +438,7 @@ jobs:
           path: dist
 
       - name: Boot ${{ matrix.os }} VM
-        uses: cross-platform-actions/action@v1.5.0
+        uses: cross-platform-actions/action@v1.6.0
         with:
           operating_system: ${{ matrix.os }}
           version: ${{ matrix.version }}
@@ -750,7 +750,7 @@ jobs:
           name: distfile
           path: dist
       - name: Boot ${{ matrix.os }} VM
-        uses: cross-platform-actions/action@v1.5.0
+        uses: cross-platform-actions/action@v1.6.0
         with:
           operating_system: ${{ matrix.os }}
           version: ${{ matrix.version }}
@@ -788,7 +788,7 @@ jobs:
           name: distfile
           path: dist
       - name: Boot ${{ matrix.os }} VM
-        uses: cross-platform-actions/action@v1.5.0
+        uses: cross-platform-actions/action@v1.6.0
         with:
           operating_system: ${{ matrix.os }}
           version: ${{ matrix.version }}
