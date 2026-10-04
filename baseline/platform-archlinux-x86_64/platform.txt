@@ -1,4 +1,4 @@
-Linux lima-default 7.1.3-arch1-3 #1 SMP PREEMPT_DYNAMIC Mon, 13 Jul 2026 20:15:15 +0000 x86_64 GNU/Linux
+Linux lima-default 7.2.7-arch1-1 #1 SMP PREEMPT_DYNAMIC Mon, 21 Sep 2026 18:51:14 +0000 x86_64 GNU/Linux
 --- /etc/os-release ---
 NAME="Arch Linux"
 PRETTY_NAME="Arch Linux"
