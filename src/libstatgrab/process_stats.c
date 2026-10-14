@@ -42,6 +42,11 @@ static void sg_process_stats_item_init(sg_process_stats *d) {
 
 	d->process_name = NULL;
 	d->proctitle = NULL;
+	/* sessid is only assigned by the kinfo_proc backends (BSD/Darwin). The
+	 * Linux/Solaris/HP-UX/AIX backends never parse a session id, so without
+	 * this the field would hand allocator-provided heap bytes back to the
+	 * caller as the session id (uninitialised-value disclosure). */
+	d->sessid = 0;
 }
 
 #if 0
