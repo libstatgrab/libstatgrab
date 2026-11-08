@@ -304,8 +304,8 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 #if defined(LINUX)
 #define READBUF_LENGTH 4095
-	static const char proc_stat_fmt_base[] = "%" FMT_PID_T " %s %%c %" FMT_PID_T " %" FMT_PID_T " %%*d %%*d %%*d %%*u %%*u %%*u %%*u %%*u %%lu %%lu %%*d %%*d %%*d %%d %%*d %%*d %%llu %%llu %%llu %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*d %%*d";
-	static const char proc_stat_fmt_default[] = FMT_PID_T " %4095s %c " FMT_PID_T " " FMT_PID_T " %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d";
+	static const char proc_stat_fmt_base[] = "%" FMT_PID_T " %s %%c %" FMT_PID_T " %" FMT_PID_T " %" FMT_PID_T " %%*d %%*d %%*u %%*u %%*u %%*u %%*u %%lu %%lu %%*d %%*d %%*d %%d %%*d %%*d %%llu %%llu %%llu %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*d %%*d";
+	static const char proc_stat_fmt_default[] = FMT_PID_T " %4095s %c " FMT_PID_T " " FMT_PID_T " " FMT_PID_T " %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d";
 	struct pids_in_proc_dir_t *pids_in_proc_dir;
 	size_t pid_item = 0;
 	char filename[MAX_FILE_LENGTH];
@@ -521,17 +521,17 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 		if( proc_stat_fmt[0] ) {
 			rc = fscanf(f, proc_stat_fmt,
 			       &proc_stats_ptr[proc_items].pid, &s, &proc_stats_ptr[proc_items].parent,
-			       &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
+			       &proc_stats_ptr[proc_items].pgid, &proc_stats_ptr[proc_items].sessid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
 			       &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
 		}
 		else {
 			rc = fscanf(f, proc_stat_fmt_default,
 			       &proc_stats_ptr[proc_items].pid, read_buf, &s, &proc_stats_ptr[proc_items].parent,
-			       &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
+			       &proc_stats_ptr[proc_items].pgid, &proc_stats_ptr[proc_items].sessid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
 			       &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
 		}
 
-		if( (proc_stat_fmt[0] && rc < 10) || (proc_stat_fmt[0] == '\0' && rc < 11)) {
+		if( (proc_stat_fmt[0] && rc < 11) || (proc_stat_fmt[0] == '\0' && rc < 12)) {
 			/* Read failed.. Process vanished?
 			 * Ah well, move onwards to the next one */
 			++pid_item;
