@@ -1,4 +1,4 @@
-Linux runnervmcwoy2 6.8.0-1070-azure #78~22.04.1-Ubuntu SMP Thu Sep 24 18:46:45 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+Linux runnervmlby3q 6.8.0-1070-azure #78~22.04.1-Ubuntu SMP Thu Sep 24 18:46:45 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
 --- /etc/os-release ---
 PRETTY_NAME="Ubuntu 22.04.5 LTS"
 NAME="Ubuntu"

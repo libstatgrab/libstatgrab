@@ -1,13 +1,13 @@
-Linux lima-default 6.12.0-160000.40-default #1 SMP PREEMPT_DYNAMIC Thu Oct 22 09:10:19 UTC 2026 (3fd31e5) x86_64 x86_64 x86_64 GNU/Linux
+Linux lima-default 6.12.0-160100.8-default #1 SMP PREEMPT_DYNAMIC Thu Oct 22 13:34:22 UTC 2026 (81f5005) x86_64 x86_64 x86_64 GNU/Linux
 --- /etc/os-release ---
 NAME="openSUSE Leap"
-VERSION="16.0"
+VERSION="16.1"
 ID="opensuse-leap"
 ID_LIKE="suse opensuse"
-VERSION_ID="16.0"
-PRETTY_NAME="openSUSE Leap 16.0"
+VERSION_ID="16.1"
+PRETTY_NAME="openSUSE Leap 16.1"
 ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:opensuse:leap:16.0"
+CPE_NAME="cpe:/o:opensuse:leap:16.1"
 BUG_REPORT_URL="https://bugs.opensuse.org"
 HOME_URL="https://www.opensuse.org/"
 DOCUMENTATION_URL="https://en.opensuse.org/Portal:Leap"
