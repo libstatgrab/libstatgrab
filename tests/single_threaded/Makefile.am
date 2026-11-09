@@ -5,7 +5,9 @@ noinst_PROGRAMS = $(test_bin) $(test_script)
 
 EXTRA_DIST = run_tests.synopsis.in libstatgrab-test.properties
 
-test_bin = full_stats diff_stats
+test_bin = full_stats diff_stats process_comm
+
+TESTS = process_comm
 
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)\
 	      -I$(top_srcdir)/src -I$(top_builddir)/src\
