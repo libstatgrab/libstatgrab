@@ -161,6 +161,8 @@ set -e
 copy_if_present "$test_src/config.log" "$out/config.tests.log"
 copy_if_present "$test_src/test-suite.log" "$out/test-suite.log"
 copy_if_present "$test_src/tests/test-suite.log" "$out/test-suite.tests.log"
+copy_if_present "$test_src/tests/single_threaded/test-suite.log" "$out/test-suite.single-threaded.log"
+copy_if_present "$test_src/tests/single_threaded/process_comm.log" "$out/process_comm.log"
 if [ "$test_rc" -ne 0 ]; then
     cat "$out/tests.log" >&2
     exit "$test_rc"

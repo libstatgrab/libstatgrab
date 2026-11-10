@@ -43,7 +43,7 @@ jobs:
           LSG_VERSION=$(git rev-parse --short=8 HEAD)
           ./autogen.sh
           ./configure
-          make distcheck VERSION="$LSG_VERSION"
+          make distcheck VERSION="$LSG_VERSION" VERBOSE=1
           test -n "$(find . -maxdepth 1 -name 'libstatgrab-*.tar.gz' -print -quit)"
 
       - name: Upload distribution tarball
