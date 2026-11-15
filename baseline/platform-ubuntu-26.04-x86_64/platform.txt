@@ -1,4 +1,4 @@
-Linux runnervmwuk1x 7.0.0-1019-azure #20-Ubuntu SMP PREEMPT Mon Oct 19 22:41:16 UTC 2026 x86_64 GNU/Linux
+Linux runnervmccnms 7.0.0-1019-azure #20-Ubuntu SMP PREEMPT Mon Oct 19 22:41:16 UTC 2026 x86_64 GNU/Linux
 --- /etc/os-release ---
 PRETTY_NAME="Ubuntu 26.04.1 LTS"
 NAME="Ubuntu"
