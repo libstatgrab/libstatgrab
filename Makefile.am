@@ -27,14 +27,16 @@ MAINTAINERCLEANFILES = ChangeLog
 
 if MAINTAINER_MODE
 ChangeLog:
-	git log --stat --name-only --date=short \
-		--format='%n*%ad  %an  <%ae>%n%n%w(76,4,4)%s%n%n%b%n#Hash: %H%n#Files affected:' \
-		| $(SED)  \
-			-e 's/^\([^ \*]\)/    \1/' \
-			-e 's/^    \#/  /' \
-			-e 's/     Hash/    Hash/' \
-			-e 's/^\*//' \
-		| tail -n +2 > ChangeLog
+	git --no-pager log \
+		--no-show-signature --no-color --no-expand-tabs \
+		--name-only --date=short \
+		--format='%n*%cd  %an  <%ae>%n%n%w(0,8,8)%B%w(0,0,0)%nHash: %H%nFiles affected:' \
+		| $(SED) \
+			-e '1d' \
+			-e '/^\*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}  / { s/^\*//; b; }' \
+			-e 's/^        //' \
+			-e "/./s/^/$$(printf '\t')/" \
+		> ChangeLog
 endif
 
 dist_doc_DATA = NEWS PLATFORMS README AUTHORS COPYING COPYING.LGPL
