@@ -89,6 +89,6 @@ MAINTAINERCLEANFILES= $(man_MANS)
 
 .xml.3:
 	$(DOCBOOK2MAN) -N --symlinks --string-param \
-		header-3="`git log -1 --format='%ad' --date=short $<`" \
+		header-3="`git log --no-show-signature -1 --format='%ad' --date=short $<`" \
 		$<
 endif
