@@ -386,7 +386,10 @@ void *sg_comp_get_tls(unsigned id);
 				goto err_out;		\
 							\
 			TRACE_LOG(#comp, "calling " #getfn "(NULL)"); \
-			getfn(NULL);			\
+			if( ( NULL == getfn(NULL) ) && ( SG_ERROR_NONE != sg_get_error() ) ) { \
+				sg_vector_free( last );	\
+				goto err_out;		\
+			}				\
 							\
 			rc = sg_vector_compute_diff(&comp##_glob->comp##_vectors[diffidx], comp##_glob->comp##_vectors[nowidx], last); \
 			sg_vector_free( last );		\

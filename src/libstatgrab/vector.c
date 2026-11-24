@@ -229,6 +229,8 @@ sg_vector_clone_into_int(sg_vector **dest, const sg_vector *src){
 	assert(src->info.copy_fn);
 
 	if( !tmp ) {
+		/* sg_vector_resize() freed *dest: on error, or because src is empty */
+		*dest = NULL;
 		RETURN_FROM_PREVIOUS_ERROR( "vector", sg_get_error() );
 	}
 
