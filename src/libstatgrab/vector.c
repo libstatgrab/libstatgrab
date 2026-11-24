@@ -108,7 +108,7 @@ sg_vector_create_int(size_t block_shift, size_t alloc_count, size_t initial_used
 #endif
 		vector->info = *info;
 		vector->block_shift = block_shift;
-		vector->alloc_count = 1LU << block_shift;
+		vector->alloc_count = round_count;
 		vector->used_count = 0;
 
 		sg_vector_init_new(vector, initial_used);
