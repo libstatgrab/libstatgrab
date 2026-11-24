@@ -4,6 +4,31 @@ https://libstatgrab.org/
 Supported Platforms
 ===================
 
+CI for libstatgrab-0.92.2 covers the following platforms:
+
+AlmaLinux 8, 9 and 10 (x86_64)
+Alpine Linux 3.22 and 3.23 (x86_64)
+Arch Linux (x86_64)
+CentOS Stream 10 (x86_64)
+Debian 12 and 13 (x86_64)
+DragonFly BSD 6.4.2 (x86_64)
+Fedora 43 and 44 (x86_64)
+FreeBSD 14.4 (x86_64) and 15.1 (x86_64, arm64 and riscv64)
+macOS 15 (x86_64) and 26 (arm64)
+NetBSD 10.1 (x86_64) and 11.0 (x86_64, arm64, riscv64 and sparc64)
+OmniOS r151058 (x86_64)
+OpenBSD 7.8 (x86_64) and 7.9 (x86_64 and arm64)
+openSUSE Leap 16 (x86_64)
+Oracle Linux 10 (x86_64)
+Oracle Solaris 11.4 CBE (x86_64, GCC and Clang 19)
+Rocky Linux 8, 9 and 10 (x86_64)
+Ubuntu 22.04 (x86_64), 24.04 (x86_64 and arm64), and 26.04 (x86_64)
+
+All targets build the library, tools and examples, and run statgrab smoke
+checks. The make check test suite also runs except on FreeBSD 15.1 (arm64
+and riscv64), NetBSD 11.0 (arm64, riscv64 and sparc64), and OpenBSD 7.9
+(arm64).
+
 libstatgrab-0.92 has been tested using CI on the following platforms:
 
 Alpine Linux 3.7, 3.8, 3.9 and 3.10

@@ -6,6 +6,18 @@ PLANS: We're now working towards a 1.0 release which is where we plan
        but as always we'll like to hear about any bugs found in the
        current release.
 
+libstatgrab 0.92.2 (25 November 2026)
+ * Fix virtual memory usage calculation in the vm_stats example.
+ * Fix a memory leak when cleaning up user statistics.
+ * Fix build on OmniOS.
+ * Fix buffer overruns when reading process command lines.
+ * Initialise process session IDs on platforms which do not provide them.
+ * Fix buffer overruns when the number of entries decreases between
+   statistics samples.
+ * Fix buffer overruns when statistics grow from zero to one entry.
+ * Fix use-after-free and double-free errors after empty or failed
+   statistics refreshes.
+
 libstatgrab 0.92.1 (27 July 2021)
  * Fix build with autoconf 2.70+.
  * Fix CPU stats on older Linux kernels.
