@@ -304,16 +304,14 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 #if defined(LINUX)
 #define READBUF_LENGTH 4095
-	static const char proc_stat_fmt_base[] = "%" FMT_PID_T " %s %%c %" FMT_PID_T " %" FMT_PID_T " %%*d %%*d %%*d %%*u %%*u %%*u %%*u %%*u %%lu %%lu %%*d %%*d %%*d %%d %%*d %%*d %%llu %%llu %%llu %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*u %%*d %%*d";
-	static const char proc_stat_fmt_default[] = FMT_PID_T " %4095s %c " FMT_PID_T " " FMT_PID_T " %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*u %*d %*d";
+	static const char proc_stat_fmt[] = " %c " FMT_PID_T " " FMT_PID_T " %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu %*d %*d %*d %d %*d %*d %llu %llu %llu";
 	struct pids_in_proc_dir_t *pids_in_proc_dir;
 	size_t pid_item = 0;
 	char filename[MAX_FILE_LENGTH];
 	FILE *f;
 	char s;
 	char read_buf[READBUF_LENGTH+1];
-	char proc_stat_fmt[sizeof proc_stat_fmt_base];
-	char *read_ptr;
+	char *read_ptr, *comm_start, *comm_end;
 	/* XXX or we detect max command line length in ./configure */
 	unsigned long stime, utime;
 	unsigned long long starttime;
@@ -471,43 +469,6 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			continue;
 		}
 
-		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/comm", pids_in_proc_dir->items[pid_item]);
-		if( ( f = fopen(filename, "r") ) == NULL ) {
-			/* Open failed.. */
-			proc_stat_fmt[0] = read_buf[0] = '\0';
-		}
-		else {
-			char *tok, *tok_e;
-			char comm_jmp[32] = { '\0' }; /* procfs documents comm with 16 chars max */
-			if(NULL == fgets(read_buf, READBUF_LENGTH, f)) {
-				/* Read error or EOF before any char read -> finally no desired information */
-				fclose(f);
-				continue;
-			}
-			fclose(f);
-			read_buf[sizeof read_buf - 1] = '\0';
-
-			tok = read_buf;
-			tok_e = read_buf + strlen(read_buf) - 1;
-			if(*tok_e == '\n')
-				*tok_e-- = '\0';
-
-			strncat(comm_jmp, "%*s", sizeof(comm_jmp) - strlen(comm_jmp) - 1);
-			while(tok <= tok_e) {
-				if(isspace(*tok)) {
-					strncat(comm_jmp, " ", sizeof(comm_jmp) - strlen(comm_jmp) - 1);
-					strncat(comm_jmp, "%*s", sizeof(comm_jmp) - strlen(comm_jmp) - 1);
-
-					while(isspace(*tok) && tok <= tok_e)
-						++tok;
-				}
-
-				++tok;
-			}
-
-			snprintf(proc_stat_fmt, sizeof(proc_stat_fmt), proc_stat_fmt_base, comm_jmp);
-		}
-
 		snprintf(filename, MAX_FILE_LENGTH, PROC_LOCATION "/" FMT_PID_T "/stat", pids_in_proc_dir->items[pid_item]);
 		if( ( f = fopen(filename, "r") ) == NULL ) {
 			/* Open failed.. Process since vanished, or the path was too long.
@@ -518,20 +479,25 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 
 		VECTOR_UPDATE(proc_stats_vector_ptr, proc_items + 1, proc_stats_ptr, sg_process_stats);
 
-		if( proc_stat_fmt[0] ) {
-			rc = fscanf(f, proc_stat_fmt,
-			       &proc_stats_ptr[proc_items].pid, &s, &proc_stats_ptr[proc_items].parent,
-			       &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
-			       &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
-		}
-		else {
-			rc = fscanf(f, proc_stat_fmt_default,
-			       &proc_stats_ptr[proc_items].pid, read_buf, &s, &proc_stats_ptr[proc_items].parent,
-			       &proc_stats_ptr[proc_items].pgid, &utime, &stime, &proc_stats_ptr[proc_items].nice,
-			       &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
+		/* comm may contain spaces, newlines, or parentheses. Read the whole
+		 * record and use its final ')' to find the fixed-format fields. */
+		len = fread(read_buf, 1, READBUF_LENGTH, f);
+		read_buf[len] = '\0';
+		comm_start = strchr(read_buf, '(');
+		comm_end = strrchr(read_buf, ')');
+		if( ferror(f) || len == READBUF_LENGTH || comm_start == NULL ||
+		    comm_end == NULL || comm_end < comm_start ||
+		    sscanf(read_buf, FMT_PID_T, &proc_stats_ptr[proc_items].pid) != 1 ) {
+			++pid_item;
+			fclose(f);
+			continue;
 		}
 
-		if( (proc_stat_fmt[0] && rc < 10) || (proc_stat_fmt[0] == '\0' && rc < 11)) {
+		rc = sscanf(comm_end + 1, proc_stat_fmt,
+		       &s, &proc_stats_ptr[proc_items].parent, &proc_stats_ptr[proc_items].pgid,
+		       &utime, &stime, &proc_stats_ptr[proc_items].nice,
+		       &starttime, &proc_stats_ptr[proc_items].proc_size, &proc_stats_ptr[proc_items].proc_resident);
+		if( rc < 9 ) {
 			/* Read failed.. Process vanished?
 			 * Ah well, move onwards to the next one */
 			++pid_item;
@@ -558,15 +524,8 @@ sg_get_process_stats_int(sg_vector **proc_stats_vector_ptr) {
 			proc_stats_ptr[proc_items].state = SG_PROCESS_STATE_UNKNOWN;
 		}
 
-		/* pa_name[0] should = '(' */
-		rc = 0;
-		read_ptr = strchr(&read_buf[1], ')');
-		if( read_ptr != NULL ) {
-			*read_ptr = '\0';
-			rc = 1;
-		}
-
-		if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].process_name, &read_buf[rc] )) {
+		*comm_end = '\0';
+		if( SG_ERROR_NONE != sg_update_string( &proc_stats_ptr[proc_items].process_name, comm_start + 1 )) {
 			VECTOR_UPDATE_ERROR_CLEANUP
 			RETURN_FROM_PREVIOUS_ERROR( "process", sg_get_error() );
 		}
